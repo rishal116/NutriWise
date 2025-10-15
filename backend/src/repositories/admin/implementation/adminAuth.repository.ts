@@ -1,0 +1,24 @@
+import { AdminModel, AdminDocument } from "../../../models/admin.model";
+import { IAdminAuthRepository } from "../interface/IAdminAuthRepository";
+
+export class AdminAuthRepository implements IAdminAuthRepository {
+  async findByEmail(email: string): Promise<AdminDocument | null> {
+    return await AdminModel.findOne({ email });
+  }
+
+  async findById(id: string): Promise<AdminDocument | null> {
+    return await AdminModel.findById(id);
+  }
+
+  async updatePassword(adminId: string, hashedPassword: string): Promise<void> {
+    await AdminModel.findByIdAndUpdate(adminId, { password: hashedPassword });
+  }
+
+  async saveRefreshToken(adminId: string, token: string): Promise<void> {
+    await AdminModel.findByIdAndUpdate(adminId, { refreshToken: token });
+  }
+
+  async findByRefreshToken(token: string): Promise<AdminDocument | null> {
+    return await AdminModel.findOne({ refreshToken: token });
+  }
+}
