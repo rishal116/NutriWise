@@ -1,0 +1,20 @@
+2025-10-22T04:33:09.259Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T04:52:46.190Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T04:58:51.310Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T04:59:28.321Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:01:20.154Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:07:56.238Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:19:51.693Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:24:50.791Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T07:52:01.640Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T07:53:22.087Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T07:56:03.395Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T07:57:34.242Z [error]: OTP verification failed - Error: Invalid or expired OTP
+2025-10-22T07:57:39.357Z [error]: OTP verification failed - Error: Invalid or expired OTP
+2025-10-22T08:32:05.740Z [error]: OTP verification failed - Error: Invalid or expired OTP
+2025-10-22T09:17:46.289Z [error]: OTP verification failed - Error: OTP not found. Please request a new one.
+2025-10-24T14:34:24.560Z [error]: Error during signup: Cannot read properties of null (reading 'requestOtp')
+2025-10-24T14:34:24.564Z [error]: Error in register: Signup process failed
+2025-10-28T05:54:27.123Z [error]: Error verifying OTP: OTP has expired
+2025-10-28T05:54:30.420Z [error]: Error verifying OTP: No verification code found for this email
+2025-10-28T06:06:45.520Z [error]: Error verifying OTP: No verification code found for this email

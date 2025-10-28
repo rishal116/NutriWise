@@ -29,40 +29,13 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: [true, "Password hash is required"],
     },
-    birthdate: {
-        type: String,
-    },
-    gender: {
-        type: String,
-        enum: ["male", "female", "other"],
-    },
-    age: {
-        type: Number,
-        min: 0,
-    },
-    role: {
-        type: String,
-        enum: ["user", "nutritionist", "admin"],
-        default: "user",
-    },
-    aboutMe: {
-        type: String,
-        maxlength: [300, "About Me must be at most 300 characters"],
-    },
-    profileImage: {
-        type: String,
-    },
-    isVerified: {
-        type: Boolean,
-        default: false,
-    },
-    isBlocked: {
-        type: Boolean,
-        default: false,
-    },
-}, {
-    timestamps: true,
-});
-userSchema.index({ email: 1 });
-userSchema.index({ phone: 1 });
+    birthdate: { type: String },
+    gender: { type: String, enum: ["male", "female", "other"] },
+    age: { type: Number, min: 0 },
+    role: { type: String, enum: ["user", "nutritionist", "admin"], default: "user" },
+    aboutMe: { type: String, maxlength: [300, "About Me must be at most 300 characters"] },
+    profileImage: { type: String },
+    isVerified: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
+}, { timestamps: true });
 exports.UserModel = (0, mongoose_1.model)("User", userSchema);

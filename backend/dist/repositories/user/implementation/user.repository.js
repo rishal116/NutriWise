@@ -1,23 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepository = void 0;
+const base_repository_1 = require("../../base.repository");
 const user_model_1 = require("../../../models/user.model");
-class UserRepository {
-    async createUser(data) {
-        const user = new user_model_1.UserModel(data);
-        return await user.save();
+class UserRepository extends base_repository_1.BaseRepository {
+    constructor() {
+        super(user_model_1.UserModel);
     }
     async findByEmail(email) {
-        return await user_model_1.UserModel.findOne({ email }).exec();
+        return this.findOne({ email });
     }
-    async findById(id) {
-        return await user_model_1.UserModel.findById(id).exec();
+    async createUser(data) {
+        return this.create(data);
     }
     async updatePassword(email, hashedPassword) {
-        await user_model_1.UserModel.updateOne({ email }, { $set: { password: hashedPassword } }).exec();
+        await this.updateOne({ email }, { password: hashedPassword });
     }
     async verifyUser(email) {
-        await user_model_1.UserModel.updateOne({ email }, { $set: { isVerified: true } }).exec();
+        await this.updateOne({ email }, { isVerified: true });
     }
 }
 exports.UserRepository = UserRepository;

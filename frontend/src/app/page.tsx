@@ -1,18 +1,16 @@
-"use client";
+import React from 'react'
+import NutriWiseLanding from './(public)/page'
+import Header from '@/components/user/Header'
+import Footer from '@/components/user/Footer'
 
-import { usePathname } from "next/navigation";
-import AdminLoginForm from "@/app/(auth)/admin/login/page";
-import AdminDashboard from '@/app/admin/dashboard/page'
-import UserSignup from '@/app/(auth)/user/signup/page'
-export default function Home() {
-  const pathname = usePathname();
-
+const page = () => {
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-4">NutriWise Frontend</h1>
-      {pathname === "/admin/login" && <AdminLoginForm />}
-      {pathname === "/admin/dashboard" && <AdminDashboard/>}
-      {pathname === "/user/signup" && <UserSignup/>}
+    <div>
+      <Header/>
+      <NutriWiseLanding/>
+      <Footer/>
     </div>
-  );
+  )
 }
+
+export default page

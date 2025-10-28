@@ -1,8 +1,9 @@
-import jwt, { SignOptions } from "jsonwebtoken";
-import { jwtConfig } from "../config/jwt";
-import  { JwtPayload as JWTVerifyPayload } from "jsonwebtoken";
+import jwt, { SignOptions, JwtPayload } from "jsonwebtoken";
+import { jwtConfig } from "../configs/jwt";
 
-
+/**
+ * Generate both access and refresh tokens
+ */
 export const generateTokens = (userId: string, role: string) => {
   const payload = { userId, role };
 
@@ -17,11 +18,26 @@ export const generateTokens = (userId: string, role: string) => {
   return { accessToken, refreshToken };
 };
 
-export const verifyRefreshToken = (token: string): JWTVerifyPayload => {
+/**
+ * Verify Access Token
+ */
+export const verifyAccessToken = (token: string): JwtPayload => {
   try {
-    const payload = jwt.verify(token, jwtConfig.refreshToken.secret) as JWTVerifyPayload;
+    const payload = jwt.verify(token, jwtConfig.accessToken.secret) as JwtPayload;
     return payload;
-  } catch (err) {
+  } catch (error) {
+    throw new Error("Invalid or expired access token");
+  }
+};
+
+/**
+ * Verify Refresh Token
+ */
+export const verifyRefreshToken = (token: string): JwtPayload => {
+  try {
+    const payload = jwt.verify(token, jwtConfig.refreshToken.secret) as JwtPayload;
+    return payload;
+  } catch (error) {
     throw new Error("Invalid or expired refresh token");
   }
 };

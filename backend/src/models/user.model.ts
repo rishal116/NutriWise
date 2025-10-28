@@ -12,7 +12,7 @@ export interface IUser extends Document {
   birthdate?: string;
   gender?: Gender;
   age?: number;
-  role: UserRole;
+  role?: UserRole;
   aboutMe?: string;
   profileImage?: string;
   isVerified: boolean;
@@ -33,7 +33,7 @@ const userSchema = new Schema<IUser>(
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,
+      unique: true, 
       lowercase: true,
       trim: true,
       match: [/\S+@\S+\.\S+/, "Invalid email format"],
@@ -49,45 +49,18 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password hash is required"],
     },
-    birthdate: {
-      type: String,
-    },
-    gender: {
-      type: String,
-      enum: ["male", "female", "other"],
-    },
-    age: {
-      type: Number,
-      min: 0,
-    },
-    role: {
-      type: String,
-      enum: ["user", "nutritionist", "admin"],
-      default: "user",
-    },
-    aboutMe: {
-      type: String,
-      maxlength: [300, "About Me must be at most 300 characters"],
-    },
-    profileImage: {
-      type: String, 
-    },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    isBlocked: {
-      type: Boolean,
-      default: false,
-    },
+    birthdate: { type: String },
+    gender: { type: String, enum: ["male", "female", "other"] },
+    age: { type: Number, min: 0 },
+    role: { type: String, enum: ["user", "nutritionist", "admin"], default: "user" },
+    aboutMe: { type: String, maxlength: [300, "About Me must be at most 300 characters"] },
+    profileImage: { type: String },
+    isVerified: { type: Boolean, default: false },
+    isBlocked: { type: Boolean, default: false },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-userSchema.index({ email: 1 });
-userSchema.index({ phone: 1 });
-
 export const UserModel = model<IUser>("User", userSchema);
+
 

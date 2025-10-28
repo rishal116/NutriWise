@@ -1,0 +1,160 @@
+2025-10-22T04:33:08.934Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T04:33:09.259Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T04:52:44.392Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T04:52:46.190Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T04:58:50.579Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T04:58:51.310Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T04:59:26.310Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T04:59:28.321Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:01:14.070Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T05:01:20.154Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:07:55.336Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T05:07:56.238Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:19:38.092Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T05:19:51.693Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:24:47.237Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T05:24:50.791Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T05:30:36.509Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T05:41:51.668Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T07:02:56.422Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T07:51:59.982Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T07:52:01.640Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T07:53:20.373Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T07:53:22.087Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T07:56:02.603Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T07:56:03.395Z [error]: Signup failed - Email: rishalrishu506@gmail.com - Error: Unable to send OTP email. Please try again later.
+2025-10-22T07:56:41.703Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T07:57:34.242Z [error]: OTP verification failed - Error: Invalid or expired OTP
+2025-10-22T07:57:39.357Z [error]: OTP verification failed - Error: Invalid or expired OTP
+2025-10-22T08:31:37.484Z [info]: Signup request received - Email: rishalrishu506@gmail.com
+2025-10-22T08:32:05.740Z [error]: OTP verification failed - Error: Invalid or expired OTP
+2025-10-22T09:17:46.289Z [error]: OTP verification failed - Error: OTP not found. Please request a new one.
+2025-10-24T14:34:24.409Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-24T14:34:24.416Z [info]: Signup request initiated for rishalrishu506@gmail.com
+2025-10-24T14:34:24.560Z [error]: Error during signup: Cannot read properties of null (reading 'requestOtp')
+2025-10-24T14:34:24.564Z [error]: Error in register: Signup process failed
+2025-10-24T14:39:02.053Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-24T14:39:02.059Z [info]: Signup request initiated for rishalrishu506@gmail.com
+2025-10-24T14:39:02.112Z [info]: Generated OTP 267939 for email rishalrishu506@gmail.com,expires in 1 minute
+2025-10-24T14:39:02.213Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-24T14:39:02.329Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-24T14:39:05.811Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-24T14:39:05.905Z [info]: OTP sent successfully to rishalrishu506@gmail.com
+2025-10-24T14:39:05.906Z [info]: Generated OTP 676364 for email rishalrishu506@gmail.com,expires in 1 minute
+2025-10-24T14:39:05.942Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-24T14:39:05.967Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-24T14:39:09.089Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-24T15:22:55.614Z [info]: Registration attempt - Email: rishalrishu506@gamil.com
+2025-10-24T15:22:55.621Z [info]: Signup request initiated for rishalrishu506@gamil.com
+2025-10-24T15:22:55.672Z [info]: Generated OTP 353463 for email rishalrishu506@gamil.com,expires in 1 minute
+2025-10-24T15:22:55.688Z [info]: OTP deleted for: rishalrishu506@gamil.com
+2025-10-24T15:22:55.775Z [info]: OTP saved for email: rishalrishu506@gamil.com
+2025-10-24T15:22:59.643Z [info]: OTP successfully sent to rishalrishu506@gamil.com
+2025-10-24T15:22:59.652Z [info]: OTP sent successfully to rishalrishu506@gamil.com
+2025-10-24T15:22:59.653Z [info]: Generated OTP 452066 for email rishalrishu506@gamil.com,expires in 1 minute
+2025-10-24T15:22:59.671Z [info]: OTP deleted for: rishalrishu506@gamil.com
+2025-10-24T15:22:59.701Z [info]: OTP saved for email: rishalrishu506@gamil.com
+2025-10-24T15:23:02.015Z [info]: OTP successfully sent to rishalrishu506@gamil.com
+2025-10-24T15:23:43.882Z [info]: OTP verification attempt - Email: rishalrishu506@gamil.com
+2025-10-24T15:23:43.927Z [info]: OTP lookup for rishalrishu506@gamil.com: found
+2025-10-24T15:23:43.951Z [info]: OTP deleted for: 68fb99d36955bdb7a5dad79d
+2025-10-24T15:23:43.952Z [info]: OTP verified successfully for rishalrishu506@gamil.com
+2025-10-25T03:51:44.782Z [info]: Registration attempt - Email: ishaquelaman@gmail.com
+2025-10-25T03:51:44.788Z [info]: Signup request initiated for ishaquelaman@gmail.com
+2025-10-25T03:51:44.908Z [info]: Generated OTP 104227 for email ishaquelaman@gmail.com,expires in 1 minute
+2025-10-25T03:51:44.999Z [info]: OTP deleted for: ishaquelaman@gmail.com
+2025-10-25T03:51:45.211Z [info]: OTP saved for email: ishaquelaman@gmail.com
+2025-10-25T03:51:48.659Z [info]: OTP successfully sent to ishaquelaman@gmail.com
+2025-10-25T03:51:48.674Z [info]: OTP sent successfully to ishaquelaman@gmail.com
+2025-10-25T03:51:48.675Z [info]: Generated OTP 130312 for email ishaquelaman@gmail.com,expires in 1 minute
+2025-10-25T03:51:48.695Z [info]: OTP deleted for: ishaquelaman@gmail.com
+2025-10-25T03:51:48.717Z [info]: OTP saved for email: ishaquelaman@gmail.com
+2025-10-25T03:51:52.167Z [info]: OTP successfully sent to ishaquelaman@gmail.com
+2025-10-25T03:52:43.375Z [info]: OTP verification attempt - Email: ishaquelaman@gmail.com
+2025-10-25T03:52:43.407Z [info]: OTP lookup for ishaquelaman@gmail.com: found
+2025-10-25T03:52:43.421Z [info]: OTP deleted for: 68fc49546fe24b0318571451
+2025-10-25T03:52:43.422Z [info]: OTP verified successfully for ishaquelaman@gmail.com
+2025-10-27T07:00:43.499Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-27T07:00:43.501Z [info]: Signup request initiated for rishalrishu506@gmail.com
+2025-10-27T07:00:43.555Z [info]: Generated OTP 683974 for email rishalrishu506@gmail.com,expires in 1 minute
+2025-10-27T07:00:43.610Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-27T07:00:43.678Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-27T07:00:46.762Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-27T07:00:46.832Z [info]: OTP sent successfully to rishalrishu506@gmail.com
+2025-10-27T07:00:46.833Z [info]: Generated OTP 174242 for email rishalrishu506@gmail.com,expires in 1 minute
+2025-10-27T07:00:46.849Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-27T07:00:46.862Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-27T07:00:49.958Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-27T10:57:17.311Z [info]: Registration attempt - Email: rishal@gmail.com
+2025-10-27T10:57:17.321Z [info]: Signup request initiated for rishal@gmail.com
+2025-10-27T10:57:17.470Z [info]: Generated OTP 319075 for email rishal@gmail.com,expires in 1 minute
+2025-10-27T10:57:17.550Z [info]: OTP deleted for: rishal@gmail.com
+2025-10-27T10:57:17.669Z [info]: OTP saved for email: rishal@gmail.com
+2025-10-27T10:57:20.887Z [info]: OTP successfully sent to rishal@gmail.com
+2025-10-27T10:57:20.891Z [info]: OTP sent successfully to rishal@gmail.com
+2025-10-27T13:47:45.540Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-27T13:47:45.551Z [info]: Signup request initiated for rishalrishu506@gmail.com
+2025-10-27T13:47:45.738Z [info]: Generated OTP 733346 for email rishalrishu506@gmail.com,expires in 1 minute
+2025-10-27T13:47:45.828Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-27T13:47:45.954Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-27T13:47:49.028Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-27T13:47:49.032Z [info]: OTP sent successfully to rishalrishu506@gmail.com
+2025-10-27T14:59:18.956Z [info]: Registration attempt - Email: warog43578@keevle.com
+2025-10-27T14:59:18.972Z [info]: Signup request initiated for warog43578@keevle.com
+2025-10-27T14:59:19.102Z [info]: Generated OTP 468477 for email warog43578@keevle.com, expires in 1 minute
+2025-10-27T14:59:19.172Z [info]: OTP deleted for: warog43578@keevle.com
+2025-10-27T14:59:19.325Z [info]: OTP saved for email: warog43578@keevle.com
+2025-10-27T14:59:23.209Z [info]: OTP successfully sent to warog43578@keevle.com
+2025-10-27T14:59:23.214Z [info]: OTP sent successfully to warog43578@keevle.com
+2025-10-27T14:59:52.298Z [info]: OTP verification attempt - Email: warog43578@keevle.com -OTP 468477
+2025-10-27T14:59:52.300Z [info]: Verifying OTP for warog43578@keevle.com
+2025-10-27T14:59:52.350Z [info]: OTP lookup for warog43578@keevle.com: found
+2025-10-27T14:59:52.374Z [info]: OTP deleted for: 68ff88c73454738dcd419f5d
+2025-10-27T14:59:52.375Z [info]: OTP verified successfully for warog43578@keevle.com
+2025-10-27T14:59:52.782Z [info]: User verified and registered successfully: warog43578@keevle.com
+2025-10-28T05:50:29.874Z [info]: Registration attempt - Email: warog43578@keevle.com
+2025-10-28T05:50:29.877Z [info]: Signup request initiated for warog43578@keevle.com
+2025-10-28T05:52:13.187Z [info]: Registration attempt - Email: warog43578@keevle.com
+2025-10-28T05:52:13.188Z [info]: Signup request initiated for warog43578@keevle.com
+2025-10-28T05:52:56.279Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-28T05:52:56.281Z [info]: Signup request initiated for rishalrishu506@gmail.com
+2025-10-28T05:52:56.301Z [info]: Generated OTP 213844 for email rishalrishu506@gmail.com, expires in 1 minute
+2025-10-28T05:52:56.341Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-28T05:52:56.396Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-28T05:52:59.845Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-28T05:52:59.845Z [info]: OTP sent successfully to rishalrishu506@gmail.com
+2025-10-28T05:54:27.091Z [info]: OTP verification attempt - Email: rishalrishu506@gmail.com -OTP 452066
+2025-10-28T05:54:27.091Z [info]: Verifying OTP for rishalrishu506@gmail.com
+2025-10-28T05:54:27.109Z [info]: OTP lookup for rishalrishu506@gmail.com: found
+2025-10-28T05:54:27.122Z [info]: OTP deleted for: 69005a386ce4d103255ca3b0
+2025-10-28T05:54:27.123Z [error]: Error verifying OTP: OTP has expired
+2025-10-28T05:54:30.416Z [info]: OTP verification attempt - Email: rishalrishu506@gmail.com -OTP 452066
+2025-10-28T05:54:30.416Z [info]: Verifying OTP for rishalrishu506@gmail.com
+2025-10-28T05:54:30.420Z [info]: OTP lookup for rishalrishu506@gmail.com: not found
+2025-10-28T05:54:30.420Z [error]: Error verifying OTP: No verification code found for this email
+2025-10-28T06:01:15.523Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-28T06:01:15.525Z [info]: Generated OTP 399472 for email rishalrishu506@gmail.com, expires in 1 minute
+2025-10-28T06:01:15.535Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-28T06:01:15.553Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-28T06:01:18.059Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-28T06:01:51.389Z [info]: OTP verification attempt - Email: rishalrishu506@gmail.com -OTP 399472
+2025-10-28T06:01:51.389Z [info]: Verifying OTP for rishalrishu506@gmail.com
+2025-10-28T06:01:51.395Z [info]: OTP lookup for rishalrishu506@gmail.com: found
+2025-10-28T06:01:51.399Z [info]: OTP deleted for: 69005c2b112cd28618f9e08c
+2025-10-28T06:01:51.400Z [info]: OTP verified successfully for rishalrishu506@gmail.com
+2025-10-28T06:06:02.010Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-28T06:06:02.010Z [info]: Signup request initiated for rishalrishu506@gmail.com
+2025-10-28T06:06:02.015Z [info]: Generated OTP 856421 for email rishalrishu506@gmail.com, expires in 1 minute
+2025-10-28T06:06:02.019Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-28T06:06:02.040Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-28T06:06:04.386Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-28T06:06:04.387Z [info]: OTP sent successfully to rishalrishu506@gmail.com
+2025-10-28T06:06:25.759Z [info]: OTP verification attempt - Email: rishalrishu506@gmail.com -OTP 856421
+2025-10-28T06:06:25.759Z [info]: Verifying OTP for rishalrishu506@gmail.com
+2025-10-28T06:06:25.766Z [info]: OTP lookup for rishalrishu506@gmail.com: found
+2025-10-28T06:06:25.774Z [info]: OTP deleted for: 69005d4a112cd28618f9e093
+2025-10-28T06:06:25.774Z [info]: OTP verified successfully for rishalrishu506@gmail.com
+2025-10-28T06:06:45.516Z [info]: OTP verification attempt - Email: rishalrishu506@gmail.com -OTP 856421
+2025-10-28T06:06:45.516Z [info]: Verifying OTP for rishalrishu506@gmail.com
+2025-10-28T06:06:45.519Z [info]: OTP lookup for rishalrishu506@gmail.com: not found
+2025-10-28T06:06:45.520Z [error]: Error verifying OTP: No verification code found for this email

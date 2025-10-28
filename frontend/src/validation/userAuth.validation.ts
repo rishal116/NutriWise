@@ -1,4 +1,3 @@
-// /validation/userAuth.validation.ts
 import { z } from "zod";
 
 export const UserSignupSchema = z
@@ -11,15 +10,18 @@ export const UserSignupSchema = z
     phone: z
       .string()
       .regex(/^\+?\d{10,15}$/, "Invalid phone number"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm password is required"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/,
+        "Password must include at least one uppercase, one lowercase, one number, and one special character."
+      ),
+    confirmPassword: z.string().min(8, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
-    path: ["confirmPassword"], // points to the field that caused the issue
+    path: ["confirmPassword"],
   });
 
-export const UserLoginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
+export type UserSignupType = z.infer<typeof UserSignupSchema>;

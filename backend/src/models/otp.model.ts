@@ -16,26 +16,25 @@ const otpSchema = new Schema<IOTP>(
       required: true,
       lowercase: true,
       trim: true,
-      match: [/\S+@\S+\.\S+/, 'Invalid email'],
       index: true,
+      unique: true, // Ensure one active OTP per email
     },
     otp: {
       type: String,
       required: true,
-      minlength: 6,
-      maxlength: 6,
+      length: 6, // 6-digit OTP
     },
     expiresAt: {
       type: Date,
       required: true,
-      index: { expireAfterSeconds: 0 },
+      default: () => new Date(Date.now() + 1 * 60 * 1000), // 1 minute expiry
+      index: { expireAfterSeconds: 0 }, // MongoDB TTL auto deletion
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // adds createdAt and updatedAt
   }
 );
 
-otpSchema.index({ email: 1 }, { unique: true });
 
 export const OtpModel = model<IOTP>("Otp", otpSchema);
