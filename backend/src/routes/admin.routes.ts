@@ -1,16 +1,17 @@
 import { Router } from "express";
-import { AdminAuthController } from "../controllers/admin/implementation/adminAuth.controller";
-import { AdminAuthService } from "../services/implements/admin/adminAuth.service";
-import { AdminRepository } from "../repositories/implements/admin/admin.repository";
-import { authMiddleware } from "../middlewares/auth.middleware";
+import { container } from "../configs/inversify";
+import { TYPES } from "../types/types";
+import { IAdminAuthController } from "../controllers/admin/interface/IAdminAuthController.ts";
+import { validateDto } from "../middlewares/validateDto.middleware";
+import { AdminLoginDto,AdminForgotPasswordDto } from "../dtos/admin/adminAuth.dtos";
 
 const router = Router();
+const adminAuthController = container.get<IAdminAuthController>(TYPES.IAdminAuthController);
 
-const adminRepository = new AdminRepository();
-const adminAuthService = new AdminAuthService(adminRepository);
-const adminAuthController = new AdminAuthController(adminAuthService);
-
-
-
+router.post("/login", validateDto(AdminLoginDto), adminAuthController.login);
+router.post("/forgot-password", validateDto(AdminForgotPasswordDto),adminAuthController.forgotPassword);
 
 export default router;
+
+
+

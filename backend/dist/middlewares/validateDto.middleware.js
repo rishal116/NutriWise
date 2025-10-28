@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateDto = void 0;
-// src/middlewares/validateDto.ts
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const customError_1 = require("../utils/customError");

@@ -1,63 +1,39 @@
 import { api } from "@/lib/api";
 import { AdminRoutes } from "@/routes/admin.routes";
 
-interface LoginDTO{
+// ---- DTO Interfaces ----
+export interface LoginDTO {
   email: string;
   password: string;
 }
 
-interface ForgotPasswordDTO {
+export interface ForgotPasswordDTO {
   email: string;
 }
 
-interface VerifyOtpDTO {
-  email: string;
-  otp: string;
+// ---- API Response Interfaces ----
+interface AuthResponse {
+  message: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: any;
 }
 
-interface ResetPasswordDTO {
-  email: string;
-  otp: string;
-  newPassword: string;
+interface GenericResponse {
+  message: string;
 }
 
 export const adminAuthService = {
-  login: async (data: LoginDTO) => {
-    const response = await api.post('/admin/login', data);
-    return response.data; 
-  },
-
-  getProfile: async () => {
-    const response = await api.get("/admin/profile");
-    return response.data;
-  },
-
-  logout: async () => {
-    const response = await api.post("/admin/logout");
-    localStorage.removeItem("accessToken");
-    return response.data;
-  },
-
-  refreshToken: async () => {
-    const response = await api.post("/admin/refresh-token");
+  login: async (data: LoginDTO): Promise<AuthResponse> => {
+    const response = await api.post(AdminRoutes.LOGIN, data); 
     if (response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
     }
     return response.data;
   },
 
-  forgotPassword: async (data: ForgotPasswordDTO) => {
-    const response = await api.post("/admin/forgot-password", data);
-    return response.data;
-  },
-
-  verifyOtp: async (data: VerifyOtpDTO) => {
-    const response = await api.post("/admin/verify-otp", data);
-    return response.data;
-  },
-
-  resetPassword: async (data: ResetPasswordDTO) => {
-    const response = await api.post("/admin/reset-password", data);
+  forgotPassword: async (data: ForgotPasswordDTO): Promise<GenericResponse> => {
+    const response = await api.post(AdminRoutes.FORGOT_PASSWORD, data);
     return response.data;
   },
 };

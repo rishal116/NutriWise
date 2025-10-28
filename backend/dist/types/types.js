@@ -2,12 +2,14 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TYPES = void 0;
 exports.TYPES = {
+    // 🧩 User
     IUserAuthController: Symbol.for("IUserAuthController"),
-    IUserRepository: Symbol.for("IUserRepository"),
-    IAdminRepository: Symbol.for("IAdminRepository"),
-    ICommunityAdminRepository: Symbol.for("ICommunityAdminRepository"),
-    IOtpRepository: Symbol.for("IOtpRepository"),
-    IOTPService: Symbol.for("IOTPService"),
     IUserAuthService: Symbol.for("IUserAuthService"),
-    IJwtService: Symbol.for("IJwtService"),
+    IUserRepository: Symbol.for("IUserRepository"),
+    IOTPService: Symbol.for("IOTPService"),
+    IOtpRepository: Symbol.for("IOtpRepository"),
+    // 🧑‍💼 Admin
+    IAdminAuthController: Symbol.for("IAdminAuthController"),
+    IAdminAuthService: Symbol.for("IAdminAuthService"),
+    IAdminRepository: Symbol.for("IAdminRepository"),
 };

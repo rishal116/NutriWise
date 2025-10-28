@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const adminAuth_controller_1 = require("../controllers/admin/implementation/adminAuth.controller");
-const adminAuth_service_1 = require("../services/implements/admin/adminAuth.service");
-const admin_repository_1 = require("../repositories/implements/admin/admin.repository");
+const inversify_1 = require("../configs/inversify");
+const types_1 = require("../types/types");
+const validateDto_middleware_1 = require("../middlewares/validateDto.middleware");
+const adminAuth_dtos_1 = require("../dtos/admin/adminAuth.dtos");
 const router = (0, express_1.Router)();
-const adminRepository = new admin_repository_1.AdminRepository();
-const adminAuthService = new adminAuth_service_1.AdminAuthService(adminRepository);
-const adminAuthController = new adminAuth_controller_1.AdminAuthController(adminAuthService);
+const adminAuthController = inversify_1.container.get(types_1.TYPES.IAdminAuthController);
+router.post("/login", (0, validateDto_middleware_1.validateDto)(adminAuth_dtos_1.AdminLoginDto), adminAuthController.login);
+router.post("/forgot-password", (0, validateDto_middleware_1.validateDto)(adminAuth_dtos_1.AdminForgotPasswordDto), adminAuthController.forgotPassword);
 exports.default = router;

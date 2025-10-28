@@ -158,3 +158,22 @@
 2025-10-28T06:06:45.516Z [info]: Verifying OTP for rishalrishu506@gmail.com
 2025-10-28T06:06:45.519Z [info]: OTP lookup for rishalrishu506@gmail.com: not found
 2025-10-28T06:06:45.520Z [error]: Error verifying OTP: No verification code found for this email
+2025-10-28T06:07:57.254Z [info]: Registration attempt - Email: rishalrishu506@gmail.com
+2025-10-28T06:07:57.255Z [info]: Signup request initiated for rishalrishu506@gmail.com
+2025-10-28T06:07:57.271Z [info]: Generated OTP 586550 for email rishalrishu506@gmail.com, expires in 1 minute
+2025-10-28T06:07:57.283Z [info]: OTP deleted for: rishalrishu506@gmail.com
+2025-10-28T06:07:57.320Z [info]: OTP saved for email: rishalrishu506@gmail.com
+2025-10-28T06:08:00.003Z [info]: OTP successfully sent to rishalrishu506@gmail.com
+2025-10-28T06:08:00.004Z [info]: OTP sent successfully to rishalrishu506@gmail.com
+2025-10-28T06:08:15.713Z [info]: OTP verification attempt - Email: rishalrishu506@gmail.com -OTP 586550
+2025-10-28T06:08:15.713Z [info]: Verifying OTP for rishalrishu506@gmail.com
+2025-10-28T06:08:15.718Z [info]: OTP lookup for rishalrishu506@gmail.com: found
+2025-10-28T06:08:15.722Z [info]: OTP deleted for: 69005dbd98e57bca1b3322f8
+2025-10-28T06:08:15.722Z [info]: OTP verified successfully for rishalrishu506@gmail.com
+2025-10-28T06:08:15.825Z [info]: User verified and registered successfully: rishalrishu506@gmail.com
+2025-10-28T06:10:00.194Z [info]: Role selection request for email: rishalrishu506@gmail.com -> user
+2025-10-28T06:10:00.222Z [info]: Role 'user' assigned successfully for user: rishalrishu506@gmail.com
+2025-10-28T06:10:01.779Z [info]: Role selection request for email: rishalrishu506@gmail.com -> user
+2025-10-28T06:10:01.803Z [info]: Role 'user' assigned successfully for user: rishalrishu506@gmail.com
+2025-10-28T06:10:03.906Z [info]: Role selection request for email: rishalrishu506@gmail.com -> user
+2025-10-28T06:10:03.915Z [info]: Role 'user' assigned successfully for user: rishalrishu506@gmail.com
