@@ -9,7 +9,16 @@ exports.TYPES = {
     IOTPService: Symbol.for("IOTPService"),
     IOtpRepository: Symbol.for("IOtpRepository"),
     // 🧑‍💼 Admin
+    IAdminUsersController: Symbol.for("IAdminUsersController"),
     IAdminAuthController: Symbol.for("IAdminAuthController"),
+    IAdminUsersService: Symbol.for("IAdminUsersService"),
     IAdminAuthService: Symbol.for("IAdminAuthService"),
     IAdminRepository: Symbol.for("IAdminRepository"),
+    IAdminNotificationController: Symbol.for("IAdminNotificationController"),
+    IAdminNotificationRepository: Symbol.for("IAdminNotificationRepository"),
+    IAdminNotificationService: Symbol.for("IAdminNotificationService"),
+    // 🍎 Nutritionist
+    INutritionistAuthController: Symbol.for("INutritionistAuthController"),
+    INutritionistAuthService: Symbol.for("INutritionistAuthService"),
+    INutritionistDetailsRepository: Symbol.for("INutritionistDetailsRepository"),
 };

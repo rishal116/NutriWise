@@ -2,33 +2,32 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BaseRepository = void 0;
 class BaseRepository {
-    constructor(model) {
-        this.model = model;
+    constructor(_model) {
+        this._model = _model;
     }
-    // ✅ Create a new document
     async create(data) {
-        const document = new this.model(data);
+        const document = new this._model(data);
         return document.save();
     }
-    // ✅ Find one document by filter
     async findOne(filter) {
-        return this.model.findOne(filter);
+        return this._model.findOne(filter);
     }
-    // ✅ Find by ID
     async findById(id) {
-        return this.model.findById(id);
+        return this._model.findById(id);
     }
-    // ✅ Update one document by filter
+    async findAll(filter = {}) {
+        return this._model.find(filter);
+    }
     async updateOne(filter, update) {
-        await this.model.updateOne(filter, update);
+        const result = await this._model.updateOne(filter, update);
+        return result.modifiedCount;
     }
-    // ✅ Update by ID and return the updated document
     async updateById(id, update) {
-        return this.model.findByIdAndUpdate(id, update, { new: true });
+        return this._model.findByIdAndUpdate(id, update, { new: true });
     }
-    // ✅ Delete one by filter
     async deleteOne(filter) {
-        await this.model.deleteOne(filter);
+        const result = await this._model.deleteOne(filter);
+        return result.deletedCount ?? 0;
     }
 }
 exports.BaseRepository = BaseRepository;

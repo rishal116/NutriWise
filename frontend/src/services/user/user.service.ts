@@ -14,7 +14,7 @@ export const userAuthService = {
   },
 
   verifyOtp: async (email: string, otp: string) => {
-    const response = await api.post("/verify-otp", { email, otp });
+    const response = await api.post("/verify-otp", { email, otp },{ withCredentials: true });
     return response.data;
   },
 
@@ -23,26 +23,33 @@ export const userAuthService = {
     return response.data
   },
   
-  selectRole: async (data: { email: string; role: string }) => {
-    const res = await api.post("/select-role", data);
-    return res.data;
+  logout: async () => {
+    await api.post("/logout", {}, { withCredentials: true });
+    localStorage.removeItem("clientAccessToken");
+    window.location.href = "/client/login";
   },
-
 
 
   login: async (email: string, password: string) => {
     const response = await api.post("/login", { email, password });
     return response.data;
   },
-
   
-
-
-
-  getProfile: async () => {
-    const response = await api.get("/users/profile");
-    return response.data;
-  },
+  
+  async googleSignup(payload: {
+    fullName: string;
+    email: string;
+    googleId: string;
+    role: string;
+    credential: string;}) {
+      const response = await api.post(`${process.env.NEXT_PUBLIC_API_URL}/google`,payload);
+      return response.data;
+    },
+    
+    getProfile: async () => {
+      const response = await api.get("/users/profile");
+      return response.data;
+    },
 
   updateProfile: async (data: any) => {
     const response = await api.put("/users/profile", data);

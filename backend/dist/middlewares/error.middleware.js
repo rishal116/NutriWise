@@ -9,7 +9,7 @@ const errorMiddleware = (err, req, res, next) => {
     const message = err instanceof customError_1.CustomError ? err.message : "Something went wrong";
     res.status(status).json({
         success: false,
-        error: message,
+        message,
     });
 };
 exports.errorMiddleware = errorMiddleware;

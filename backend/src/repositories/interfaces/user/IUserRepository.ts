@@ -11,5 +11,11 @@ export interface IUserRepository {
 
   updatePassword(email: string, hashedPassword: string): Promise<void>;
 
-  verifyUser(email: string): Promise<void>;
+  getAllClients(): Promise<Partial<IUser>[]>;
+  getAllNutritionists(): Promise<Partial<IUser>[]>;
+  blockUser(userId: string): Promise<void>;
+  unblockUser(userId: string): Promise<void>;
+  findByGoogleId(googleId: string): Promise<IUser | null>;
+  updateById(id: string, data: Partial<IUser>): Promise<IUser | null>;
+  
 }

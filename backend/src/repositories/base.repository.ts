@@ -1,37 +1,36 @@
 import { Document, Model, FilterQuery, UpdateQuery } from "mongoose";
 
 export abstract class BaseRepository<T extends Document> {
-  constructor(protected readonly model: Model<T>) {}
+  constructor(protected _model: Model<T>) {}
 
-  // ✅ Create a new document
   async create(data: Partial<T>): Promise<T> {
-    const document = new this.model(data);
+    const document = new this._model(data);
     return document.save();
   }
 
-  // ✅ Find one document by filter
   async findOne(filter: FilterQuery<T>): Promise<T | null> {
-    return this.model.findOne(filter);
+    return this._model.findOne(filter);
   }
 
-  // ✅ Find by ID
   async findById(id: string): Promise<T | null> {
-    return this.model.findById(id);
+    return this._model.findById(id);
   }
 
-  // ✅ Update one document by filter
-  async updateOne(filter: FilterQuery<T>, update: UpdateQuery<T>): Promise<void> {
-    await this.model.updateOne(filter, update);
+  async findAll(filter: FilterQuery<T> = {}): Promise<T[]> {
+    return this._model.find(filter);
   }
 
-  // ✅ Update by ID and return the updated document
+  async updateOne(filter: FilterQuery<T>, update: UpdateQuery<T>): Promise<number> {
+    const result = await this._model.updateOne(filter, update);
+    return result.modifiedCount;
+  }
+
   async updateById(id: string, update: UpdateQuery<T>): Promise<T | null> {
-    return this.model.findByIdAndUpdate(id, update, { new: true });
+    return this._model.findByIdAndUpdate(id, update, { new: true });
   }
 
-  // ✅ Delete one by filter
-  async deleteOne(filter: FilterQuery<T>): Promise<void> {
-    await this.model.deleteOne(filter);
+  async deleteOne(filter: FilterQuery<T>): Promise<number> {
+    const result = await this._model.deleteOne(filter);
+    return result.deletedCount ?? 0;
   }
 }
-

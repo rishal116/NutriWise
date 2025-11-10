@@ -18,3 +18,9 @@
 2025-10-28T05:54:27.123Z [error]: Error verifying OTP: OTP has expired
 2025-10-28T05:54:30.420Z [error]: Error verifying OTP: No verification code found for this email
 2025-10-28T06:06:45.520Z [error]: Error verifying OTP: No verification code found for this email
+2025-10-28T13:13:47.830Z [error]: Error verifying OTP: Invalid OTP
+2025-10-28T13:14:14.996Z [error]: Error verifying OTP: OTP has expired
+2025-10-28T13:14:18.036Z [error]: Error verifying OTP: No verification code found for this email
+2025-10-28T13:17:33.620Z [error]: Error verifying OTP: OTP has expired
+2025-11-06T03:55:11.921Z [error]: Error verifying OTP: No verification code found for this email
+2025-11-06T04:25:30.150Z [error]: Error verifying OTP: No verification code found for this email

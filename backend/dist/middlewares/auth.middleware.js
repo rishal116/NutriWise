@@ -9,18 +9,25 @@ const jwt_1 = require("../configs/jwt");
 const customError_1 = require("../utils/customError");
 const statusCode_enum_1 = require("../enums/statusCode.enum");
 const authMiddleware = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        throw new customError_1.CustomError("Authorization header missing", statusCode_enum_1.StatusCode.UNAUTHORIZED);
-    }
-    const token = authHeader.split(" ")[1];
     try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            throw new customError_1.CustomError("Authorization header missing", statusCode_enum_1.StatusCode.UNAUTHORIZED);
+        }
+        const token = authHeader.split(" ")[1];
         const decoded = jsonwebtoken_1.default.verify(token, jwt_1.jwtConfig.accessToken.secret);
+        // attach user data to request object
         req.user = decoded;
         next();
     }
-    catch (err) {
-        throw new customError_1.CustomError("Invalid or expired token", statusCode_enum_1.StatusCode.UNAUTHORIZED);
+    catch (error) {
+        if (error.name === "TokenExpiredError") {
+            return next(new customError_1.CustomError("Token expired", statusCode_enum_1.StatusCode.UNAUTHORIZED));
+        }
+        if (error.name === "JsonWebTokenError") {
+            return next(new customError_1.CustomError("Invalid token", statusCode_enum_1.StatusCode.UNAUTHORIZED));
+        }
+        next(new customError_1.CustomError("Authentication failed", statusCode_enum_1.StatusCode.UNAUTHORIZED));
     }
 };
 exports.authMiddleware = authMiddleware;

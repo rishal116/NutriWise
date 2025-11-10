@@ -1,29 +1,32 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface AuthState {
+interface UserState {
   email: string | null;
-  isOtpPending: boolean;
+  role: "client" | "nutritionist" | null;
 }
 
-const initialState: AuthState = {
+const initialState: UserState = {
   email: null,
-  isOtpPending: false,
+  role: null,
 };
 
-const authSlice = createSlice({
-  name: "auth",
+const userSlice = createSlice({
+  name: "user",
   initialState,
   reducers: {
-    setOtpPending(state, action: PayloadAction<string>) {
-      state.email = action.payload;
-      state.isOtpPending = true;
+    setUserEmailAndRole: (
+      state,
+      action: PayloadAction<{ email: string; role: "client" | "nutritionist" }>
+    ) => {
+      state.email = action.payload.email;
+      state.role = action.payload.role;
     },
-    clearAuth(state) {
+    clearUser: (state) => {
       state.email = null;
-      state.isOtpPending = false;
+      state.role = null;
     },
   },
 });
 
-export const { setOtpPending, clearAuth } = authSlice.actions;
-export default authSlice.reducer;
+export const { setUserEmailAndRole, clearUser } = userSlice.actions;
+export default userSlice.reducer;

@@ -2,34 +2,36 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { clearAuth } from "@/redux/slices/authSlice";
 import { userAuthService } from "@/services/user/user.service";
+import { nutritionistAuthService } from "@/services/nutritionist/nutritionist.service";
+import toast, { Toaster } from "react-hot-toast";
 
-export default function OtpForm() {
-  const { email } = useSelector((state: RootState) => state.auth);
-  const dispatch = useDispatch();
+interface OtpFormProps {
+  roles: "client" | "nutritionist";
+}
+
+export default function OtpForm({ roles }: OtpFormProps) {
+  const { email, role } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
-
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
-  // Redirect if no user email
+  // Redirect if no email or role
   useEffect(() => {
-    if (!email) {
-      router.replace("/signup");
+    if (!email || !role) {
+      router.replace(`/${role}/signup`);
     }
-  }, [email, router]);
+  }, [email, role, router]);
 
-  // Focus first input
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
 
-  // Countdown timer
+  // Timer countdown
   useEffect(() => {
     if (timer <= 0) {
       setCanResend(true);
@@ -65,38 +67,55 @@ export default function OtpForm() {
   };
 
   const handleVerify = async () => {
-    if (!email) {
-      alert("Email not found. Please sign up again.");
-      router.replace("/signup");
+    if (!email || !role) {
+      toast.error("Invalid session. Please sign up again.");
+      router.replace(`/${role}/signup`);
       return;
     }
 
     try {
       const otpString = otp.join("");
-      const res = await userAuthService.verifyOtp(email, otpString);
-      alert(res.message);
-      router.replace("/select-role");
+      const service = role === "nutritionist" ? nutritionistAuthService : userAuthService;
+      const res = await service.verifyOtp(email, otpString);
+
+     if (res.success) {
+  toast.success(res.message || "OTP verified successfully!");
+
+  // ⬇️ Store access token
+  if (res.accessToken) {
+    localStorage.setItem("token", res.accessToken);
+  }
+
+  setTimeout(() => {
+    if (role === "nutritionist") router.replace("/nutritionist/details");
+    else router.replace("/home");
+  }, 1000);
+} else {
+  toast.error(res.message || "Verification failed. Please try again.");
+}
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Invalid OTP.");
+      toast.error(err?.response?.data?.message || "Invalid OTP or OTP expired.");
     }
   };
 
   const handleResend = async () => {
-    if (!email) {
-      alert("Email not found. Please sign up again.");
-      router.replace("/signup");
+    if (!email || !role) {
+      toast.error("Invalid session. Please sign up again.");
+      router.replace(`/${role}/signup`);
       return;
     }
-    
+
     try {
-      const res = await userAuthService.resendOtp(email);
-      alert(res.message);
+      const service = role === "nutritionist" ? nutritionistAuthService : userAuthService;
+      const res = await service.resendOtp(email);
+
+      toast.success(res.message || "OTP resent successfully!");
       setTimer(60);
       setCanResend(false);
       setOtp(Array(6).fill(""));
       inputRefs.current[0]?.focus();
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Failed to resend OTP.");
+      toast.error(err?.response?.data?.message || "Failed to resend OTP.");
     }
   };
 
@@ -107,57 +126,83 @@ export default function OtpForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-        <h1 className="text-2xl font-bold mb-4 text-green-700">OTP Verification</h1>
-        <p className="mb-6 text-gray-600">
-          Enter the 6-digit OTP sent to your email {email && `(${email})`}
-        </p>
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: "10px",
+            background: "#333",
+            color: "#fff",
+          },
+        }}
+      />
 
-        <div className="flex justify-between mb-4">
-          {otp.map((digit, i) => (
-            <input
-              key={i}
-              type="text"
-              inputMode="numeric"
-              pattern="\d*"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleChange(i, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(e, i)}
-              ref={(el) => { inputRefs.current[i] = el }}
-              className="w-12 h-14 text-center text-lg border rounded-md border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          ))}
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
+        <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md text-center">
+          <h1 className="text-2xl font-bold mb-3 text-green-700">OTP Verification</h1>
+          <p className="mb-6 text-gray-600">
+            Enter the 6-digit OTP sent to your email <br />
+            <span className="font-medium text-green-600">{email}</span>
+          </p>
 
-        <button
-          onClick={handleVerify}
-          disabled={otp.some(d => d === "")}
-          className={`w-full py-2 rounded-md font-semibold mb-2 text-white transition ${
-            otp.some(d => d === "")
-              ? "bg-green-200 cursor-not-allowed"
-              : "bg-green-500 hover:bg-green-600"
-          }`}
-        >
-          Verify
-        </button>
+          {/* OTP Inputs */}
+          <div className="flex justify-between mb-6">
+            {otp.map((digit, i) => (
+              <input
+                key={i}
+                type="text"
+                inputMode="numeric"
+                pattern="\d*"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleChange(i, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e, i)}
+                ref={(el) => { inputRefs.current[i] = el }}
+                className="w-12 h-14 text-center text-lg font-semibold border-2 rounded-lg border-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 transition"
+              />
+            ))}
+          </div>
 
-        <div className="flex justify-between items-center mt-2">
-          <span className="text-gray-500">
-            {timer > 0 ? `Resend OTP in ${formatTime(timer)}` : "OTP expired"}
-          </span>
+          {/* Verify Button */}
           <button
-            disabled={!canResend}
-            onClick={handleResend}
-            className={`text-green-700 font-semibold ${
-              canResend ? "hover:underline" : "opacity-50 cursor-not-allowed"
+            onClick={handleVerify}
+            disabled={otp.some(d => d === "") || timer <= 0}
+            className={`w-full py-2 rounded-md font-semibold mb-3 text-white transition ${
+              otp.some(d => d === "") || timer <= 0
+                ? "bg-green-200 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-600"
             }`}
           >
-            Resend OTP
+            Verify
           </button>
+
+          {/* Timer and Resend */}
+          <div className="mt-4 flex flex-col items-center">
+            <div className="relative w-48 h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
+              <div
+                className="absolute top-0 left-0 h-full bg-green-500 transition-all duration-1000"
+                style={{ width: `${(timer / 60) * 100}%` }}
+              ></div>
+            </div>
+
+            <span className="text-gray-500 text-sm mb-2">
+              {timer > 0 ? `OTP expires in ${formatTime(timer)}` : "OTP expired"}
+            </span>
+
+            <button
+              disabled={!canResend}
+              onClick={handleResend}
+              className={`text-green-700 font-semibold ${
+                canResend ? "hover:underline" : "opacity-50 cursor-not-allowed"
+              }`}
+            >
+              Resend OTP
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

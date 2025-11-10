@@ -1,4 +1,5 @@
 import { injectable, inject } from "inversify";
+import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { TYPES } from "../../../types/types";
 import { IUserAuthService } from "../../interfaces/user/IUserAuthService";
@@ -7,75 +8,128 @@ import { IOTPService } from "../../interfaces/IOtpService";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
-import { UserRegisterDto, VerifyOtpDto, UserRoleDto } from "../../../dtos/user/UserAuth.dtos";
-import { saveTempUser, findTempUserByEmail, deleteTempUser } from "../../../utils/tempUser";
+import { OAuth2Client } from "google-auth-library";
+import { validateDto } from "../../../middlewares/validateDto.middleware";
+import { ResendOtpDto, UserRegisterDto, VerifyOtpDto ,LoginDto} from "../../../dtos/user/UserAuth.dto";
 import { generateTokens } from "../../../utils/jwt";
 
 @injectable()
 export class UserAuthService implements IUserAuthService {
+  private _googleClient: OAuth2Client;
   constructor(
     @inject(TYPES.IUserRepository)
     private _userRepository: IUserRepository,
 
     @inject(TYPES.IOTPService)
-    private _otpService: IOTPService 
-  ) {}
-  
+    private _otpService: IOTPService
+  ) {this._googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);}
 
-  async signup(data: UserRegisterDto): Promise<{ message: string }> {
+
+  async signup(req: Request, data: UserRegisterDto): Promise<{ message: string }> {
+    await validateDto(UserRegisterDto, data);
     const { fullName, email, phone, password } = data;
     logger.info(`Signup request initiated for ${email}`);
     const existingUser = await this._userRepository.findByEmail(email);
     if (existingUser) {
       throw new CustomError("User already exists", 409);
     }
-    const tempUserData = { fullName, email, phone, password };
-    await saveTempUser(email, tempUserData);
-    await this._otpService.requestOtp(email);
-    logger.info(`OTP sent successfully to ${email}`);
-    return { message: "OTP sent to your email. Please verify to complete signup." };
+    req.session.tempUser = { fullName, email, phone, password };
+    const response = await this._otpService.requestOtp(email);
+    logger.info(`OTP sent successfully for ${email}`);
+    return { message: "OTP sent successfully. Please verify your email." };
   }
-  
 
-  async verifyOtp(data: VerifyOtpDto): Promise<{ message: string }> {
+
+  async verifyOtp(req: Request, data: VerifyOtpDto): Promise<{ message: string; accessToken: string,refreshToken:string }>{
+    await validateDto(VerifyOtpDto, data);
     const { email, otp } = data;
     logger.info(`Verifying OTP for ${email}`);
     const isValid = await this._otpService.verifyOtp(email, otp);
     if (!isValid) {
       throw new CustomError("Invalid or expired OTP", StatusCode.BAD_REQUEST);
     }
-    const tempUser = await findTempUserByEmail(email);
+    const tempUser = req.session.tempUser; 
     if (!tempUser) {
       throw new CustomError("Temporary user data not found", StatusCode.NOT_FOUND);
     }
     const hashedPassword = await bcrypt.hash(tempUser.password, 10);
-    await this._userRepository.createUser({
+     const newUser = await this._userRepository.createUser({
       fullName: tempUser.fullName,
       email: tempUser.email,
       phone: tempUser.phone,
       password: hashedPassword,
       isVerified: true,
+      role:"client",
     });
-    await deleteTempUser(email);
     logger.info(`User verified and registered successfully: ${email}`);
-    return {
-      message: "Signup successful! Please select your role to complete your profile.",
-    };
+    const { accessToken, refreshToken } = generateTokens(newUser._id.toString(), newUser.role || "client");
+    delete req.session.tempUser
+    return { message: "Signup successful",accessToken, refreshToken,};
   }
   
-  async selectUserRole(data: UserRoleDto): Promise<{ message: string; accessToken: string; refreshToken: string }> {
-    const { email, role } = data;
-    logger.info(`Role selection request for email: ${email} -> ${role}`);
-    const user = await this._userRepository.findByEmail(email);
+
+  async resendOtp(data: ResendOtpDto): Promise<{ message: string }> {
+    await validateDto(ResendOtpDto, data);
+    const { email } = data;
+    logger.info(`Resending OTP for ${email}`);
+    const existingUser = await this._userRepository.findByEmail(email);
+    if (existingUser && existingUser.isVerified) {
+      throw new CustomError("Account already verified", StatusCode.BAD_REQUEST);
+    }
+    const response = await this._otpService.requestOtp(email);
+    logger.info(`New OTP sent to ${email}`);
+    return { message: response };
+  }
+
+
+  async login(data: LoginDto): Promise<{ user: any; accessToken: string; refreshToken: string }> {
+    const { email, password } = data;
+    const user = await this._userRepository.findByEmail( email );
     if (!user) {
-      throw new CustomError("User not found", StatusCode.NOT_FOUND);
+      throw new Error("User not found");
     }
-    user.role = role;
-    await this._userRepository.updateUser(user._id, { role });
-    const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.role);
-    logger.info(`Role '${role}' assigned successfully for user: ${user.email}`);
-    return {
-      message: `Role '${role}' assigned successfully.`, accessToken, refreshToken,};
+    const isMatch = await bcrypt.compare(password, user.password!);
+    if (!isMatch) {
+      throw new Error("Invalid password");
     }
+    const { accessToken, refreshToken } = generateTokens(user._id!.toString(), user.role);
+    const safeUser = {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      fullName: user.fullName,
+    };
+    return { user: safeUser, accessToken, refreshToken };
+  }
+  
+  
+  async googleLogin(payload: { credential: string; role: "client" | "nutritionist" | "admin" }) {
+    const { credential, role } = payload;
+    const ticket = await this._googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const tokenPayload = ticket.getPayload();
+    if (!tokenPayload) throw new Error("Invalid Google token");
+    let user = await this._userRepository.findByGoogleId(tokenPayload.sub!);
+    if (!user) {
+      user = await this._userRepository.createUser({
+        fullName: tokenPayload.name || "",
+        email: tokenPayload.email || "",
+        googleId: tokenPayload.sub!,
+        role,
+        isVerified: true,
+      });
+    }
+    const { accessToken, refreshToken } = generateTokens(user._id!.toString(), user.role);
+    const safeUser = {
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    };
+    return { user: safeUser, accessToken, refreshToken };
+  }
+
 
 }

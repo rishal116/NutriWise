@@ -12,10 +12,10 @@ export const errorMiddleware = (
 
   const status = err instanceof CustomError ? err.statusCode : StatusCode.INTERNAL_SERVER_ERROR;
   const message = err instanceof CustomError ? err.message : "Something went wrong";
-
+  
   res.status(status).json({
     success: false,
-    error: message,
+    message,
   });
 };
 

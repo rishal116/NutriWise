@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LoginResponseDto = exports.RegisterResponseDto = exports.UserRoleDto = exports.ResendOtpDto = exports.VerifyOtpDto = exports.RequestOtpDto = exports.UserRegisterDto = void 0;
+exports.LoginResponseDto = exports.RegisterResponseDto = exports.ResendOtpDto = exports.VerifyOtpDto = exports.UserRegisterDto = void 0;
 const class_validator_1 = require("class-validator");
 class UserRegisterDto {
 }
@@ -39,16 +39,6 @@ __decorate([
     (0, class_validator_1.MinLength)(8, { message: "Confirm password must be at least 8 characters" }),
     __metadata("design:type", String)
 ], UserRegisterDto.prototype, "confirmPassword", void 0);
-// ✅ OTP Request
-class RequestOtpDto {
-}
-exports.RequestOtpDto = RequestOtpDto;
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: "Email is required" }),
-    (0, class_validator_1.IsEmail)({}, { message: "Invalid email address" }),
-    __metadata("design:type", String)
-], RequestOtpDto.prototype, "email", void 0);
-// ✅ OTP Verification
 class VerifyOtpDto {
 }
 exports.VerifyOtpDto = VerifyOtpDto;
@@ -70,21 +60,6 @@ __decorate([
     (0, class_validator_1.IsEmail)({}, { message: "Invalid email address" }),
     __metadata("design:type", String)
 ], ResendOtpDto.prototype, "email", void 0);
-// ✅ Role Selection
-class UserRoleDto {
-}
-exports.UserRoleDto = UserRoleDto;
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: "Email is required" }),
-    (0, class_validator_1.IsEmail)({}, { message: "Invalid email address" }),
-    __metadata("design:type", String)
-], UserRoleDto.prototype, "email", void 0);
-__decorate([
-    (0, class_validator_1.IsNotEmpty)({ message: "Role is required" }),
-    (0, class_validator_1.IsEnum)(["user", "admin", "nutritionist"], { message: "Role must be one of: user, trainer, nutritionist" }),
-    __metadata("design:type", String)
-], UserRoleDto.prototype, "role", void 0);
-// ✅ Response DTOs
 class RegisterResponseDto {
     constructor(success, message) {
         this.success = success;

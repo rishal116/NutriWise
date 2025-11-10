@@ -22,6 +22,8 @@ const sendOtp_1 = require("../../utils/sendOtp");
 const logger_1 = __importDefault(require("../../utils/logger"));
 const customError_1 = require("../../utils/customError");
 const statusCode_enum_1 = require("../../enums/statusCode.enum");
+const validateDto_middleware_1 = require("../../middlewares/validateDto.middleware");
+const UserAuth_dto_1 = require("../../dtos/user/UserAuth.dto");
 let OtpService = class OtpService {
     constructor(_otpRepository, _userRepository) {
         this._otpRepository = _otpRepository;
@@ -31,68 +33,32 @@ let OtpService = class OtpService {
         return Math.floor(100000 + Math.random() * 900000).toString();
     }
     async requestOtp(email) {
+        await (0, validateDto_middleware_1.validateDto)(UserAuth_dto_1.ResendOtpDto, { email });
         const otp = this.generateOtp();
-        const expiresAt = new Date(Date.now() + 1 * 60 * 1000);
-        logger_1.default.info(`Generated OTP ${otp} for email ${email}, expires in 1 minute`);
-        await this._otpRepository.deleteOtp(email);
-        await this._otpRepository.saveOtp(email, otp, expiresAt);
-        await (0, sendOtp_1.sendOtpEmail)(email, otp);
-        logger_1.default.info(`OTP successfully sent to ${email}`);
-        return otp;
+        const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
+        const cleanEmail = email.toLowerCase().trim();
+        await this._otpRepository.deleteOtpByEmail(cleanEmail);
+        await this._otpRepository.saveOtp({ email: cleanEmail, otp, expiresAt });
+        const response = await (0, sendOtp_1.sendOtpEmail)(cleanEmail, otp);
+        logger_1.default.info(`OTP generated and sent to ${cleanEmail}`);
+        return "OTP sent successfully";
     }
     async verifyOtp(email, otp) {
-        try {
-            const record = await this._otpRepository.findOtpByEmail(email);
-            if (!record) {
-                throw new customError_1.CustomError("No verification code found for this email", statusCode_enum_1.StatusCode.NOT_FOUND);
-            }
-            if (record.expiresAt < new Date()) {
-                await this._otpRepository.deleteOtp(record._id.toString());
-                throw new customError_1.CustomError("OTP has expired", statusCode_enum_1.StatusCode.BAD_REQUEST);
-            }
-            if (record.otp !== otp) {
-                throw new customError_1.CustomError("Invalid OTP", statusCode_enum_1.StatusCode.BAD_REQUEST);
-            }
-            await this._otpRepository.deleteOtp(record._id.toString());
-            logger_1.default.info(`OTP verified successfully for ${email}`);
-            return true;
+        await (0, validateDto_middleware_1.validateDto)(UserAuth_dto_1.VerifyOtpDto, { email, otp });
+        const record = await this._otpRepository.findOtpByEmail(email);
+        if (!record) {
+            throw new customError_1.CustomError("No verification code found for this email", statusCode_enum_1.StatusCode.NOT_FOUND);
         }
-        catch (error) {
-            logger_1.default.error("Error verifying OTP:", error);
-            throw error instanceof customError_1.CustomError
-                ? error
-                : new customError_1.CustomError("OTP verification failed", statusCode_enum_1.StatusCode.BAD_REQUEST);
+        if (record.expiresAt < new Date()) {
+            await this._otpRepository.deleteOtpById(record._id.toString());
+            throw new customError_1.CustomError("OTP has expired", statusCode_enum_1.StatusCode.BAD_REQUEST);
         }
-    }
-    async requestForgotPasswordOtp(email) {
-        try {
-            const existingUser = await this._userRepository.findByEmail(email);
-            if (!existingUser) {
-                throw new customError_1.CustomError("No account found with this email address", statusCode_enum_1.StatusCode.NOT_FOUND);
-            }
-            const otp = this.generateOtp();
-            const expiresAt = new Date(Date.now() + 1 * 60 * 1000);
-            logger_1.default.info(`Generated forgot password OTP ${otp} for ${email}, expires in 1 minute`);
-            await this._otpRepository.deleteOtp(email);
-            await this._otpRepository.saveOtp(email, otp, expiresAt);
-            await (0, sendOtp_1.sendOtpEmail)(email, otp);
-            logger_1.default.info(`Forgot password OTP sent to ${email}`);
-            return otp;
+        if (record.otp !== otp) {
+            throw new customError_1.CustomError("Invalid OTP", statusCode_enum_1.StatusCode.BAD_REQUEST);
         }
-        catch (error) {
-            logger_1.default.error("Error requesting forgot password OTP:", error);
-            throw error instanceof customError_1.CustomError ? error : new customError_1.CustomError("Failed to send password reset code", statusCode_enum_1.StatusCode.INTERNAL_SERVER_ERROR);
-        }
-    }
-    async clearOtp(email) {
-        try {
-            await this._otpRepository.deleteOtp(email);
-            logger_1.default.info(`OTP cleared for ${email}`);
-        }
-        catch (error) {
-            logger_1.default.error("Error clearing OTP:", error);
-            throw new customError_1.CustomError("Failed to clear OTP", statusCode_enum_1.StatusCode.INTERNAL_SERVER_ERROR);
-        }
+        logger_1.default.info(`OTP verified successfully for ${email}`);
+        await this._otpRepository.deleteOtpById(record._id.toString());
+        return true;
     }
 };
 exports.OtpService = OtpService;

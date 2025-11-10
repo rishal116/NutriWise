@@ -4,5 +4,9 @@ export const AdminRoutes = {
   USERS: "/admin/users",
   NUTRITIONISTS: "/admin/nutritionists",
   PROFILE: "/admin/profile",
-  FORGOT_PASSWORD : "/admin/forgot-password"
+  FORGOT_PASSWORD : "/admin/forgot-password",
+  
+  GET_ALL_USERS: "/admin/users",
+  BLOCK_USER: "/admin/block-user",
+  UNBLOCK_USER: "/admin/unblock-user",
 };

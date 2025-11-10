@@ -6,5 +6,8 @@ class AdminRepository {
     async findByEmail(email) {
         return await admin_model_1.AdminModel.findOne({ email });
     }
+    async findAdmin() {
+        return await admin_model_1.AdminModel.findOne({});
+    }
 }
 exports.AdminRepository = AdminRepository;

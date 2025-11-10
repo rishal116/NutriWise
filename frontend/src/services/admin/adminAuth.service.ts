@@ -1,7 +1,6 @@
 import { api } from "@/lib/api";
 import { AdminRoutes } from "@/routes/admin.routes";
 
-// ---- DTO Interfaces ----
 export interface LoginDTO {
   email: string;
   password: string;
@@ -11,7 +10,6 @@ export interface ForgotPasswordDTO {
   email: string;
 }
 
-// ---- API Response Interfaces ----
 interface AuthResponse {
   message: string;
   accessToken?: string;
@@ -26,9 +24,25 @@ interface GenericResponse {
 export const adminAuthService = {
   login: async (data: LoginDTO): Promise<AuthResponse> => {
     const response = await api.post(AdminRoutes.LOGIN, data); 
-    if (response.data.accessToken) {
-      localStorage.setItem("accessToken", response.data.accessToken);
+    const { accessToken} = response.data;
+    if (accessToken) {
+      localStorage.setItem("adminAccessToken", accessToken);
     }
+    return response.data;
+  },
+
+   getAllUsers: async () => {
+    const response = await api.get(AdminRoutes.GET_ALL_USERS);
+    return response.data;
+  },
+
+  blockUser: async (userId: string) => {
+    const response = await api.patch(`${AdminRoutes.BLOCK_USER}/${userId}`);
+    return response.data;
+  },
+
+  unblockUser: async (userId: string) => {
+    const response = await api.patch(`${AdminRoutes.UNBLOCK_USER}/${userId}`);
     return response.data;
   },
 
@@ -36,4 +50,5 @@ export const adminAuthService = {
     const response = await api.post(AdminRoutes.FORGOT_PASSWORD, data);
     return response.data;
   },
+  
 };

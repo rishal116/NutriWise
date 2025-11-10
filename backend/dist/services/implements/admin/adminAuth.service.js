@@ -22,25 +22,25 @@ const otp_model_1 = require("../../../models/otp.model");
 const sendOtp_1 = require("../../../utils/sendOtp");
 const customError_1 = require("../../../utils/customError");
 const statusCode_enum_1 = require("../../../enums/statusCode.enum");
-const adminAuth_dtos_1 = require("../../../dtos/admin/adminAuth.dtos");
+const adminAuth_dto_1 = require("../../../dtos/admin/adminAuth.dto");
 const inversify_1 = require("inversify");
 const types_1 = require("../../../types/types");
+const validateDto_middleware_1 = require("../../../middlewares/validateDto.middleware");
 let AdminAuthService = class AdminAuthService {
     constructor(_adminRepository) {
         this._adminRepository = _adminRepository;
     }
     async login(dto) {
+        await (0, validateDto_middleware_1.validateDto)(adminAuth_dto_1.AdminLoginDto, dto);
         const { email, password } = dto;
         const admin = await this._adminRepository.findByEmail(email);
-        if (!admin) {
-            throw new customError_1.CustomError("Invalid credentials", statusCode_enum_1.StatusCode.UNAUTHORIZED);
-        }
+        if (!admin)
+            throw new customError_1.CustomError("Invalid credentials", 401);
         const valid = await bcryptjs_1.default.compare(password, admin.password);
-        if (!valid) {
-            throw new customError_1.CustomError("Invalid credentials", statusCode_enum_1.StatusCode.UNAUTHORIZED);
-        }
+        if (!valid)
+            throw new customError_1.CustomError("Invalid credentials", 401);
         const { accessToken, refreshToken } = (0, jwt_1.generateTokens)(admin._id.toString(), "admin");
-        return new adminAuth_dtos_1.AdminLoginResponseDto(admin, accessToken, refreshToken);
+        return new adminAuth_dto_1.AdminLoginResponseDto(admin, accessToken, refreshToken);
     }
     async forgotPassword(dto) {
         const { email } = dto;

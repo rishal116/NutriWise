@@ -1,10 +1,10 @@
-import { UserRegisterDto,VerifyOtpDto, UserRoleDto} from "../../../dtos/user/UserAuth.dtos";
+import { Request } from "express"; 
+import { UserRegisterDto, VerifyOtpDto, ResendOtpDto, LoginDto } from "../../../dtos/user/UserAuth.dto";
 
 export interface IUserAuthService {
-  signup(data: UserRegisterDto): Promise<{ message: string }>;
-  verifyOtp(data: VerifyOtpDto): Promise<{ message: string }>;
-  selectUserRole(data: UserRoleDto): Promise<{ message: string; 
-    accessToken: string; refreshToken: string; 
-  }>;
-  
+  signup(req: Request, data: UserRegisterDto): Promise<{ message: string }>;
+  verifyOtp(req: Request, data: VerifyOtpDto): Promise<{ message: string; accessToken: string; refreshToken:string}>;
+  resendOtp(data: ResendOtpDto): Promise<{ message: string }>;
+  login( data: LoginDto): Promise<{ user: any; accessToken: string; refreshToken: string}>;
+  googleLogin(payload: {credential: string;role: "client" | "nutritionist" | "admin";}): Promise<{user: any;accessToken: string;refreshToken: string}>;
 }

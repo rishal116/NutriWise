@@ -6,9 +6,10 @@ import { OtpModel } from "../../../models/otp.model";
 import { sendOtpEmail } from "../../../utils/sendOtp";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import {AdminLoginDto,AdminForgotPasswordDto,AdminLoginResponseDto,} from "../../../dtos/admin/adminAuth.dtos";
+import {AdminLoginDto,AdminForgotPasswordDto,AdminLoginResponseDto,} from "../../../dtos/admin/adminAuth.dto";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
+import { validateDto } from "../../../middlewares/validateDto.middleware";
 
 @injectable()
 export class AdminAuthService implements IAdminAuthService {
@@ -19,16 +20,13 @@ export class AdminAuthService implements IAdminAuthService {
 
   
   async login(dto: AdminLoginDto) {
+    await validateDto(AdminLoginDto, dto);
     const { email, password } = dto;
     const admin = await this._adminRepository.findByEmail(email);
-    if (!admin){
-      throw new CustomError("Invalid credentials", StatusCode.UNAUTHORIZED);
-    }
+    if (!admin) throw new CustomError("Invalid credentials", 401);
     const valid = await bcrypt.compare(password, admin.password);
-    if (!valid){
-      throw new CustomError("Invalid credentials", StatusCode.UNAUTHORIZED);
-    }
-    const { accessToken, refreshToken } = generateTokens(admin._id.toString(),"admin");
+    if (!valid) throw new CustomError("Invalid credentials", 401);
+    const { accessToken, refreshToken } = generateTokens(admin._id.toString(), "admin");
     return new AdminLoginResponseDto(admin, accessToken, refreshToken);
   }
 
