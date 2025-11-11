@@ -13,7 +13,6 @@ export interface ForgotPasswordDTO {
 interface AuthResponse {
   message: string;
   accessToken?: string;
-  refreshToken?: string;
   user?: any;
 }
 

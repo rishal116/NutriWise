@@ -30,16 +30,15 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
   
   async getAllClients(): Promise<Partial<IUser>[]> {
     return this._model
-    .find({ role: "client" }, "_id fullName email role isBlocked")
-    .lean<Partial<IUser>[]>();
+      .find({ role: "client" }, "_id fullName email role isBlocked")
+      .lean<Partial<IUser>[]>();
   }
 
   async getAllNutritionists(): Promise<Partial<IUser>[]> {
     return this._model
-    .find({ role: "nutritionist" }, "_id fullName email role isBlocked")
-    .lean<Partial<IUser>[]>();
+      .find({ role: "nutritionist" }, "_id fullName email role isBlocked")
+      .lean<Partial<IUser>[]>();
   }
-
 
   async blockUser(userId: string): Promise<void> {
     if (!Types.ObjectId.isValid(userId)) throw new Error("Invalid userId");
@@ -59,5 +58,18 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
     return this._model.findByIdAndUpdate(userId, data, { new: true });
   }
 
+  // ---------------- Forgot/Reset Password ----------------
+  async setResetToken(email: string, token: string, expires: Date): Promise<void> {
+    await this._model.updateOne(
+      { email },
+      { resetPasswordToken: token, resetPasswordExpires: expires }
+    );
+  }
 
+  async findByResetToken(token: string): Promise<IUser | null> {
+    return this._model.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: new Date() }, 
+    });
+  }
 }

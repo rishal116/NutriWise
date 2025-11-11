@@ -56,16 +56,13 @@ export const userAuthService = {
     return response.data;
   },
 
-  forgotPassword: async (email: string) => {
-    const response = await api.post("/users/auth/forgot-password", { email });
-    return response.data;
-  },
+forgotPassword: async (email: string) => {
+  const response = await api.post("/forgot-password", { email });
+  return response.data;
+},
 
-  resetPassword: async (email: string, newPassword: string) => {
-    const response = await api.post("/users/auth/reset-password", {
-      email,
-      newPassword,
-    });
-    return response.data;
-  },
+resetPassword: async (token: string, password: string) => {
+  const response = await api.post("/reset-password", { token, password });
+  return response.data;
+},
 };

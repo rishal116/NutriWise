@@ -7,4 +7,6 @@ export interface IUserAuthController {
   resendOtp: (req: Request, res: Response, next: NextFunction) => void;
   login: (req: Request, res: Response, next: NextFunction) => void;
   googleLogin: (req: Request, res: Response, next: NextFunction) => void;
+  forgotPassword: (req: Request, res: Response, next: NextFunction) => void;
+  resetPassword: (req: Request, res: Response, next: NextFunction) => void;
 }

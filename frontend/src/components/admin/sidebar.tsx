@@ -1,35 +1,45 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import React, { useState, useRef, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Users, Stethoscope, Trophy, FileText, CreditCard,
-  Settings, MessageSquare, Activity, Bell, ChevronRight, User, LogOut, ChevronUp
-} from 'lucide-react';
+  LayoutDashboard,
+  Users,
+  Stethoscope,
+  Trophy,
+  FileText,
+  CreditCard,
+  Settings,
+  MessageSquare,
+  Activity,
+  Bell,
+  ChevronRight,
+  User,
+  LogOut,
+  ChevronUp,
+} from "lucide-react";
 
 const navSections = [
   {
     title: "Overview",
-    items: [
-      { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
-    ]
+    items: [{ name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" }],
   },
   {
     title: "Management",
     items: [
-      { name: "Users", icon: Users, path: "/admin/users", badge: "" },
+      { name: "Users", icon: Users, path: "/admin/users" },
       { name: "Nutritionists", icon: Stethoscope, path: "/admin/nutritionists", badge: "42" },
       { name: "Challenges", icon: Trophy, path: "/admin/challenges" },
       { name: "Posts", icon: FileText, path: "/admin/posts" },
-    ]
+    ],
   },
   {
     title: "Finance & Community",
     items: [
       { name: "Payments", icon: CreditCard, path: "/admin/payments" },
       { name: "Community", icon: MessageSquare, path: "/admin/community" },
-    ]
-  }
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -38,20 +48,21 @@ export default function Sidebar() {
   const [showDropup, setShowDropup] = useState(false);
   const dropupRef = useRef<HTMLDivElement>(null);
 
-  // Close dropup when clicking outside
+  // ---------------- Click outside dropup ----------------
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropupRef.current && !dropupRef.current.contains(event.target as Node)) {
         setShowDropup(false);
       }
     };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ---------------- Logout ----------------
 const handleLogout = () => {
-  localStorage.removeItem("adminAccessToken"); 
+  localStorage.removeItem("adminAccessToken");
+  console.log("Logging out, navigating to /admin/login");
   router.push("/admin/login");
 };
 
@@ -91,17 +102,23 @@ const handleLogout = () => {
                         : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-md"
                       }`}
                   >
-                    <item.icon
-                      className={`w-5 h-5 transition-transform group-hover:scale-110 relative z-10 ${
-                        isActive ? "text-white" : "text-slate-500"
-                      }`}
-                      strokeWidth={isActive ? 2.5 : 2}
-                    />
+                    {item.icon && (
+                      <item.icon
+                        className={`w-5 h-5 transition-transform group-hover:scale-110 relative z-10 ${
+                          isActive ? "text-white" : "text-slate-500"
+                        }`}
+                        strokeWidth={isActive ? 2.5 : 2}
+                      />
+                    )}
                     <span className="relative z-10 flex-1 text-left">{item.name}</span>
                     {item.badge && (
-                      <span className={`relative z-10 text-xs px-2 py-0.5 rounded-full font-semibold ${
-                        isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
-                      }`}>{item.badge}</span>
+                      <span
+                        className={`relative z-10 text-xs px-2 py-0.5 rounded-full font-semibold ${
+                          isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {item.badge}
+                      </span>
                     )}
                     {isActive && <ChevronRight className="w-4 h-4 relative z-10" strokeWidth={3} />}
                   </button>
@@ -131,39 +148,40 @@ const handleLogout = () => {
 
       {/* User Profile */}
       <div className="p-4 border-t border-slate-200 bg-white relative" ref={dropupRef}>
-{showDropup && (
-  <div
-    className="absolute bottom-full left-4 right-4 mb-2 bg-yellow-400 rounded-xl shadow-2xl border border-yellow-500 overflow-hidden 
-        animate-in slide-in-from-bottom-2 duration-200 opacity-100"
-  >
-    <div className="py-2">
-      <button
-        onClick={() => { router.push('/admin/profile'); setShowDropup(false); }}
-        className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-yellow-300 transition-colors"
-      >
-        <User className="w-4 h-4" />
-        <span className="text-sm font-medium">View Profile</span>
-      </button>
-      <button
-        onClick={() => { router.push('/admin/settings'); setShowDropup(false); }}
-        className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-yellow-300 transition-colors"
-      >
-        <Settings className="w-4 h-4" />
-        <span className="text-sm font-medium">Settings</span>
-      </button>
-      <div className="my-1 border-t border-yellow-500"></div>
-      <button
-        onClick={handleLogout}
-        className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-yellow-300 transition-colors"
-      >
-        <LogOut className="w-4 h-4" />
-        <span className="text-sm font-medium">Logout</span>
-      </button>
-    </div>
-  </div>
-)}
-
-
+        {showDropup && (
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-yellow-400 rounded-xl shadow-2xl border border-yellow-500 overflow-hidden animate-in slide-in-from-bottom-2 duration-200 opacity-100">
+            <div className="py-2">
+              <button
+                onClick={() => {
+                  router.push("/admin/profile");
+                  setShowDropup(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-yellow-300 transition-colors"
+              >
+                <User className="w-4 h-4" />
+                <span className="text-sm font-medium">View Profile</span>
+              </button>
+              <button
+                onClick={() => {
+                  router.push("/admin/settings");
+                  setShowDropup(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-yellow-300 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="text-sm font-medium">Settings</span>
+              </button>
+              <div className="my-1 border-t border-yellow-500"></div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-yellow-300 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm font-medium">Logout</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         <button
           onClick={() => setShowDropup(!showDropup)}
@@ -176,8 +194,10 @@ const handleLogout = () => {
             <p className="text-sm font-semibold text-slate-800 truncate">Admin User</p>
             <p className="text-xs text-slate-500 truncate">admin@nutriwise.com</p>
           </div>
-          <ChevronUp 
-            className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showDropup ? 'rotate-180' : ''}`}
+          <ChevronUp
+            className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+              showDropup ? "rotate-180" : ""
+            }`}
           />
         </button>
       </div>

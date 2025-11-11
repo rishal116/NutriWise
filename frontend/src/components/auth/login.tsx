@@ -31,6 +31,10 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const { token, user } = await userAuthService.login(email, password);
+      if (user.isBlocked) {
+        setError("Your account has been blocked. Please contact support.");
+        return;
+      }
       
       if (user.role === "client") {
         localStorage.setItem("clientToken", token);
@@ -40,9 +44,17 @@ export default function LoginForm() {
 
       dispatch(setUserEmailAndRole({ email: user.email, role: user.role }));
 
-      if (user.role === "admin") router.push("/admin/dashboard");
-      else if (user.role === "nutritionist") router.push("/nutritionist/dashboard");
-      else router.push("/home");
+      if (user.role === "admin") {
+      router.push("/admin/dashboard");
+    } else if (user.role === "nutritionist") {
+      if (user.nutritionistStatus === "approved") {
+        router.push("/nutritionist/dashboard");
+      } else {
+        router.push("/nutritionist/details"); 
+      }
+    } else {
+      router.push("/home");
+    }
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid credentials");
     } finally {

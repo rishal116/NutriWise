@@ -12,6 +12,9 @@ import { OAuth2Client } from "google-auth-library";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { ResendOtpDto, UserRegisterDto, VerifyOtpDto ,LoginDto} from "../../../dtos/user/UserAuth.dto";
 import { generateTokens } from "../../../utils/jwt";
+import crypto from "crypto";
+import { sendResetPasswordEmail } from "../../../utils/sendOtp";
+
 
 @injectable()
 export class UserAuthService implements IUserAuthService {
@@ -98,6 +101,8 @@ export class UserAuthService implements IUserAuthService {
       email: user.email,
       role: user.role,
       fullName: user.fullName,
+      isBlocked:user.isBlocked,
+      nutritionistStatus:user.nutritionistStatus
     };
     return { user: safeUser, accessToken, refreshToken };
   }
@@ -129,6 +134,31 @@ export class UserAuthService implements IUserAuthService {
       role: user.role,
     };
     return { user: safeUser, accessToken, refreshToken };
+  }
+  
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const user = await this._userRepository.findByEmail(email);
+    if (!user) throw new CustomError("User not found", StatusCode.NOT_FOUND);
+    const token = crypto.randomBytes(32).toString("hex");
+    const expires = new Date(Date.now() + 60 * 60 * 1000);
+    await this._userRepository.setResetToken(email, token, expires);
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    await sendResetPasswordEmail(email, resetLink);
+
+    logger.info(`Password reset token generated and sent to ${email}`);
+    return { message: "Password reset link sent to your email." };
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const user = await this._userRepository.findByResetToken(token);
+    if (!user) throw new CustomError("Invalid or expired token", StatusCode.BAD_REQUEST);
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this._userRepository.updatePassword(user.email, hashedPassword);
+    await this._userRepository.setResetToken(user.email, "", new Date(0));
+
+    logger.info(`Password reset successfully for ${user.email}`);
+    return { message: "Password reset successfully." };
   }
 
 

@@ -59,6 +59,21 @@ export class UserAuthController implements IUserAuthController {
       accessToken: response.accessToken,
     });
   });
+
+  forgotPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const { email } = req.body;
+  logger.info(`Forgot password request - Email: ${email}`);
+  const response = await this._userAuthService.requestPasswordReset(email);
+  res.status(StatusCode.OK).json({ success: true, message: response.message });
+});
+
+
+resetPassword = asyncHandler(async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+  if (!password) throw new Error("Password is required");
+  const response = await this._userAuthService.resetPassword(token, password);
+  res.status(200).json({ success: true, message: response.message });
+});
   
 }
 

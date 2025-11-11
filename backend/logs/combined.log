@@ -640,3 +640,12 @@
 2025-11-10T15:23:18.803Z [info]: OTP verified successfully for beteh16982@wacold.com
 2025-11-10T15:23:19.173Z [info]: Nutritionist verified and registered successfully: beteh16982@wacold.com
 2025-11-10T15:24:22.710Z [info]: Submit details attempt - Nutritionist ID: 69120367928d5da1351dbe2b
+2025-11-11T00:48:42.694Z [info]: Forgot password request - Email: beteh16982@wacold.com
+2025-11-11T00:48:45.780Z [info]: Password reset token generated and sent to beteh16982@wacold.com
+2025-11-11T00:49:22.988Z [info]: Reset password attempt with token: 3e47eea7b67d274058d60613db91bf94d9635030cc602cf3b0c41515c72df5f8
+2025-11-11T00:51:07.119Z [info]: Reset password attempt with token: 3e47eea7b67d274058d60613db91bf94d9635030cc602cf3b0c41515c72df5f8
+2025-11-11T00:54:09.518Z [info]: Password reset successfully for beteh16982@wacold.com
+2025-11-11T00:54:54.705Z [info]: Login attempt - Email: beteh16982@wacold.com
+2025-11-11T00:55:10.990Z [info]: Login attempt - Email: beteh16982@wacold.com
+2025-11-11T01:19:55.967Z [info]: Login attempt - Email: beteh16982@wacold.com
+2025-11-11T01:20:35.302Z [info]: Login attempt - Email: tikecav727@nyfhk.com
