@@ -1,37 +1,47 @@
 "use client";
-import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
+import toast from "react-hot-toast";
+import {Eye, EyeOff, User, Mail, Lock,XCircle, Users, Stethoscope,UserPlus,} from "lucide-react";
 import { setUserEmailAndRole } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
-import { Eye, EyeOff, User, Mail, Phone, Lock, Sparkles } from "lucide-react";
 import { userAuthService } from "@/services/user/user.service";
 import { nutritionistAuthService } from "@/services/nutritionist/nutritionist.service";
-import toast from "react-hot-toast";
-import { XCircle } from "lucide-react";
 
-interface SignupFormProps {
-  role: "client" | "nutritionist";
+type Role = "client" | "nutritionist";
+
+interface FormData {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: Role;
 }
 
-export default function SignupForm({ role }: SignupFormProps) {
+export default function SignupForm() {
   const dispatch = useDispatch();
   const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  
+  const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
-    phone: "",
     password: "",
     confirmPassword: "",
+    role: "client",
   });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -52,103 +62,176 @@ export default function SignupForm({ role }: SignupFormProps) {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+
     try {
       setLoading(true);
-      const payload = { ...formData };
+      const { role, ...payload } = formData;
+
       const data =
         role === "nutritionist"
           ? await nutritionistAuthService.register(payload)
           : await userAuthService.register(payload);
 
       if (data.success) {
-        dispatch(setUserEmailAndRole({ email: formData.email, role }));
-        router.push(`/${role}/verify-otp`);
+        dispatch(
+          setUserEmailAndRole({
+            email: formData.email,
+            role: role as "client" | "nutritionist",
+          })
+        );
+        router.push(`/verify-otp`);
       } else {
         toast.error("Signup failed", {
-          style: {
-            borderRadius: "10px",
-            background: "#f56565",
-            color: "#fff",
-            fontWeight: "bold",
-          },
           icon: <XCircle color="white" size={20} />,
         });
       }
     } catch (error: any) {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong. Please try again.";
-      toast.error(errorMessage, {
-        position: "top-right",
-        duration: 2000,
-        style: {
-          borderRadius: "10px",
-          background: "#f56565",
-          color: "#fff",
-          padding: "16px",
-          fontWeight: "bold",
-          boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-        },
-        icon: <XCircle color="white" size={20} />,
-      });
+      toast.error(error?.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
+  
+  
+  const handleGoogleError = (error?: any) => {
+    console.error("Google Login Failed:", error);
+    toast.error("Google login failed. Please try again.");
+  };
 
- const handleGoogleSuccess = async (credentialResponse: any) => {
-  try {
-    if (!credentialResponse?.credential)
-      throw new Error("No credential returned");
-
-    const decoded: any = jwtDecode(credentialResponse.credential);
-
-    const payload = {
-      fullName: decoded.name,
-      email: decoded.email,
-      googleId: decoded.sub,
-      role,
-      credential: credentialResponse.credential, 
-    };
-
-    const data =
-      role === "nutritionist"
-        ? await nutritionistAuthService.googleSignup(payload)
-        : await userAuthService.googleSignup(payload);
-
-        console.log(data)
-
-    if (data?.success && data?.accessToken) {
-      localStorage.setItem("token", data.accessToken);
-      dispatch(setUserEmailAndRole({ email: data.user.email, role: data.user.role }));
-    } else {
-      toast.error(data?.message||"field");
-    }
-    switch (data.user.role) {
-      case "client": router.push("/home"); break;
-      case "nutritionist": router.push("/nutritionist/details"); break;
-      default: router.push("/");
+  
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      const decoded: any = jwtDecode(credentialResponse.credential!);
+      const selectedRole = formData.role;
+      if (!selectedRole) {
+        toast.error("Please select whether you're a client or a nutritionist before continuing.");
+        return;
       }
-  } catch (err: any) {
-    console.log(err)
-    toast.error(err||"error");
+      
+      const payload = {
+        fullName: decoded.name,
+        email: decoded.email,
+        googleId: decoded.sub,
+        role: selectedRole,
+        credential: credentialResponse.credential,
+      };
+      
+      const response  = selectedRole === "nutritionist" ? await nutritionistAuthService.googleSignup(payload) : await userAuthService.googleSignup(payload);
+      if (response.success) {
+        if (selectedRole === "nutritionist") {
+          localStorage.setItem("nutritionistToken", response.token);
+          router.push("/nutritionist/dashboard");
+      } else {
+        localStorage.setItem("clientToken", response.token);
+        router.push("/client/home");
+      }
+
+      dispatch(setUserEmailAndRole({ email: decoded.email, role: selectedRole }));
+      toast.success(`Welcome ${decoded.name}!`);
+    } else {
+      toast.error(response.message || "Signup failed");
+    }
+  } catch (error: any) {
+    console.error("Google login error:", error);
+    toast.error(error?.response?.data?.message || "Google login failed");
   }
 };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-green-50 to-white px-4">
-      <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl p-8 border border-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 px-4 py-12 sm:py-16 lg:py-20">
+      <div className="max-w-md w-full bg-white shadow-2xl rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-100">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">
-            {role === "nutritionist"
-              ? "Join as a Nutritionist"
-              : "Create Your Account"}
+        <div className="text-center mb-8 lg:mb-10">
+          <div className="inline-flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-4xl">🍃</span>
+            </div>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
+            Create Account
           </h1>
-          <p className="text-gray-500 text-sm mt-2">
-            Sign up to get started with NutriWise
+          <p className="text-gray-500 text-sm sm:text-base">
+            Join NutriWise and start your wellness journey
           </p>
+        </div>
+
+        {/* Role Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">
+            I am a
+          </label>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {[
+              {
+                name: "client",
+                icon: Users,
+                label: "Client",
+                subtext: "Seeking nutrition guidance",
+              },
+              {
+                name: "nutritionist",
+                icon: Stethoscope,
+                label: "Nutritionist",
+                subtext: "Provide expert advice",
+              },
+            ].map((option) => {
+              const isActive = formData.role === option.name;
+              const Icon = option.icon;
+              return (
+                <button
+                  key={option.name}
+                  type="button"
+                  onClick={() =>
+                    handleInputChange({
+                      target: { name: "role", value: option.name },
+                    } as any)
+                  }
+                  className={`relative flex flex-col items-center justify-center p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 ${
+                    isActive
+                      ? "border-green-500 bg-green-50 shadow-md"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
+                  }`}
+                >
+                  <div
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-colors ${
+                      isActive ? "bg-green-500" : "bg-gray-100"
+                    }`}
+                  >
+                    <Icon
+                      className={`w-6 h-6 sm:w-7 sm:h-7 ${
+                        isActive ? "text-white" : "text-gray-500"
+                      }`}
+                    />
+                  </div>
+                  <span
+                    className={`font-semibold text-sm sm:text-base ${
+                      isActive ? "text-green-700" : "text-gray-700"
+                    }`}
+                  >
+                    {option.label}
+                  </span>
+                  <span className="text-xs text-gray-500 mt-1 text-center">
+                    {option.subtext}
+                  </span>
+                  {isActive && (
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Input Fields */}
@@ -166,15 +249,9 @@ export default function SignupForm({ role }: SignupFormProps) {
               placeholder: "you@example.com",
               icon: <Mail className="text-green-500" size={18} />,
             },
-            {
-              name: "phone",
-              type: "tel",
-              placeholder: "+91 98765 43210",
-              icon: <Phone className="text-green-500" size={18} />,
-            },
           ].map((field) => (
             <div key={field.name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+              <label className="block text-sm font-semibold text-gray-700 mb-2 capitalize">
                 {field.name.replace(/([A-Z])/g, " $1")}
               </label>
               <div className="relative">
@@ -187,11 +264,12 @@ export default function SignupForm({ role }: SignupFormProps) {
                   value={(formData as any)[field.name]}
                   onChange={handleInputChange}
                   placeholder={field.placeholder}
-                  className="w-full pl-10 pr-3 py-3 rounded-lg bg-gray-50 border focus:border-green-500 focus:bg-white outline-none transition"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all"
                 />
               </div>
               {errors[field.name] && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                  <XCircle size={12} />
                   {errors[field.name]}
                 </p>
               )}
@@ -216,7 +294,7 @@ export default function SignupForm({ role }: SignupFormProps) {
             },
           ].map((item) => (
             <div key={item.name}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 {item.label}
               </label>
               <div className="relative">
@@ -231,18 +309,19 @@ export default function SignupForm({ role }: SignupFormProps) {
                       ? "Create a strong password"
                       : "Confirm your password"
                   }
-                  className="w-full pl-10 pr-10 py-3 rounded-lg bg-gray-50 border focus:border-green-500 focus:bg-white outline-none transition"
+                  className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => item.setShow(!item.show)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {item.show ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {errors[item.name] && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                  <XCircle size={12} />
                   {errors[item.name]}
                 </p>
               )}
@@ -254,44 +333,52 @@ export default function SignupForm({ role }: SignupFormProps) {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-lg font-semibold transition-all flex justify-center items-center gap-2"
+          className="w-full mt-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 rounded-xl font-semibold transition-all flex justify-center items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
             <>
-              <span>Sign Up</span>
-              <Sparkles className="w-5 h-5" />
+              <span>Create Account</span>
+              <UserPlus className="w-5 h-5" />
             </>
           )}
         </button>
 
         {/* Divider */}
-        <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-gray-200"></div>
-          <span className="px-3 text-sm text-gray-400">OR</span>
-          <div className="flex-1 border-t border-gray-200"></div>
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-white text-gray-500">
+              Or continue with
+            </span>
+          </div>
         </div>
+        
+        <div className="flex flex-col items-center space-y-3">
+          <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+          useOneTap
+          theme="outline"
+          size="large"
+          width="100%"
+          />
 
-        {/* Google Signup */}
-<div className="flex flex-col items-center mt-4">
-  <div className="rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition">
-    <GoogleLogin
-      onSuccess={handleGoogleSuccess}
-      onError={() => toast.error("Google sign-in failed")}
-    />
-  </div>
-</div>
-
-
-        {/* Login Link */}
-        <p className="text-center text-sm text-gray-600 mt-6">
+        <p className="text-xs text-gray-500 mt-1">
+          (You’re signing up as a <strong>{formData.role}</strong>)
+        </p>
+      </div>
+        {/* Footer */}
+        <p className="text-center text-sm text-gray-500 mt-6">
           Already have an account?{" "}
           <a
-            href={`/${role}/login`}
-            className="text-green-600 font-semibold hover:underline"
+            href="/login"
+            className="text-green-600 hover:text-green-700 font-semibold hover:underline"
           >
-            Log in
+            Sign In
           </a>
         </p>
       </div>

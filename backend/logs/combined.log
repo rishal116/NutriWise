@@ -649,3 +649,22 @@
 2025-11-11T00:55:10.990Z [info]: Login attempt - Email: beteh16982@wacold.com
 2025-11-11T01:19:55.967Z [info]: Login attempt - Email: beteh16982@wacold.com
 2025-11-11T01:20:35.302Z [info]: Login attempt - Email: tikecav727@nyfhk.com
+2025-11-11T03:42:41.645Z [info]: User registration attempt - Email: beteh16982@wacold.com
+2025-11-11T03:42:41.722Z [info]: Signup request initiated for beteh16982@wacold.com
+2025-11-11T03:43:02.902Z [info]: User registration attempt - Email: majifa5273@nyfhk.com
+2025-11-11T03:43:02.906Z [info]: Signup request initiated for majifa5273@nyfhk.com
+2025-11-11T03:43:05.578Z [info]: OTP generated and sent to majifa5273@nyfhk.com
+2025-11-11T03:43:05.580Z [info]: OTP sent successfully for majifa5273@nyfhk.com
+2025-11-11T03:43:20.188Z [info]: OTP verification attempt - Email: majifa5273@nyfhk.com -OTP 123456
+2025-11-11T03:43:20.192Z [info]: Verifying OTP for majifa5273@nyfhk.com
+2025-11-11T03:44:28.222Z [info]: Registration attempt - Email: majifa5273@nyfhk.com
+2025-11-11T03:44:28.225Z [info]: Resending OTP for majifa5273@nyfhk.com
+2025-11-11T03:44:30.545Z [info]: OTP generated and sent to majifa5273@nyfhk.com
+2025-11-11T03:44:30.547Z [info]: New OTP sent to majifa5273@nyfhk.com
+2025-11-11T03:44:53.846Z [info]: OTP verification attempt - Email: majifa5273@nyfhk.com -OTP 457849
+2025-11-11T03:44:53.849Z [info]: Verifying OTP for majifa5273@nyfhk.com
+2025-11-11T03:44:53.862Z [info]: OTP verified successfully for majifa5273@nyfhk.com
+2025-11-11T03:44:54.031Z [info]: Nutritionist verified and registered successfully: majifa5273@nyfhk.com
+2025-11-11T03:46:13.724Z [info]: Submit details attempt - Nutritionist ID: 6912b13657e3db7f6c512687
+2025-11-11T03:48:41.609Z [info]: Login attempt - Email: majifa5273@nyfhk.com
+2025-11-11T03:52:19.144Z [info]: Google login attempt - Role: client

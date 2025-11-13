@@ -6,7 +6,6 @@ export const userAuthService = {
     const response = await api.post("/signup", {
       fullName: payload.fullName,
       email: payload.email,
-      phone: payload.phone,
       password: payload.password,
       confirmPassword : payload.confirmPassword
     });

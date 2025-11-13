@@ -6,9 +6,6 @@ export const UserSignupSchema = z.object({
   .min(3, "Full name must be at least 3 characters")
   .max(50, "Full name must be at most 50 characters"),
   email: z.string().email("Invalid email address"),
-  phone:
-  z.string()
-  .regex(/^\+?\d{10,15}$/, "Invalid phone number"),
   password:
   z.string()
   .min(8, "Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.")
