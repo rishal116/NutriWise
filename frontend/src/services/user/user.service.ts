@@ -3,12 +3,7 @@ import { UserSignupType} from "@/validation/userAuth.validation";
 
 export const userAuthService = {
   register: async (payload: UserSignupType) => {
-    const response = await api.post("/signup", {
-      fullName: payload.fullName,
-      email: payload.email,
-      password: payload.password,
-      confirmPassword : payload.confirmPassword
-    });
+    const response = await api.post("/signup", payload);
     return response.data;
   },
 
@@ -34,16 +29,10 @@ export const userAuthService = {
     return response.data;
   },
   
-  
-  async googleSignup(payload: {
-    fullName: string;
-    email: string;
-    googleId: string;
-    role: string;
-    credential: string;}) {
-      const response = await api.post(`${process.env.NEXT_PUBLIC_API_URL}/google`,payload);
-      return response.data;
-    },
+  googleSignup: async (payload: any) => {
+    const response = await api.post("/google", payload);
+    return response.data;
+  },
     
     getProfile: async () => {
       const response = await api.get("/users/profile");

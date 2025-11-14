@@ -30,20 +30,21 @@ export class UserAuthService implements IUserAuthService {
 
   async signup(req: Request, data: UserRegisterDto): Promise<{ message: string }> {
     await validateDto(UserRegisterDto, data);
-    const { fullName, email, phone, password } = data;
+    const { fullName, email, password,confirmPassword, role } = data;
     logger.info(`Signup request initiated for ${email}`);
     const existingUser = await this._userRepository.findByEmail(email);
     if (existingUser) {
       throw new CustomError("User already exists", 409);
     }
-    req.session.tempUser = { fullName, email, phone, password };
+    req.session.tempUser = { fullName, email, password, role };
+    console.log(req.session.tempUser)
     const response = await this._otpService.requestOtp(email);
     logger.info(`OTP sent successfully for ${email}`);
     return { message: "OTP sent successfully. Please verify your email." };
   }
 
 
-  async verifyOtp(req: Request, data: VerifyOtpDto): Promise<{ message: string; accessToken: string,refreshToken:string }>{
+  async verifyOtp(req: Request, data: VerifyOtpDto): Promise<{ message: string; accessToken: string,refreshToken:string,role: string;  }>{
     await validateDto(VerifyOtpDto, data);
     const { email, otp } = data;
     logger.info(`Verifying OTP for ${email}`);
@@ -56,18 +57,18 @@ export class UserAuthService implements IUserAuthService {
       throw new CustomError("Temporary user data not found", StatusCode.NOT_FOUND);
     }
     const hashedPassword = await bcrypt.hash(tempUser.password, 10);
-     const newUser = await this._userRepository.createUser({
+    const userData: any = {
       fullName: tempUser.fullName,
       email: tempUser.email,
-      phone: tempUser.phone,
       password: hashedPassword,
-      isVerified: true,
-      role:"client",
-    });
+      role: tempUser.role,
+    };
+
+    const newUser = await this._userRepository.createUser(userData);
     logger.info(`User verified and registered successfully: ${email}`);
     const { accessToken, refreshToken } = generateTokens(newUser._id.toString(), newUser.role || "client");
     delete req.session.tempUser
-    return { message: "Signup successful",accessToken, refreshToken,};
+    return { message: "Signup successful",accessToken, refreshToken, role: newUser.role };
   }
   
 
@@ -76,39 +77,40 @@ export class UserAuthService implements IUserAuthService {
     const { email } = data;
     logger.info(`Resending OTP for ${email}`);
     const existingUser = await this._userRepository.findByEmail(email);
-    if (existingUser && existingUser.isVerified) {
+    if (existingUser) {
       throw new CustomError("Account already verified", StatusCode.BAD_REQUEST);
     }
     const response = await this._otpService.requestOtp(email);
     logger.info(`New OTP sent to ${email}`);
     return { message: response };
   }
-
-
+  
   async login(data: LoginDto): Promise<{ user: any; accessToken: string; refreshToken: string }> {
     const { email, password } = data;
-    const user = await this._userRepository.findByEmail( email );
+    const user = await this._userRepository.findByEmail(email);
     if (!user) {
-      throw new Error("User not found");
+      throw new CustomError("User not found", 404);
     }
-    const isMatch = await bcrypt.compare(password, user.password!);
+    if (!user.password) {
+      throw new CustomError("This account is registered with Google. Please login with Google",400);
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      throw new Error("Invalid password");
+      throw new CustomError("Invalid password", 401);
     }
     const { accessToken, refreshToken } = generateTokens(user._id!.toString(), user.role);
     const safeUser = {
       id: user._id,
+      fullName: user.fullName,
       email: user.email,
       role: user.role,
-      fullName: user.fullName,
-      isBlocked:user.isBlocked,
-      nutritionistStatus:user.nutritionistStatus
+      isBlocked: user.isBlocked,
     };
     return { user: safeUser, accessToken, refreshToken };
   }
   
   
-  async googleLogin(payload: { credential: string; role: "client" | "nutritionist" | "admin" }) {
+  async googleLogin(payload: { credential: string; role: "client" | "nutritionist" }) {
     const { credential, role } = payload;
     const ticket = await this._googleClient.verifyIdToken({
       idToken: credential,
@@ -123,7 +125,6 @@ export class UserAuthService implements IUserAuthService {
         email: tokenPayload.email || "",
         googleId: tokenPayload.sub!,
         role,
-        isVerified: true,
       });
     }
     const { accessToken, refreshToken } = generateTokens(user._id!.toString(), user.role);

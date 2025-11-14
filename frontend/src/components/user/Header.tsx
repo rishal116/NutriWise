@@ -55,7 +55,7 @@ export default function Header() {
             {!isLoggedIn ? (
               <>
                 <button
-                  onClick={() => router.push("/select-role")}
+                  onClick={() => router.push("/signup")}
                   className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition cursor-pointer"
                 >
                   Get Started

@@ -668,3 +668,110 @@
 2025-11-11T03:46:13.724Z [info]: Submit details attempt - Nutritionist ID: 6912b13657e3db7f6c512687
 2025-11-11T03:48:41.609Z [info]: Login attempt - Email: majifa5273@nyfhk.com
 2025-11-11T03:52:19.144Z [info]: Google login attempt - Role: client
+2025-11-13T05:18:01.775Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T05:18:01.783Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T05:18:06.340Z [info]: OTP generated and sent to wehimi1249@gyknife.com
+2025-11-13T05:18:06.341Z [info]: OTP sent successfully for wehimi1249@gyknife.com
+2025-11-13T05:28:09.805Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T05:28:09.806Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T05:28:12.457Z [info]: OTP generated and sent to wehimi1249@gyknife.com
+2025-11-13T05:28:12.458Z [info]: OTP sent successfully for wehimi1249@gyknife.com
+2025-11-13T05:28:41.327Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:41.330Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:45.089Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:45.090Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:46.955Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:46.956Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:47.891Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:47.892Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:48.076Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:48.077Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:48.251Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:48.253Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:48.425Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:48.425Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:48.600Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:48.600Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:48.772Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:48.772Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:48.933Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:48.933Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:49.111Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:49.112Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:49.281Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:49.282Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:49.463Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:49.463Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:49.631Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:49.631Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:49.808Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:49.808Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:49.992Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:49.993Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:50.164Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:50.165Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:50.356Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:50.357Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:50.531Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:50.532Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:50.704Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:50.704Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:28:50.937Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 111111
+2025-11-13T05:28:50.938Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T05:29:20.633Z [info]: Registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T05:29:20.633Z [info]: Resending OTP for wehimi1249@gyknife.com
+2025-11-13T05:29:23.182Z [info]: OTP generated and sent to wehimi1249@gyknife.com
+2025-11-13T05:29:23.183Z [info]: New OTP sent to wehimi1249@gyknife.com
+2025-11-13T07:10:05.078Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T07:10:05.087Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T07:10:08.184Z [info]: OTP generated and sent to wehimi1249@gyknife.com
+2025-11-13T07:10:08.185Z [info]: OTP sent successfully for wehimi1249@gyknife.com
+2025-11-13T07:24:49.978Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 261766
+2025-11-13T07:24:49.986Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T07:24:54.840Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 261766
+2025-11-13T07:24:54.842Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T08:07:55.544Z [info]: Registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T08:07:55.553Z [info]: Resending OTP for wehimi1249@gyknife.com
+2025-11-13T08:07:58.796Z [info]: OTP generated and sent to wehimi1249@gyknife.com
+2025-11-13T08:07:58.798Z [info]: New OTP sent to wehimi1249@gyknife.com
+2025-11-13T08:08:26.272Z [info]: OTP verification attempt - Email: wehimi1249@gyknife.com -OTP 189128
+2025-11-13T08:08:26.275Z [info]: Verifying OTP for wehimi1249@gyknife.com
+2025-11-13T08:08:26.316Z [info]: OTP verified successfully for wehimi1249@gyknife.com
+2025-11-13T08:08:26.521Z [info]: User verified and registered successfully: wehimi1249@gyknife.com
+2025-11-13T09:23:31.077Z [info]: Google login attempt - Role: client
+2025-11-13T09:24:09.071Z [info]: Google login attempt - Role: nutritionist
+2025-11-13T09:26:08.403Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:26:08.422Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:26:12.393Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:26:12.395Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:26:13.211Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:26:13.213Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:26:13.877Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:26:13.878Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:26:14.104Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:26:14.105Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:26:50.059Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:26:50.060Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:27:07.379Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:27:07.380Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:27:08.421Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:27:08.422Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:27:25.126Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:27:25.128Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:28:36.139Z [info]: User registration attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:28:36.140Z [info]: Signup request initiated for wehimi1249@gyknife.com
+2025-11-13T09:43:39.350Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:44:22.732Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:44:42.969Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:45:52.010Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:53:00.372Z [info]: Login attempt - Email: rishal99477@gmail.com
+2025-11-13T09:54:55.155Z [info]: Login attempt - Email: rishal99477@gmail.com
+2025-11-13T09:57:05.468Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T09:59:52.269Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T10:02:24.651Z [info]: Login attempt - Email: rishal99477@gmail.com
+2025-11-13T10:03:45.607Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T10:03:53.323Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T10:20:36.102Z [info]: Login attempt - Email: wehimi1249@gyknife.com
+2025-11-13T10:20:54.813Z [info]: Login attempt - Email: rishal99477@gmail.com
+2025-11-13T10:21:15.334Z [info]: Login attempt - Email: qwer@gmail.com
+2025-11-13T10:21:41.533Z [info]: Login attempt - Email: wehimi1249@gyknife.com

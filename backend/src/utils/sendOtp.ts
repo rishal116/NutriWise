@@ -12,7 +12,7 @@ export const sendOtpEmail = async (email: string, otp: string) => {
           <h2>OTP Verification</h2>
           <p>Your OTP code is:</p>
           <h3 style="color: #2b7cff;">${otp}</h3>
-          <p>This code will expire in <b>5 minutes</b>.</p>
+          <p>This code will expire in <b>1 minutes</b>.</p>
         </div>
       `,
     };

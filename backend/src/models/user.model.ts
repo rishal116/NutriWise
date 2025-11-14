@@ -17,7 +17,6 @@ export interface IUser extends Document {
   nutritionistStatus?: string;
   rejectionReason?: string;
   profileImage?: string;
-  isVerified: boolean;
   isBlocked: boolean;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
@@ -82,10 +81,7 @@ const userSchema = new Schema<IUser>(
     },
 
     profileImage: { type: String },
-    isVerified: { type: Boolean, default: false },
     isBlocked: { type: Boolean, default: false },
-
-    // ---------------- Forgot/Reset Password Fields ----------------
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
   },

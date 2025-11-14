@@ -17,7 +17,7 @@ const otpSchema = new Schema<IOTP>(
       lowercase: true,
       trim: true,
       index: true,
-      unique: true, // Ensure one active OTP per email
+      unique: true,
     },
     otp: {
       type: String,
@@ -27,12 +27,12 @@ const otpSchema = new Schema<IOTP>(
     expiresAt: {
       type: Date,
       required: true,
-      default: () => new Date(Date.now() + 1 * 60 * 1000), // 1 minute expiry
-      index: { expireAfterSeconds: 0 }, // MongoDB TTL auto deletion
+      default: () => new Date(Date.now() + 5 * 60 * 1000),
+      index: { expireAfterSeconds: 0 },
     },
   },
   {
-    timestamps: true, // adds createdAt and updatedAt
+    timestamps: true, 
   }
 );
 

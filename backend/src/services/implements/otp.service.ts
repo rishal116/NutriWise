@@ -26,7 +26,7 @@ export class OtpService implements IOTPService {
   async requestOtp(email: string): Promise<string> {
     await validateDto(ResendOtpDto, { email });
     const otp = this.generateOtp();
-    const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     const cleanEmail = email.toLowerCase().trim();
     await this._otpRepository.deleteOtpByEmail(cleanEmail);
     await this._otpRepository.saveOtp({ email: cleanEmail, otp, expiresAt });

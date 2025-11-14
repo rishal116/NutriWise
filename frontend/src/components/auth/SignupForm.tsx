@@ -9,7 +9,6 @@ import {Eye, EyeOff, User, Mail, Lock,XCircle, Users, Stethoscope,UserPlus,} fro
 import { setUserEmailAndRole } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/user.service";
-import { nutritionistAuthService } from "@/services/nutritionist/nutritionist.service";
 
 type Role = "client" | "nutritionist";
 
@@ -65,20 +64,20 @@ export default function SignupForm() {
 
     try {
       setLoading(true);
-      const { role, ...payload } = formData;
+      const {email, role } = formData
 
-      const data =
-        role === "nutritionist"
-          ? await nutritionistAuthService.register(payload)
-          : await userAuthService.register(payload);
+      const data = await userAuthService.register(formData);
 
       if (data.success) {
         dispatch(
           setUserEmailAndRole({
-            email: formData.email,
+            email,
             role: role as "client" | "nutritionist",
           })
+          
         );
+        sessionStorage.setItem("tempUser", JSON.stringify({ email , role }));
+        
         router.push(`/verify-otp`);
       } else {
         toast.error("Signup failed", {
@@ -116,26 +115,46 @@ export default function SignupForm() {
         credential: credentialResponse.credential,
       };
       
-      const response  = selectedRole === "nutritionist" ? await nutritionistAuthService.googleSignup(payload) : await userAuthService.googleSignup(payload);
+      const response = await userAuthService.googleSignup(payload);
       if (response.success) {
-        if (selectedRole === "nutritionist") {
-          localStorage.setItem("nutritionistToken", response.token);
-          router.push("/nutritionist/dashboard");
-      } else {
-        localStorage.setItem("clientToken", response.token);
-        router.push("/client/home");
+        const { user, accessToken } = response;
+        localStorage.setItem("accessToken", accessToken);
+        sessionStorage.setItem("tempUser", JSON.stringify({ email: user.email, role: user.role }))
+        dispatch(setUserEmailAndRole({ email: user.email, role: user.role }));
+        if (user.isBlocked) {
+          toast.error("Your account has been blocked. Please contact support.");
+          return;
+        }
+        
+        if (user.role === "nutritionist") {
+          switch (user.nutritionistStatus) {
+            case "pending":
+              toast("Your application is pending. Please complete your details.");
+              router.push("/nutritionist/details");
+              break;
+              
+            case "rejected":
+              toast.error("Your application was rejected. You can reapply in your profile.");
+              router.push("/home");
+              break;
+            case "approved":
+            default:
+              router.push("/nutritionist/dashboard");
+              break;
+            }
+          }
+          else if (user.role === "client") {
+            router.push("/home");
+          }
+          toast.success(`Welcome ${user.fullName || "User"}!`);
+        } else {
+          toast.error(response.message || "Signup failed");
+        }
+      } catch (error: any) {
+        console.error("Google login error:", error);
+        toast.error(error?.response?.data?.message || "Google login failed");
       }
-
-      dispatch(setUserEmailAndRole({ email: decoded.email, role: selectedRole }));
-      toast.success(`Welcome ${decoded.name}!`);
-    } else {
-      toast.error(response.message || "Signup failed");
-    }
-  } catch (error: any) {
-    console.error("Google login error:", error);
-    toast.error(error?.response?.data?.message || "Google login failed");
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 px-4 py-12 sm:py-16 lg:py-20">

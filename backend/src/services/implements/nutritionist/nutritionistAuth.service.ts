@@ -29,60 +29,7 @@ export class NutritionistAuthService implements INutritionistAuthService {
     @inject(TYPES.INutritionistDetailsRepository) private _nutritionistDetailsRepository: INutritionistDetailsRepository,
   ) {}
 
-    async signup(req: Request, data: UserRegisterDto): Promise<{ message: string }> {
-      await validateDto(UserRegisterDto, data);
-      const { fullName, email, phone, password } = data;
-      logger.info(`Signup request initiated for ${email}`);
-      const existingUser = await this._nutritionistRepository.findByEmail(email);
-      if (existingUser) {
-        throw new CustomError("User already exists", 409);
-      }
-      req.session.tempUser = { fullName, email, phone, password };
-      const response = await this._otpService.requestOtp(email);
-      logger.info(`OTP sent successfully for ${email}`);
-      return { message: "OTP sent successfully. Please verify your email." };
-    }
-
-  async verifyOtp(req: Request, data: VerifyOtpDto): Promise<{ message: string; accessToken: string,refreshToken:string }>{
-    await validateDto(VerifyOtpDto, data);
-    const { email, otp } = data;
-    logger.info(`Verifying OTP for ${email}`);
-    const isValid = await this._otpService.verifyOtp(email, otp);
-    if (!isValid) {
-      throw new CustomError("Invalid or expired OTP", StatusCode.BAD_REQUEST);
-    }
-    const tempUser = req.session.tempUser; 
-    if (!tempUser) {
-      throw new CustomError("Temporary user data not found", StatusCode.NOT_FOUND);
-    }
-    const hashedPassword = await bcrypt.hash(tempUser.password, 10);
-     const newUser = await this._nutritionistRepository.createUser({
-      fullName: tempUser.fullName,
-      email: tempUser.email,
-      phone: tempUser.phone,
-      password: hashedPassword,
-      isVerified: true,
-      role:"nutritionist",
-    });
-    logger.info(`Nutritionist verified and registered successfully: ${email}`);
-    const { accessToken, refreshToken } = generateTokens(newUser._id.toString(), newUser.role || "nutritionist");
-    delete req.session.tempUser
-    return { message: "Signup successful",accessToken, refreshToken,};
-  }
-
-  async resendOtp(data: ResendOtpDto): Promise<{ message: string }> {
-    await validateDto(ResendOtpDto, data);
-    const { email } = data;
-    logger.info(`Resending OTP for ${email}`);
-    const existingUser = await this._nutritionistRepository.findByEmail(email);
-    if (existingUser && existingUser.isVerified) {
-      throw new CustomError("Account already verified", StatusCode.BAD_REQUEST);
-    }
-    const response = await this._otpService.requestOtp(email);
-    logger.info(`New OTP sent to ${email}`);
-    return { message: response };
-  }
-  
+ 
   async submitDetails(req: Request, userId: string): Promise<{ message: string; data: any }> {
     const { bio, videoCallRate, consultationDuration } = req.body;
     const qualification = req.body["qualification[]"] || req.body.qualification;

@@ -15,11 +15,11 @@ export class UserAuthController implements IUserAuthController {
   constructor(@inject(TYPES.IUserAuthService) private _userAuthService: IUserAuthService ) {}
   
   
-  register = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const { fullName, email, phone, password, confirmPassword } = req.body;
+  signup = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { fullName, email, password, confirmPassword, role } = req.body;
     logger.info(`User registration attempt - Email: ${email}`);
-    const response = await this._userAuthService.signup(req,{fullName,email,phone,password,confirmPassword,});
-    res.status(StatusCode.OK).json({success: true,message: response.message});
+    const response = await this._userAuthService.signup(req,{fullName,email,password,confirmPassword,role});
+    res.status(StatusCode.OK).json({success: true,message: response.message,});
   });
 
   
@@ -53,11 +53,7 @@ export class UserAuthController implements IUserAuthController {
     logger.info(`Google login attempt - Role: ${role}`);
     const response = await this._userAuthService.googleLogin({ credential, role });
     setAuthCookies(res, response.refreshToken);
-    res.status(StatusCode.CREATED).json({
-      success: true,
-      user: response.user,
-      accessToken: response.accessToken,
-    });
+    res.status(StatusCode.CREATED).json({ success: true, message: "Google login successful", user: response.user, accessToken: response.accessToken, });
   });
 
   forgotPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {

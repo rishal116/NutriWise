@@ -19,16 +19,24 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    setError("");
+  setErrors({});
+  setError("");
 
-    const validation = UserLoginSchema.safeParse({ email, password });
-    if (!validation.success) {
-      setError(validation.error.issues[0].message);
-      return;
-    }
+
+     const validation = UserLoginSchema.safeParse({ email, password });
+  if (!validation.success) {
+    const fieldErrors: any = {};
+    validation.error.issues.forEach((issue) => {
+      const field = issue.path[0] as string;
+      fieldErrors[field] = issue.message;
+    });
+    setErrors(fieldErrors);
+    return;
+  }
 
     setLoading(true);
     try {
@@ -37,28 +45,15 @@ export default function LoginForm() {
         setError("Your account has been blocked. Please contact support.");
         return;
       }
-      
-      if (user.role === "client") {
-        localStorage.setItem("clientToken", token);
-      } else if (user.role === "nutritionist") {
-        localStorage.setItem("nutritionistToken", token);
-      }
+      localStorage.setItem("authData", JSON.stringify({ token, role: user.role }));
 
       dispatch(setUserEmailAndRole({ email: user.email, role: user.role }));
-
-      if (user.role === "admin") {
-        router.push("/admin/dashboard");
-      } else if (user.role === "nutritionist") {
-        if (user.nutritionistStatus === "approved") {
-          router.push("/nutritionist/dashboard");
-        } else {
-          router.push("/nutritionist/details"); 
-        }
-      } else {
-        router.push("/home");
-      }
+      router.push("/home");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid credentials");
+      console.log(err)
+      const message = err.response?.data?.message || err.message || "Invalid credentials. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -86,60 +81,62 @@ export default function LoginForm() {
           </p>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-            <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <p className="text-red-600 text-sm">{error}</p>
-          </div>
-        )}
-
         {/* Login Form */}
         <div className="space-y-5">
           {/* Email Input */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                <Mail className="text-green-500" size={18} />
-              </div>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-            </div>
-          </div>
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Email Address
+  </label>
+  <div className="relative">
+    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+      <Mail className="text-green-500" size={18} />
+    </div>
+    <input
+      type="email"
+      placeholder="you@example.com"
+      className={`w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border ${
+        errors.email ? "border-red-400" : "border-gray-200"
+      } focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all`}
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      onKeyPress={handleKeyPress}
+    />
+  </div>
+  {errors.email && (
+    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+  )}
+</div>
 
-          {/* Password Input */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
+{/* Password Input */}
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Password
+  </label>
+  <div className="relative">
+    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+    <input
+      type={showPassword ? "text" : "password"}
+      placeholder="Enter your password"
+      className={`w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border ${
+        errors.password ? "border-red-400" : "border-gray-200"
+      } focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all`}
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      onKeyPress={handleKeyPress}
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+    >
+      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+    </button>
+  </div>
+  {errors.password && (
+    <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+  )}
+</div>
 
           {/* Forgot Password */}
           <div className="flex justify-end">
