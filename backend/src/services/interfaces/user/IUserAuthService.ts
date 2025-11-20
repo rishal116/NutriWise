@@ -9,4 +9,6 @@ export interface IUserAuthService {
   googleLogin(payload: {credential: string; role: "client" | "nutritionist" | "admin";}): Promise<{user: any; accessToken: string; refreshToken: string}>;
   requestPasswordReset(email: string): Promise<{ message: string }>;
   resetPassword(token: string, newPassword: string): Promise<{ message: string }>;
+  googleSignin(payload: { credential: string; }): Promise<{ user: any; accessToken: string; refreshToken: string; }>;
+  getMe(userId: string): Promise<{ id: string; fullName: string; email: string; role: "client" | "nutritionist" | "admin"; nutritionistStatus: string; }>;
 }

@@ -20,23 +20,6 @@ export const generateTokens = (userId: string, role: string) => {
   return { accessToken, refreshToken };
 };
 
-export const verifyAccessToken = (token: string): JwtPayload => {
-  try {
-    const payload = jwt.verify(token, jwtConfig.accessToken.secret) as JwtPayload;
-    return payload;
-  } catch (error) {
-    throw new Error("Invalid or expired access token");
-  }
-};
-
-export const verifyRefreshToken = (token: string): JwtPayload => {
-  try {
-    const payload = jwt.verify(token, jwtConfig.refreshToken.secret) as JwtPayload;
-    return payload;
-  } catch (error) {
-    throw new Error("Invalid or expired refresh token");
-  }
-};
 
 export const setAuthCookies = (res: Response, refreshToken: string) => {
   res.cookie("refreshToken", refreshToken, {

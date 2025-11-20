@@ -6,7 +6,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { userAuthService } from "@/services/user/user.service";
 import { setUserEmailAndRole } from "@/redux/slices/authSlice";
-import { nutritionistAuthService } from "@/services/nutritionist/nutritionist.service";
 import toast, { Toaster } from "react-hot-toast";
 import { Mail, Shield, Clock, RotateCw, CheckCircle2 } from "lucide-react";
 

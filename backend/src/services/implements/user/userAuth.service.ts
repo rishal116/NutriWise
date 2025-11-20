@@ -161,6 +161,49 @@ export class UserAuthService implements IUserAuthService {
     logger.info(`Password reset successfully for ${user.email}`);
     return { message: "Password reset successfully." };
   }
+  
+  
+  async googleSignin({ credential }: { credential: string }) {
+    const ticket = await this._googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const email = payload?.email;
+    if (!email) throw new CustomError("Google email not found", 400);
+    const user = await this._userRepository.findByEmail(email);
+    if (!user) {
+      throw new CustomError( "Account not found. Please sign up first with Google.", 404 );
+    }
+    const { accessToken, refreshToken } = generateTokens(
+      user._id.toString(),
+      user.role
+    );
+    return {
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
+  
+  async getMe(userId: string) {
+    const user = await this._userRepository.findById(userId);
+    if (!user) {
+      throw new CustomError("User not found", 404);
+    }
+    return {
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      nutritionistStatus: user.nutritionistStatus ?? "not_submitted",
+    };
+  }
 
 
 }

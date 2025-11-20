@@ -2,13 +2,12 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, LogIn, XCircle } from "lucide-react";
-import { useDispatch } from "react-redux";
-import { setUserEmailAndRole } from "@/redux/slices/authSlice";
+import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 import { userAuthService } from "@/services/user/user.service";
 import { UserLoginSchema } from "@/validation/userAuth.validation";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "@/redux/slices/authSlice";
 import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 
 export default function LoginForm() {
@@ -21,13 +20,16 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
-
-  const handleLogin = async () => {
+  
+const handleLogin = async (e?: any) => {
+  e?.preventDefault();
+  e?.stopPropagation();
+  
   setErrors({});
   setError("");
 
 
-     const validation = UserLoginSchema.safeParse({ email, password });
+  const validation = UserLoginSchema.safeParse({ email, password });
   if (!validation.success) {
     const fieldErrors: any = {};
     validation.error.issues.forEach((issue) => {
@@ -35,30 +37,62 @@ export default function LoginForm() {
       fieldErrors[field] = issue.message;
     });
     setErrors(fieldErrors);
+    setLoading(false);
     return;
   }
 
-    setLoading(true);
+  setLoading(true);
+
+  try {
+    const res = await userAuthService.login(email, password);
+
+    if (res.user.isBlocked) {
+      setError("Your account has been blocked. Please contact support.");
+      setLoading(false);
+      return;
+    }
+
+    localStorage.setItem("token", res.accessToken);
+    dispatch(loginSuccess());
+    router.push("/home");
+  } catch (err: any) {
+    const message =
+      err.response?.data?.message ||
+      err.message ||
+      "Invalid credentials. Please try again.";
+
+    setError(message);
+    toast.error(message);
+    localStorage.setItem("msg",message)
+    console.log(message)
+  } finally {
+    setLoading(false);
+  }
+};  
+  
+  const handleGoogleLoginSuccess = async (credentialResponse: any) => {
     try {
-      const { token, user } = await userAuthService.login(email, password);
-      if (user.isBlocked) {
-        setError("Your account has been blocked. Please contact support.");
+      const credential = credentialResponse.credential;
+      if (!credential) {
+        toast.error("Google login failed");
         return;
       }
-      localStorage.setItem("authData", JSON.stringify({ token, role: user.role }));
-
-      dispatch(setUserEmailAndRole({ email: user.email, role: user.role }));
+      const res = await userAuthService.googleSignin({ credential });
+      const { user, accessToken } = res;
+      localStorage.setItem( "token", accessToken );
+      dispatch(loginSuccess());
+      toast.success(`Welcome back ${user.fullName}`);
       router.push("/home");
     } catch (err: any) {
-      console.log(err)
-      const message = err.response?.data?.message || err.message || "Invalid credentials. Please try again.";
-      setError(message);
-      toast.error(message);
-    } finally {
-      setLoading(false);
+      toast.error(err.response?.data?.message || "Google login failed");
     }
   };
-
+  
+  const handleGoogleLoginError = () => {
+    console.error("Google Login Failed");
+    toast.error("Google login failed");
+  };
+  
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleLogin();
@@ -84,59 +118,54 @@ export default function LoginForm() {
         {/* Login Form */}
         <div className="space-y-5">
           {/* Email Input */}
-<div>
-  <label className="block text-sm font-semibold text-gray-700 mb-2">
-    Email Address
-  </label>
-  <div className="relative">
-    <div className="absolute left-4 top-1/2 -translate-y-1/2">
-      <Mail className="text-green-500" size={18} />
-    </div>
-    <input
-      type="email"
-      placeholder="you@example.com"
-      className={`w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border ${
-        errors.email ? "border-red-400" : "border-gray-200"
-      } focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all`}
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      onKeyPress={handleKeyPress}
-    />
-  </div>
-  {errors.email && (
-    <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-  )}
-</div>
-
-{/* Password Input */}
-<div>
-  <label className="block text-sm font-semibold text-gray-700 mb-2">
-    Password
-  </label>
-  <div className="relative">
-    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
-    <input
-      type={showPassword ? "text" : "password"}
-      placeholder="Enter your password"
-      className={`w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border ${
-        errors.password ? "border-red-400" : "border-gray-200"
-      } focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all`}
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      onKeyPress={handleKeyPress}
-    />
-    <button
-      type="button"
-      onClick={() => setShowPassword(!showPassword)}
-      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-    >
-      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-    </button>
-  </div>
-  {errors.password && (
-    <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-  )}
-</div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+            <div className="relative">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2">
+              <Mail className="text-green-500" size={18} />
+              </div>
+              <input
+              type="email"
+              placeholder="you@example.com"
+              className={`w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border ${
+                errors.email ? "border-red-400" : "border-gray-200"
+              } focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyPress={handleKeyPress}
+              />
+              </div>
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+                </div>
+                {/* Password Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+                    <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    className={`w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border ${
+                      errors.password ? "border-red-400" : "border-gray-200"
+                    } focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all`}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    />
+                    <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                      </div>
+                      {errors.password && (
+                        <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                        )}
+                        </div>
 
           {/* Forgot Password */}
           <div className="flex justify-end">
@@ -151,19 +180,20 @@ export default function LoginForm() {
 
           {/* Login Button */}
           <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="w-full mt-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 rounded-xl font-semibold transition-all flex justify-center items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <span>Sign In</span>
-                <LogIn className="w-5 h-5" />
-              </>
-            )}
-          </button>
+  type="button"
+  onClick={(e) => handleLogin(e)}
+  disabled={loading}
+  className="w-full mt-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 rounded-xl font-semibold transition-all flex justify-center items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {loading ? (
+    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+  ) : (
+    <>
+      <span>Sign In</span>
+      <LogIn className="w-5 h-5" />
+    </>
+  )}
+</button>
         </div>
 
         {/* Divider */}
@@ -179,26 +209,13 @@ export default function LoginForm() {
         {/* Google Login */}
         <div className="flex justify-center">
           <GoogleLogin
-            onSuccess={(credentialResponse) => {
-              try {
-                const decoded: any = jwtDecode(credentialResponse.credential!);
-                console.log("Google Login Success:", decoded);
-                toast.success(`Welcome back ${decoded.name}!`);
-                // Handle Google login success and routing here
-              } catch (error) {
-                console.error("Google login error:", error);
-                toast.error("Google login failed");
-              }
-            }}
-            onError={() => {
-              console.error("Google Login Failed");
-              toast.error("Google login failed");
-            }}
-            useOneTap
-            theme="outline"
-            size="large"
-            width="100%"
+          onSuccess={handleGoogleLoginSuccess}
+          onError={handleGoogleLoginError}
+          theme="outline"
+          size="large"
+          width="100%"
           />
+
         </div>
 
         {/* Sign Up Link */}

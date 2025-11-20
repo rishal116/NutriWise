@@ -118,7 +118,7 @@ export default function SignupForm() {
       const response = await userAuthService.googleSignup(payload);
       if (response.success) {
         const { user, accessToken } = response;
-        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("token", accessToken);
         sessionStorage.setItem("tempUser", JSON.stringify({ email: user.email, role: user.role }))
         dispatch(setUserEmailAndRole({ email: user.email, role: user.role }));
         if (user.isBlocked) {

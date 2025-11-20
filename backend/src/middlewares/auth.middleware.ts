@@ -7,6 +7,7 @@ import { StatusCode } from "../enums/statusCode.enum";
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
+    console.log("hello ",authHeader)
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new CustomError("Authorization header missing", StatusCode.UNAUTHORIZED);
@@ -17,10 +18,14 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
       userId: string;
       role: string;
     };
-
-    // attach user data to request object
-    (req as any).user = decoded;
-
+    const validRoles = ["client", "nutritionist", "admin"] as const;
+    if (!validRoles.includes(decoded.role as any)) {
+      throw new CustomError("Invalid role in token", StatusCode.UNAUTHORIZED);
+    }
+    req.user = {
+      userId: decoded.userId,
+      role: decoded.role as "client" | "nutritionist" | "admin",
+    };
     next();
   } catch (error: any) {
     if (error.name === "TokenExpiredError") {
@@ -32,3 +37,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     next(new CustomError("Authentication failed", StatusCode.UNAUTHORIZED));
   }
 };
+
+
+

@@ -33,24 +33,33 @@ export const userAuthService = {
     const response = await api.post("/google", payload);
     return response.data;
   },
-    
-    getProfile: async () => {
-      const response = await api.get("/users/profile");
-      return response.data;
-    },
-
+  
+  getProfile: async () => {
+    const response = await api.get("/users/profile");
+    return response.data;
+  },
+  
   updateProfile: async (data: any) => {
     const response = await api.put("/users/profile", data);
     return response.data;
   },
+  
+  forgotPassword: async (email: string) => {
+    const response = await api.post("/forgot-password", { email });
+    return response.data;
+  },
+  
+  resetPassword: async (token: string, password: string) => {
+    const response = await api.post("/reset-password", { token, password });
+    return response.data;
+  },
+  getMe: async () => {
+    const res = await api.get("/me");
+    return res.data;
+  },
+  googleSignin: async (payload: any) => {
+    const response = await api.post("/google-signin", payload);
+    return response.data;
+  },
 
-forgotPassword: async (email: string) => {
-  const response = await api.post("/forgot-password", { email });
-  return response.data;
-},
-
-resetPassword: async (token: string, password: string) => {
-  const response = await api.post("/reset-password", { token, password });
-  return response.data;
-},
 };

@@ -9,4 +9,6 @@ export interface IUserAuthController {
   googleLogin: (req: Request, res: Response, next: NextFunction) => void;
   forgotPassword: (req: Request, res: Response, next: NextFunction) => void;
   resetPassword: (req: Request, res: Response, next: NextFunction) => void;
+  getMe: (req: Request, res: Response, next: NextFunction) => void;
+  googleSignin: (req: Request, res: Response, next: NextFunction) => void;
 }

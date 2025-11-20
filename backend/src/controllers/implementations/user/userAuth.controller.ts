@@ -6,7 +6,6 @@ import { IUserAuthController } from "../../interfaces/user/IUserAuthController";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { OAuth2Client } from "google-auth-library";
 import { setAuthCookies } from "../../../utils/jwt";
 
 @injectable()
@@ -55,21 +54,42 @@ export class UserAuthController implements IUserAuthController {
     setAuthCookies(res, response.refreshToken);
     res.status(StatusCode.CREATED).json({ success: true, message: "Google login successful", user: response.user, accessToken: response.accessToken, });
   });
-
-  forgotPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-  const { email } = req.body;
-  logger.info(`Forgot password request - Email: ${email}`);
-  const response = await this._userAuthService.requestPasswordReset(email);
-  res.status(StatusCode.OK).json({ success: true, message: response.message });
-});
-
-
-resetPassword = asyncHandler(async (req: Request, res: Response) => {
-  const { token, password } = req.body;
-  if (!password) throw new Error("Password is required");
-  const response = await this._userAuthService.resetPassword(token, password);
-  res.status(200).json({ success: true, message: response.message });
-});
   
+  forgotPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.body;
+    logger.info(`Forgot password request - Email: ${email}`);
+    const response = await this._userAuthService.requestPasswordReset(email);
+    res.status(StatusCode.OK).json({ success: true, message: response.message });
+  });
+  
+  resetPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { token, password } = req.body;
+    if (!password) throw new Error("Password is required");
+    const response = await this._userAuthService.resetPassword(token, password);
+    res.status(200).json({ success: true, message: response.message });
+  });
+  
+  
+  getMe = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Not authenticated" });
+    }
+    const user = await this._userAuthService.getMe(req.user.userId);
+    return res.status(200).json({ success: true, user });
+  });
+
+
+  googleSignin = asyncHandler(async (req, res) => {
+    const { credential } = req.body;
+    const response = await this._userAuthService.googleSignin({ credential });
+    setAuthCookies(res, response.refreshToken);
+    res.status(200).json({
+      success: true,
+      user: response.user,
+      accessToken: response.accessToken,
+    });
+  })
+
+
 }
 

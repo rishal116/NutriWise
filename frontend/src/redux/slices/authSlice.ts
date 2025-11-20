@@ -1,32 +1,35 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 
-interface UserState {
-  email: string | null;
-  role: "client" | "nutritionist" | null;
+interface AuthState {
+  isAuthenticated: boolean;
 }
 
-const initialState: UserState = {
-  email: null,
-  role: null,
+const initialState: AuthState = {
+  isAuthenticated: false,
 };
 
-const userSlice = createSlice({
+const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUserEmailAndRole: (
-      state,
-      action: PayloadAction<{ email: string; role: "client" | "nutritionist" }>
-    ) => {
-      state.email = action.payload.email;
-      state.role = action.payload.role;
+    loginSuccess: (state) => {
+      state.isAuthenticated = true;
     },
-    clearUser: (state) => {
-      state.email = null;
-      state.role = null;
+
+    restoreAuth: (state) => {
+      if (typeof window !== "undefined") {
+        state.isAuthenticated = !!localStorage.getItem("token");
+      }
+    },
+
+    logout: (state) => {
+      state.isAuthenticated = false;
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+      }
     },
   },
 });
 
-export const { setUserEmailAndRole, clearUser } = userSlice.actions;
-export default userSlice.reducer;
+export const { loginSuccess, restoreAuth, logout } = authSlice.actions;
+export default authSlice.reducer;

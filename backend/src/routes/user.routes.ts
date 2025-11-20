@@ -2,6 +2,8 @@ import express from "express";
 import { container } from "../configs/inversify";
 import { TYPES } from "../types/types";
 import { IUserAuthController } from "../controllers/interfaces/user/IUserAuthController";
+import { refreshToken } from "../middlewares/refreshToken";
+import { authMiddleware } from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
@@ -15,6 +17,12 @@ router.post("/google", userAuthController.googleLogin);
 
 router.post("/forgot-password", userAuthController.forgotPassword);
 router.post("/reset-password", userAuthController.resetPassword);
+
+
+router.post("/refresh-token", refreshToken);
+router.get("/me",authMiddleware,userAuthController.getMe);
+router.post("/google-signin", userAuthController.googleSignin);
+
 export default router;
 
 
