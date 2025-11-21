@@ -1,5 +1,9 @@
 import Header from "@/components/user/Header";
 
+export const metadata = {
+  title: "NutriWise – Personalized Nutrition, Meal Plans & Wellness Tracking",
+};
+
 export default function Home() {
   return (
     <div>

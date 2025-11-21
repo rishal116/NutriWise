@@ -38,38 +38,34 @@ api.interceptors.response.use(
     }
 
     // 401 → try refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+  if ( error.response?.status === 401 && !originalRequest._retry && 
+    !originalRequest.url.includes("/login") && localStorage.getItem("token")) {
       originalRequest._retry = true;
-
       try {
-        const res = await api.post(
-          "/refresh-token",
-          {},
-          { headers: { Authorization: "" } } 
+        const res = await api.post( "/refresh-token", {},
+          { headers: { Authorization: "" } }
         );
-
         const newToken = res.data?.accessToken;
-
         if (newToken) {
           localStorage.setItem("token", newToken);
           originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
           return api(originalRequest);
         }
-
         throw new Error("No new token received");
       } catch (err) {
         store.dispatch(logout());
         localStorage.clear();
-        window.location.href = "/login";
+        window.location.href = "/hello"
         return Promise.reject(err);
       }
     }
+
 
     // 403 → blocked or forbidden
     if (error.response?.status === 403) {
       store.dispatch(logout());
       localStorage.clear();
-      window.location.href = "/login";
+      window.location.href = "/";
     }
 
     return Promise.reject(error);

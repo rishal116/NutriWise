@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { adminAuthService } from "@/services/admin/adminAuth.service";
 import { adminLoginSchema } from "@/validation/adminAuth.validation";
-import { ForgotPasswordModal } from "@/components/admin/forgotPassword";
+import { ForgotPasswordModal } from "@/components/admin/ForgotPassword";
 
 export default function SuperAdminLogin() {
   const router = useRouter();

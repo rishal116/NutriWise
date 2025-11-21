@@ -17,20 +17,46 @@ export default function Header() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await userAuthService.getMe();
-        setUser(res.user);
-      } catch (err) {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+// Toggle dropdown
+const toggleDropdown = () => {
+  setOpen((prev) => !prev);
+};
 
-    fetchMe();
-  }, []);
+// Close when clicking outside
+useEffect(() => {
+  const handleClickOutside = (e: any) => {
+    const dropdown = document.getElementById("user-dropdown");
+    if (dropdown && !dropdown.contains(e.target)) {
+      setOpen(false);
+    }
+  };
+
+  document.addEventListener("click", handleClickOutside);
+  return () => document.removeEventListener("click", handleClickOutside);
+}, []);
+
+
+  useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setLoading(false);
+    return;
+  }
+
+  const fetchMe = async () => {
+    try {
+      const res = await userAuthService.getMe();
+      setUser(res.user);
+    } catch (err) {
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchMe();
+}, []);
+
 
   const isLoggedIn = !!user;
 
@@ -40,13 +66,20 @@ export default function Header() {
     { name: "Nutritionists", href: "/nutritionists" },
     { name: "Communities", href: "/communities" },
   ];
-
-  const handleLogout = () => {
-    dispatch(logout());
-    setUser(null);
-    setOpen(false);
-    router.push("/login");
+  
+  const handleLogout = async () => {
+    try {
+      await userAuthService.logout();
+      localStorage.removeItem("token");
+      dispatch(logout());
+      setUser(null);
+      setOpen(false);
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
+
 
   const handleNutritionistDashboard = async () => {
     setOpen(false);
@@ -112,7 +145,7 @@ export default function Header() {
                 {pathname === link.href ? (
                   <span className="absolute inset-0 bg-green-50 rounded-lg"></span>
                 ) : (
-                  <span className="absolute inset-0 bg-gray-100 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
+                  <span className="absolute inset-0 bg-gray-100 rounded-lg opacity-0 group-hover:opacity-90 transition-opacity duration-200"></span>
                 )}
               </Link>
             ))}
@@ -131,35 +164,34 @@ export default function Header() {
             {!isLoggedIn ? (
               <>
                 <button
-                  onClick={() => router.push("/login")}
-                  className="text-gray-700 hover:text-green-600 font-medium transition"
-                >
-                  Login
-                </button>
-                <button
                   onClick={() => router.push("/signup")}
                   className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition shadow-sm"
                 >
                   Get Started
                 </button>
+                                <button
+                  onClick={() => router.push("/login")}
+                  className="text-gray-700 hover:text-green-600 font-medium transition"
+                >
+                  Login
+                </button>
               </>
             ) : (
               /* Profile dropdown */
-              <div className="relative">
-                <button
-                  onClick={() => setOpen(!open)}
-                  className="flex items-center space-x-2 hover:bg-gray-50 px-2 py-2 rounded-lg transition"
-                >
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-                    {getUserInitial()}
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${open ? 'rotate-180' : ''}`} />
-                </button>
+<div id="user-dropdown" className="relative">
+  <button
+    onClick={toggleDropdown}
+    className="flex items-center space-x-2 px-2 py-2 rounded-lg transition cursor-pointer"
+  >
+    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+      {getUserInitial()}
+    </div>
+  </button>
 
                 {open && (
                   <>
                     <div
-                      className="fixed inset-0 z-40"
+                      className="fixed inset-0 z-40 cursor-pointer"
                       onClick={() => setOpen(false)}
                     ></div>
                     <div className="absolute right-0 mt-2 w-64 bg-white shadow-xl rounded-xl border border-gray-100 overflow-hidden z-50">

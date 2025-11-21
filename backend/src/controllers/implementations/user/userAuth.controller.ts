@@ -6,7 +6,7 @@ import { IUserAuthController } from "../../interfaces/user/IUserAuthController";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { setAuthCookies } from "../../../utils/jwt";
+import { setAuthCookies, clearAuthCookies } from "../../../utils/jwt";
 
 @injectable()
 export class UserAuthController implements IUserAuthController {
@@ -79,7 +79,7 @@ export class UserAuthController implements IUserAuthController {
   });
 
 
-  googleSignin = asyncHandler(async (req, res) => {
+  googleSignin = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { credential } = req.body;
     const response = await this._userAuthService.googleSignin({ credential });
     setAuthCookies(res, response.refreshToken);
@@ -89,6 +89,12 @@ export class UserAuthController implements IUserAuthController {
       accessToken: response.accessToken,
     });
   })
+  
+  logout = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    clearAuthCookies(res);
+    logger.info(`User logged out`);
+    res.status(StatusCode.OK).json({ success: true, message: "Logged out successfully" });
+  });
 
 
 }

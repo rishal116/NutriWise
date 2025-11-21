@@ -208,13 +208,13 @@ const handleLogin = async (e?: any) => {
 
         {/* Google Login */}
         <div className="flex justify-center">
-          <GoogleLogin
-          onSuccess={handleGoogleLoginSuccess}
-          onError={handleGoogleLoginError}
-          theme="outline"
-          size="large"
-          width="100%"
-          />
+<GoogleLogin
+  onSuccess={handleGoogleLoginSuccess}
+  onError={handleGoogleLoginError}
+  useOneTap
+  theme="outline"
+  size="large"  // remove width="100%"
+/>
 
         </div>
 

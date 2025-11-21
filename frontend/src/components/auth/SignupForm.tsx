@@ -6,9 +6,11 @@ import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
 import {Eye, EyeOff, User, Mail, Lock,XCircle, Users, Stethoscope,UserPlus,} from "lucide-react";
-import { setUserEmailAndRole } from "@/redux/slices/authSlice";
+import { loginSuccess } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/user.service";
+
+
 
 type Role = "client" | "nutritionist";
 
@@ -69,13 +71,7 @@ export default function SignupForm() {
       const data = await userAuthService.register(formData);
 
       if (data.success) {
-        dispatch(
-          setUserEmailAndRole({
-            email,
-            role: role as "client" | "nutritionist",
-          })
-          
-        );
+        dispatch(loginSuccess());
         sessionStorage.setItem("tempUser", JSON.stringify({ email , role }));
         
         router.push(`/verify-otp`);
@@ -120,7 +116,7 @@ export default function SignupForm() {
         const { user, accessToken } = response;
         localStorage.setItem("token", accessToken);
         sessionStorage.setItem("tempUser", JSON.stringify({ email: user.email, role: user.role }))
-        dispatch(setUserEmailAndRole({ email: user.email, role: user.role }));
+        dispatch(loginSuccess());
         if (user.isBlocked) {
           toast.error("Your account has been blocked. Please contact support.");
           return;
@@ -377,14 +373,13 @@ export default function SignupForm() {
         </div>
         
         <div className="flex flex-col items-center space-y-3">
-          <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-          useOneTap
-          theme="outline"
-          size="large"
-          width="100%"
-          />
+<GoogleLogin
+  onSuccess={handleGoogleSuccess}
+  onError={handleGoogleError}
+  useOneTap
+  theme="outline"
+  size="large"
+/>
 
         <p className="text-xs text-gray-500 mt-1">
           (You’re signing up as a <strong>{formData.role}</strong>)

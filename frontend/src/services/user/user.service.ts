@@ -19,8 +19,8 @@ export const userAuthService = {
   
   logout: async () => {
     await api.post("/logout", {}, { withCredentials: true });
-    localStorage.removeItem("clientAccessToken");
-    window.location.href = "/client/login";
+    localStorage.removeItem("token");
+    window.location.href = "/login";
   },
 
 

@@ -9,43 +9,7 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
-// Sidebar data
-const navSections = [
-  {
-    title: "Overview",
-    items: [{ name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" }]
-  },
-  {
-    title: "Management",
-    items: [
-      { name: "Users", icon: Users, path: "/admin/users", badge: "" },
-      { name: "Nutritionists", icon: Stethoscope, path: "/admin/nutritionists", badge: "42" },
-      { name: "Challenges", icon: Trophy, path: "/admin/challenges" },
-      { name: "Posts", icon: FileText, path: "/admin/posts" },
-    ]
-  },
-  {
-    title: "Finance & Community",
-    items: [
-      { name: "Payments", icon: CreditCard, path: "/admin/payments" },
-      { name: "Community", icon: MessageSquare, path: "/admin/community" },
-    ]
-  }
-];
 
-// Page titles for navbar
-const pageTitles: Record<string, { title: string; subtitle: string }> = {
-  '/admin/dashboard': { title: 'Dashboard', subtitle: 'Overview of your admin panel' },
-  '/admin/users': { title: 'Users', subtitle: 'Manage user accounts and permissions' },
-  '/admin/nutritionists': { title: 'Nutritionists', subtitle: 'Manage nutritionist profiles' },
-  '/admin/challenges': { title: 'Challenges', subtitle: 'Create and manage challenges' },
-  '/admin/posts': { title: 'Posts', subtitle: 'Moderate community posts' },
-  '/admin/payments': { title: 'Payments', subtitle: 'Track transactions and revenue' },
-  '/admin/settings': { title: 'Settings', subtitle: 'Configure system preferences' },
-  '/admin/community': { title: 'Community', subtitle: 'Monitor community activity' },
-  '/admin/notifications': { title: 'Notifications', subtitle: 'View all notifications' },
-  '/admin/profile': { title: 'Profile', subtitle: 'Manage your admin profile' },
-};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -54,8 +18,6 @@ export default function AdminDashboard() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const dropupRef = useRef<HTMLDivElement>(null);
-
-  const currentPage = pageTitles[pathname] || { title: 'Admin Panel', subtitle: 'NutriWise Administration' };
 
   // Close dropup when clicking outside
   useEffect(() => {
