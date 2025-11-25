@@ -13,6 +13,10 @@ import { IUserRepository } from "../repositories/interfaces/user/IUserRepository
 import { UserRepository } from "../repositories/implements/user/user.repository";
 import { IOtpRepository } from "../repositories/interfaces/IOtpRepository";
 import { OtpRepository } from "../repositories/implements/otp.repository";
+import { NutritionistController } from "../controllers/implementations/user/nutritionists.controller";
+import { INutritionistController } from "../controllers/interfaces/user/INutritionistsController";
+import { NutritionistService } from "../services/implements/user/nutritionists.service";
+import { INutritionistService } from "../services/interfaces/user/INutritionistsService";
 
 // ---------------- ADMIN ----------------
 import { IAdminAuthController } from "../controllers/interfaces/admin/IAdminAuthController";
@@ -52,6 +56,8 @@ container.bind<IUserAuthService>(TYPES.IUserAuthService).to(UserAuthService);
 container.bind<IUserRepository>(TYPES.IUserRepository).to(UserRepository);
 container.bind<IOTPService>(TYPES.IOTPService).to(OtpService);
 container.bind<IOtpRepository>(TYPES.IOtpRepository).to(OtpRepository);
+container.bind<INutritionistController>(TYPES.INutritionistController).to(NutritionistController);
+container.bind<INutritionistService>(TYPES.INutritionistService).to(NutritionistService);
 
 // -------- ADMIN BINDINGS --------
 container.bind<IAdminAuthController>(TYPES.IAdminAuthController).to(AdminAuthController);

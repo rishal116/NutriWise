@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import {Eye, EyeOff, User, Mail, Lock,XCircle, Users, Stethoscope,UserPlus,} from "lucide-react";
 import { loginSuccess } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
-import { userAuthService } from "@/services/user/user.service";
+import { userAuthService } from "@/services/user/userAuth.service";
 
 
 

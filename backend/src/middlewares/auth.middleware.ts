@@ -7,7 +7,6 @@ import { StatusCode } from "../enums/statusCode.enum";
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
-    console.log("hello ",authHeader)
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new CustomError("Authorization header missing", StatusCode.UNAUTHORIZED);

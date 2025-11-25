@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
-import { userAuthService } from "@/services/user/user.service";
+import { userAuthService } from "@/services/user/userAuth.service";
 import { setUserEmailAndRole } from "@/redux/slices/authSlice";
 import toast, { Toaster } from "react-hot-toast";
 import { Mail, Shield, Clock, RotateCw, CheckCircle2 } from "lucide-react";

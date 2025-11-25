@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import { userAuthService } from "@/services/user/user.service";
+import { userAuthService } from "@/services/user/userAuth.service";
 
 export default function ResetPasswordPage() {
   const router = useRouter();

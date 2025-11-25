@@ -1,4 +1,4 @@
-import { api } from "@/lib/api";
+import { api } from "@/lib/axios/api";
 import { UserSignupType} from "@/validation/userAuth.validation";
 
 export const userAuthService = {
@@ -34,16 +34,6 @@ export const userAuthService = {
     return response.data;
   },
   
-  getProfile: async () => {
-    const response = await api.get("/users/profile");
-    return response.data;
-  },
-  
-  updateProfile: async (data: any) => {
-    const response = await api.put("/users/profile", data);
-    return response.data;
-  },
-  
   forgotPassword: async (email: string) => {
     const response = await api.post("/forgot-password", { email });
     return response.data;
@@ -53,10 +43,12 @@ export const userAuthService = {
     const response = await api.post("/reset-password", { token, password });
     return response.data;
   },
+
   getMe: async () => {
     const res = await api.get("/me");
     return res.data;
   },
+  
   googleSignin: async (payload: any) => {
     const response = await api.post("/google-signin", payload);
     return response.data;

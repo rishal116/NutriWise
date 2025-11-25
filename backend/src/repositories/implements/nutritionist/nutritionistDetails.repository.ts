@@ -4,6 +4,8 @@ import { INutritionistDetailsRepository } from "../../interfaces/nutritionist/IN
 import { NutritionistDetailsModel, INutritionistDetails } from "../../../models/nutritionistDetails.model";
 import { Types } from "mongoose";
 
+
+
 @injectable()
 export class NutritionistDetailsRepository extends BaseRepository<INutritionistDetails> implements INutritionistDetailsRepository {
   constructor() {

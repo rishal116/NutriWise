@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { Bell, ChevronDown, LogOut, UserCircle, Settings } from "lucide-react";
 import { logout } from "@/redux/slices/authSlice";
-import { userAuthService } from "@/services/user/user.service";
+import { userAuthService } from "@/services/user/userAuth.service";
 
 export default function Header() {
   const pathname = usePathname();
@@ -196,9 +196,9 @@ useEffect(() => {
                     ></div>
                     <div className="absolute right-0 mt-2 w-64 bg-white shadow-xl rounded-xl border border-gray-100 overflow-hidden z-50">
                       {/* User Info Section */}
-                      <div className="px-4 py-4 bg-gradient-to-br from-green-50 to-emerald-50 border-b border-gray-100">
+                      <div className="px-4 py-4 bg-gradient-to-br from-green-50 to-emerald-50 border-b border-gray-100 cursor-default">
                         <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                          <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md cursor-pointer">
                             {getUserInitial()}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -221,7 +221,7 @@ useEffect(() => {
                             setOpen(false);
                             router.push("/profile");
                           }}
-                          className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 transition"
+                          className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 transition cursor-pointer"
                         >
                           <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
                             <UserCircle size={18} className="text-blue-600" />
@@ -235,7 +235,7 @@ useEffect(() => {
                         {user?.role === "nutritionist" && (
                           <button
                             onClick={handleNutritionistDashboard}
-                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 transition"
+                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 transition cursor-pointer"
                           >
                             <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
                               <Settings size={18} className="text-green-600" />
@@ -250,7 +250,7 @@ useEffect(() => {
                         <div className="border-t border-gray-100 mt-2 pt-2">
                           <button
                             onClick={handleLogout}
-                            className="w-full text-left px-4 py-2.5 hover:bg-red-50 flex items-center gap-3 text-sm text-red-600 transition"
+                            className="w-full text-left px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-sm text-gray-700 transition cursor-pointer"
                           >
                             <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
                               <LogOut size={18} className="text-red-600" />

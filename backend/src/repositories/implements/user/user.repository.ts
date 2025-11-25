@@ -58,7 +58,6 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
     return this._model.findByIdAndUpdate(userId, data, { new: true });
   }
 
-  // ---------------- Forgot/Reset Password ----------------
   async setResetToken(email: string, token: string, expires: Date): Promise<void> {
     await this._model.updateOne(
       { email },
