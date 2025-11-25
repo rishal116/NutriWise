@@ -28,16 +28,38 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
     await this._model.updateOne({ email }, { password: hashedPassword });
   }
   
-  async getAllClients(): Promise<Partial<IUser>[]> {
-    return this._model
-      .find({ role: "client" }, "_id fullName email role isBlocked")
-      .lean<Partial<IUser>[]>();
+  async getAllUsers(skip: number, limit: number, search?: string): Promise<{ users: Partial<IUser>[]; total: number }> {
+    const filter: Record<string, any> = {};
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+    const users = await this._model
+    .find(filter, "_id fullName email role isBlocked")
+    .skip(skip)
+    .limit(limit)
+    .lean<Partial<IUser>[]>();
+    const total = await this._model.countDocuments(filter);
+    return { users, total };
   }
-
-  async getAllNutritionists(): Promise<Partial<IUser>[]> {
-    return this._model
-      .find({ role: "nutritionist" }, "_id fullName email role isBlocked")
-      .lean<Partial<IUser>[]>();
+  
+  
+  async getAllNutritionists(skip: number, limit: number, search?: string): Promise<{ nutritionists: Partial<IUser>[]; total: number }> {
+    const filter: any = { role: "nutritionist" };
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+    const nutritionists = await this._model.find(filter, "_id fullName email role isBlocked")
+    .skip(skip)
+    .limit(limit)
+    .lean<Partial<IUser>[]>();
+    const total = await this._model.countDocuments(filter);
+    return { nutritionists, total };
   }
 
   async blockUser(userId: string): Promise<void> {

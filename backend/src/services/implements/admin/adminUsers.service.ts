@@ -3,6 +3,9 @@ import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepo
 import { IAdminUsersService } from "../../interfaces/admin/IAdminUsersService";
 import { TYPES } from "../../../types/types";
 import { INutritionistDetailsRepository } from "../../../repositories/interfaces/nutritionist/INutritionistDetailsRepository";
+import { UserDTO } from "../../../dtos/admin/user.dto";
+import { PaginatedResponseDto } from "../../../dtos/base/BaseResponse.dtos";
+import { NutritionistDTO } from "../../../dtos/admin/user.dto";
 
 
 
@@ -13,14 +16,32 @@ export class AdminUsersService implements IAdminUsersService {
     private _userRepository: IUserRepository,
     @inject(TYPES.INutritionistDetailsRepository) private _nutritionistDetailsRepo : INutritionistDetailsRepository,
   ) {}
-
-
-  async getAllClients(): Promise<any[]> {
-    return this._userRepository.getAllClients();
+  
+  async getAllUsers( page: number = 1, limit: number = 10, search?: string ): Promise<PaginatedResponseDto<UserDTO>> {
+    const skip = (page - 1) * limit;
+    const { users, total } = await this._userRepository.getAllUsers(skip, limit, search);
+    const userDTOs: UserDTO[] = users.map(u => ({
+      id: u._id as string,
+      name: u.fullName || "",
+      email: u.email || "",
+      role: u.role!,
+      isBlocked: u.isBlocked ?? false,
+    }));
+    return new PaginatedResponseDto<UserDTO>(userDTOs, total, page, limit);
   }
-
-  async getAllNutritionists(): Promise<any[]> {
-    return this._userRepository.getAllNutritionists();
+  
+  async getAllNutritionists(page: number, limit: number, search?: string): Promise<PaginatedResponseDto<NutritionistDTO>> {
+    const skip = (page - 1) * limit;
+    const { nutritionists, total } = await this._userRepository.getAllNutritionists(skip, limit, search);
+    const nutritionistDTOs: NutritionistDTO[] = nutritionists.map(n => ({
+      id: n._id as string,
+      name: n.fullName || "",
+      email: n.email || "",
+      role: n.role!,
+      isBlocked: n.isBlocked ?? false,
+      nutritionistStatus: n.nutritionistStatus || "none",
+    }));
+    return new PaginatedResponseDto<NutritionistDTO>(nutritionistDTOs, total, page, limit);
   }
 
   async blockUser(userId: string): Promise<void> {

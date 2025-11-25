@@ -11,8 +11,8 @@ export interface IUserRepository {
 
   updatePassword(email: string, hashedPassword: string): Promise<void>;
 
-  getAllClients(): Promise<Partial<IUser>[]>;
-  getAllNutritionists(): Promise<Partial<IUser>[]>;
+  getAllUsers(skip: number, limit: number, search?:string): Promise<{ users: Partial<IUser>[]; total: number }>;
+  getAllNutritionists( skip: number, limit: number, search?: string ): Promise<{ nutritionists: Partial<IUser>[]; total: number }>;
   blockUser(userId: string): Promise<void>;
   unblockUser(userId: string): Promise<void>;
   findByGoogleId(googleId: string): Promise<IUser | null>;

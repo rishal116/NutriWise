@@ -12,16 +12,21 @@ export class AdminUsersController implements IAdminUsersController {
     private _adminUsersService: IAdminUsersService
   ) {}
   
-  
-  getAllClients = asyncHandler(async (req: Request, res: Response) => {
-    const clients = await this._adminUsersService.getAllClients();
-    res.status(200).json({ success: true, clients });
+  getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string | undefined;
+    const response = await this._adminUsersService.getAllUsers(page, limit, search);
+    res.status(200).json(response);
   });
-
-  getAllNutritionist = asyncHandler(async(req: Request, res: Response) => {
-    const nutritionists = await this._adminUsersService.getAllNutritionists();
-    res.status(200).json({success:true,nutritionists})
-  })
+  
+  getAllNutritionist = asyncHandler(async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string | undefined;
+    const response = await this._adminUsersService.getAllNutritionists(page, limit, search);
+    res.status(200).json(response);
+  });
   
   
   blockUser = asyncHandler(async (req: Request, res: Response) => {

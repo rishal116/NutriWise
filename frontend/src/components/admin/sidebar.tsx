@@ -18,8 +18,22 @@ import {
   LogOut,
   ChevronUp,
 } from "lucide-react";
+import { adminAuthService } from "@/services/admin/adminAuth.service";
 
-const navSections = [
+// Define navigation sections with proper types
+interface NavItem {
+  name: string;
+  icon: React.ComponentType<any>;
+  path: string;
+  badge?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
   {
     title: "Overview",
     items: [{ name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" }],
@@ -28,7 +42,7 @@ const navSections = [
     title: "Management",
     items: [
       { name: "Users", icon: Users, path: "/admin/users" },
-      { name: "Nutritionists", icon: Stethoscope, path: "/admin/nutritionists", badge: "42" },
+      { name: "Nutritionists", icon: Stethoscope, path: "/admin/nutritionists" },
       { name: "Challenges", icon: Trophy, path: "/admin/challenges" },
       { name: "Posts", icon: FileText, path: "/admin/posts" },
     ],
@@ -48,7 +62,7 @@ export default function Sidebar() {
   const [showDropup, setShowDropup] = useState(false);
   const dropupRef = useRef<HTMLDivElement>(null);
 
-  // ---------------- Click outside dropup ----------------
+  // Close dropup if clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropupRef.current && !dropupRef.current.contains(event.target as Node)) {
@@ -59,13 +73,16 @@ export default function Sidebar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ---------------- Logout ----------------
-const handleLogout = () => {
-  localStorage.removeItem("adminAccessToken");
-  console.log("Logging out, navigating to /admin/login");
-  router.push("/admin/login");
+const handleLogout = async () => {
+  try {
+    await adminAuthService.logout(); // Call API logout
+  } catch (err) {
+    console.error("Logout failed:", err);
+  } finally {
+    localStorage.removeItem("adminToken"); // Remove token just in case
+    router.push("/admin/login"); // Redirect to login page
+  }
 };
-
 
   return (
     <aside className="fixed top-0 left-0 h-screen w-72 bg-gradient-to-b from-slate-50 to-white shadow-xl border-r border-slate-200 flex flex-col z-50">
@@ -102,14 +119,12 @@ const handleLogout = () => {
                         : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-md"
                       }`}
                   >
-                    {item.icon && (
-                      <item.icon
-                        className={`w-5 h-5 transition-transform group-hover:scale-110 relative z-10 ${
-                          isActive ? "text-white" : "text-slate-500"
-                        }`}
-                        strokeWidth={isActive ? 2.5 : 2}
-                      />
-                    )}
+                    <item.icon
+                      className={`w-5 h-5 transition-transform group-hover:scale-110 relative z-10 ${
+                        isActive ? "text-white" : "text-slate-500"
+                      }`}
+                      strokeWidth={isActive ? 2.5 : 2}
+                    />
                     <span className="relative z-10 flex-1 text-left">{item.name}</span>
                     {item.badge && (
                       <span
@@ -148,15 +163,33 @@ const handleLogout = () => {
 
       {/* User Profile */}
       <div className="p-4 border-t border-slate-200 bg-white relative" ref={dropupRef}>
+        <button
+          onClick={() => setShowDropup(!showDropup)}
+          className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all group"
+        >
+          <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
+            AD
+          </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-semibold text-slate-800 truncate">Admin</p>
+            <p className="text-xs text-slate-500 truncate">admin@nutriwise.com</p>
+          </div>
+          <ChevronUp
+            className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+              showDropup ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
         {showDropup && (
-          <div className="absolute bottom-full left-4 right-4 mb-2 bg-yellow-400 rounded-xl shadow-2xl border border-yellow-500 overflow-hidden animate-in slide-in-from-bottom-2 duration-200 opacity-100">
+          <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden animate-in slide-in-from-bottom-2 duration-200">
             <div className="py-2">
               <button
                 onClick={() => {
                   router.push("/admin/profile");
                   setShowDropup(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-yellow-300 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-slate-50 transition-colors"
               >
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">View Profile</span>
@@ -166,15 +199,15 @@ const handleLogout = () => {
                   router.push("/admin/settings");
                   setShowDropup(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-yellow-300 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 text-slate-800 hover:bg-slate-50 transition-colors"
               >
                 <Settings className="w-4 h-4" />
                 <span className="text-sm font-medium">Settings</span>
               </button>
-              <div className="my-1 border-t border-yellow-500"></div>
+              <div className="my-1 border-t border-slate-200"></div>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-yellow-300 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-slate-50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 <span className="text-sm font-medium">Logout</span>
@@ -182,24 +215,6 @@ const handleLogout = () => {
             </div>
           </div>
         )}
-
-        <button
-          onClick={() => setShowDropup(!showDropup)}
-          className="w-full flex items-center gap-3 px-4 py-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all group"
-        >
-          <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
-            AD
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-sm font-semibold text-slate-800 truncate">Admin User</p>
-            <p className="text-xs text-slate-500 truncate">admin@nutriwise.com</p>
-          </div>
-          <ChevronUp
-            className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-              showDropup ? "rotate-180" : ""
-            }`}
-          />
-        </button>
       </div>
     </aside>
   );

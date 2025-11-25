@@ -1,10 +1,10 @@
 import { Schema, model, Document } from "mongoose";
 
 export type UserRole = "client" | "nutritionist" | "admin";
+
 export type Gender = "male" | "female" | "other";
 
 export interface IUser extends Document {
-  _id: string;
   fullName: string;
   email: string;
   phone?: string;
@@ -14,7 +14,7 @@ export interface IUser extends Document {
   gender?: Gender;
   age?: number;
   role: UserRole;
-  nutritionistStatus?: string;
+  nutritionistStatus?: "pending" | "approved" | "rejected" | "none";
   rejectionReason?: string;
   profileImage?: string;
   isBlocked: boolean;
@@ -28,15 +28,15 @@ const userSchema = new Schema<IUser>(
   {
     fullName: {
       type: String,
-      required: [true, "Full name is required"],
+      required: true,
       trim: true,
-      minlength: [3, "Full name must be at least 3 characters"],
-      maxlength: [50, "Full name must be at most 50 characters"],
+      minlength: 3,
+      maxlength: 50,
     },
 
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: true,
       unique: true,
       lowercase: true,
       trim: true,
@@ -49,19 +49,13 @@ const userSchema = new Schema<IUser>(
       match: [/^\d{10}$/, "Phone number must be 10 digits"],
     },
 
-    password: {
-      type: String,
-      required: false,
-    },
+    password: { type: String },
 
-    googleId: {
-      type: String,
-      required: false,
-    },
+    googleId: { type: String },
 
     birthdate: { type: String },
     gender: { type: String, enum: ["male", "female", "other"] },
-    age: { type: Number, min: 0 },
+    age: { type: Number },
 
     role: {
       type: String,
@@ -74,14 +68,13 @@ const userSchema = new Schema<IUser>(
       enum: ["pending", "approved", "rejected", "none"],
       default: "none",
     },
-    rejectionReason: {
-      type: String,
-      trim: true,
-      default: "",
-    },
+
+    rejectionReason: { type: String, trim: true, default: "" },
 
     profileImage: { type: String },
+
     isBlocked: { type: Boolean, default: false },
+
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
   },

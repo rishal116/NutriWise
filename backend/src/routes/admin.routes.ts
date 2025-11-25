@@ -11,10 +11,18 @@ const adminUsersController = container.get<IAdminUsersController>(TYPES.IAdminUs
 const adminNotificationController = container.get<IAdminNotificationController>(TYPES.IAdminNotificationController)
 
 router.post("/login",adminAuthController.login);
-router.get("/users",adminUsersController.getAllClients)
+router.post("/logout",adminAuthController.logout)
+
+
+
+
+
+router.get("/users",adminUsersController.getAllUsers)
 router.get("/nutritionists",adminUsersController.getAllNutritionist)
 router.patch("/block-user/:userId",adminUsersController.blockUser);
 router.patch("/unblock-user/:userId",adminUsersController.unblockUser)
+
+
 router.get("/notifications", adminNotificationController.getAllNotifications);
 router.patch("/notifications/read/:id",adminNotificationController.markAsRead);
 router.delete("notifications/:id",adminNotificationController.deleteNotification);

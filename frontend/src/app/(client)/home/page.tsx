@@ -1,9 +1,11 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Heart, Users, Award, TrendingUp, Sparkles, ArrowRight } from 'lucide-react';
 
 export default function Home() {
+  const router = useRouter()
   const [scrollY, setScrollY] = useState(0);
   const [hoveredCard, setHoveredCard] = useState(null);
 
@@ -12,6 +14,15 @@ export default function Home() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+  
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+
+    if (!token) {
+      router.replace("/");
+    }
+  }, [router]);
+
 
   const challenges = [
     {
@@ -118,7 +129,6 @@ export default function Home() {
           {challenges.map((challenge, i) => (
             <div
               key={i}
-              onMouseEnter={() => setHoveredCard(`challenge-${i}`)}
               onMouseLeave={() => setHoveredCard(null)}
               className="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden cursor-pointer hover:-translate-y-2"
             >
