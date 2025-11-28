@@ -5,7 +5,7 @@ export default async function NutritionistsPage() {
   const response = await adminUserService.getAllNutritionists(1, 5);
 
   return (
-    <div className="ml-72 mt-24 p-8 min-h-screen bg-gray-50">
+  <div className="min-h-screen bg-gray-50 mt-[90px] px-4">
       <NutritionistTable initialData={response} />
     </div>
   );

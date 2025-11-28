@@ -66,7 +66,7 @@ export class UserAuthService implements IUserAuthService {
 
     const newUser = await this._userRepository.createUser(userData);
     logger.info(`User verified and registered successfully: ${email}`);
-    const { accessToken, refreshToken } = generateTokens(newUser._id.toString(), newUser.role || "client");
+    const { accessToken, refreshToken } = generateTokens(newUser._id!.toString(), newUser.role || "client");
     delete req.session.tempUser
     return { message: "Signup successful",accessToken, refreshToken, role: newUser.role };
   }
@@ -176,7 +176,7 @@ export class UserAuthService implements IUserAuthService {
       throw new CustomError( "Account not found. Please sign up first with Google.", 404 );
     }
     const { accessToken, refreshToken } = generateTokens(
-      user._id.toString(),
+      user._id!.toString(),
       user.role
     );
     return {
@@ -197,7 +197,7 @@ export class UserAuthService implements IUserAuthService {
       throw new CustomError("User not found", 404);
     }
     return {
-      id: user._id,
+      id: user._id!.toString(),
       fullName: user.fullName,
       email: user.email,
       role: user.role,

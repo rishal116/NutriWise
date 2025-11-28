@@ -141,7 +141,7 @@ const viewProfile = async (userId: string) => {
   };
 
   return (
-    <div className="ml-72 mt-24 p-8 min-h-screen bg-gray-50">
+<div className="min-h-screen bg-gray-50 mt-[90px] px-4">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <h1 className="text-3xl font-semibold text-gray-800 tracking-tight">
           Notifications

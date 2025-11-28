@@ -26,13 +26,23 @@ export default function UserTable({ initialData }: { initialData: PaginatedRespo
   const [page, setPage] = useState(initialData.page);
   const [totalPages, setTotalPages] = useState(initialData.totalPages);
   const [dropdown, setDropdown] = useState<{ id: string; top: number; left: number } | null>(null);
+  const firstCall = useRef(true);
+
+
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const perPage = initialData.limit;
 
-  // Fetch users whenever page or search changes
+
   useEffect(() => {
+      if (firstCall.current) {
+    firstCall.current = false;
+    return; // Skip first effect only
+  }
+
+
     const fetchUsers = async () => {
+      
       try {
         const response = await adminUserService.getAllUsers(page, perPage, search);
         setUsers(response.data);
@@ -45,7 +55,6 @@ export default function UserTable({ initialData }: { initialData: PaginatedRespo
     fetchUsers();
   }, [page, search]);
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {

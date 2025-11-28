@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { userAuthService } from "@/services/user/userAuth.service";
-import { setUserEmailAndRole } from "@/redux/slices/authSlice";
+import { loginSuccess } from "@/redux/slices/authSlice";
 import toast, { Toaster } from "react-hot-toast";
 import { Mail, Shield, Clock, RotateCw, CheckCircle2 } from "lucide-react";
+import { setSignupEmail } from "@/redux/slices/signupSlice";
 
 export default function OtpForm() {
-  const { email, role } = useSelector((state: RootState) => state.auth);
+  const email = useSelector((state: RootState) => state.signup.email);
   const dispatch = useDispatch();
   const router = useRouter();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -21,16 +22,8 @@ export default function OtpForm() {
 
 
  useEffect(() => {
+  const { email, role } = JSON.parse(sessionStorage.getItem("tempUser") || "{}");
     if (!email || !role) {
-      const storedUser = sessionStorage.getItem("tempUser");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        if (parsed?.email && parsed?.role) {
-          dispatch(setUserEmailAndRole(parsed));
-          return;
-        }
-      }
-
       toast.error("Session expired. Please sign up again.");
       router.replace("/signup");
     }
@@ -89,6 +82,7 @@ export default function OtpForm() {
   };
 
   const handleVerify = async () => {
+    const { email, role } = JSON.parse(sessionStorage.getItem("tempUser") || "{}");
     if (!email || !role) {
       toast.error("Invalid session. Please sign up again.");
       router.replace(`/signup`);
@@ -99,11 +93,15 @@ export default function OtpForm() {
       setIsVerifying(true);
       const otpString = otp.join("");
       const res = await userAuthService.verifyOtp(email, otpString)
+      console.log(res);
+      
 
       if (res.success) {
+        dispatch(setSignupEmail(email));
         toast.success(res.message || "OTP verified successfully!");
 
         if (res.accessToken) {
+          dispatch(loginSuccess(res.user));
           localStorage.setItem("token", res.accessToken);
         }
 
@@ -122,6 +120,7 @@ export default function OtpForm() {
   };
 
   const handleResend = async () => {
+    const { email, role } = JSON.parse(sessionStorage.getItem("tempUser") || "{}");
     if (!email || !role) {
       toast.error("Invalid session. Please sign up again.");
       router.replace(`/signup`);

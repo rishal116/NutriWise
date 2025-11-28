@@ -8,11 +8,11 @@ export const metadata = {
 
 export default async function UsersPage() {
   const response = await adminUserService.getAllUsers(1, 5);
-  console.log(response);
 
-  return (
-    <div className="ml-72 mt-24 p-8 min-h-screen bg-gray-50">
-      <UserTable initialData={response} />
-    </div>
-  );
+return (
+<div className="min-h-screen bg-gray-50 mt-[90px] px-4">
+  <UserTable initialData={response} />
+</div>
+);
+
 }

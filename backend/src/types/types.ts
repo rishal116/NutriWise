@@ -7,6 +7,9 @@ export const TYPES = {
   IOtpRepository: Symbol.for("IOtpRepository"),
   INutritionistController: Symbol.for("INutritionistController"),
   INutritionistService: Symbol.for("INutritionistService"),
+  IUserProfileController: Symbol.for("IUserProfileController"),
+  IUserProfileService: Symbol.for("IUserProfileService"),
+
 
   // 🧑‍💼 Admin
   IAdminUsersController: Symbol.for("IAdminUsersController"),

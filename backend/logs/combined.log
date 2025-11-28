@@ -950,3 +950,72 @@
 2025-11-24T16:41:26.615Z [info]: Fetching all nutritionists
 2025-11-24T17:04:45.780Z [info]: Fetching all nutritionists
 2025-11-24T17:04:45.781Z [info]: Fetching all nutritionists
+2025-11-25T15:23:51.921Z [info]: Google login attempt - Role: nutritionist
+2025-11-26T04:05:11.911Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T04:05:11.913Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T04:08:43.745Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T04:08:43.746Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T04:10:56.760Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T04:10:56.762Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T04:11:28.054Z [info]: User logged out
+2025-11-26T04:31:17.613Z [info]: User registration attempt - Email: siyif52857@moondyal.com
+2025-11-26T04:31:17.621Z [info]: Signup request initiated for siyif52857@moondyal.com
+2025-11-26T04:31:21.325Z [info]: OTP generated and sent to siyif52857@moondyal.com
+2025-11-26T04:31:21.325Z [info]: OTP sent successfully for siyif52857@moondyal.com
+2025-11-26T04:45:32.638Z [info]: OTP verification attempt - Email: siyif52857@moondyal.com -OTP 420746
+2025-11-26T04:45:32.641Z [info]: Verifying OTP for siyif52857@moondyal.com
+2025-11-26T04:46:33.693Z [info]: Registration attempt - Email: siyif52857@moondyal.com
+2025-11-26T04:46:33.694Z [info]: Resending OTP for siyif52857@moondyal.com
+2025-11-26T04:46:36.548Z [info]: OTP generated and sent to siyif52857@moondyal.com
+2025-11-26T04:46:36.549Z [info]: New OTP sent to siyif52857@moondyal.com
+2025-11-26T04:46:56.470Z [info]: OTP verification attempt - Email: siyif52857@moondyal.com -OTP 572271
+2025-11-26T04:46:56.471Z [info]: Verifying OTP for siyif52857@moondyal.com
+2025-11-26T04:46:56.485Z [info]: OTP verified successfully for siyif52857@moondyal.com
+2025-11-26T04:46:56.616Z [info]: User verified and registered successfully: siyif52857@moondyal.com
+2025-11-26T04:48:02.216Z [info]: User logged out
+2025-11-26T04:48:38.920Z [info]: User registration attempt - Email: rekiw53785@okcdeals.com
+2025-11-26T04:48:38.921Z [info]: Signup request initiated for rekiw53785@okcdeals.com
+2025-11-26T04:48:41.728Z [info]: OTP generated and sent to rekiw53785@okcdeals.com
+2025-11-26T04:48:41.728Z [info]: OTP sent successfully for rekiw53785@okcdeals.com
+2025-11-26T04:48:56.732Z [info]: OTP verification attempt - Email: rekiw53785@okcdeals.com -OTP 640718
+2025-11-26T04:48:56.733Z [info]: Verifying OTP for rekiw53785@okcdeals.com
+2025-11-26T04:48:56.737Z [info]: OTP verified successfully for rekiw53785@okcdeals.com
+2025-11-26T04:48:56.824Z [info]: User verified and registered successfully: rekiw53785@okcdeals.com
+2025-11-26T05:03:36.384Z [info]: User logged out
+2025-11-26T05:19:43.996Z [info]: Google login attempt - Role: client
+2025-11-26T05:19:53.426Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T05:19:53.441Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T05:19:53.617Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T05:19:53.661Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T05:20:30.347Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T05:20:30.380Z [info]: Fetching profile for user: 6910bcd4a0d58acaa45fba26
+2025-11-26T05:21:02.133Z [info]: Fetching all nutritionists
+2025-11-26T05:21:02.136Z [info]: Fetching all nutritionists
+2025-11-26T05:23:47.336Z [info]: Fetching all nutritionists
+2025-11-26T05:23:47.340Z [info]: Fetching all nutritionists
+2025-11-26T05:25:56.229Z [info]: Fetching all nutritionists
+2025-11-26T05:25:56.231Z [info]: Fetching all nutritionists
+2025-11-26T05:30:39.204Z [info]: Login attempt - Email: beteh16982@wacold.com
+2025-11-26T05:31:02.258Z [info]: Login attempt - Email: majifa5273@nyfhk.com
+2025-11-26T05:33:04.759Z [info]: User logged out
+2025-11-27T04:41:54.353Z [info]: Login attempt - Email: admin@gmail.com
+2025-11-27T04:48:55.242Z [info]: User registration attempt - Email: rekiw53785@okcdeals.com
+2025-11-27T04:48:55.276Z [info]: Signup request initiated for rekiw53785@okcdeals.com
+2025-11-27T04:50:23.289Z [info]: User registration attempt - Email: hohixoc550@okcdeals.com
+2025-11-27T04:50:23.292Z [info]: Signup request initiated for hohixoc550@okcdeals.com
+2025-11-27T04:50:26.279Z [info]: OTP generated and sent to hohixoc550@okcdeals.com
+2025-11-27T04:50:26.280Z [info]: OTP sent successfully for hohixoc550@okcdeals.com
+2025-11-27T04:50:51.832Z [info]: OTP verification attempt - Email: hohixoc550@okcdeals.com -OTP 123445
+2025-11-27T04:50:51.833Z [info]: Verifying OTP for hohixoc550@okcdeals.com
+2025-11-27T04:51:45.752Z [info]: Registration attempt - Email: hohixoc550@okcdeals.com
+2025-11-27T04:51:45.753Z [info]: Resending OTP for hohixoc550@okcdeals.com
+2025-11-27T04:51:49.240Z [info]: OTP generated and sent to hohixoc550@okcdeals.com
+2025-11-27T04:51:49.241Z [info]: New OTP sent to hohixoc550@okcdeals.com
+2025-11-27T04:53:13.210Z [info]: Registration attempt - Email: hohixoc550@okcdeals.com
+2025-11-27T04:53:13.211Z [info]: Resending OTP for hohixoc550@okcdeals.com
+2025-11-27T04:53:17.016Z [info]: OTP generated and sent to hohixoc550@okcdeals.com
+2025-11-27T04:53:17.016Z [info]: New OTP sent to hohixoc550@okcdeals.com
+2025-11-27T04:53:52.817Z [info]: OTP verification attempt - Email: hohixoc550@okcdeals.com -OTP 389630
+2025-11-27T04:53:52.819Z [info]: Verifying OTP for hohixoc550@okcdeals.com
+2025-11-27T04:53:52.823Z [info]: OTP verified successfully for hohixoc550@okcdeals.com
+2025-11-27T04:53:52.960Z [info]: User verified and registered successfully: hohixoc550@okcdeals.com

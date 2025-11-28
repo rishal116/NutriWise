@@ -4,3 +4,10 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* Leaflet CSS */
+.leaflet-container {
+  height: 300px;
+  width: 100%;
+  border-radius: 1rem;
+}

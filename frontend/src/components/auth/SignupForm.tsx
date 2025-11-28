@@ -9,6 +9,7 @@ import {Eye, EyeOff, User, Mail, Lock,XCircle, Users, Stethoscope,UserPlus,} fro
 import { loginSuccess } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
+import { setSignupEmail } from "@/redux/slices/signupSlice";
 
 
 
@@ -66,13 +67,13 @@ export default function SignupForm() {
 
     try {
       setLoading(true);
-      const {email, role } = formData
+      const {email} = formData
 
       const data = await userAuthService.register(formData);
 
       if (data.success) {
-        dispatch(loginSuccess());
-        sessionStorage.setItem("tempUser", JSON.stringify({ email , role }));
+        dispatch(setSignupEmail(email));
+        
         
         router.push(`/verify-otp`);
       } else {

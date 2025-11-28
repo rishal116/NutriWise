@@ -105,8 +105,8 @@ useEffect(() => {
   };
 
   const getUserInitial = () => {
-    if (user?.name) {
-      return user.name.charAt(0).toUpperCase();
+    if (user?.fullName) {
+      return user.fullName.charAt(0).toUpperCase();
     }
     if (user?.email) {
       return user.email.charAt(0).toUpperCase();
@@ -202,9 +202,9 @@ useEffect(() => {
                             {getUserInitial()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            {user?.name && (
+                            {user?.fullName && (
                               <p className="text-sm font-semibold text-gray-900 truncate">
-                                {user.name}
+                                {user.fullName}
                               </p>
                             )}
                             <p className="text-xs text-gray-600 truncate">

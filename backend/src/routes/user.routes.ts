@@ -3,8 +3,14 @@ import { container } from "../configs/inversify";
 import { TYPES } from "../types/types";
 import { IUserAuthController } from "../controllers/interfaces/user/IUserAuthController";
 import { INutritionistController } from "../controllers/interfaces/user/INutritionistsController";
+import { IUserProfileController } from "../controllers/interfaces/user/IUserProfileController";
 import { refreshToken } from "../middlewares/refreshToken";
 import { authMiddleware } from "../middlewares/auth.middleware";
+
+
+const profileController = container.get<IUserProfileController>(TYPES.IUserProfileController);
+
+
 
 const router = express.Router();
 
@@ -25,6 +31,10 @@ router.post("/reset-password", userAuthController.resetPassword);
 router.post("/refresh-token", refreshToken);
 router.get("/me",authMiddleware,userAuthController.getMe);
 router.post("/google-signin", userAuthController.googleSignin);
+
+
+router.get("/profile", authMiddleware, profileController.getProfile);
+router.put("/profile", authMiddleware, profileController.updateProfile);
 
 
 

@@ -1,7 +1,6 @@
 import { api } from "@/lib/axios/api";
 
 export const nutritionistAuthService = {
-    
     submitDetails: async (data: FormData) => {
       const token = localStorage.getItem("token");
       const response = await api.post("/nutritionist/submit-details", data, {

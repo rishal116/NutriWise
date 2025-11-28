@@ -7,12 +7,14 @@ import { StatusCode } from "../enums/statusCode.enum";
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
+    
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new CustomError("Authorization header missing", StatusCode.UNAUTHORIZED);
     }
 
     const token = authHeader.split(" ")[1];
+    
     const decoded = jwt.verify(token, jwtConfig.accessToken.secret) as {
       userId: string;
       role: string;
@@ -27,7 +29,12 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     };
     next();
   } catch (error: any) {
+    console.log(error);
+    
     if (error.name === "TokenExpiredError") {
+      console.log("Mistake ",error.name);
+      
+      
       return next(new CustomError("Token expired", StatusCode.UNAUTHORIZED));
     }
     if (error.name === "JsonWebTokenError") {
