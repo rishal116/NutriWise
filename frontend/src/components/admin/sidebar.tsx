@@ -149,7 +149,6 @@ export default function Sidebar() {
         {!collapsed && (
           <>
             <span className="flex-1 text-left text-sm font-medium">Notifications</span>
-            <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded-lg">5</span>
           </>
         )}
       </button>
@@ -166,7 +165,7 @@ export default function Sidebar() {
           {!collapsed && (
             <div className="flex-1 text-left">
               <p className="text-sm font-semibold">Admin</p>
-              <p className="text-xs text-slate-500">admin@nutriwise.com</p>
+              <p className="text-xs text-slate-500">admin@gmail.com</p>
             </div>
           )}
           {!collapsed && (

@@ -1,16 +1,17 @@
 import { api } from "@/lib/axios/api";
 
 export const nutritionistAuthService = {
-    submitDetails: async (data: FormData) => {
-      const token = localStorage.getItem("token");
-      const response = await api.post("/nutritionist/submit-details", data, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response.data;
-    },
+  submitDetails: async (data: FormData) => {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Unauthorized - No token found");
+    const response = await api.post("/nutritionist/submit-details", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
     
     getProfile: async () => {
       const response = await api.get("/nutritionist/profile");

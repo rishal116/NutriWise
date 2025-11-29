@@ -21,7 +21,7 @@ export interface INutritionistDetails extends Document {
   certifications?: string[];
   totalExperienceYears?: number;
   location?: {
-    country: string;
+    state: string;
     city: string;
   };
   createdAt: Date;
@@ -58,7 +58,7 @@ const NutritionistDetailsSchema = new Schema<INutritionistDetails>(
     certifications: { type: [String] },
     totalExperienceYears: { type: Number, min: 0 },
     location: {
-      country: { type: String, required: true, trim: true },
+      state: { type: String, required: true, trim: true },
       city: { type: String, required: true, trim: true },
     },
   },

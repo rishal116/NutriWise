@@ -22,8 +22,7 @@ export default function OtpForm() {
 
 
  useEffect(() => {
-  const { email, role } = JSON.parse(sessionStorage.getItem("tempUser") || "{}");
-    if (!email || !role) {
+    if (!email) {
       toast.error("Session expired. Please sign up again.");
       router.replace("/signup");
     }
@@ -82,8 +81,7 @@ export default function OtpForm() {
   };
 
   const handleVerify = async () => {
-    const { email, role } = JSON.parse(sessionStorage.getItem("tempUser") || "{}");
-    if (!email || !role) {
+    if (!email) {
       toast.error("Invalid session. Please sign up again.");
       router.replace(`/signup`);
       return;

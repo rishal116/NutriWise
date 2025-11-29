@@ -74,7 +74,7 @@ useEffect(() => {
       dispatch(logout());
       setUser(null);
       setOpen(false);
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -178,16 +178,15 @@ useEffect(() => {
               </>
             ) : (
               /* Profile dropdown */
-<div id="user-dropdown" className="relative">
-  <button
-    onClick={toggleDropdown}
-    className="flex items-center space-x-2 px-2 py-2 rounded-lg transition cursor-pointer"
-  >
-    <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">
-      {getUserInitial()}
-    </div>
-  </button>
-
+              <div id="user-dropdown" className="relative">
+                <button
+                onClick={toggleDropdown}
+                className="flex items-center space-x-2 px-2 py-2 rounded-lg transition cursor-pointer"
+                >
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                    {getUserInitial()}
+                    </div>
+                    </button>
                 {open && (
                   <>
                     <div

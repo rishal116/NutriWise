@@ -18,6 +18,7 @@ export class NutritionistAuthController implements INutritionistAuthController {
   submitDetails = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { user } = req as any;
     logger.info(`Submit details attempt - Nutritionist ID: ${user.userId}`);
+    
     const response = await this._nutritionistAuthService.submitDetails(req, user.userId);
     res.status(StatusCode.OK).json({success: true,message: "Details submitted successfully",data: response,});
   });

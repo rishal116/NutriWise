@@ -27,7 +27,7 @@ export class UserAuthController implements IUserAuthController {
     logger.info(`OTP verification attempt - Email: ${email} -OTP ${otp}`);
     const response = await this._userAuthService.verifyOtp(req,{email,otp});
     setAuthCookies(res, response.refreshToken);
-    res.status(StatusCode.CREATED).json({success: true,message: response.message,accessToken:response.accessToken,});
+    res.status(StatusCode.CREATED).json({success: true,message: response.message,accessToken:response.accessToken,role:response.role});
   });
   
 
