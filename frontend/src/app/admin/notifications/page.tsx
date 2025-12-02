@@ -1,12 +1,13 @@
-import NotificationsPage from '@/components/admin/Notification'
-import React from 'react'
+import { adminNotificationService } from "@/services/admin/adminNotification.service";
+import NotificationsPage from "@/components/admin/Notification";
 
-function page() {
-  return (
-    <div>
-      <NotificationsPage/>
-    </div>
-  )
+export const metadata = {
+  title: "NutriWise – Admin Notification",
+};
+
+export default async function Page() {
+  const initialData = await adminNotificationService.getAllNotifications(1, 10, "");
+  console.log("data: ",initialData);
+  
+  return <NotificationsPage initialData={initialData} />;
 }
-
-export default page

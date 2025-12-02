@@ -13,18 +13,23 @@ export class NutritionistDetailsRepository extends BaseRepository<INutritionistD
   }
 
   async createDetails(data: Partial<INutritionistDetails>): Promise<INutritionistDetails> {
-    return this.create(data);
+    return this._model.create(data);
   }
 
   async findByUserId(userId: string): Promise<INutritionistDetails | null> {
-    return this.findOne({ userId: new Types.ObjectId(userId) });
+    return this._model.findOne({ userId: new Types.ObjectId(userId) });
   }
-
-  async updateDetails(userId: string, data: Partial<INutritionistDetails>): Promise<INutritionistDetails | null> {
-    return NutritionistDetailsModel.findOneAndUpdate(
+  
+  async updateDetails( userId: string, data: Partial<INutritionistDetails>): Promise<INutritionistDetails | null> {
+    return this._model.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
-      data,
-      { new: true }
+      { $set: data },
+      {
+        new: true,
+        runValidators: true,
+        upsert: false,
+      }
     );
   }
+  
 }

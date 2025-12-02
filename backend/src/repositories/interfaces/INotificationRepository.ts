@@ -1,13 +1,11 @@
 import { INotification } from "../../models/notification.model";
 import { NotificationDto } from "../../dtos/common/notification.dto";
+import { NotificationQuery } from "../../dtos/common/notification.dto";
 
-export interface IAdminNotificationRepository {
-  getAllNotifications(): Promise<any[]>;
+export interface INotificationRepository {
+  getNotifications(query: NotificationQuery): Promise<{ data: INotification[]; total: number }>;
   markNotificationRead(id: string): Promise<void>;
   deleteNotification(id: string): Promise<void>;
-
-  // Add this
   createNotification(data: NotificationDto): Promise<void>;
-  approveNutritionist(userId: string): Promise<void>;
-  rejectNutritionist(userId: string, reason: string): Promise<void>;
+  markAllRead(receiverId: string, recipientType: "user" | "admin"): Promise<void>;
 }

@@ -1,13 +1,16 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export type NotificationType = "info" | "success" | "warning" | "error";
+export type RecipientType = "user" | "admin";
 
 export interface INotification extends Document {
   title: string;
   message: string;
   type: NotificationType;
   read: boolean;
-  userId?: Types.ObjectId;               
+  recipientType: RecipientType;
+  receiverId: Types.ObjectId;
+  senderId?: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -16,9 +19,11 @@ const NotificationSchema = new Schema<INotification>(
   {
     title: { type: String, required: true, trim: true },
     message: { type: String, required: true, trim: true },
-    type: { type: String, enum: ["info","success","warning","error"], default: "info" },
+    type: { type: String, enum: ["info", "success", "warning", "error"], default: "info" },
     read: { type: Boolean, default: false },
-    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    recipientType: { type: String, enum: ["user", "admin"], required: true },
+    receiverId: { type: Schema.Types.ObjectId, required: true },
+    senderId: { type: Schema.Types.ObjectId },
   },
   { timestamps: true }
 );

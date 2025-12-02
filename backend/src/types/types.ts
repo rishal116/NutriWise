@@ -18,8 +18,8 @@ export const TYPES = {
   IAdminAuthService: Symbol.for("IAdminAuthService"),
   IAdminRepository: Symbol.for("IAdminRepository"),
   IAdminNotificationController:Symbol.for("IAdminNotificationController"),
-  IAdminNotificationRepository:Symbol.for("IAdminNotificationRepository"),
-  IAdminNotificationService:Symbol.for("IAdminNotificationService"),
+  INotificationRepository:Symbol.for("INotificationRepository"),
+  INotificationService:Symbol.for("INotificationService"),
 
   // 🍎 Nutritionist
   INutritionistAuthController: Symbol.for("INutritionistAuthController"),

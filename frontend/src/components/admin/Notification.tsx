@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { adminNotificationService } from "@/services/admin/adminNotification.service";
 
@@ -9,315 +9,236 @@ interface Notification {
   _id: string;
   title: string;
   message: string;
-  type: "info" | "success" | "warning" | "error" | "approval";
+  type: string;
   createdAt: string;
   read: boolean;
-  userId?: string;
+  senderId?: string;
 }
 
 interface NutritionistProfile {
   _id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  userId:string;
-  status: string;
+  userId: string;
+  bio?: string;
   qualifications?: string[];
   specializations?: string[];
-  experiences?: { role: string; organization: string; years: number }[];
-  bio?: string;
   languages?: string[];
+  experiences?: { role: string; organization: string; years: number }[];
+  totalExperienceYears?: number;
+  location?: { state: string; city: string };
+  cv?: string;
+  certifications?: string[];
   videoCallRate?: number;
   consultationDuration?: string;
-  availabilityStatus?: "available" | "unavailable" | "busy";
-  cv?: string;
 }
 
-
-export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function NotificationsPage({ initialData }: { initialData: any }) {
+  const [notifications, setNotifications] = useState<Notification[]>(initialData.notifications || []);
+  const [page, setPage] = useState(initialData.currentPage || 1);
+  const [totalPages, setTotalPages] = useState(initialData.totalPages || 1);
+  const [limit] = useState(10);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<NutritionistProfile | null>(null);
+  const [basicUser, setBasicUser] = useState<any>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  // ---------------- Fetch Notifications ----------------
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        setLoading(true);
-        const res = await adminNotificationService.getAllNotifications();
-        setNotifications(res.notifications || []);
-      } catch (error: any) {
-        toast.error(error?.response?.data?.message || "Failed to load notifications");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNotifications();
-  }, []);
-
-  // ---------------- Dropdown ----------------
-  const toggleDropdown = (id: string) => {
-    setOpenDropdown(openDropdown === id ? null : id);
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const res = await adminNotificationService.getAllNotifications(page, limit, search);
+      setNotifications(res.notifications || []);
+      setPage(res.currentPage || 1);
+      setTotalPages(res.totalPages || 1);
+    } catch {
+      toast.error("Failed to load notifications");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ---------------- Mark as Read ----------------
+  // Fetch notifications when page or search changes
+  useEffect(() => {
+    if (page !== initialData.currentPage || search !== "") fetchNotifications();
+  }, [page, search]);
+
+  const toggleDropdown = (id: string) => setOpenDropdown(openDropdown === id ? null : id);
+
   const markAsRead = async (id: string) => {
     try {
       await adminNotificationService.markNotificationRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, read: true } : n))
-      );
-      toast.success("Notification marked as read");
+      setNotifications(prev => prev.map(n => (n._id === id ? { ...n, read: true } : n)));
+      toast.success("Marked as read");
       setOpenDropdown(null);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Action failed");
+    } catch {
+      toast.error("Failed to mark as read");
     }
   };
 
-  // ---------------- Delete Notification ----------------
   const deleteNotification = async (id: string) => {
     try {
       await adminNotificationService.deleteNotification(id);
-      setNotifications((prev) => prev.filter((n) => n._id !== id));
+      setNotifications(prev => prev.filter(n => n._id !== id));
       toast.success("Notification deleted");
       setOpenDropdown(null);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Action failed");
+    } catch {
+      toast.error("Failed to delete notification");
     }
   };
 
-  // ---------------- View Profile Modal ----------------
-const viewProfile = async (userId: string) => {
-  console.log(userId);
-  
-  try {
-    const res = await adminNotificationService.getNutritionistProfile(userId);
-    setSelectedProfile(res.nutritionist);
-    setShowProfileModal(true);
-    setRejectReason("");
-    setOpenDropdown(null);
-  } catch (error: any) {
-    toast.error(error?.response?.data?.message || "Failed to fetch profile");
-  }
-};
+  const viewProfile = async (userId: string) => {
+    try {
+      const res = await adminNotificationService.getNutritionistProfile(userId);
+      setSelectedProfile(res.nutritionist);
+      setBasicUser(res.user);
+      setRejectReason("");
+      setShowProfileModal(true);
+      setOpenDropdown(null);
+    } catch {
+      toast.error("Failed to fetch profile");
+    }
+  };
 
-
-  // ---------------- Approve Nutritionist ----------------
-  const approveNutritionist = async (userId) => {
-    if (!selectedProfile) return;
+  const approveNutritionist = async (userId: string) => {
     try {
       await adminNotificationService.approveNutritionist(userId);
       toast.success("Nutritionist approved");
-      setNotifications((prev) =>
-        prev.filter((n) => n.userId !== selectedProfile._id)
-      );
+      setNotifications(prev => prev.filter(n => n.senderId !== userId));
       setShowProfileModal(false);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to approve");
+    } catch {
+      toast.error("Failed to approve nutritionist");
     }
   };
 
-  // ---------------- Reject Nutritionist ----------------
-  const rejectNutritionist = async (userId) => {
-    if (!selectedProfile) return;
-    if (!rejectReason.trim()) {
-      toast.error("Reason is required");
-      return;
-    }
+  const rejectNutritionist = async (userId: string) => {
+    if (!rejectReason.trim()) return toast.error("Rejection reason required");
     try {
       await adminNotificationService.rejectNutritionist(userId, rejectReason);
       toast.success("Nutritionist rejected");
-      setNotifications((prev) =>
-        prev.filter((n) => n.userId !== selectedProfile._id)
-      );
+      setNotifications(prev => prev.filter(n => n.senderId !== userId));
       setShowProfileModal(false);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to reject");
+    } catch {
+      toast.error("Failed to reject nutritionist");
     }
   };
 
   return (
-  <div className="min-h-screen bg-[#F8F9FB] mt-[90px] px-4 sm:px-8 pb-10">
-    {/* Header */}
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-3">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Notifications</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          Track & manage nutritionist approval requests and system alerts
-        </p>
+    <div className="min-h-screen bg-gray-50 mt-[90px] px-4 sm:px-8 pb-10">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Notifications</h1>
+
+      {/* Search */}
+      <div className="mb-4">
+        <input
+          type="text"
+          className="border px-3 py-2 rounded-xl w-full sm:w-80"
+          placeholder="Search notifications..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+        />
       </div>
-    </div>
 
-    {/* Card Wrapper */}
-    <div className="bg-white rounded-2xl shadow-md border border-gray-200">
-
+      {/* Notifications list */}
       {loading ? (
-        <div className="text-center text-gray-500 py-12 animate-pulse text-lg font-medium">
-          Loading notifications…
-        </div>
+        <div className="text-center text-gray-500 py-12">Loading…</div>
       ) : notifications.length === 0 ? (
-        <div className="text-center text-gray-500 py-12 text-lg">
-          No notifications found.
-        </div>
+        <div className="text-center text-gray-500 py-12">No notifications found</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-gray-600 text-xs uppercase tracking-wide">
-                <th className="px-6 py-4 text-left">Title</th>
-                <th className="px-6 py-4 text-left">Message</th>
-                <th className="px-6 py-4 text-left">Type</th>
-                <th className="px-6 py-4 text-left">Date</th>
-                <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4 text-center">Actions</th>
-              </tr>
-            </thead>
+        notifications.map(n => (
+          <div key={n._id} className={`bg-white rounded-2xl shadow-md border p-4 flex justify-between items-center transition hover:shadow-lg ${!n.read ? "border-green-400 bg-green-50" : ""}`}>
+            <div>
+              <p className="font-semibold text-gray-800">{n.title}</p>
+              <p className="text-gray-600">{n.message}</p>
+              <p className="text-gray-400 text-xs mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+            </div>
+            <div className="relative">
+              <button className="p-2 hover:bg-gray-100 rounded-full" onClick={() => toggleDropdown(n._id)}>
+                <MoreVertical size={20} />
+              </button>
+              {openDropdown === n._id && (
+                <div className="absolute right-0 top-8 bg-white rounded-xl border shadow-lg w-44 z-50">
+                  {!n.read && <button onClick={() => markAsRead(n._id)} className="w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-50">Mark as Read</button>}
+                  {n.senderId && <button onClick={() => viewProfile(n.senderId!)} className="w-full px-4 py-2 text-sm text-blue-600 hover:bg-gray-50">View Profile</button>}
+                  <button onClick={() => deleteNotification(n._id)} className="w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Delete</button>
+                </div>
+              )}
+            </div>
+          </div>
+        ))
+      )}
 
-            <tbody>
-              {notifications.map((n) => (
-                <tr
-                  key={n._id}
-                  className={`border-b hover:bg-gray-50 transition ${
-                    !n.read ? "bg-green-50" : ""
-                  }`}
-                >
-                  <td className="px-6 py-4 font-medium text-gray-900">{n.title}</td>
-                  <td className="px-6 py-4 text-gray-700">{n.message}</td>
-                  <td className="px-6 py-4 capitalize">{n.type}</td>
-                  <td className="px-6 py-4 text-gray-600">
-                    {new Date(n.createdAt).toLocaleString()}
-                  </td>
-
-                  <td className="px-6 py-4 text-center">
-                    <span
-                      className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                        n.read
-                          ? "bg-gray-200 text-gray-700"
-                          : "bg-green-100 text-green-700"
-                      }`}
-                    >
-                      {n.read ? "Read" : "Unread"}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td className="px-6 py-4 text-center relative">
-                    <button
-                      className="p-2 rounded-full hover:bg-gray-100"
-                      onClick={() => toggleDropdown(n._id)}
-                    >
-                      <MoreVertical size={18} />
-                    </button>
-
-                    {openDropdown === n._id && (
-                      <div className="absolute right-8 mt-2 bg-white rounded-xl border shadow-xl w-44 overflow-hidden z-50 animate-fadeIn">
-                        {!n.read && (
-                          <button
-                            onClick={() => markAsRead(n._id)}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-green-600 font-medium"
-                          >
-                            Mark as Read
-                          </button>
-                        )}
-                        {n.userId && (
-                          <button
-                            onClick={() => viewProfile(n.userId!)}
-                            className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-blue-600 font-medium"
-                          >
-                            View Profile
-                          </button>
-                        )}
-                        <button
-                          onClick={() => deleteNotification(n._id)}
-                          className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-gray-600 font-medium"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage(prev => prev - 1)}
+            className="px-3 py-2 bg-gray-200 rounded-xl disabled:opacity-40">
+            Prev
+          </button>
+          <span className="font-semibold px-3 py-2">
+            Page {page} / {totalPages}
+          </span>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage(prev => prev + 1)}
+            className="px-3 py-2 bg-gray-200 rounded-xl disabled:opacity-40">
+            Next
+          </button>
         </div>
       )}
-    </div>
 
-    {/* ---------- Profile Modal ---------- */}
-    {showProfileModal && selectedProfile && (
-      <div className="fixed inset-0 bg-black/40 flex items-center justify-center px-3 z-50">
-        <div className="bg-white rounded-2xl p-6 w-[420px] max-h-[92vh] overflow-y-auto shadow-2xl animate-scaleIn">
-          <h2 className="text-xl font-bold text-gray-700 mb-4">
-            Nutritionist Profile
-          </h2>
+      {/* Profile Modal */}
+      {showProfileModal && selectedProfile && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+            <button className="absolute top-4 right-4" onClick={() => setShowProfileModal(false)}>
+              <X />
+            </button>
 
-          <div className="space-y-2 text-gray-700 text-sm">
-            <p><strong>Name:</strong> {selectedProfile.fullName}</p>
-            <p><strong>Email:</strong> {selectedProfile.email}</p>
-            <p><strong>Phone:</strong> {selectedProfile.phone}</p>
-            <p><strong>Status:</strong> {selectedProfile.status}</p>
-            {selectedProfile.qualifications && (
-              <p><strong>Qualifications:</strong> {selectedProfile.qualifications.join(", ")}</p>
+            <h2 className="text-2xl font-bold mb-3">Nutritionist Profile</h2>
+
+            <p><strong>Name:</strong> {basicUser?.fullName}</p>
+            <p><strong>Email:</strong> {basicUser?.email}</p>
+            <p><strong>Phone:</strong> {basicUser?.phone}</p>
+
+            {selectedProfile.bio && (
+              <p className="mt-3"><strong>Bio:</strong> <br />{selectedProfile.bio}</p>
             )}
-            {selectedProfile.specializations && (
-              <p><strong>Specializations:</strong> {selectedProfile.specializations.join(", ")}</p>
-            )}
-            {selectedProfile.experiences && (
-              <div>
-                <strong>Experience:</strong>
-                <ul className="list-disc ml-6">
-                  {selectedProfile.experiences.map((exp, i) => (
-                    <li key={i}>{exp.role} at {exp.organization} ({exp.years} yrs)</li>
-                  ))}
+
+            {(selectedProfile.qualifications?.length ?? 0) > 0 && (
+              <div className="mt-3">
+                <strong>Qualifications:</strong>
+                <ul className="ml-5 list-disc">
+                  {selectedProfile.qualifications?.map((q: string, i: number) => <li key={i}>{q}</li>)}
                 </ul>
               </div>
             )}
-            {selectedProfile.bio && <p><strong>Bio:</strong> {selectedProfile.bio}</p>}
+
             {selectedProfile.cv && (
-              <p>
-                <strong>CV:</strong>{" "}
-                <a className="text-blue-600 underline" href={selectedProfile.cv} target="_blank">
-                  View CV
-                </a>
-              </p>
+              <p className="mt-3"><strong>CV:</strong> <a className="text-blue-600 underline" href={selectedProfile.cv} target="_blank">View CV</a></p>
             )}
-          </div>
 
-          <textarea
-            className="w-full border rounded-xl px-3 py-2 mt-4 text-sm"
-            placeholder="Enter rejection reason"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-          ></textarea>
+            <textarea
+              className="w-full border rounded-xl p-2 mt-4"
+              placeholder="Rejection reason..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+            />
 
-          <div className="flex justify-end gap-2 mt-5">
-            <button
-              onClick={() => setShowProfileModal(false)}
-              className="px-4 py-2 bg-gray-200 rounded-xl font-medium"
-            >
-              Close
-            </button>
-            <button
-              onClick={() => approveNutritionist(selectedProfile.userId!)}
-              className="px-4 py-2 bg-green-600 text-white rounded-xl font-medium"
-            >
-              Approve
-            </button>
-            <button
-              onClick={() => rejectNutritionist(selectedProfile.userId!)}
-              className="px-4 py-2 bg-red-600 text-white rounded-xl font-medium"
-            >
-              Reject
-            </button>
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => approveNutritionist(selectedProfile.userId)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl">Approve</button>
+              <button onClick={() => rejectNutritionist(selectedProfile.userId)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl">Reject</button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
 }

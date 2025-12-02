@@ -1,21 +1,13 @@
-"use client";
-
-import React, { useEffect } from "react";
+import React from "react";
 import NutriWiseLanding from "./(public)/page";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useRouter } from "next/navigation";
 
+export const metadata = {
+  title: "NutriWise – Landing Page",
+};
 
 const Page = () => {
-  const router = useRouter();
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.push("/home");
-    }
-  }, [router]);
-
   return (
     <div>
       <NutriWiseLanding />

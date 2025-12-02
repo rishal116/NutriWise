@@ -1,9 +1,17 @@
-
 export interface NotificationDto {
   title: string;
   message: string;
   type: "info" | "success" | "warning" | "error";
-  userId: string;     // the user/admin who will receive the notification
-  senderId?: string;  // optional: who triggered the notification
-  read?: boolean;     // default false
+  recipientType: "user" | "admin";
+  receiverId?: string;
+  senderId?: string;
+  read?: boolean;
+}
+
+export interface NotificationQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  receiverId?: string;
+  recipientType?: string;
 }

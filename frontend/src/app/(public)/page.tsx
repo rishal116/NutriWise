@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 
 export default function NutriWiseLanding() {
   const router = useRouter();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.push("/home");
+    }
+  }, [router]);
 
   const [activeSection, setActiveSection] = useState("home");
   const [scrolled, setScrolled] = useState(false);

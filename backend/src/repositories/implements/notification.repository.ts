@@ -1,43 +1,50 @@
-import { Model, Types } from "mongoose";
+import { Model } from "mongoose";
 import { BaseRepository } from "../base.repository";
-import { IAdminNotificationRepository } from "../interfaces/INotificationRepository";
 import { INotification, NotificationModel } from "../../models/notification.model";
-import { NotificationDto } from "../../dtos/common/notification.dto";
+import { NotificationDto, NotificationQuery } from "../../dtos/common/notification.dto";
+import { INotificationRepository } from "../interfaces/INotificationRepository";
 
-export class AdminNotificationRepository
-  extends BaseRepository<INotification>
-  implements IAdminNotificationRepository
-{
+export class NotificationRepository extends BaseRepository<INotification> implements INotificationRepository {
   constructor(model: Model<INotification> = NotificationModel) {
     super(model);
   }
-async createNotification(data: NotificationDto): Promise<void> {
+
+  async createNotification(data: NotificationDto): Promise<void> {
     await this._model.create(data);
   }
-
-  async getAllNotifications() {
-    return this._model.find();
+  
+  async getNotifications(query: NotificationQuery) {
+    const { page = 1, limit = 10, search = "", receiverId, recipientType } = query;
+    const filter: any = {};
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { message: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (receiverId) filter.receiverId = receiverId;
+    if (recipientType) filter.recipientType = recipientType;
+    const total = await this._model.countDocuments(filter);
+    const data = await this._model
+    .find(filter)
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+    return { data, total };
   }
 
   async markNotificationRead(id: string) {
     await this._model.findByIdAndUpdate(id, { read: true });
   }
 
+  async markAllRead(receiverId: string, recipientType: "user" | "admin") {
+    await this._model.updateMany(
+      { receiverId, recipientType },
+      { read: true }
+    );
+  }
+
   async deleteNotification(id: string) {
     await this._model.findByIdAndDelete(id);
-  }
-
-  async approveNutritionist(userId: string) {
-    await this._model.db.collection("users").updateOne(
-      { _id: new Types.ObjectId(userId) },
-      { $set: { nutritionistStatus: "approved" } }
-    );
-  }
-
-  async rejectNutritionist(userId: string, reason: string) {
-    await this._model.db.collection("users").updateOne(
-      { _id: new Types.ObjectId(userId) },
-      { $set: { nutritionistStatus: "rejected", rejectionReason: reason } }
-    );
   }
 }

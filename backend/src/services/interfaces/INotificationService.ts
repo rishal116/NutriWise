@@ -1,7 +1,11 @@
-export interface IAdminNotificationService {
-  getAllNotifications(): Promise<any[]>;
+export interface INotificationService {
+  getNotifications( receiverId: string, recipientType:string, page: number, limit: number, search?: string ): Promise<{
+    notifications: any[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  }>;
   markNotificationRead(notificationId: string): Promise<void>;
+  markAllNotificationsRead( receiverId: string, recipientType: "user" | "admin" ): Promise<void>;
   deleteNotification(notificationId: string): Promise<void>;
-  approveNutritionist(userId: string): Promise<void>;
-  rejectNutritionist(userId: string, reason: string): Promise<void>;
 }

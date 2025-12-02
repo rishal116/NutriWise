@@ -1,8 +1,10 @@
 import { api } from "@/lib/axios/api";
 
 export const adminNotificationService = {
-  getAllNotifications: async () => {
-    const res = await api.get(`/admin/notifications`);
+  getAllNotifications: async (page = 1, limit = 10, search = "") => {
+    const res = await api.get(`/admin/notifications`, {
+      params: { page, limit, search }
+    });
     return res.data;
   },
 
@@ -25,11 +27,9 @@ export const adminNotificationService = {
     const res = await api.patch(`/admin/nutritionist/reject/${userId}`, { reason });
     return res.data;
   },
-  
-  
+
   getNutritionistProfile: async (userId: string) => {
-    console.log(userId)
     const res = await api.get(`/admin/nutritionist/${userId}`);
     return res.data;
-  },
+  }
 };

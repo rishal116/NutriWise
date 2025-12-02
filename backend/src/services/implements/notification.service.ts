@@ -1,53 +1,43 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../types/types";
-import { IAdminNotificationService } from "../interfaces/INotificationService";
-import { IAdminNotificationRepository } from "../../repositories/interfaces/INotificationRepository";
-import { IUserRepository } from "../../repositories/interfaces/user/IUserRepository";
-import { NotificationDto } from "../../dtos/common/notification.dto";
+import { INotificationService } from "../interfaces/INotificationService";
+import { INotificationRepository } from "../../repositories/interfaces/INotificationRepository";
 
 @injectable()
-export class AdminNotificationService implements IAdminNotificationService {
+export class NotificationService implements INotificationService {
   constructor(
-    @inject(TYPES.IAdminNotificationRepository)
-    private _notificationRepo: IAdminNotificationRepository,
-
-    @inject(TYPES.IUserRepository)
-    private _userRepo: IUserRepository
+    @inject(TYPES.INotificationRepository)
+    private _notificationRepo: INotificationRepository
   ) {}
-
-  async getAllNotifications(): Promise<any[]> {
-    return this._notificationRepo.getAllNotifications(); 
-  }
-
-  async markNotificationRead(notificationId: string): Promise<void> {
-    await this._notificationRepo.markNotificationRead(notificationId);
-  }
-
-  async deleteNotification(notificationId: string): Promise<void> {
-    await this._notificationRepo.deleteNotification(notificationId);
-  }
-
-  async approveNutritionist(userId: string): Promise<void> {
-    await this._userRepo.updateById(userId, { nutritionistStatus: "approved" });
-
-    const notification: NotificationDto = {
-      title: "Your profile has been approved",
-      message: "Congratulations! Your nutritionist profile is now approved.",
-      type: "success",
-      userId,      
+  
+  async getNotifications( receiverId: string, recipientType:string, page: number, limit: number, search?: string ): 
+  Promise<{ notifications: any[]; total: number; currentPage: number; totalPages: number }> {
+    const result = await this._notificationRepo.getNotifications({
+      receiverId,
+      recipientType,
+      page,
+      limit,
+      search,
+    });
+    const { data, total } = result;
+    const totalPages = Math.ceil(total / limit);
+    return {
+      notifications: data,
+      total,
+      currentPage: page,
+      totalPages,
     };
-    await this._notificationRepo.createNotification(notification);
   }
 
-  async rejectNutritionist(userId: string, reason: string): Promise<void> {
-    await this._userRepo.updateById(userId, { nutritionistStatus: "rejected" });
+  async markNotificationRead(id: string) {
+    await this._notificationRepo.markNotificationRead(id);
+  }
 
-    const notification: NotificationDto = {
-      title: "Your profile has been rejected",
-      message: `Your nutritionist profile was rejected. Reason: ${reason}`,
-      type: "error",
-      userId,
-    };
-    await this._notificationRepo.createNotification(notification);
+  async markAllNotificationsRead(receiverId: string, recipientType: "user" | "admin") {
+    await this._notificationRepo.markAllRead(receiverId, recipientType);
+  }
+
+  async deleteNotification(id: string) {
+    await this._notificationRepo.deleteNotification(id);
   }
 }

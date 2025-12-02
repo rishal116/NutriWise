@@ -38,10 +38,10 @@ import { AdminRepository } from "../repositories/implements/admin/admin.reposito
 
 import { IAdminNotificationController } from "../controllers/interfaces/admin/IAdminNotificationController";
 import { AdminNotificationController } from "../controllers/implementations/admin/adminNotification.controller";
-import { IAdminNotificationService } from "../services/interfaces/INotificationService";
-import { AdminNotificationService } from "../services/implements/notification.service";
-import { IAdminNotificationRepository } from "../repositories/interfaces/INotificationRepository";
-import { AdminNotificationRepository } from "../repositories/implements/notification.repository";
+import { INotificationService } from "../services/interfaces/INotificationService";
+import { NotificationService } from "../services/implements/notification.service";
+import { INotificationRepository } from "../repositories/interfaces/INotificationRepository";
+import { NotificationRepository } from "../repositories/implements/notification.repository";
 
 // ---------------- NUTRITIONIST ----------------
 import { INutritionistAuthController } from "../controllers/interfaces/nutritionist/INutritionistAuthController";
@@ -74,8 +74,8 @@ container.bind<IAdminAuthService>(TYPES.IAdminAuthService).to(AdminAuthService);
 container.bind<IAdminRepository>(TYPES.IAdminRepository).to(AdminRepository);
 
 container.bind<IAdminNotificationController>(TYPES.IAdminNotificationController).to(AdminNotificationController);
-container.bind<IAdminNotificationService>(TYPES.IAdminNotificationService).to(AdminNotificationService);
-container.bind<IAdminNotificationRepository>(TYPES.IAdminNotificationRepository).to(AdminNotificationRepository);
+container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService);
+container.bind<INotificationRepository>(TYPES.INotificationRepository).to(NotificationRepository);
 
 // -------- NUTRITIONIST BINDINGS --------
 container.bind<INutritionistAuthController>(TYPES.INutritionistAuthController).to(NutritionistAuthController);

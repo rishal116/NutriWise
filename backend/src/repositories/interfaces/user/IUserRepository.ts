@@ -17,7 +17,6 @@ export interface IUserRepository {
   unblockUser(userId: string): Promise<void>;
   findByGoogleId(googleId: string): Promise<IUser | null>;
   updateById(id: string, data: Partial<IUser>): Promise<IUser | null>;
-
   setResetToken(email: string, token: string, expires: Date): Promise<void>;
   findByResetToken(token: string): Promise<IUser | null>;
 }

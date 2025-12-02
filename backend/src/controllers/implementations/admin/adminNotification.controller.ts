@@ -2,20 +2,33 @@ import { injectable, inject } from "inversify";
 import { Request, Response } from "express";
 import { TYPES } from "../../../types/types";
 import { IAdminNotificationController } from "../../interfaces/admin/IAdminNotificationController";
-import { IAdminNotificationService } from "../../../services/interfaces/INotificationService";
-import {asyncHandler} from "../../../utils/asyncHandler";
+import { INotificationService } from "../../../services/interfaces/INotificationService";
+import { asyncHandler } from "../../../utils/asyncHandler";
 
 @injectable()
 export class AdminNotificationController implements IAdminNotificationController {
   constructor(
-    @inject(TYPES.IAdminNotificationService)
-    private _adminNotificationService: IAdminNotificationService
+    @inject(TYPES.INotificationService)
+    private _adminNotificationService: INotificationService,
   ) {}
 
+
   getAllNotifications = asyncHandler(async (req: Request, res: Response) => {
-    const notifications = await this._adminNotificationService.getAllNotifications();
-    res.status(200).json({ success: true, notifications });
+    const receiverId = process.env.ADMIN_ID!;
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const recipientType = "admin"
+    const result = await this._adminNotificationService.getNotifications(
+      receiverId!,
+      recipientType,
+      page,
+      limit,
+      search
+    );
+    res.status(200).json({ success: true, ...result });
   });
+
 
   markAsRead = asyncHandler(async (req: Request, res: Response) => {
     const id = req.params.id;
@@ -23,26 +36,20 @@ export class AdminNotificationController implements IAdminNotificationController
     res.status(200).json({ success: true, message: "Notification marked as read" });
   });
 
+  
+  markAllAsRead = asyncHandler(async (req: Request, res: Response) => {
+    const receiverId = req.user?.userId;
+    const recipientType = "admin"
+    await this._adminNotificationService.markAllNotificationsRead(receiverId!,recipientType);
+    res.status(200).json({ success: true, message: "All notifications marked as read" });
+  });
+  
+  
   deleteNotification = asyncHandler(async (req: Request, res: Response) => {
     const id = req.params.id;
     await this._adminNotificationService.deleteNotification(id);
     res.status(200).json({ success: true, message: "Notification deleted" });
   });
 
-  approveNutritionist = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.params.userId;
-    await this._adminNotificationService.approveNutritionist(userId);
-    res.status(200).json({ success: true, message: "Nutritionist approved" });
-  });
 
-  rejectNutritionist = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.params.userId;
-    const { reason } = req.body;
-    if (!reason) {
-      res.status(400).json({ success: false, message: "Rejection reason is required" });
-      return;
-    }
-    await this._adminNotificationService.rejectNutritionist(userId, reason);
-    res.status(200).json({ success: true, message: "Nutritionist rejected" });
-  });
 }
