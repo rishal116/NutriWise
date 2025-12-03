@@ -52,7 +52,6 @@ export default function NotificationsPage({ initialData }: { initialData: any })
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<NutritionistProfile | null>(null);
   const [rejectReason, setRejectReason] = useState("");
-
   const [filter, setFilter] = useState<"all" | "unread">("all");
 
   const fetchNotifications = async () => {

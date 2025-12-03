@@ -1181,3 +1181,61 @@
 2025-12-03T09:04:28.404Z [info]: Admin fetched nutritionists list | total=1
 2025-12-03T09:04:28.410Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
 2025-12-03T09:04:28.419Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T10:32:57.309Z [info]: User logged out
+2025-12-03T10:34:58.283Z [info]: User logged out
+2025-12-03T10:35:49.808Z [info]: User registration attempt - Email: gijomeg442@httpsu.com
+2025-12-03T10:35:49.819Z [info]: Signup request initiated for gijomeg442@httpsu.com
+2025-12-03T10:35:52.621Z [info]: OTP generated and sent to gijomeg442@httpsu.com
+2025-12-03T10:35:52.623Z [info]: OTP sent successfully for gijomeg442@httpsu.com
+2025-12-03T10:36:59.613Z [info]: User registration attempt - Email: gijomeg442@httpsu.com
+2025-12-03T10:36:59.614Z [info]: Signup request initiated for gijomeg442@httpsu.com
+2025-12-03T10:37:02.394Z [info]: OTP generated and sent to gijomeg442@httpsu.com
+2025-12-03T10:37:02.396Z [info]: OTP sent successfully for gijomeg442@httpsu.com
+2025-12-03T10:37:18.733Z [info]: OTP verification attempt - Email: gijomeg442@httpsu.com -OTP 546697
+2025-12-03T10:37:18.737Z [info]: Verifying OTP for gijomeg442@httpsu.com
+2025-12-03T10:37:18.789Z [info]: OTP verified successfully for gijomeg442@httpsu.com
+2025-12-03T10:37:18.905Z [info]: User verified and registered successfully: gijomeg442@httpsu.com
+2025-12-03T10:37:29.551Z [info]: User logged out
+2025-12-03T10:38:16.340Z [info]: User registration attempt - Email: togalog924@httpsu.com
+2025-12-03T10:38:16.341Z [info]: Signup request initiated for togalog924@httpsu.com
+2025-12-03T10:38:19.012Z [info]: OTP generated and sent to togalog924@httpsu.com
+2025-12-03T10:38:19.012Z [info]: OTP sent successfully for togalog924@httpsu.com
+2025-12-03T10:38:37.990Z [info]: OTP verification attempt - Email: togalog924@httpsu.com -OTP 808592
+2025-12-03T10:38:37.991Z [info]: Verifying OTP for togalog924@httpsu.com
+2025-12-03T10:38:37.996Z [info]: OTP verified successfully for togalog924@httpsu.com
+2025-12-03T10:38:38.087Z [info]: User verified and registered successfully: togalog924@httpsu.com
+2025-12-03T10:39:59.285Z [info]: Submit details attempt - Nutritionist ID: 6930132edbe243b071d310e9
+2025-12-03T10:40:33.001Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T10:40:33.009Z [info]: Admin successfully fetched users list | total=3
+2025-12-03T10:40:33.085Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T10:40:33.091Z [info]: Admin successfully fetched users list | total=3
+2025-12-03T10:40:36.540Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T10:40:36.545Z [info]: Admin fetched nutritionists list | total=2
+2025-12-03T10:40:36.623Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T10:40:36.638Z [info]: Admin fetched nutritionists list | total=2
+2025-12-03T10:40:36.653Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T10:40:36.665Z [info]: Admin fetched nutritionists list | total=2
+2025-12-03T10:40:39.568Z [info]: Admin fetching nutritionists | page=1, limit=5, search=t
+2025-12-03T10:40:39.583Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T10:40:39.776Z [info]: Admin fetching nutritionists | page=1, limit=5, search=ta
+2025-12-03T10:40:39.783Z [info]: Admin fetched nutritionists list | total=0
+2025-12-03T10:40:40.214Z [info]: Admin fetching nutritionists | page=1, limit=5, search=t
+2025-12-03T10:40:40.223Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T10:40:40.858Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T10:40:40.862Z [info]: Admin fetched nutritionists list | total=2
+2025-12-03T10:40:42.756Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T10:40:42.761Z [info]: Admin successfully fetched users list | total=3
+2025-12-03T10:40:42.811Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T10:40:42.817Z [info]: Admin successfully fetched users list | total=3
+2025-12-03T10:41:04.022Z [info]: Fetching nutritionist profile | ID=6930132edbe243b071d310e9
+2025-12-03T10:41:04.027Z [info]: Nutritionist profile fetched successfully | ID=6930132edbe243b071d310e9
+2025-12-03T10:41:07.142Z [info]: Admin approving nutritionist | ID=6930132edbe243b071d310e9
+2025-12-03T10:41:07.146Z [info]: Nutritionist approved | ID=6930132edbe243b071d310e9
+2025-12-03T10:44:41.072Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-03T10:44:41.073Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-03T10:44:41.097Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-03T10:44:41.098Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-03T11:05:12.853Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-03T11:05:12.854Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-03T11:05:12.874Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-03T11:05:12.875Z [info]: Fetching profile for user: 6930132edbe243b071d310e9

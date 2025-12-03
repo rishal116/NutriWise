@@ -1,3 +1,6 @@
+export const metadata = {
+  title: "NutriWise – Admin Dashboard",
+};
 
 export default function AdminDashboard() {
   return (

@@ -33,6 +33,8 @@ export default function NutritionistTable({ initialData }: NutritionistTableProp
   const perPage = initialData.limit;
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
+  
+
   useEffect(() => {
     const fetchNutritionists = async () => {
       try {

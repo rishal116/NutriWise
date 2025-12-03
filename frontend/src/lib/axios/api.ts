@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { store } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
@@ -54,7 +53,7 @@ api.interceptors.response.use(
       } catch (err) {
         store.dispatch(logout());
         localStorage.clear();
-        window.location.href = "/hello"
+        window.location.href = "/"
         return Promise.reject(err);
       }
     }
