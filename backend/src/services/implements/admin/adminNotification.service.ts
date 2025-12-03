@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
-import { TYPES } from "../../types/types";
-import { INotificationService } from "../interfaces/INotificationService";
-import { INotificationRepository } from "../../repositories/interfaces/INotificationRepository";
+import { TYPES } from "../../../types/types";
+import { INotificationService } from "../../interfaces/admin/INotificationService";
+import { INotificationRepository } from "../../../repositories/interfaces/INotificationRepository";
 
 @injectable()
 export class NotificationService implements INotificationService {
@@ -35,9 +35,5 @@ export class NotificationService implements INotificationService {
 
   async markAllNotificationsRead(receiverId: string, recipientType: "user" | "admin") {
     await this._notificationRepo.markAllRead(receiverId, recipientType);
-  }
-
-  async deleteNotification(id: string) {
-    await this._notificationRepo.deleteNotification(id);
   }
 }

@@ -9,6 +9,7 @@ import { NotificationDto } from "../../../dtos/common/notification.dto";
 import { uploadToCloudinary, uploadMultipleToCloudinary } from "../../../utils/cloudinaryUploads";
 import { NutritionistDetailsUpdateDto } from "../../../dtos/nutritionist/NutritionistAuth.dto";
 import { INotificationRepository } from "../../../repositories/interfaces/INotificationRepository";
+import { NutritionistProfileDto } from "../../../dtos/nutritionist/nutritionistProfile";
 
 interface NutritionistFiles {
   cv?: Express.Multer.File[];
@@ -141,6 +142,7 @@ export class NutritionistAuthService implements INutritionistAuthService {
     };
     await this._notificationRepository.createNotification(notification);
   }
-
+  
+ 
 
 }

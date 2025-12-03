@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Search, MoreVertical, User, Lock, Unlock } from "lucide-react";
-import { adminUserService } from "@/services/admin/Adminuser.service";
+import { adminUserService } from "@/services/admin/adminUser.service";
 import { toast } from "react-hot-toast";
 
 interface NutritionistDTO {

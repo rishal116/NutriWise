@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import { Request, Response } from "express";
 import { TYPES } from "../../../types/types";
 import { IAdminNotificationController } from "../../interfaces/admin/IAdminNotificationController";
-import { INotificationService } from "../../../services/interfaces/INotificationService";
+import { INotificationService } from "../../../services/interfaces/admin/INotificationService";
 import { asyncHandler } from "../../../utils/asyncHandler";
 
 @injectable()
@@ -43,13 +43,6 @@ export class AdminNotificationController implements IAdminNotificationController
     await this._adminNotificationService.markAllNotificationsRead(receiverId!,recipientType);
     res.status(200).json({ success: true, message: "All notifications marked as read" });
   });
-  
-  
-  deleteNotification = asyncHandler(async (req: Request, res: Response) => {
-    const id = req.params.id;
-    await this._adminNotificationService.deleteNotification(id);
-    res.status(200).json({ success: true, message: "Notification deleted" });
-  });
 
-
+  
 }

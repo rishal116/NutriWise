@@ -14,7 +14,6 @@ export const adminUserService = {
     const params: Record<string, any> = { page, limit };
     if (search) params.search = search;
     const response = await server.get(AdminRoutes.NUTRITIONISTS, { params });
-    console.log(response);
     return response.data;
   },
 

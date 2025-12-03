@@ -1,5 +1,5 @@
 import { Model } from "mongoose";
-import { BaseRepository } from "../base.repository";
+import { BaseRepository } from "./base.repository";
 import { INotification, NotificationModel } from "../../models/notification.model";
 import { NotificationDto, NotificationQuery } from "../../dtos/common/notification.dto";
 import { INotificationRepository } from "../interfaces/INotificationRepository";

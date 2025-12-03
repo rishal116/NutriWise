@@ -27,23 +27,27 @@ export class NutritionistService implements INutritionistService {
   ) {}
 
   async getAll(): Promise<NutritionistDto[]> {
-    logger.info("Fetching all nutritionists");
-    const users = await this._userRepository.getAllNutritionists();
-    
-    const result: NutritionistDto[] = await Promise.all(
-      users.map(async (user) => {
-        const details = await this._nutritionistDetailsRepository.findByUserId(user._id!.toString());
-        return {
-          id: user._id!.toString(),
-          name: user.fullName || "Unknown",
-          expertise: details?.specializations?.join(", ") || "General",
-          rating: details?.videoCallRate || 0,
-          location: details?.bio || "",
-        };
-      })
-    );
-    return result;
-  }
+  logger.info("Fetching all nutritionists");
+  const users = (await this._userRepository.getAllNutritionists()) || [];
+  const filteredUsers = users.filter(
+    user => user.nutritionistStatus === "approved" && !user.blocked
+  );
+
+  const result: NutritionistDto[] = await Promise.all(
+    filteredUsers.map(async (user) => {
+      const details = await this._nutritionistDetailsRepository.findByUserId(user._id!.toString());
+      return {
+        id: user._id!.toString(),
+        name: user.fullName || "Unknown",
+        expertise: details?.specializations?.join(", ") || "General",
+        rating: details?.videoCallRate || 0,
+        location: details?.bio || "",
+      };
+    })
+  );
+
+  return result;
+}
 
   async getById(id: string): Promise<NutritionistDto> {
     logger.info(`Fetching nutritionist by ID: ${id}`);

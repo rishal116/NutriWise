@@ -44,7 +44,7 @@ export class UserProfileService implements IUserProfileService {
       profileImage: data.profileImage ?? user.profileImage,
     };
 
-    const updatedUser = await this._userRepository.updateUser(userId, updatedProfile);
+    const updatedUser = await this._userRepository.updateById(userId, updatedProfile);
 
     return {
       fullName: updatedUser!.fullName,

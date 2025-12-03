@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { BaseRepository } from "../../base.repository";
+import { BaseRepository } from "../base.repository";
 import { INutritionistDetailsRepository } from "../../interfaces/nutritionist/INutritionistDetailsRepository";
 import { NutritionistDetailsModel, INutritionistDetails } from "../../../models/nutritionistDetails.model";
 import { Types } from "mongoose";

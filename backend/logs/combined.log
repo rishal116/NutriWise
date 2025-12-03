@@ -1042,3 +1042,142 @@
 2025-11-30T05:10:10.678Z [info]: User logged out
 2025-12-01T05:16:44.112Z [info]: Google login attempt - Role: nutritionist
 2025-12-01T05:19:16.303Z [info]: Submit details attempt - Nutritionist ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:18:47.174Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:18:51.441Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:20:30.215Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:21:48.658Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:22:30.276Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:23:12.634Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:27:09.601Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:28:20.638Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:31:10.015Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:31:19.363Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:35:42.701Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:45:38.641Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:45:52.789Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T06:46:10.385Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T07:00:19.984Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T07:41:59.449Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T07:42:05.513Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T07:44:30.319Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T07:44:34.861Z [info]: Fetching nutritionist profile - ID: 692d24bcc91cc4c5901157cc
+2025-12-02T07:46:45.888Z [info]: Fetching all nutritionists
+2025-12-02T07:46:45.889Z [info]: Fetching all nutritionists
+2025-12-02T07:47:27.424Z [info]: Fetching all nutritionists
+2025-12-02T07:47:27.425Z [info]: Fetching all nutritionists
+2025-12-02T07:47:30.184Z [info]: Fetching all nutritionists
+2025-12-02T07:47:30.185Z [info]: Fetching all nutritionists
+2025-12-02T07:47:32.110Z [info]: Fetching all nutritionists
+2025-12-02T07:47:32.110Z [info]: Fetching all nutritionists
+2025-12-02T07:48:10.132Z [info]: Fetching all nutritionists
+2025-12-02T07:48:10.133Z [info]: Fetching all nutritionists
+2025-12-02T07:48:18.167Z [info]: Fetching all nutritionists
+2025-12-02T07:48:18.167Z [info]: Fetching all nutritionists
+2025-12-02T07:48:42.155Z [info]: Fetching all nutritionists
+2025-12-02T07:48:42.156Z [info]: Fetching all nutritionists
+2025-12-02T07:48:44.799Z [info]: Fetching all nutritionists
+2025-12-02T07:48:44.800Z [info]: Fetching all nutritionists
+2025-12-02T07:48:58.335Z [info]: Fetching all nutritionists
+2025-12-02T07:48:58.336Z [info]: Fetching all nutritionists
+2025-12-02T07:49:00.726Z [info]: Fetching all nutritionists
+2025-12-02T07:49:00.726Z [info]: Fetching all nutritionists
+2025-12-02T07:49:30.788Z [info]: Fetching all nutritionists
+2025-12-02T07:49:30.789Z [info]: Fetching all nutritionists
+2025-12-02T07:49:33.617Z [info]: Fetching all nutritionists
+2025-12-02T07:49:33.617Z [info]: Fetching all nutritionists
+2025-12-02T07:49:37.122Z [info]: Fetching all nutritionists
+2025-12-02T07:49:37.123Z [info]: Fetching all nutritionists
+2025-12-02T07:49:40.903Z [info]: Fetching all nutritionists
+2025-12-02T07:49:40.903Z [info]: Fetching all nutritionists
+2025-12-03T08:50:48.185Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:50:48.382Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:48.487Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:50:48.493Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:51.469Z [info]: Admin fetching users | page=1, limit=5, search=u
+2025-12-03T08:50:51.532Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:51.772Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:50:51.776Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:51.976Z [info]: Admin fetching users | page=1, limit=5, search=r
+2025-12-03T08:50:51.987Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:52.223Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:50:52.232Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:52.305Z [info]: Admin fetching users | page=1, limit=5, search=r
+2025-12-03T08:50:52.311Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:52.535Z [info]: Admin fetching users | page=1, limit=5, search=rr
+2025-12-03T08:50:52.542Z [info]: Admin successfully fetched users list | total=0
+2025-12-03T08:50:52.599Z [info]: Admin fetching users | page=1, limit=5, search=rre
+2025-12-03T08:50:52.605Z [info]: Admin successfully fetched users list | total=0
+2025-12-03T08:50:53.305Z [info]: Admin fetching users | page=1, limit=5, search=rr
+2025-12-03T08:50:53.310Z [info]: Admin successfully fetched users list | total=0
+2025-12-03T08:50:53.810Z [info]: Admin fetching users | page=1, limit=5, search=r
+2025-12-03T08:50:53.816Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:53.848Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:50:53.854Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:56.186Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:50:56.196Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:50:56.288Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:50:56.302Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:50:56.325Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:50:56.338Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:50:58.763Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:50:58.770Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:50:58.836Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:50:58.843Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:51:02.717Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:51:02.721Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:51:57.789Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:51:57.795Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:51:57.857Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:51:57.866Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:51:59.034Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:51:59.039Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:51:59.144Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:51:59.152Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:51:59.156Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:51:59.166Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:52:03.549Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:52:03.554Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:52:03.584Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T08:52:03.592Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T08:52:05.006Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:52:05.013Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:52:05.085Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:52:05.094Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:52:05.098Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:52:05.107Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:56:55.135Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:56:55.146Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:56:55.579Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:56:55.586Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:56:56.954Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:56:56.962Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:56:57.126Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:56:57.137Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:57:21.994Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:57:22.004Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:58:14.757Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:58:14.775Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:58:15.268Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:58:15.278Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:58:18.535Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:58:18.540Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T08:58:19.903Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T08:58:19.912Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T09:04:21.065Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T09:04:21.076Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T09:04:21.558Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T09:04:21.564Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T09:04:23.969Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T09:04:23.977Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T09:04:24.054Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T09:04:24.062Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T09:04:27.492Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T09:04:27.497Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T09:04:27.529Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-03T09:04:27.540Z [info]: Admin successfully fetched users list | total=1
+2025-12-03T09:04:28.358Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T09:04:28.364Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T09:04:28.395Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T09:04:28.404Z [info]: Admin fetched nutritionists list | total=1
+2025-12-03T09:04:28.410Z [info]: Admin fetching nutritionists | page=1, limit=5, search=none
+2025-12-03T09:04:28.419Z [info]: Admin fetched nutritionists list | total=1

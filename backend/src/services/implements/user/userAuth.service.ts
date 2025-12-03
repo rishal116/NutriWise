@@ -64,7 +64,7 @@ export class UserAuthService implements IUserAuthService {
       role: tempUser.role,
     };
 
-    const newUser = await this._userRepository.createUser(userData);
+    const newUser = await this._userRepository.create(userData);
     logger.info(`User verified and registered successfully: ${email}`);
     const { accessToken, refreshToken } = generateTokens(newUser._id!.toString(), newUser.role || "client");
     delete req.session.tempUser
@@ -120,7 +120,7 @@ export class UserAuthService implements IUserAuthService {
     if (!tokenPayload) throw new Error("Invalid Google token");
     let user = await this._userRepository.findByGoogleId(tokenPayload.sub!);
     if (!user) {
-      user = await this._userRepository.createUser({
+      user = await this._userRepository.create({
         fullName: tokenPayload.name || "",
         email: tokenPayload.email || "",
         googleId: tokenPayload.sub!,

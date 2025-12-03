@@ -1,5 +1,5 @@
 import NutritionistTable from "@/components/admin/NutritionistTable";
-import { adminUserService } from "@/services/admin/Adminuser.service";
+import { adminUserService } from "@/services/admin/adminUser.service";
 
 export default async function NutritionistsPage() {
   const response = await adminUserService.getAllNutritionists(1, 5);

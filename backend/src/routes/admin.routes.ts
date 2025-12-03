@@ -2,35 +2,34 @@ import { Router } from "express";
 import { container } from "../configs/inversify";
 import { TYPES } from "../types/types";
 import { IAdminAuthController } from "../controllers/interfaces/admin/IAdminAuthController";
-import { IAdminUsersController } from "../controllers/interfaces/admin/IAdminUsersController";
+import { IAdminClientController } from "../controllers/interfaces/admin/IAdminClientController";
 import {IAdminNotificationController} from "../controllers/interfaces/admin/IAdminNotificationController"
 import { INutritionistAuthController } from "../controllers/interfaces/nutritionist/INutritionistAuthController";
+import { IAdminNutritionistController } from "../controllers/interfaces/admin/IAdminNutritionistController";
 
 const router = Router();
 const adminAuthController = container.get<IAdminAuthController>(TYPES.IAdminAuthController);
-const adminUsersController = container.get<IAdminUsersController>(TYPES.IAdminUsersController)
+const adminClientController = container.get<IAdminClientController>(TYPES.IAdminClientController)
+const adminNutritionistController = container.get<IAdminNutritionistController>(TYPES.IAdminNutritionistController)
 const adminNotificationController = container.get<IAdminNotificationController>(TYPES.IAdminNotificationController)
-const nutritionistAuth = container.get<INutritionistAuthController>(TYPES.INutritionistAuthController)
+
 
 router.post("/login",adminAuthController.login);
 router.post("/logout",adminAuthController.logout)
 
+router.get("/users",adminClientController.getAllUsers)
+router.patch("/block-user/:userId",adminClientController.blockUser);
+router.patch("/unblock-user/:userId",adminClientController.unblockUser)
 
+router.get("/nutritionists",adminNutritionistController.getAllNutritionist)
+router.patch("/nutritionist/approve/:userId",adminNutritionistController.approveNutritionist);
+router.patch("/nutritionist/reject/:userId",adminNutritionistController.rejectNutritionist);
+router.get("/nutritionist/:userId",adminNutritionistController.getNutritionistProfile);
 
-
-
-router.get("/users",adminUsersController.getAllUsers)
-router.get("/nutritionists",adminUsersController.getAllNutritionist)
-router.patch("/block-user/:userId",adminUsersController.blockUser);
-router.patch("/unblock-user/:userId",adminUsersController.unblockUser)
 
 
 router.get("/notifications", adminNotificationController.getAllNotifications);
 router.patch("/notifications/read/:id",adminNotificationController.markAsRead);
-router.delete("notifications/:id",adminNotificationController.deleteNotification);
-router.patch("/nutritionist/approve/:userId",nutritionistAuth.approveNutritionist);
-router.patch("/nutritionist/reject/:userId",nutritionistAuth.rejectNutritionist);
-router.get("/nutritionist/:userId", adminUsersController.getNutritionistDetails);
 
 export default router;
 

@@ -9,6 +9,8 @@ export const metadata = {
 export default async function NutritionistsPage() {
   const response = await nutritionistListService.getAll();
   const nutritionists = response.data;
+  console.log(nutritionists);
+  
 
   return (
     <div className="min-h-screen bg-green-50 py-10 px-6">

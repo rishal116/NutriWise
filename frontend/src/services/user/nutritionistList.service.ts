@@ -1,8 +1,11 @@
 import { server } from "@/lib/axios/server";
+import { api } from "@/lib/axios/api";
 
 export const nutritionistListService = {
   getAll: async () => {
-    const response = await server.get("/nutritionists");
+    const response = await server.get("/nutritionists")
+    console.log(response);
+    
     return response.data;
   },
 

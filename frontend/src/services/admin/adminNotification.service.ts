@@ -13,11 +13,6 @@ export const adminNotificationService = {
     return res.data;
   },
 
-  deleteNotification: async (notificationId: string) => {
-    const res = await api.delete(`/admin/notifications/${notificationId}`);
-    return res.data;
-  },
-
   approveNutritionist: async (userId: string) => {
     const res = await api.patch(`/admin/nutritionist/approve/${userId}`);
     return res.data;
@@ -30,6 +25,8 @@ export const adminNotificationService = {
 
   getNutritionistProfile: async (userId: string) => {
     const res = await api.get(`/admin/nutritionist/${userId}`);
+    console.log(res);
+    
     return res.data;
   }
 };

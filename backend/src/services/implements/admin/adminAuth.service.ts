@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { IAdminAuthService } from "../../interfaces/admin/IAdminAuthService";
-import { IAdminRepository } from "../../../repositories/interfaces/admin/IAdminRepository";
+import { IAdminAuthRepository } from "../../../repositories/interfaces/admin/IAdminAuthRepository";
 import { generateTokens } from "../../../utils/jwt";
 import { OtpModel } from "../../../models/otp.model";
 import { sendOtpEmail } from "../../../utils/sendOtp";
@@ -14,15 +14,15 @@ import { validateDto } from "../../../middlewares/validateDto.middleware";
 @injectable()
 export class AdminAuthService implements IAdminAuthService {
   constructor(
-    @inject(TYPES.IAdminRepository)
-    private _adminRepository: IAdminRepository
+    @inject(TYPES.IAdminAuthRepository)
+    private _adminAuthRepository: IAdminAuthRepository
   ) {}
 
   
   async login(dto: AdminLoginDto) {
     await validateDto(AdminLoginDto, dto);
     const { email, password } = dto;
-    const admin = await this._adminRepository.findByEmail(email);
+    const admin = await this._adminAuthRepository.findByEmail(email);
     if (!admin) throw new CustomError("Invalid credentials", 401);
     const valid = await bcrypt.compare(password, admin.password);
     if (!valid) throw new CustomError("Invalid credentials", 401);
@@ -33,7 +33,7 @@ export class AdminAuthService implements IAdminAuthService {
 
   async forgotPassword(dto: AdminForgotPasswordDto) {
     const { email } = dto;
-    const admin = await this._adminRepository.findByEmail(email!);
+    const admin = await this._adminAuthRepository.findByEmail(email!);
     if (!admin){
       throw new CustomError("Email not found", StatusCode.NOT_FOUND);
     }
@@ -47,4 +47,6 @@ export class AdminAuthService implements IAdminAuthService {
     await sendOtpEmail(email!, otpCode);
     return { message: "OTP sent to email" };
   }
+
+
 }

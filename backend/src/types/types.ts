@@ -1,5 +1,5 @@
 export const TYPES = {
-  // 🧩 User
+  //User
   IUserAuthController: Symbol.for("IUserAuthController"),
   IUserAuthService: Symbol.for("IUserAuthService"),
   IUserRepository: Symbol.for("IUserRepository"),
@@ -11,17 +11,30 @@ export const TYPES = {
   IUserProfileService: Symbol.for("IUserProfileService"),
 
 
-  // 🧑‍💼 Admin
-  IAdminUsersController: Symbol.for("IAdminUsersController"),
+  //Admin
   IAdminAuthController: Symbol.for("IAdminAuthController"),
-  IAdminUsersService: Symbol.for("IAdminUsersService"),
   IAdminAuthService: Symbol.for("IAdminAuthService"),
-  IAdminRepository: Symbol.for("IAdminRepository"),
+  IAdminAuthRepository: Symbol.for("IAdminRepository"),
+
+  IAdminNutritionistController : Symbol.for("IAdminNutritionistController"),
+  IAdminNutritionistService : Symbol.for("IAdminNutritionistService"),
+  IAdminNutritionistRepository : Symbol.for("IAdminNutritionistRepository"),
+
+  IAdminClientController : Symbol.for("IAdminClientController"),
+  IAdminClientService : Symbol.for("IAdminClientService"),
+  IAdminClientRepository : Symbol.for("IAdminClientRepository"),
+
+  
+  
   IAdminNotificationController:Symbol.for("IAdminNotificationController"),
   INotificationRepository:Symbol.for("INotificationRepository"),
   INotificationService:Symbol.for("INotificationService"),
 
-  // 🍎 Nutritionist
+
+
+
+  
+  //Nutritionist
   INutritionistAuthController: Symbol.for("INutritionistAuthController"),
   INutritionistAuthService: Symbol.for("INutritionistAuthService"),
   INutritionistDetailsRepository: Symbol.for("INutritionistDetailsRepository"),

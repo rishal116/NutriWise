@@ -1,5 +1,5 @@
 import UserTable from "@/components/admin/UserTable";
-import { adminUserService } from "@/services/admin/Adminuser.service";
+import { adminUserService } from "@/services/admin/adminUser.service";
 
 export const metadata = {
   title: "Admin – NutriWise User List",

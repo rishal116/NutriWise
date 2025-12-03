@@ -7,5 +7,4 @@ export interface INotificationService {
   }>;
   markNotificationRead(notificationId: string): Promise<void>;
   markAllNotificationsRead( receiverId: string, recipientType: "user" | "admin" ): Promise<void>;
-  deleteNotification(notificationId: string): Promise<void>;
 }
