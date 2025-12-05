@@ -59,6 +59,20 @@ import { NutritionistAuthService } from "../services/implements/nutritionist/nut
 import { INutritionistDetailsRepository } from "../repositories/interfaces/nutritionist/INutritionistDetailsRepository";
 import { NutritionistDetailsRepository } from "../repositories/implements/nutritionist/nutritionistDetails.repository";
 
+import { INutritionistProfileController } from "../controllers/interfaces/nutritionist/INutritionistProfileController";
+import { NutritionistProfileController } from "../controllers/implementations/nutritionist/nutritionistProfile.controller";
+import { INutritionistProfileService } from "../services/interfaces/nutritionist/INutritionistProfileService";
+import { NutritionistProfileService } from "../services/implements/nutritionist/nutritionistProfile.service";
+import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutritionistProfileRepository";
+import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutritionistProfile.repository";
+
+import { INutritionistAvailabilityController } from "../controllers/interfaces/nutritionist/INutritionistAvailabilityController";
+import { NutritionistAvailabilityController } from "../controllers/implementations/nutritionist/nutritionistAvailability.controller";
+import { INutritionistAvailabilityService } from "../services/interfaces/nutritionist/INutritionistAvailabilityService";
+import { NutritionistAvailabilityService } from "../services/implements/nutritionist/nutritionistAvailability.service";
+import { INutritionistAvailabilityRepository } from "../repositories/interfaces/nutritionist/INutritionistAvailabilityRepository";
+import { NutritionistAvailabilityRepository } from "../repositories/implements/nutritionist/nutritionistAvailability.repository";
+
 // ---------------- CONTAINER ----------------
 const container = new Container();
 
@@ -98,5 +112,18 @@ container.bind<INotificationRepository>(TYPES.INotificationRepository).to(Notifi
 container.bind<INutritionistAuthController>(TYPES.INutritionistAuthController).to(NutritionistAuthController);
 container.bind<INutritionistAuthService>(TYPES.INutritionistAuthService).to(NutritionistAuthService);
 container.bind<INutritionistDetailsRepository>(TYPES.INutritionistDetailsRepository).to(NutritionistDetailsRepository);
+
+container.bind<INutritionistProfileController>(TYPES.INutritionistProfileController).to(NutritionistProfileController);
+container.bind<INutritionistProfileService>(TYPES.INutritionistProfileService).to(NutritionistProfileService);
+container.bind<INutritionistProfileRepository>(TYPES.INutritionistProfileRepository).to(NutritionistProfileRepository);
+
+container.bind<NutritionistAvailabilityController>(TYPES.INutritionistAvailabilityController).to(NutritionistAvailabilityController);
+container.bind<INutritionistAvailabilityService>(TYPES.INutritionistAvailabilityService).to(NutritionistAvailabilityService);
+container.bind<INutritionistAvailabilityRepository>(TYPES.INutritionistAvailabilityRepository).to(NutritionistAvailabilityRepository);
+
+
+
+
+
 
 export { container };

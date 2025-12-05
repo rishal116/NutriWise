@@ -1,29 +1,32 @@
 export default function NutritionistDashboard() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+      <h1 className="text-3xl font-bold">Dashboard Overview</h1>
 
-      <p className="text-gray-700 text-lg">
-        Welcome to your Nutritionist Dashboard.
-      </p>
-
-      <div className="space-y-2 text-gray-700">
-        <p>Total Clients: 120</p>
-        <p>Upcoming Appointments: 5</p>
-        <p>Pending Reports: 2</p>
-        <p>Total Earnings: ₹2,450</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Clients" value="120" />
+        <StatCard label="Upcoming Appointments" value="5" />
+        <StatCard label="Pending Reports" value="2" />
+        <StatCard label="Total Earnings" value="₹2,450" />
       </div>
 
-      <div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">
-          Recent Activity
-        </h2>
+      <div className="bg-white shadow rounded-xl p-6">
+        <h2 className="text-xl font-semibold mb-3">Recent Activity</h2>
         <ul className="space-y-1 text-gray-700">
           <li>• John Doe registered as a client</li>
           <li>• Appointment confirmed with Jane Smith</li>
           <li>• Report submitted for Alex Johnson</li>
         </ul>
       </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white rounded-xl shadow-md p-5 text-center">
+      <p className="text-sm text-gray-600">{label}</p>
+      <p className="text-3xl font-bold text-emerald-600">{value}</p>
     </div>
   );
 }

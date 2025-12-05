@@ -8,5 +8,7 @@ export interface IUserRepository extends IBaseRepository<IUser> {
   findByGoogleId(googleId: string): Promise<IUser | null>;
   setResetToken(email: string, token: string, expires: Date): Promise<void>;
   findByResetToken(token: string): Promise<IUser | null>;
+
+  findNutritionists(filter?: any): Promise<IUser[]>;
   
 }

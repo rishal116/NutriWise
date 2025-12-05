@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  reactStrictMode: true,
+  images: {
+    domains: ["res.cloudinary.com"], // allow Cloudinary URLs
+  },
 };
 
 export default nextConfig;

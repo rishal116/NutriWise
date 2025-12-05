@@ -1,9 +1,9 @@
 "use client";
 
-import { Search, X, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import React, { useState } from "react";
 
-export default function FilterBar() {
+export default function FilterBar({ onApply }: any) {
   const [filters, setFilters] = useState({
     search: "",
     expertise: [] as string[],
@@ -35,10 +35,6 @@ export default function FilterBar() {
       maxFee: "",
     });
 
-  const expertiseOptions = ["Weight Loss", "Diabetes", "Sports Nutrition", "PCOS", "Women's Health", "General Diet"];
-  const languageOptions = ["English", "Hindi", "Malayalam", "Tamil", "Kannada", "Telugu"];
-  const regionOptions = ["North India", "South India", "East India", "West India", "Central India"];
-
   const hasFilters =
     filters.search ||
     filters.expertise.length ||
@@ -46,6 +42,10 @@ export default function FilterBar() {
     filters.region.length ||
     filters.minFee ||
     filters.maxFee;
+
+  const expertiseOptions = ["Weight Loss", "Diabetes", "Sports Nutrition", "PCOS", "Women's Health", "General Diet"];
+  const languageOptions = ["English", "Hindi", "Malayalam", "Tamil", "Kannada", "Telugu"];
+  const regionOptions = ["North India", "South India", "East India", "West India", "Central India"];
 
   return (
     <div className="bg-white rounded-2xl border shadow-md flex flex-col">
@@ -138,6 +138,7 @@ export default function FilterBar() {
       {/* Apply */}
       <div className="p-4 border-t">
         <button
+          onClick={() => onApply(filters)}   // 🔥 THIS IS THE MAIN CHANGE
           className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700"
         >
           Apply Filters

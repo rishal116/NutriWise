@@ -38,6 +38,7 @@ export class UserAuthController implements IUserAuthController {
     res.status(StatusCode.OK).json({success: true,message: response.message});
   });
 
+
   login = asyncHandler(async (req:Request, res:Response, next:NextFunction)=> {
     const {email,password} = req.body;
     logger.info(`Login attempt - Email: ${email}`);
@@ -55,12 +56,14 @@ export class UserAuthController implements IUserAuthController {
     res.status(StatusCode.CREATED).json({ success: true, message: "Google login successful", user: response.user, accessToken: response.accessToken, });
   });
   
+
   forgotPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.body;
     logger.info(`Forgot password request - Email: ${email}`);
     const response = await this._userAuthService.requestPasswordReset(email);
     res.status(StatusCode.OK).json({ success: true, message: response.message });
   });
+  
   
   resetPassword = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { token, password } = req.body;

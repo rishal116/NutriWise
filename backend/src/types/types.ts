@@ -38,4 +38,13 @@ export const TYPES = {
   INutritionistAuthController: Symbol.for("INutritionistAuthController"),
   INutritionistAuthService: Symbol.for("INutritionistAuthService"),
   INutritionistDetailsRepository: Symbol.for("INutritionistDetailsRepository"),
+
+  INutritionistProfileController : Symbol.for("INutritionistProfileController"),
+  INutritionistProfileService : Symbol.for("INutritionistProfileService"),
+  INutritionistProfileRepository : Symbol.for("INutritionistProfileRepository"),
+  
+  INutritionistAvailabilityController: Symbol.for("INutritionistAvailabilityController"),
+  INutritionistAvailabilityService: Symbol.for("INutritionistAvailabilityService"),
+  INutritionistAvailabilityRepository: Symbol.for("INutritionistAvailabilityRepository"),
+  
 };

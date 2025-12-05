@@ -1,10 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation"; // if using Next.js app router
 import { Star } from "lucide-react";
+import { nutritionistListService } from "@/services/user/nutritionistList.service";
+
+interface NutritionistProfileType {
+  id: string;
+  name: string;
+  expertise: string[];
+  rating?: number;
+  location?: string;
+  bio?: string;
+  totalExperienceYears?: number;
+  languages?: string[];
+  certifications?: string[];
+}
 
 export default function NutritionistProfile() {
+  const params = useParams();
   const [activeTab, setActiveTab] = useState("about");
+  const [nutritionist, setNutritionist] = useState<NutritionistProfileType | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNutritionist = async () => {
+      if (!params?.id) return;
+      setLoading(true);
+      try {
+        const id = Array.isArray(params.id) ? params.id[0] : params.id;
+        let response;
+        if (id) {
+          response = await nutritionistListService.getById(id);
+          console.log(response);
+        }
+       
+        setNutritionist(response.data); // Assuming API returns { success: true, data: {...} }
+      } catch (error) {
+        console.error("Failed to fetch nutritionist", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNutritionist();
+  }, [params?.id]);
+
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
+  if (!nutritionist) return <div className="p-8 text-center">Nutritionist not found</div>;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -12,42 +55,12 @@ export default function NutritionistProfile() {
         return (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">About</h2>
-
-            <p className="text-gray-700 leading-relaxed mb-6">
-              Dr. Bennett is a registered dietitian with over 10 years of experience helping clients
-              achieve their health and wellness goals. She specializes in weight management, sports
-              nutrition, and chronic disease management.
-            </p>
+            <p className="text-gray-700 leading-relaxed mb-6">{nutritionist.bio || "No bio available"}</p>
 
             <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Education</h3>
-              <p className="text-gray-700">
-                Master of Science in Nutrition, University of California, Los Angeles
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Languages</h3>
-              <p className="text-gray-700">English, Spanish</p>
-            </div>
-
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Certifications</h3>
-              <p className="text-gray-700">
-                Certified Specialist in Sports Dietetics (CSSD), Registered Dietitian (RD)
-              </p>
-            </div>
-
-            <div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">Specializations</h3>
               <div className="flex flex-wrap gap-2">
-                {[
-                  "Weight Management",
-                  "Sports Nutrition",
-                  "Diabetes Management",
-                  "Heart Health",
-                  "General Wellness",
-                ].map((item, i) => (
+                {nutritionist.expertise?.map((item, i) => (
                   <span
                     key={i}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium"
@@ -57,6 +70,24 @@ export default function NutritionistProfile() {
                 ))}
               </div>
             </div>
+
+            {(nutritionist.certifications?.length ?? 0) > 0 && (
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Certifications</h3>
+                <ul className="list-disc list-inside text-gray-700">
+                  {nutritionist.certifications?.map((c, i) => (
+                    <li key={i}>{c}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {(nutritionist.languages?.length ?? 0) > 0 && (
+              <div className="mb-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">Languages</h3>
+                <p className="text-gray-700">{nutritionist.languages?.join(", ")}</p>
+              </div>
+            )}
           </div>
         );
 
@@ -84,7 +115,6 @@ export default function NutritionistProfile() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Availability</h2>
             <p className="text-gray-700">Available Slots:</p>
-
             <div className="grid grid-cols-2 gap-4 mt-4">
               {["10:00 AM", "12:00 PM", "2:30 PM", "5:00 PM"].map((slot, i) => (
                 <div
@@ -102,7 +132,6 @@ export default function NutritionistProfile() {
         return (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Book Appointment</h2>
-
             <div className="space-y-4">
               <label className="block">
                 <span className="text-gray-700 font-medium">Select Date</span>
@@ -143,16 +172,17 @@ export default function NutritionistProfile() {
                 <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gray-200">
                   <img
                     src="https://i.pravatar.cc/150?img=47"
-                    alt="Doctor"
+                    alt={nutritionist.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
 
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">Dr. Olivia Bennett</h1>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{nutritionist.name}</h1>
                   <p className="text-gray-600">
-                    Registered Dietitian | 10+ years experience
+                    Registered Dietitian | {nutritionist.totalExperienceYears || "N/A"} years experience
                   </p>
+                  <p className="text-gray-600">Location: {nutritionist.location || "N/A"}</p>
                 </div>
               </div>
 

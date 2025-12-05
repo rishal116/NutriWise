@@ -7,7 +7,7 @@ import { NutritionistDTO } from "../../../dtos/admin/user.dto";
 import { IAdminNutritionistRepository } from "../../../repositories/interfaces/admin/IAdminNutritionistRepository";
 import { INotificationRepository } from "../../../repositories/interfaces/INotificationRepository";
 import { NotificationDto } from "../../../dtos/common/notification.dto";
-import { NutritionistProfileDto } from "../../../dtos/nutritionist/nutritionistProfile";
+import { AdminNutritionistProfileDto } from "../../../dtos/admin/user.dto";
 
 
 
@@ -80,7 +80,7 @@ export class AdminNutritionistService implements IAdminNutritionistService {
     await this._notificationRepository.createNotification(notification);
   }
 
-   async getNutritionistProfile(userId: string): Promise<NutritionistProfileDto> {
+   async getNutritionistProfile(userId: string): Promise<AdminNutritionistProfileDto> {
     const user = await this._adminNutritionistRepository.findById(userId);
     if (!user) throw new Error("User not found");
     const details = await this._nutritionistDetailsRepository.findByUserId(userId);

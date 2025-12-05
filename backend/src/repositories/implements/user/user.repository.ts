@@ -1,7 +1,6 @@
 import { BaseRepository } from "../../implements/base.repository";
 import { IUserRepository } from "../../interfaces/user/IUserRepository";
 import { UserModel, IUser } from "../../../models/user.model";
-import { Types } from "mongoose";
 
 export class UserRepository extends BaseRepository<IUser> implements IUserRepository {
   constructor() {
@@ -35,5 +34,10 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
       resetPasswordExpires: { $gt: new Date() }, 
     });
   }
-
+  
+  async findNutritionists(filter: any = {}): Promise<IUser[]> {
+    const query: any = { role: "nutritionist", ...filter };
+    return this._model.find(query);
+  }
+  
 }

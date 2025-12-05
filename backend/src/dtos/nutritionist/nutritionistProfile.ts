@@ -1,30 +1,23 @@
 import { IExperience } from "../../models/nutritionistDetails.model";
+import { Types } from "mongoose";
 
-export interface NutritionistProfileDto {
-  _id: string;                     // From User
-  fullName: string;                // From User
-  email: string;                   // From User
-  phone?: string;                  // From User
-  profileImage?: string;           // From User or NutritionistDetails
-  nutritionistStatus: "pending" | "approved" | "rejected" | "none"; // User
-  rejectionReason?: string;        // User
-
-  // NutritionistDetails
+export interface NutritionistProfileDTO {
+  _id: Types.ObjectId;
+  fullName: string;
+  email: string;
+  bio: string;
+  availabilityStatus: string;
+  consultationDuration: string;
+  videoCallRate: number;
+  totalExperienceYears: number;
+  languages: string[];
   qualifications: string[];
   specializations: string[];
-  bio?: string;
-  languages: string[];
-  videoCallRate: number;
-  consultationDuration: string;
-  location?: {
+  experiences: any[];
+  certifications: any[];
+  location: {
     state: string;
     city: string;
   };
-  experiences: IExperience[];
-  totalExperienceYears?: number;
-  cv?: string;
-  certifications?: string[];
-  availabilityStatus: "available" | "unavailable" | "busy";
-  createdAt: Date;
-  updatedAt: Date;
+  cv: string;
 }

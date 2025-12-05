@@ -1239,3 +1239,55 @@
 2025-12-03T11:05:12.854Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
 2025-12-03T11:05:12.874Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
 2025-12-03T11:05:12.875Z [info]: Fetching profile for user: 6930132edbe243b071d310e9
+2025-12-05T03:32:53.988Z [info]: Fetching all nutritionists
+2025-12-05T03:32:53.999Z [info]: Fetching all nutritionists
+2025-12-05T03:34:23.776Z [info]: Fetching all nutritionists
+2025-12-05T03:34:23.777Z [info]: Fetching all nutritionists
+2025-12-05T03:34:30.688Z [info]: Fetching all nutritionists
+2025-12-05T03:34:30.689Z [info]: Fetching all nutritionists
+2025-12-05T03:41:55.600Z [info]: Fetching all nutritionists
+2025-12-05T03:41:55.602Z [info]: Fetching all nutritionists
+2025-12-05T03:42:17.736Z [info]: Fetching all nutritionists
+2025-12-05T03:42:17.738Z [info]: Fetching all nutritionists
+2025-12-05T04:15:41.837Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:15:41.845Z [info]: Fetching all nutritionists
+2025-12-05T04:16:16.869Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:16:16.870Z [info]: Fetching all nutritionists
+2025-12-05T04:16:20.363Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:16:20.365Z [info]: Fetching all nutritionists
+2025-12-05T04:16:25.700Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:16:25.700Z [info]: Fetching all nutritionists
+2025-12-05T04:18:54.151Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:18:54.152Z [info]: Fetching all nutritionists
+2025-12-05T04:19:09.602Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:19:09.603Z [info]: Fetching all nutritionists
+2025-12-05T04:19:30.908Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:19:30.910Z [info]: Fetching all nutritionists
+2025-12-05T04:19:41.918Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:19:41.919Z [info]: Fetching all nutritionists
+2025-12-05T04:20:00.695Z [info]: Fetching all nutritionists with filters
+2025-12-05T04:20:00.696Z [info]: Fetching all nutritionists
+2025-12-05T04:48:43.301Z [info]: Fetching nutritionist by ID: 692d24bcc91cc4c5901157cc
+2025-12-05T04:48:43.305Z [info]: Fetching nutritionist by ID: 692d24bcc91cc4c5901157cc
+2025-12-05T04:49:44.538Z [info]: Fetching nutritionist by ID: 692d24bcc91cc4c5901157cc
+2025-12-05T04:49:44.540Z [info]: Fetching nutritionist by ID: 692d24bcc91cc4c5901157cc
+2025-12-05T05:11:45.425Z [info]: Fetching all nutritionists with filters
+2025-12-05T05:11:45.433Z [info]: Fetching all nutritionists
+2025-12-05T05:12:16.672Z [info]: Fetching all nutritionists with filters
+2025-12-05T05:12:16.674Z [info]: Fetching all nutritionists
+2025-12-05T05:13:08.038Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-05T05:13:08.232Z [info]: Admin successfully fetched users list | total=3
+2025-12-05T05:13:08.480Z [info]: Admin fetching users | page=1, limit=5, search=none
+2025-12-05T05:13:08.488Z [info]: Admin successfully fetched users list | total=3
+2025-12-05T05:20:07.431Z [info]: Fetching all nutritionists with filters
+2025-12-05T05:20:07.435Z [info]: Fetching all nutritionists
+2025-12-05T05:20:07.468Z [info]: Fetching all nutritionists with filters
+2025-12-05T05:20:07.469Z [info]: Fetching all nutritionists
+2025-12-05T05:20:13.787Z [info]: Fetching nutritionist by ID: 692d24bcc91cc4c5901157cc
+2025-12-05T05:20:13.788Z [info]: Fetching nutritionist by ID: 692d24bcc91cc4c5901157cc
+2025-12-05T05:20:16.885Z [info]: Fetching all nutritionists with filters
+2025-12-05T05:20:16.887Z [info]: Fetching all nutritionists
+2025-12-05T05:20:20.222Z [info]: Fetching nutritionist by ID: 6930132edbe243b071d310e9
+2025-12-05T05:20:20.224Z [info]: Fetching nutritionist by ID: 6930132edbe243b071d310e9
+2025-12-05T05:20:26.404Z [info]: Fetching all nutritionists with filters
+2025-12-05T05:20:26.405Z [info]: Fetching all nutritionists

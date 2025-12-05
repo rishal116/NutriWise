@@ -2,15 +2,17 @@ import { server } from "@/lib/axios/server";
 import { api } from "@/lib/axios/api";
 
 export const nutritionistListService = {
-  getAll: async () => {
-    const response = await server.get("/nutritionists")
+  getAll: async (filters = {}) => {
+    const response = await api.get("/nutritionists", { params: filters });
     console.log(response);
     
     return response.data;
   },
 
   getById: async (id: string) => {
-    const response = await server.get(`/nutritionists/${id}`);
+    const response = await api.get(`/nutritionists/${id}`);
+    console.log(response);
+    
     return response.data;
   },
 
