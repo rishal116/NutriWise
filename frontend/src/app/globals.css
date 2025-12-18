@@ -1,0 +1,30 @@
+
+
+@import 'tailwindcss';
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* Leaflet CSS */
+.leaflet-container {
+  height: 300px;
+  width: 100%;
+  border-radius: 1rem;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #ffffff;
+  --text: #111827;
+}
+
+.dark {
+  --bg: #0b0b0b;
+  --text: #e5e7eb;
+}
+
