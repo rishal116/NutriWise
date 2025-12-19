@@ -1,127 +1,180 @@
 "use client";
 
-import { Star, Calendar, MessageCircle, ShieldCheck, Users } from "lucide-react";
+import { motion } from "framer-motion";
 
-export default function NutritionistDetailsPage() {
+export default function NutritionistDetailPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50 to-gray-50 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50 px-4 py-10">
+      <div className="max-w-6xl mx-auto space-y-10">
 
-        {/* HEADER CARD */}
-        <div className="bg-white rounded-3xl shadow-lg p-6 md:p-8 flex flex-col md:flex-row gap-6">
+        {/* ================= PROFILE HEADER ================= */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-2xl shadow-sm p-6 flex flex-col md:flex-row gap-6"
+        >
           <img
-            src="https://via.placeholder.com/150"
+            src="https://via.placeholder.com/160"
             alt="Nutritionist"
-            className="w-36 h-36 rounded-2xl object-cover border"
+            className="w-40 h-40 rounded-2xl object-cover"
           />
 
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">Dr. Ananya Sharma</h1>
-            <p className="text-green-600 font-medium mt-1">Certified Clinical Nutritionist</p>
+            <h1 className="text-3xl font-semibold">Dr. Ananya Sharma</h1>
+            <p className="text-gray-600 mt-1">Clinical Nutritionist & Dietitian</p>
 
-            <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
-              <span className="flex items-center gap-1">
-                <Star className="w-4 h-4 text-yellow-500" /> 4.8 (320 reviews)
-              </span>
-              <span className="flex items-center gap-1">
-                <Users className="w-4 h-4" /> 120+ clients coached
-              </span>
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="w-4 h-4 text-green-600" /> Verified
-              </span>
+            <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-600">
+              <span>⭐ 4.8 (210 clients)</span>
+              <span>📍 Online / Bangalore</span>
+              <span>🕒 8+ years experience</span>
             </div>
+
+            <div className="mt-6">
+              <button className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition">
+                View Subscription Plans
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ================= HOW I HELP ================= */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-white rounded-2xl shadow-sm p-6"
+        >
+          <h2 className="text-2xl font-semibold mb-4">How I Help You</h2>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-700">
+            <li>✔ Personalized diet plans</li>
+            <li>✔ Continuous progress monitoring</li>
+            <li>✔ Lifestyle & habit correction</li>
+            <li>✔ Regular plan adjustments</li>
+            <li>✔ Direct chat support</li>
+            <li>✔ Sustainable long-term results</li>
+          </ul>
+        </motion.div>
+
+        {/* ================= SPECIALIZATIONS ================= */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-2xl font-semibold mb-4">Specializations</h2>
+          <div className="flex flex-wrap gap-3">
+            {["Weight Loss", "PCOS", "Diabetes", "Gut Health", "Sports Nutrition"].map(
+              (item) => (
+                <span
+                  key={item}
+                  className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm"
+                >
+                  {item}
+                </span>
+              )
+            )}
           </div>
         </div>
 
-        {/* CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+        {/* ================= SUBSCRIPTION PLANS ================= */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-3xl font-semibold mb-6">Subscription Plans</h2>
 
-          {/* LEFT SECTION */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Starter */}
+            <div className="bg-white rounded-2xl shadow-sm p-6 border">
+              <h3 className="text-xl font-semibold">Starter</h3>
+              <p className="text-gray-500 text-sm mt-1">Best for beginners</p>
 
-            {/* ABOUT */}
-            <Card title="About">
-              <p className="text-gray-700 text-sm leading-relaxed">
-                I specialize in sustainable weight loss, metabolic health, and
-                lifestyle-based nutrition coaching. My approach focuses on
-                long-term habits rather than crash diets.
-              </p>
-            </Card>
+              <p className="text-3xl font-bold text-green-600 mt-4">₹1,499</p>
+              <p className="text-sm text-gray-500">per month</p>
 
-            {/* EXPERTISE */}
-            <Card title="Expertise">
-              <div className="flex flex-wrap gap-2">
-                {["Weight Loss", "PCOS", "Diabetes", "Gut Health", "Lifestyle Coaching"].map(tag => (
-                  <span key={tag} className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </Card>
-
-            {/* COACHING STYLE */}
-            <Card title="Coaching Style">
-              <ul className="text-sm text-gray-700 space-y-2">
-                <li>✔ Personalized diet plans</li>
-                <li>✔ Weekly progress reviews</li>
-                <li>✔ Habit & lifestyle guidance</li>
-                <li>✔ Direct chat support</li>
+              <ul className="mt-4 space-y-2 text-gray-700">
+                <li>✔ Monthly diet plan</li>
+                <li>✔ Chat support (48h)</li>
+                <li>✔ Monthly progress review</li>
               </ul>
-            </Card>
 
-            {/* AVAILABLE PLANS */}
-            <Card title="Available Plans">
-              <div className="space-y-4">
-                {[1, 2].map((_, i) => (
-                  <div key={i} className="border rounded-xl p-4 hover:shadow">
-                    <h3 className="font-semibold">3 Month Weight Loss Coaching</h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Weekly sessions • Chat support • Progress tracking
-                    </p>
-                    <p className="text-green-600 font-semibold mt-2">₹7,999</p>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </div>
-
-          {/* RIGHT SIDEBAR */}
-          <div className="space-y-6">
-
-            {/* BOOKING */}
-            <div className="bg-white rounded-2xl shadow p-6">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <Calendar size={18} /> Book Consultation
-              </h3>
-              <button className="w-full py-3 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700">
-                View Available Slots
+              <button className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 transition">
+                Subscribe
               </button>
             </div>
 
-            {/* CONTACT */}
-            <div className="bg-white rounded-2xl shadow p-6">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <MessageCircle size={18} /> Contact
-              </h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Ask questions before subscribing to a plan
-              </p>
-              <button className="w-full py-3 rounded-xl border border-gray-300 hover:bg-gray-50">
-                Send Message
+            {/* Pro */}
+            <div className="bg-white rounded-2xl shadow-md p-6 border-2 border-green-600">
+              <h3 className="text-xl font-semibold">Pro</h3>
+              <p className="text-gray-500 text-sm mt-1">Most popular</p>
+
+              <p className="text-3xl font-bold text-green-600 mt-4">₹2,999</p>
+              <p className="text-sm text-gray-500">per month</p>
+
+              <ul className="mt-4 space-y-2 text-gray-700">
+                <li>✔ Weekly diet updates</li>
+                <li>✔ Priority chat support</li>
+                <li>✔ Weekly progress tracking</li>
+                <li>✔ Lifestyle guidance</li>
+              </ul>
+
+              <button className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 transition">
+                Subscribe
               </button>
+            </div>
+
+            {/* Elite */}
+            <div className="bg-white rounded-2xl shadow-sm p-6 border">
+              <h3 className="text-xl font-semibold">Elite</h3>
+              <p className="text-gray-500 text-sm mt-1">Complete care</p>
+
+              <p className="text-3xl font-bold text-green-600 mt-4">₹4,999</p>
+              <p className="text-sm text-gray-500">per month</p>
+
+              <ul className="mt-4 space-y-2 text-gray-700">
+                <li>✔ Fully customized plan</li>
+                <li>✔ Daily chat support</li>
+                <li>✔ Weekly check-ins</li>
+                <li>✔ Supplement guidance</li>
+              </ul>
+
+              <button className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 transition">
+                Subscribe
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ================= HOW IT WORKS ================= */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-2xl font-semibold mb-4">How Subscription Works</h2>
+          <ol className="list-decimal ml-6 space-y-2 text-gray-700">
+            <li>Select a subscription plan</li>
+            <li>Fill your health & lifestyle details</li>
+            <li>Nutritionist designs your plan</li>
+            <li>Track progress & chat regularly</li>
+          </ol>
+        </div>
+
+        {/* ================= REVIEWS ================= */}
+        <div className="bg-white rounded-2xl shadow-sm p-6">
+          <h2 className="text-2xl font-semibold mb-4">Client Transformations</h2>
+
+          <div className="space-y-4">
+            <div className="border-b pb-3">
+              <p className="font-medium">Rohit Mehra</p>
+              <p className="text-sm text-gray-600">
+                Lost 8kg in 3 months with continuous guidance. Highly recommend!
+              </p>
+            </div>
+
+            <div>
+              <p className="font-medium">Sneha Patel</p>
+              <p className="text-sm text-gray-600">
+                PCOS symptoms reduced significantly after 2 months of follow-up.
+              </p>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white rounded-2xl shadow p-6">
-      <h2 className="text-xl font-semibold mb-4">{title}</h2>
-      {children}
+      </div>
     </div>
   );
 }

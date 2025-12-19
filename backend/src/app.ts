@@ -18,20 +18,11 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://dvg1z2ns-3000.inc1.devtunnels.ms"
-];
+
 
 app.use(
   cors({
-        origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin:process.env.FRONTEND_URL,
     credentials: true,
   })
 );

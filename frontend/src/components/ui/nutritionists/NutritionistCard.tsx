@@ -4,6 +4,8 @@ import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function NutritionistCard({ item }: any) {
+  console.log(item);
+  
   const router = useRouter();
 
   const rating = item.rating ?? "4.5";
@@ -35,7 +37,7 @@ export default function NutritionistCard({ item }: any) {
         </p>
 
         <button
-          onClick={() => router.push(`/nutritionists/${item._id}`)}
+          onClick={() => router.push(`/nutritionists/${item.id}`)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white text-sm"
         >
           View Profile <ArrowRight size={16} />

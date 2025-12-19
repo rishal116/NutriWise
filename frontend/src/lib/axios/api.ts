@@ -3,7 +3,7 @@ import { store } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
 
 export const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://dvg1z2ns-5000.inc1.devtunnels.ms/",
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
