@@ -7,6 +7,8 @@ import { INutritionistAuthController } from "../controllers/interfaces/nutrition
 import { INutritionistProfileController } from "../controllers/interfaces/nutritionist/INutritionistProfileController";
 import { INutritionistPlanController } from "../controllers/interfaces/nutritionist/INutritionistPlanController";
 import { INutritionistSubscriptionController } from "../controllers/interfaces/nutritionist/INutritionistSubscriptionController";
+import { authorize } from "../middlewares/role.middleware";
+import { ROLES } from "../constants/index";
 
 
 const router = Router();
@@ -34,9 +36,11 @@ router.get("/plans",authMiddleware,nutritionistPlanController.getMyPlans);
 router.get("/specializations",authMiddleware,nutritionistPlanController.getSpecializations);
 router.get("/pricing", authMiddleware,nutritionistPlanController.getNutritionistPricing);
 router.get("/plans/:planId", authMiddleware, nutritionistPlanController.getPlanById);
+router.put("/plans/:planId", authMiddleware, nutritionistPlanController.updatePlan);
 
 
-router.get("/subscription",authMiddleware,nutritionistSubscriptionController.getSubscribers);
+router.get("/subscription",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistSubscriptionController.getSubscribers);
+
 
 
 export default router;

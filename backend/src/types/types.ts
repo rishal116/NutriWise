@@ -54,5 +54,7 @@ export const TYPES = {
   IStripeService:Symbol.for("IStripeService"),
   ICheckoutController:Symbol.for("ICheckoutController"),
   IStripeWebhookService: Symbol.for("IStripeWebhookService"),
-  IStripeWebhookController: Symbol.for("IStripeWebhookController")
+  IStripeWebhookController: Symbol.for("IStripeWebhookController"),
+  IWalletRepository:Symbol.for("IWalletRepository"),
+  IPaymentRepository:Symbol.for("IPaymentRepository")
 };

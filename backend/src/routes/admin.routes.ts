@@ -9,10 +9,7 @@ import { container } from "../containers/index";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
 import { ROLES } from "../constants/index";
-import { refreshToken } from "../middlewares/refreshToken.middleware";
 import { adminRefreshToken } from "../middlewares/adminRefreshToken.middleware";
-
-const router = Router();
 
 const adminAuthController = container.get<IAdminAuthController>(TYPES.IAdminAuthController);
 const adminClientController = container.get<IAdminClientController>(TYPES.IAdminClientController);
@@ -20,25 +17,36 @@ const adminNutritionistController = container.get<IAdminNutritionistController>(
 const adminNotificationController = container.get<IAdminNotificationController>(TYPES.IAdminNotificationController);
 const adminPlanController = container.get<IAdminPlanController>(TYPES.IAdminPlanController);
 
-// Public routes (no auth needed)
+const router = Router();
+
+
+//    PUBLIC ROUTES
 router.post("/login", adminAuthController.login);
-router.post("/logout", authMiddleware, authorize(ROLES.ADMIN), adminAuthController.logout);
-
-// Protected admin routes
-router.get("/users", authMiddleware, authorize(ROLES.ADMIN), adminClientController.getAllUsers);
-router.patch("/block-user/:userId", authMiddleware, authorize(ROLES.ADMIN), adminClientController.blockUser);
-router.patch("/unblock-user/:userId", authMiddleware, authorize(ROLES.ADMIN), adminClientController.unblockUser);
-
-router.get("/nutritionists", authMiddleware, authorize(ROLES.ADMIN), adminNutritionistController.getAllNutritionist);
-router.patch("/nutritionist/approve/:userId", authMiddleware, authorize(ROLES.ADMIN), adminNutritionistController.approveNutritionist);
-router.patch("/nutritionist/reject/:userId", authMiddleware, authorize(ROLES.ADMIN), adminNutritionistController.rejectNutritionist);
-router.patch("/nutritionist/:userId/level", authMiddleware, authorize(ROLES.ADMIN), adminNutritionistController.updateNutritionistLevel);
-router.get("/nutritionist/:userId", authMiddleware, authorize(ROLES.ADMIN), adminNutritionistController.getNutritionistProfile);
-
-router.get("/notifications", authMiddleware, authorize(ROLES.ADMIN), adminNotificationController.getAllNotifications);
-router.patch("/notifications/read/:id", authMiddleware, authorize(ROLES.ADMIN), adminNotificationController.markAsRead);
-
-router.get("/plans", authMiddleware, authorize(ROLES.ADMIN), adminPlanController.getAllPlans);
-router.patch("/plans/:planId/publish", authMiddleware, authorize(ROLES.ADMIN), adminPlanController.publishPlan);
 router.post("/refresh-token", adminRefreshToken);
+router.post("/logout", adminAuthController.logout);
+
+
+//    PROTECTED ROUTES
+
+router.use(authMiddleware);
+router.use(authorize(ROLES.ADMIN));
+
+
+router.get("/users", adminClientController.getAllUsers);
+router.patch("/block-user/:userId", adminClientController.blockUser);
+router.patch("/unblock-user/:userId", adminClientController.unblockUser);
+
+router.get("/nutritionists", adminNutritionistController.getAllNutritionist);
+router.patch("/nutritionist/approve/:userId", adminNutritionistController.approveNutritionist);
+router.patch("/nutritionist/reject/:userId", adminNutritionistController.rejectNutritionist);
+router.patch("/nutritionist/:userId/level", adminNutritionistController.updateNutritionistLevel);
+router.get("/nutritionist/:userId", adminNutritionistController.getNutritionistProfile);
+
+router.get("/notifications", adminNotificationController.getAllNotifications);
+router.patch("/notifications/read/:id", adminNotificationController.markAsRead);
+
+router.get("/plans", adminPlanController.getAllPlans);
+router.patch("/plans/:planId/publish", adminPlanController.publishPlan);
+
 export default router;
+

@@ -199,18 +199,22 @@ export class UserAuthService implements IUserAuthService {
     if (!user) throw new CustomError("User not found", StatusCode.NOT_FOUND);
 
     const token = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
     const expires = new Date(Date.now() + 60 * 60 * 1000);
 
-    await this._userRepository.setResetToken(email, token, expires);
+    await this._userRepository.setResetToken(email, hashedToken, expires);
 
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+    console.log(resetLink);
+    
     await sendResetPasswordEmail(email, resetLink);
 
     return { message: "Password reset link sent to your email." };
   }
 
   async resetPassword(token: string, newPassword: string): Promise<MessageResponseDto> {
-    const user = await this._userRepository.findByResetToken(token);
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await this._userRepository.findByResetToken(hashedToken);
     if (!user) throw new CustomError("Invalid or expired token", StatusCode.BAD_REQUEST);
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

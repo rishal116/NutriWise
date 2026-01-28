@@ -110,6 +110,10 @@ import { IStripeWebhookService } from "../services/interfaces/common/IStripeWebh
 import { StripeWebhookService } from "../services/implements/common/stripeWebhook.service";
 import { StripeWebhookController } from "../controllers/implementations/common/stripeWebhook.controller";
 import { IStripeWebhookController } from "../controllers/interfaces/common/IStripeWebhookController";
+import { IWalletRepository } from "../repositories/interfaces/common/IWalletRepository";
+import { WalletRepository } from "../repositories/implements/common/wallet.repository";
+import { PaymentRepository } from "../repositories/implements/common/payment.repository";
+import { IPaymentRepository } from "../repositories/interfaces/common/IPaymentRepository";
 // ---------------- CONTAINER ----------------
 const container = new Container();
 
@@ -175,6 +179,9 @@ container.bind<IStripeService>(TYPES.IStripeService).to(StripeService);
 container.bind<IStripeWebhookService>(TYPES.IStripeWebhookService).to(StripeWebhookService);
 
 container.bind<IStripeWebhookController>(TYPES.IStripeWebhookController).to(StripeWebhookController);
+container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
+container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepository);
+
 
 
 

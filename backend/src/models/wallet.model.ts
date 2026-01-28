@@ -3,6 +3,7 @@ import { Schema, model, Types } from "mongoose";
 export type WalletOwnerType = "ADMIN" | "NUTRITIONIST" | "USER";
 
 export interface IWallet {
+  _id:Types.ObjectId,
   ownerId: Types.ObjectId;        
   ownerType: WalletOwnerType;
   balance: number;

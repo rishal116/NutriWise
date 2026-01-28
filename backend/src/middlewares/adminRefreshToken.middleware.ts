@@ -9,6 +9,7 @@ export const adminRefreshToken = async (
   next: NextFunction
 ) => {
   try {
+    
     const token = req.cookies.adminRefreshToken;
 
     if (!token) {
@@ -20,7 +21,9 @@ export const adminRefreshToken = async (
       jwtConfig.refreshToken.secret
     ) as { userId: string; role: string };
 
-    // 🔐 IMPORTANT: role check
+    console.log(decoded.role);
+    
+
     if (decoded.role !== "ADMIN") {
       return res.status(403).json({ message: "Not authorized as admin" });
     }
@@ -31,6 +34,8 @@ export const adminRefreshToken = async (
     );
 
     setAdminAuthCookies(res, refreshToken);
+    console.log(refreshToken);
+    
 
     return res.status(200).json({
       success: true,
@@ -38,9 +43,10 @@ export const adminRefreshToken = async (
       role: decoded.role,
     });
   } catch (error: any) {
+    console.error("Admin refresh token error:", error);
     if (error.name === "TokenExpiredError") {
-      return res.status(403).json({ message: "Admin refresh token expired" });
+      return res.status(401).json({ message: "Admin refresh token expired" });
     }
-    return res.status(403).json({ message: "Invalid admin refresh token" });
+    return res.status(401).json({ message: "Invalid admin refresh token" });
   }
 };

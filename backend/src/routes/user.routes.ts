@@ -42,14 +42,14 @@ router.put("/profile", authMiddleware, profileController.updateProfile);
 router.post("/profile/upload-image",authMiddleware,upload.single("image"),profileController.updateUserProfileImage)
 router.get("/profile/upload-image",authMiddleware,profileController.getUserProfileImage)
 
-router.get("/nutritionists", nutritionistController.getAllNutritionists);
-router.get("/nutritionists/:nutritionistId", nutritionistController.getNutritionistById);
+router.get("/nutritionists",nutritionistController.getAllNutritionists);
+router.get("/nutritionists/:nutritionistId",nutritionistController.getNutritionistById);
 router.get("/nutritionists/:nutritionistId/plans", nutritionistController.getNutritionistPlans);
 
-router.post("/checkout/session", authMiddleware,checkoutController.createSession);
-router.post("/stripe/webhook",express.raw({ type: "application/json" }),stripeController.handle);
+router.post("/checkout/session",authMiddleware, authMiddleware,checkoutController.createSession);
+router.post("/stripe/webhook",authMiddleware,express.raw({ type: "application/json" }),stripeController.handle);
 router.get("/health-details", authMiddleware, healthDetailsController.getMyDetails);
-router.post("/health-details", authMiddleware,healthDetailsController.saveDetails);
+router.post("/health-details", authMiddleware,authMiddleware,healthDetailsController.saveDetails);
 router.get("/plans",authMiddleware,userPlanController.getMyPlans)
 
 router.post("/change-password",authMiddleware,userAccountController.changePassword)

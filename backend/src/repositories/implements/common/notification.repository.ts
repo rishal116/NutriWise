@@ -2,7 +2,7 @@ import { Model } from "mongoose";
 import { BaseRepository } from "./base.repository";
 import { INotification, NotificationModel } from "../../../models/notification.model";
 import { NotificationDto, NotificationQuery } from "../../../dtos/common/notification.dto";
-import { INotificationRepository } from "../interfaces/INotificationRepository";
+import { INotificationRepository } from "../../interfaces/common/INotificationRepository";
 
 export class NotificationRepository extends BaseRepository<INotification> implements INotificationRepository {
   constructor(model: Model<INotification> = NotificationModel) {

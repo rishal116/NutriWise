@@ -16,11 +16,11 @@ export class NutritionistPlanRepository
     return this._model.create(payload);
   }
 
-  updateById(id: string, payload: Partial<IPlan>) {
-    return this._model
-      .findByIdAndUpdate(id, payload, { new: true })
-      .lean<IPlan>() as any;
-  }
+updateById(id: string, payload: Partial<IPlan>) {
+  return this._model
+    .findByIdAndUpdate(new Types.ObjectId(id), payload, { new: true, runValidators: true })
+    .lean<IPlan>() as any;
+}
 
   findById(id: string) {
     return this._model.findById(id).lean<IPlan | null>();
@@ -32,7 +32,9 @@ export class NutritionistPlanRepository
 
   findByNutritionistId(nutritionistId: string) {
     return this._model
-      .find({ nutritionistId: new Types.ObjectId(nutritionistId) })
+      .find({ nutritionistId: new Types.ObjectId(nutritionistId) ,
+        status: "published",
+      })
       .lean<IPlan[]>();
   }
 

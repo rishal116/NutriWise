@@ -5,6 +5,7 @@ import { CustomError } from "../utils/customError";
 import { StatusCode } from "../enums/statusCode.enum";
 import { ROLES, Role } from "../types/role";
 import { AUTH_MESSAGES } from "../constants/index";
+import { log } from "winston";
 
 interface JwtPayload {
   userId: string;
@@ -13,12 +14,13 @@ interface JwtPayload {
 
 export const authMiddleware = (req: Request,res: Response,next: NextFunction) => {
   try {
-    console.log("1");
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith("Bearer ")) {
       throw new CustomError(AUTH_MESSAGES.AUTH_HEADER_MISSING,StatusCode.UNAUTHORIZED);
     }
     const token = authHeader.split(" ")[1];
+
+    
     const decoded = jwt.verify(token, jwtConfig.accessToken.secret) as JwtPayload;
     if (!ROLES.includes(decoded.role)) {
       throw new CustomError(AUTH_MESSAGES.INVALID_ROLE,StatusCode.UNAUTHORIZED);

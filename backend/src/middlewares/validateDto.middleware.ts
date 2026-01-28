@@ -5,7 +5,6 @@ import { CustomError } from "../utils/customError";
 
 export const validateDtoMiddleware = (DtoClass: any) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body)
     const dtoInstance = plainToInstance(DtoClass, req.body);
 
     const errors = await validate(dtoInstance);

@@ -23,7 +23,7 @@ async findAllNutritionist(filters: NutritionistListFilter) {
     userQuery.fullName = { $regex: search, $options: "i" };
   }
 
-  // STEP 1: If specialization filter exists, get matching userIds first
+
   let userIdsBySpecialization: string[] | undefined;
 
   if (specializations) {
@@ -34,7 +34,6 @@ async findAllNutritionist(filters: NutritionistListFilter) {
 
     userIdsBySpecialization = profiles.map(p => p.userId.toString());
 
-    // If no matching profiles → return empty
     if (!userIdsBySpecialization.length) {
       return { data: [], total: 0 };
     }
@@ -42,10 +41,10 @@ async findAllNutritionist(filters: NutritionistListFilter) {
     userQuery._id = { $in: userIdsBySpecialization };
   }
 
-  // STEP 2: Count AFTER all filters
+ 
   const total = await this._model.countDocuments(userQuery);
 
-  // STEP 3: Apply pagination AFTER filters
+ 
   const users = await this._model
     .find(userQuery)
     .skip((page - 1) * limit)
@@ -53,7 +52,7 @@ async findAllNutritionist(filters: NutritionistListFilter) {
 
   if (!users.length) return { data: [], total };
 
-  // STEP 4: Fetch profiles only for paginated users
+
   const profiles = await NutritionistDetailsModel.find({
     userId: { $in: users.map(u => u._id) },
   });
