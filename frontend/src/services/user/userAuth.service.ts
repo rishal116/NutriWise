@@ -46,6 +46,7 @@ export const userAuthService = {
 
   getMe: async () => {
     const res = await api.get("/me");
+    console.log(res);
     return res.data;
   },
   

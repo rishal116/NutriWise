@@ -1,4 +1,4 @@
-import NutritionistDetailsPage from '@/components/auth/nutrtionistForm/NutritionistDetails'
+import NutritionistDetailsPage from '@/components/auth/nutrtionistForm/NutritionistForm'
 import React from 'react'
 
 export const metadata = {

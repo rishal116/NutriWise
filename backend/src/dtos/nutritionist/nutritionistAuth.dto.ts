@@ -31,11 +31,22 @@ export class NutritionistRejectionDTO implements NutritionistRejectionDto {
   email: string;
   nutritionistStatus: "pending" | "approved" | "rejected" | "none";
   rejectionReason: string;
-
   constructor(user: IUser) {
     this.fullName = user.fullName;
     this.email = user.email;
     this.nutritionistStatus = user.nutritionistStatus || "none";
     this.rejectionReason = user.rejectionReason || "";
+  }
+}
+
+export class NutritionistNameDTO {
+  name: string;
+  email: string;
+  profileImage: string;
+
+  constructor(name: string, email: string, profileImage: string) {
+    this.name = name;
+    this.email = email;
+    this.profileImage = profileImage;
   }
 }

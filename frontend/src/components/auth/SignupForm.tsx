@@ -11,10 +11,7 @@ import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
 
-
-
 type Role = "client" | "nutritionist";
-
 interface FormData {
   fullName: string;
   email: string;
@@ -26,11 +23,9 @@ interface FormData {
 export default function SignupForm() {
   const dispatch = useDispatch();
   const router = useRouter();
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
@@ -38,7 +33,6 @@ export default function SignupForm() {
     confirmPassword: "",
     role: "client",
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (
@@ -64,18 +58,14 @@ export default function SignupForm() {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     try {
       setLoading(true);
       const {email} = formData
-
       const data = await userAuthService.register(formData);
-
       if (data.success) {
         dispatch(setSignupEmail(email));
-        
-        
-        router.push(`/verify-otp`);
+        localStorage.setItem("signupEmail", email);
+        router.push("/verify-otp");
       } else {
         toast.error("Signup failed", {
           icon: <XCircle color="white" size={20} />,
@@ -88,13 +78,11 @@ export default function SignupForm() {
     }
   };
   
-  
   const handleGoogleError = (error?: any) => {
     console.error("Google Login Failed:", error);
     toast.error("Google login failed. Please try again.");
   };
 
-  
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       const decoded: any = jwtDecode(credentialResponse.credential!);
@@ -103,7 +91,6 @@ export default function SignupForm() {
         toast.error("Please select whether you're a client or a nutritionist before continuing.");
         return;
       }
-      
       const payload = {
         fullName: decoded.name,
         email: decoded.email,
@@ -111,7 +98,6 @@ export default function SignupForm() {
         role: selectedRole,
         credential: credentialResponse.credential,
       };
-      
       const response = await userAuthService.googleSignup(payload);
       if (response.success) {
         const { user, accessToken } = response;
@@ -122,21 +108,19 @@ export default function SignupForm() {
           toast.error("Your account has been blocked. Please contact support.");
           return;
         }
-        
         if (user.role === "nutritionist") {
           switch (user.nutritionistStatus) {
             case "pending":
               toast("Your application is pending. Please complete your details.");
-              router.push("/nutritionist/details");
-              break;
-              
-            case "rejected":
-              toast.error("Your application was rejected. You can reapply in your profile.");
               router.push("/home");
+              break;
+            case "none":
+              toast.error("Your application was rejected. You can reapply in your profile.");
+              router.push("/nutritionist/details");
               break;
             case "approved":
             default:
-              router.push("/nutritionist/dashboard");
+              router.push("/home");
               break;
             }
           }

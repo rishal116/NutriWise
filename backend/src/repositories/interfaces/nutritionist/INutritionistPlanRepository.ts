@@ -5,4 +5,6 @@ export interface INutritionistPlanRepository {
   updateById(id: string, payload: Partial<IPlan>): Promise<IPlan>;
   findById(id: string): Promise<IPlan | null>;
   findMany(filter: Partial<IPlan>): Promise<IPlan[]>;
+  findByNutritionistId(nutritionistId: string): Promise<IPlan[]>;
+  count(filter: Partial<IPlan>): Promise<number>;
 }

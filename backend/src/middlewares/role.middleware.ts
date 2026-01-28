@@ -1,14 +1,20 @@
 import { Request, Response, NextFunction } from "express";
+import { CustomError } from "../utils/customError";
+import { StatusCode } from "../enums/statusCode.enum";
+import { Role } from "../types/role";
+import { AUTH_MESSAGES } from "../constants/index"; 
 
-export const requireRole = (role: "client" | "nutritionist" | "admin") => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const user = (req as any).user;
-
-    if (!user || user.role !== role) {
-      return res.status(403).json({ message: "Forbidden" });
+export const authorize = (...allowedRoles: Role[]) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(
+        new CustomError(AUTH_MESSAGES.UNAUTHORIZED, StatusCode.UNAUTHORIZED)
+      );
     }
-
+    if (!allowedRoles.includes(req.user.role)) {
+      return next(
+        new CustomError(AUTH_MESSAGES.FORBIDDEN, StatusCode.FORBIDDEN)
+      );
+    }
     next();
   };
-};
-

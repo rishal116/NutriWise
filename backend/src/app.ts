@@ -14,6 +14,10 @@ dotenv.config();
 
 const app = express();
 
+app.use("/stripe/webhook",
+  express.raw({ type: "application/json" })
+);
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

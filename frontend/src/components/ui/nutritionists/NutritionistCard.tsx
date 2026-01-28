@@ -1,56 +1,64 @@
 "use client";
-
-import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function NutritionistCard({ item }: any) {
-  console.log(item);
-  
+interface NutritionistCardProps {
+  item: {
+    id: string;
+    fullName: string;
+    profileImage?: string;
+    rating?: number;
+    totalPeopleCoached?: number;
+    defaultPlan?: string;
+  };
+}
+
+export default function NutritionistCard({ item }: NutritionistCardProps) {
   const router = useRouter();
 
-  const rating = item.rating ?? "4.5";
-  const experience = item.totalExperienceYears ?? "5";
-
-  const doctorImages = [
-    "https://cdn-icons-png.flaticon.com/512/3774/3774299.png",
-    "https://cdn-icons-png.flaticon.com/512/3870/3870822.png",
-    "https://cdn-icons-png.flaticon.com/512/3048/3048122.png",
-  ];
-
-  const image =
-    item.image ||
-    doctorImages[Math.floor(Math.random() * doctorImages.length)];
-
   return (
-    <div className="group bg-white rounded-2xl border hover:shadow-xl transition flex h-40">
-      <div className="p-5 flex flex-col justify-between flex-1">
-        <span className="inline-block px-3 py-1 bg-green-50 text-green-600 text-xs rounded-full">
-          {item.availabilityStatus ?? "Available"}
-        </span>
-
-        <h3 className="text-lg font-semibold">
-          Dr. {item.fullName}
-        </h3>
-
-        <p className="text-sm text-gray-600">
-          {item.specializations?.join(", ")} · {rating} ⭐ · {experience} yrs
-        </p>
-
-        <button
-          onClick={() => router.push(`/nutritionists/${item.id}`)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-600 text-white text-sm"
-        >
-          View Profile <ArrowRight size={16} />
-        </button>
-      </div>
-
-      <div className="w-44 flex items-center justify-center">
+    <div className="bg-white border rounded-3xl p-8 flex flex-col items-center transition hover:shadow-lg relative">
+      
+      {/* Image */}
+      <div className="relative mb-4">
         <img
-          src={image}
+          src={
+            item.profileImage ||
+            "https://cdn-icons-png.flaticon.com/512/3870/3870822.png"
+          }
+          className="w-32 h-32 object-contain"
           alt={item.fullName}
-          className="w-28 h-28 rounded-xl object-cover"
         />
+
+        {item.defaultPlan && (
+          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+            {item.defaultPlan}
+          </span>
+        )}
       </div>
+
+      {/* Name */}
+      <h3 className="text-xl font-bold mt-4 text-gray-900 text-center">
+        {item.fullName}
+      </h3>
+
+      {/* Meta Info */}
+      <div className="flex items-center gap-2 text-gray-500 mt-2 text-sm">
+        <span className="text-yellow-500 font-bold">
+          {(item.rating ?? 4.5).toFixed(1)} ★
+        </span>
+        <span>|</span>
+        <span>
+          {item.totalPeopleCoached ?? 120} People Coached
+        </span>
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={() => router.push(`/coaching/${item.id}/plans`)}
+        className="w-full mt-8 bg-green-600 text-white py-4 rounded-2xl font-medium hover:bg-green-700 transition"
+      >
+        See Plans
+      </button>
     </div>
   );
 }

@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import Cropper from "react-easy-crop";
 import { nutritionistProfileService } from "@/services/nutritionist/nutritionistProfile.service";
+import { COUNTRIES, LANGUAGE_OPTIONS, GENDERS } from "@/constants/nutritionistDetails.constants";
+import "react-phone-number-input/style.css";
+import PhoneInput from "react-phone-number-input";
+import { parsePhoneNumberFromString, isValidPhoneNumber } from "libphonenumber-js";
+
 
 /* ---------------- Types ---------------- */
 interface FormData {
@@ -15,34 +21,31 @@ interface FormData {
   languages: string[];
 }
 
-/* ---------------- Constants ---------------- */
-const GENDERS = ["Male", "Female", "Other"];
+interface CropArea {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
 
-const COUNTRIES = [
-  "India",
-  "United States",
-  "United Kingdom",
-  "Netherlands",
-  "Canada",
-  "Australia",
-];
-
-const LANGUAGES = [
-  "English",
-  "Hindi",
-  "Malayalam",
-  "Tamil",
-  "Telugu",
-  "Spanish",
-  "French",
-  "German",
-];
-
-/* ---------------- Page ---------------- */
+/* ---------------- Helper ---------------- */
+const createImage = (url: string): Promise<HTMLImageElement> =>
+  new Promise((resolve, reject) => {
+    const img = new window.Image(); // <-- use window.Image to access browser Image
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = url;
+  });
+  
 export default function GeneralInfoPage() {
-  const [previewImage, setPreviewImage] = useState("/profile-placeholder.png");
-  const [loading, setLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState("/images/images.jpg");
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     _id: "",
     fullName: "",
@@ -52,17 +55,15 @@ export default function GeneralInfoPage() {
     bio: "",
     languages: [],
   });
-
   const [initialData, setInitialData] = useState<FormData | null>(null);
 
-  /* ---------------- Fetch Profile ---------------- */
+  /* ---------------- Load Profile ---------------- */
   useEffect(() => {
     (async () => {
       try {
         const res = await nutritionistProfileService.getProfile();
         const data = res.data;
-
-        const profileData = {
+        const profileData: FormData = {
           _id: data._id || "",
           fullName: data.fullName || "",
           gender: data.gender || "",
@@ -71,46 +72,47 @@ export default function GeneralInfoPage() {
           bio: data.bio || "",
           languages: Array.isArray(data.languages) ? data.languages : [],
         };
-
         setFormData(profileData);
         setInitialData(profileData);
-
-        if (data.profileImage) setPreviewImage(data.profileImage);
       } catch (err) {
         console.error("Failed to load profile", err);
       }
     })();
   }, []);
 
-  /* ---------------- Validation ---------------- */
-  const errors = {
-    fullName: !formData.fullName.trim(),
-    phone: !formData.phone.trim(),
-    country: !formData.country.trim(),
-    languages: formData.languages.length === 0,
-    bio: !formData.bio.trim(),
-  };
+  useEffect(() => {
+  (async () => {
+    try {
+      const res = await nutritionistProfileService.getProfileImage();
+      console.log(res);
+      
+      setPreviewImage(res.data.profileImage);
+    } catch (err) {
+      console.log(err);
+      
+      setPreviewImage("/profile-placeholder.png");
+    }
+  })();
+}, []);
 
-  /* ---------------- Detect Form Changes ---------------- */
+  /* ---------------- Form Validation ---------------- */
+const phoneNumberObj = parsePhoneNumberFromString(formData.phone, "IN");
+const errors = {
+  fullName: !formData.fullName.trim(),
+  phone: !formData.phone.trim() || !(phoneNumberObj?.isValid() ?? false),
+  country: !formData.country.trim(),
+  languages: formData.languages.length === 0,
+  bio: !formData.bio.trim(),
+};
+
   const isFormChanged = () => {
     if (!initialData) return false;
-
-    return (
-      formData.fullName !== initialData.fullName ||
-      formData.phone !== initialData.phone ||
-      formData.gender !== initialData.gender ||
-      formData.country !== initialData.country ||
-      formData.bio !== initialData.bio ||
-      formData.languages.join(",") !== initialData.languages.join(",")
-    );
+    return JSON.stringify(formData) !== JSON.stringify(initialData);
   };
 
-  /* ---------------- Handlers ---------------- */
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  ) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const toggleLanguage = (lang: string) => {
     setFormData((prev) => ({
@@ -121,203 +123,240 @@ export default function GeneralInfoPage() {
     }));
   };
 
-  const handleImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  /* ---------------- Crop Handlers ---------------- */
+  const onCropComplete = useCallback((_: any, croppedArea: CropArea) => {
+    setCroppedAreaPixels(croppedArea);
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
+    setSelectedFile(file);
     setPreviewImage(URL.createObjectURL(file));
+    setCropModalOpen(true);
+  };
 
+  const getCroppedImage = async (): Promise<Blob | null> => {
+    if (!selectedFile || !croppedAreaPixels) return null;
+
+    const image = await createImage(URL.createObjectURL(selectedFile));
+    const canvas = document.createElement("canvas");
+    canvas.width = croppedAreaPixels.width;
+    canvas.height = croppedAreaPixels.height;
+
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(
+      image,
+      croppedAreaPixels.x,
+      croppedAreaPixels.y,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height,
+      0,
+      0,
+      croppedAreaPixels.width,
+      croppedAreaPixels.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob), "image/jpeg");
+    });
+  };
+
+  const handleUploadCroppedImage = async () => {
     try {
+      const blob = await getCroppedImage();
+      if (!blob) return;
+
+      const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
       await nutritionistProfileService.uploadProfileImage(file);
+
+      setCropModalOpen(false);
+      setPreviewImage(URL.createObjectURL(file));
+      alert("Profile image uploaded successfully");
     } catch (err) {
-      console.error("Image upload failed", err);
+      console.log("error: ",err)
+      
+      alert("Upload failed");
     }
   };
 
+  /* ---------------- Submit Form ---------------- */
   const handleSubmit = async () => {
     try {
       setLoading(true);
       await nutritionistProfileService.updateProfile(formData);
+      setInitialData(formData);
       alert("Profile updated successfully");
-      setInitialData(formData); // reset initialData to prevent multiple save clicks
     } catch (err) {
-      console.error("Update failed", err);
+      console.error("5",err);
+      alert("Update failed");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- UI ---------------- */
+  /* ---------------- Render ---------------- */
   return (
-    <div className="max-w-6xl mx-auto space-y-10">
+    <div className="max-w-5xl mx-auto py-8 px-4 sm:px-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">
+      <div className="mb-10">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           General Information
         </h1>
-        <p className="text-sm text-gray-500 mt-1">
-          This information is visible to clients before purchasing a plan
+        <p className="mt-2 text-slate-500">
+          Set up your public profile to build trust with potential clients.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LEFT CARD */}
-        <div className="bg-white rounded-2xl border p-6 space-y-5">
-          <div className="flex flex-col items-center text-center">
-            <Image
-              src={previewImage}
-              alt="Profile"
-              width={140}
-              height={140}
-              className="rounded-xl object-cover border"
-            />
-            <label className="mt-4 text-sm font-medium text-emerald-600 cursor-pointer">
-              Change Photo
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-            </label>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Profile Image */}
+        <div className="lg:col-span-4 mb-6 flex flex-col items-center gap-4">
+          <div className="relative w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-slate-50">
+            <Image src={previewImage} alt="Profile" fill unoptimized
+            className="object-cover"/>
           </div>
-
-          <div className="text-center">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-              Available for Clients
-            </span>
-          </div>
+          <label className="cursor-pointer px-4 py-2 bg-emerald-600 text-white rounded-xl">
+            Upload Image
+            <input type="file" accept="image/*" hidden onChange={handleFileChange} />
+          </label>
         </div>
 
-        {/* RIGHT FORM */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="Full Name"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              error={errors.fullName}
-            />
+        {/* Crop Modal */}
+        {cropModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
+            <div className="relative w-[90%] max-w-xl h-[400px] bg-white rounded-2xl p-4">
+              <Cropper
+                image={previewImage}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+              <div className="absolute bottom-4 left-4 flex gap-4">
+                <button
+                  onClick={() => setCropModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUploadCroppedImage}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 text-white"
+                >
+                  Upload
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-            <Input
-              label="Phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              error={errors.phone}
-            />
-
-            {/* Country */}
-            <div>
-              <label className="text-sm font-semibold">
-                Country {errors.country && <span className="text-rose-500">*</span>}
-              </label>
-              <select
+        {/* Main Form */}
+        <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-10 space-y-8">
+          <section className="space-y-6">
+            <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+              <span className="h-6 w-1 bg-emerald-500 rounded-full" />
+              Basic Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+              <Input
+                label="Full Name"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                error={errors.fullName}
+                placeholder="e.g. Dr. Jane Smith"
+              />
+<PhoneField
+  value={formData.phone}
+  onChange={(phone) => setFormData((prev) => ({ ...prev, phone }))}
+  error={errors.phone}
+  errorMessage="Please enter a valid phone number"
+/>
+              <Select
+                label="Country"
                 name="country"
                 value={formData.country}
                 onChange={handleChange}
-                className={`mt-1 w-full rounded-lg border p-3 bg-white
-                  ${errors.country ? "border-rose-500" : "border-gray-200"}
-                `}
-              >
-                <option value="">Select country</option>
-                {COUNTRIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Gender */}
-            <div>
-              <label className="text-sm font-semibold">Gender</label>
-              <select
+                error={errors.country}
+                options={COUNTRIES}
+              />
+              <Select
+                label="Gender"
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-lg border p-3 bg-white border-gray-200"
-              >
-                <option value="">Select gender</option>
-                {GENDERS.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
+                options={GENDERS}
+              />
             </div>
-          </div>
+          </section>
 
-          {/* Languages */}
-          <div>
-            <label className="text-sm font-semibold">
-              Languages {errors.languages && <span className="text-rose-500">*</span>}
-            </label>
+          <hr className="border-slate-100" />
 
-            <div className="mt-2 flex flex-wrap gap-2">
-              {LANGUAGES.map((lang) => {
-                const selected = formData.languages.includes(lang);
-
+          <section className="space-y-4">
+            <div className="flex justify-between items-end">
+              <label className="text-sm font-bold text-slate-700">Languages Spoken</label>
+              {errors.languages && (
+                <span className="text-xs font-medium text-rose-500">Selection required</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGE_OPTIONS.map((lang) => {
+                const isSelected = formData.languages.includes(lang);
                 return (
                   <button
-                    type="button"
                     key={lang}
+                    type="button"
                     onClick={() => toggleLanguage(lang)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border transition
-                      ${
-                        selected
-                          ? "bg-emerald-600 text-white border-emerald-600"
-                          : "bg-white text-gray-700 border-gray-300 hover:bg-emerald-50"
-                      }
-                    `}
+                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                      isSelected
+                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-100 ring-2 ring-emerald-600"
+                        : "bg-slate-50 text-slate-600 border border-slate-200 hover:border-emerald-300 hover:bg-white"
+                    }`}
                   >
                     {lang}
                   </button>
                 );
               })}
             </div>
+          </section>
 
-            {errors.languages && (
-              <p className="text-xs text-rose-500 mt-1">
-                Select at least one language
-              </p>
-            )}
-          </div>
+          <hr className="border-slate-100" />
 
-          {/* Bio */}
-          <div>
-            <label className="text-sm font-semibold">
-              About You {errors.bio && <span className="text-rose-500">*</span>}
-            </label>
+          <section className="space-y-4">
+            <div className="flex justify-between items-end">
+              <label className="text-sm font-bold text-slate-700">Professional Bio</label>
+              <span
+                className={`text-xs ${
+                  formData.bio.length > 450 ? "text-amber-500" : "text-slate-400"
+                }`}
+              >
+                {formData.bio.length}/500
+              </span>
+            </div>
             <textarea
               name="bio"
               value={formData.bio}
               onChange={handleChange}
               maxLength={500}
-              className={`mt-1 w-full rounded-lg p-3 h-32 resize-none border
-                ${errors.bio ? "border-rose-500" : "border-gray-200"}
-              `}
-              placeholder="Write a short professional bio"
+              placeholder="Tell your clients about your expertise and approach..."
+              className={`w-full min-h-[140px] rounded-2xl p-4 text-slate-700 border transition-all focus:ring-4 focus:ring-emerald-50 outline-none ${
+                errors.bio ? "border-rose-200 bg-rose-50/30" : "border-slate-200 focus:border-emerald-500"
+              }`}
             />
-            <p className="text-xs text-gray-400 mt-1">
-              {formData.bio.length}/500 characters
-            </p>
-          </div>
+          </section>
 
-          {/* Save */}
-          <div className="flex justify-end">
+          <div className="pt-4 flex items-center justify-between gap-4">
+            <p className="text-xs text-slate-400 italic">
+              * Required fields to publish your profile.
+            </p>
             <button
               onClick={handleSubmit}
               disabled={loading || !isFormChanged()}
-              className="px-6 py-3 rounded-xl font-semibold text-white transition
-                bg-emerald-600 hover:bg-emerald-700
-                disabled:bg-gray-300 disabled:cursor-not-allowed
-              "
+              className="px-8 py-3.5 rounded-2xl font-bold text-white transition-all shadow-lg bg-emerald-600 hover:bg-emerald-700 hover:shadow-emerald-200 active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
             >
-              Save Changes
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </div>
@@ -326,31 +365,83 @@ export default function GeneralInfoPage() {
   );
 }
 
-/* ---------------- Reusable Input ---------------- */
-function Input({
-  label,
-  error,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
+/* ---------------- Reusable Components ---------------- */
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: boolean;
-}) {
+}
+
+function Input({ label, error, ...props }: InputProps) {
   return (
-    <div>
-      <label className="text-sm font-semibold">
-        {label}
-        {error && <span className="text-rose-500 ml-1">*</span>}
-      </label>
+    <div className="space-y-1.5">
+      <label className="text-sm font-bold text-slate-700 ml-1">{label}</label>
       <input
         {...props}
-        className={`mt-1 w-full rounded-lg p-3 border transition
-          ${error ? "border-rose-500" : "border-gray-200"}
-        `}
+        className={`w-full rounded-2xl p-3.5 border text-slate-700 transition-all focus:ring-4 focus:ring-emerald-50 outline-none ${
+          error ? "border-rose-200 bg-rose-50/50" : "border-slate-200 focus:border-emerald-500"
+        }`}
       />
-      {error && (
-        <p className="text-xs text-rose-500 mt-1">
-          Please add {label.toLowerCase()}
-        </p>
+    </div>
+  );
+}
+
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  options: string[];
+  error?: boolean;
+}
+
+function Select({ label, options, error, ...props }: SelectProps) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-bold text-slate-700 ml-1">{label}</label>
+      <select
+        {...props}
+        className={`w-full rounded-2xl p-3.5 border bg-white text-slate-700 transition-all focus:ring-4 focus:ring-emerald-50 outline-none appearance-none ${
+          error ? "border-rose-200 bg-rose-50/50" : "border-slate-200 focus:border-emerald-500"
+        }`}
+      >
+        <option value="">Select {label.toLowerCase()}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+
+function PhoneField({
+  value,
+  onChange,
+  error,
+  errorMessage,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  error?: boolean;
+  errorMessage?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="text-sm font-bold text-slate-700 ml-1">
+        Phone Number
+      </label>
+
+      <PhoneInput
+        international
+        defaultCountry="IN"
+        value={value}
+        onChange={(val) => onChange(val || "")}
+        className={`w-full rounded-2xl border p-3 transition-all ${
+          error ? "border-rose-200 bg-rose-50/50" : "border-slate-200"
+        }`}
+      />
+
+      {error && errorMessage && (
+        <p className="text-xs text-rose-500 mt-1">{errorMessage}</p>
       )}
     </div>
   );

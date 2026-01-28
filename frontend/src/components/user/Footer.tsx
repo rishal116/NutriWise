@@ -19,7 +19,7 @@ interface FooterProps {
 }
 
 const linkedinPrimary = "https://www.linkedin.com/in/muhammed-rishal-472456324/";
-const linkedinSecondary = "https://www.linkedin.com/in/muhammed-rishal-13822a39a/";
+const linkedinSecondary = "https://www.linkedin.com/in/muhammedrishale/";
 
 export default function Footer({
   companyName = "NutriWise",

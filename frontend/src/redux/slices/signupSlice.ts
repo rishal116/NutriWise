@@ -14,24 +14,17 @@ const signupSlice = createSlice({
   reducers: {
     setSignupEmail: (state, action: PayloadAction<string>) => {
       state.email = action.payload;
-      if (typeof window !== "undefined") {
-        localStorage.setItem("signupEmail", action.payload);
-      }
     },
-    restoreSignupEmail: (state) => {
-      if (typeof window !== "undefined") {
-        state.email = localStorage.getItem("signupEmail");
-      }
+    restoreSignupEmail: (state, action: PayloadAction<string | null>) => {
+      state.email = action.payload;
     },
     clearSignupEmail: (state) => {
       state.email = null;
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("signupEmail");
-      }
     },
   },
 });
 
 export const { setSignupEmail, restoreSignupEmail, clearSignupEmail } =
   signupSlice.actions;
+
 export default signupSlice.reducer;

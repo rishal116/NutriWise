@@ -52,7 +52,7 @@ api.interceptors.response.use(
         throw new Error("No new token received");
       } catch (err) {
         store.dispatch(logout());
-        localStorage.clear();
+        localStorage.removeItem("token");
         window.location.href = "/"
         return Promise.reject(err);
       }
@@ -62,7 +62,7 @@ api.interceptors.response.use(
     // 403 → blocked or forbidden
     if (error.response?.status === 403) {
       store.dispatch(logout());
-      localStorage.clear();
+      localStorage.removeItem("token");
       window.location.href = "/";
     }
 

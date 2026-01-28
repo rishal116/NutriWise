@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 const menu = [
   { label: "Dashboard", href: "/nutritionist/dashboard", icon: Home },
-  { label: "Appointments", href: "/nutritionist/appointments", icon: Calendar },
+  { label: "plans", href: "/nutritionist/appointments", icon: Calendar },
   { label: "Live Sessions", href: "/nutritionist/sessions", icon: Video },
   { label: "My Clients", href: "/nutritionist/clients", icon: Users },
   { label: "Resource Records", href: "/nutritionist/records", icon: FileText },

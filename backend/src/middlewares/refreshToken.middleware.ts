@@ -6,6 +6,7 @@ import { Request, Response, NextFunction } from "express";
 export const refreshToken = async ( req: Request, res: Response, next: NextFunction ) => {
     try {
         const token = req.cookies.refreshToken;
+        
         if (!token) {
             return res.status(401).json({ message: "No refresh token found" });
         }

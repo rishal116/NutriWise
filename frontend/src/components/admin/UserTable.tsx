@@ -1,12 +1,16 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { Search, MoreVertical, User, Lock, Unlock } from "lucide-react";
+
+import { useEffect, useState } from "react";
+import { MoreVertical, Lock, Unlock } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { adminUserService } from "@/services/admin/adminUser.service";
 import { toast } from "react-hot-toast";
+import { useDebounce } from "@/hooks/admin/debounce.hooks";
+import UserSearchBar from "./UserSearchBar";
 
 interface UserDTO {
   id: string;
-  name: string;
+  fullName: string;
   email: string;
   role: string;
   isBlocked: boolean;
@@ -14,202 +18,229 @@ interface UserDTO {
 
 interface PaginatedResponse<T> {
   data: T[];
-  total: number;
   page: number;
   limit: number;
   totalPages: number;
 }
 
-export default function UserTable({ initialData }: { initialData: PaginatedResponse<UserDTO> }) {
+export default function UserTable({
+  initialData,
+}: {
+  initialData: PaginatedResponse<UserDTO>;
+}) {
+  const router = useRouter();
+
   const [users, setUsers] = useState<UserDTO[]>(initialData.data);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
+
   const [page, setPage] = useState(initialData.page);
   const [totalPages, setTotalPages] = useState(initialData.totalPages);
-  const [dropdown, setDropdown] = useState<{ id: string; top: number; left: number } | null>(null);
-  const firstCall = useRef(true);
 
+  const [activeUserId, setActiveUserId] = useState<string | null>(null);
+  const [confirmUser, setConfirmUser] = useState<UserDTO | null>(null);
 
-
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const perPage = initialData.limit;
 
-
+  /* Reset page when search changes */
   useEffect(() => {
-      if (firstCall.current) {
-    firstCall.current = false;
-    return; // Skip first effect only
-  }
+    setPage(1);
+  }, [debouncedSearch]);
 
-
-    const fetchUsers = async () => {
-      
-      try {
-        const response = await adminUserService.getAllUsers(page, perPage, search);
-        setUsers(response.data);
-        setTotalPages(response.totalPages);
-      } catch (err: any) {
-        toast.error(err?.response?.data?.message || "Failed to fetch users");
-      }
-    };
-
+  /* Fetch users */
+  useEffect(() => {
     fetchUsers();
-  }, [page, search]);
+  }, [page, debouncedSearch]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdown(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [dropdownRef]);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(1); // Reset to first page when searching
-  };
-
-  const toggleDropdown = (id: string, event: React.MouseEvent<HTMLButtonElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    setDropdown(
-      dropdown?.id === id
-        ? null
-        : { id, top: rect.bottom + window.scrollY, left: rect.right + window.scrollX - 180 }
-    );
-  };
-
-  const handleBlockToggle = async (id: string, isBlocked: boolean) => {
+  const fetchUsers = async () => {
     try {
-      if (isBlocked) await adminUserService.unblockUser(id);
-      else await adminUserService.blockUser(id);
-
-      toast.success(isBlocked ? "User unblocked" : "User blocked");
-      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, isBlocked: !isBlocked } : u)));
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Action failed");
+      const res = await adminUserService.getAllUsers(
+        page,
+        perPage,
+        debouncedSearch
+      );
+      setUsers(res.data);
+      setTotalPages(res.totalPages);
+    } catch {
+      toast.error("Failed to load users");
     }
-    setDropdown(null);
+  };
+
+  const toggleBlock = async (user: UserDTO) => {
+    try {
+      user.isBlocked
+        ? await adminUserService.unblockUser(user.id)
+        : await adminUserService.blockUser(user.id);
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === user.id ? { ...u, isBlocked: !u.isBlocked } : u
+        )
+      );
+
+      toast.success(user.isBlocked ? "User unblocked" : "User blocked");
+    } catch {
+      toast.error("Action failed");
+    }
   };
 
   return (
-    <div>
+    <div className="bg-black text-white p-6 rounded-lg">
       {/* SEARCH */}
-      <div className="flex justify-end mb-6">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-sm 
-            focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          />
-        </div>
-      </div>
+      <UserSearchBar value={search} onChange={setSearch} />
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-auto">
-        <table className="w-full text-sm text-gray-700 min-w-[700px]">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider">
+      <div className="overflow-x-auto mt-4">
+        <table className="w-full text-sm border border-gray-800">
+          <thead className="bg-gray-900 text-gray-400">
             <tr>
-              <th className="px-6 py-4 text-left">Name</th>
-              <th className="px-6 py-4 text-left">Email</th>
-              <th className="px-6 py-4 text-center">Account</th>
-              <th className="px-6 py-4 text-center">Actions</th>
+              <th className="px-4 py-3 text-left">Name</th>
+              <th className="px-4 py-3 text-left">Email</th>
+              <th className="px-4 py-3 text-center">Role</th>
+              <th className="px-4 py-3 text-center">Status</th>
+              <th className="px-4 py-3 text-right">Action</th>
             </tr>
           </thead>
+
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b hover:bg-gray-50 transition">
-                <td className="px-6 py-4 font-medium">{u.name}</td>
-                <td className="px-6 py-4">{u.email}</td>
-                <td className="px-6 py-4 text-center">
-                  <span
-                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                      u.isBlocked ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {u.isBlocked ? "Blocked" : "Active"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <button
-                    className="p-2 rounded-full hover:bg-gray-200 transition"
-                    onClick={(e) => toggleDropdown(u.id, e)}
-                  >
-                    <MoreVertical size={18} />
-                  </button>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-6 text-gray-400">
+                  No users found
                 </td>
               </tr>
-            ))}
+            ) : (
+              users.map((u) => (
+                <tr
+                  key={u.id}
+                  className="border-t border-gray-800 hover:bg-gray-900"
+                >
+                  <td className="px-4 py-3">{u.fullName}</td>
+                  <td className="px-4 py-3 text-gray-400">{u.email}</td>
+                  <td className="px-4 py-3 text-center">{u.role}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        u.isBlocked
+                          ? "bg-red-900 text-red-300"
+                          : "bg-green-900 text-green-300"
+                      }`}
+                    >
+                      {u.isBlocked ? "Blocked" : "Active"}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3 text-right relative">
+                    <button
+                      onClick={() =>
+                        setActiveUserId(activeUserId === u.id ? null : u.id)
+                      }
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+
+                    {activeUserId === u.id && (
+                      <div className="absolute right-0 mt-2 w-40 bg-gray-900 border border-gray-700 rounded-md z-10">
+                        <button
+                          onClick={() => {
+                            router.push(`/admin/users/${u.id}`);
+                            setActiveUserId(null);
+                          }}
+                          className="w-full px-3 py-2 text-sm text-left hover:bg-gray-800"
+                        >
+                          View Profile
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setConfirmUser(u);
+                            setActiveUserId(null);
+                          }}
+                          className="w-full px-3 py-2 text-sm flex items-center gap-2 hover:bg-gray-800"
+                        >
+                          {u.isBlocked ? (
+                            <>
+                              <Unlock size={14} /> Unblock
+                            </>
+                          ) : (
+                            <>
+                              <Lock size={14} /> Block
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-
-        {/* DROPDOWN */}
-        {dropdown && (
-          <div
-            ref={dropdownRef}
-            style={{ top: dropdown.top, left: dropdown.left }}
-            className="fixed w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50"
-          >
-            <button
-              onClick={() => alert(`Viewing ${dropdown.id}`)}
-              className="w-full flex items-center px-4 py-2 hover:bg-gray-50 text-gray-700 text-sm"
-            >
-              <User className="w-4 h-4 mr-2" /> View Profile
-            </button>
-
-            <button
-              onClick={() => {
-                const u = users.find((x) => x.id === dropdown.id);
-                if (u) handleBlockToggle(u.id, u.isBlocked);
-              }}
-              className={`w-full flex items-center px-4 py-2 hover:bg-gray-50 text-sm ${
-                users.find((x) => x.id === dropdown.id)?.isBlocked ? "text-emerald-600" : "text-red-600"
-              }`}
-            >
-              {users.find((x) => x.id === dropdown.id)?.isBlocked ? (
-                <>
-                  <Unlock className="w-4 h-4 mr-2" /> Unblock User
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4 mr-2" /> Block User
-                </>
-              )}
-            </button>
-          </div>
-        )}
       </div>
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-6">
-          <div className="flex items-center gap-3">
-            <button
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-100"
-            >
-              Prev
-            </button>
+        <div className="flex justify-center mt-6 gap-4 text-sm">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="px-3 py-1 border border-gray-700 rounded disabled:opacity-40"
+          >
+            Prev
+          </button>
 
-            <span className="text-gray-600 text-sm">
-              Page {page} of {totalPages}
-            </span>
+          <span className="text-gray-400">
+            Page {page} / {totalPages}
+          </span>
 
-            <button
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1.5 border rounded-lg text-sm disabled:opacity-40 hover:bg-gray-100"
-            >
-              Next
-            </button>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="px-3 py-1 border border-gray-700 rounded disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      {/* CONFIRMATION MODAL */}
+      {confirmUser && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-gray-700 rounded-lg w-96 p-6">
+            <h2 className="text-lg font-semibold mb-2">
+              Confirm Action
+            </h2>
+
+            <p className="text-sm text-gray-400 mb-6">
+              Are you sure you want to{" "}
+              <span className="font-semibold text-white">
+                {confirmUser.isBlocked ? "unblock" : "block"}
+              </span>{" "}
+              this user?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmUser(null)}
+                className="px-4 py-2 text-sm border border-gray-600 rounded hover:bg-gray-800"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  await toggleBlock(confirmUser);
+                  setConfirmUser(null);
+                }}
+                className={`px-4 py-2 text-sm rounded text-white ${
+                  confirmUser.isBlocked
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                {confirmUser.isBlocked ? "Unblock" : "Block"}
+              </button>
+            </div>
           </div>
         </div>
       )}

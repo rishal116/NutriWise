@@ -1,14 +1,8 @@
-import { adminNotificationService } from "@/services/admin/adminNotification.service";
+"use client";
+
 import NotificationsPage from "@/components/admin/Notification";
 
-export const metadata = {
-  title: "NutriWise – Admin Notification",
-};
-
 export default async function Page() {
-  const initialData = await adminNotificationService.getAllNotifications(1, 2, "");
-  
-  
-  
-  return <NotificationsPage initialData={initialData} />;
+
+  return <NotificationsPage/>;
 }

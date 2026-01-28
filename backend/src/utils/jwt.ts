@@ -49,6 +49,7 @@ export const clearAuthCookies = (res: Response) => {
 };
 
 export const clearAdminAuthCookies = (res: Response) => {
+  console.log("hello");
   res.clearCookie("adminRefreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

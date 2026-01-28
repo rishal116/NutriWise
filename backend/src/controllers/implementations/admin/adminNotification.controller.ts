@@ -12,7 +12,6 @@ export class AdminNotificationController implements IAdminNotificationController
     private _adminNotificationService: INotificationService,
   ) {}
 
-
   getAllNotifications = asyncHandler(async (req: Request, res: Response) => {
     const receiverId = process.env.ADMIN_ID!;
     const page = parseInt(req.query.page as string) || 1;
@@ -29,20 +28,17 @@ export class AdminNotificationController implements IAdminNotificationController
     res.status(200).json({ success: true, ...result });
   });
 
-
   markAsRead = asyncHandler(async (req: Request, res: Response) => {
     const id = req.params.id;
     await this._adminNotificationService.markNotificationRead(id);
     res.status(200).json({ success: true, message: "Notification marked as read" });
   });
 
-  
   markAllAsRead = asyncHandler(async (req: Request, res: Response) => {
     const receiverId = req.user?.userId;
     const recipientType = "admin"
     await this._adminNotificationService.markAllNotificationsRead(receiverId!,recipientType);
     res.status(200).json({ success: true, message: "All notifications marked as read" });
   });
-
-  
+ 
 }

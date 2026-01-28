@@ -3,6 +3,7 @@ import { Schema, model, Document, Types } from "mongoose";
 export interface IHealthDetails extends Document {
   _id: string;
   userId: Types.ObjectId;
+  profileImage?: string;
   height: number;
   weight: number;
   bmi: number;
@@ -25,6 +26,7 @@ const healthDetailsSchema = new Schema<IHealthDetails>(
       ref: "User",
       required: true,
     },
+    profileImage: { type: String,default: "" },
     height: { type: Number, required: true },
     weight: { type: Number, required: true },
     bmi: { type: Number, required: true },

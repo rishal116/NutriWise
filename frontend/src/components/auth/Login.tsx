@@ -10,7 +10,6 @@ import { loginSuccess } from "@/redux/slices/authSlice";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import toast from "react-hot-toast";
 import { useEffect } from "react";
-import { log } from "console";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -54,6 +53,8 @@ const handleLogin = async (e?: any) => {
 
   try {
     const res = await userAuthService.login(email, password);
+    console.log(res);
+    
 
     if (res.user.isBlocked) {
       setError("Your account has been blocked. Please contact support.");

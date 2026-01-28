@@ -1,35 +1,13 @@
-import { server } from "@/lib/axios/server";
 import { api } from "@/lib/axios/api";
 
+interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export const userAccountService = {
-  getProfile: async () => {
-    const response = await api.get("/profile");
-    console.log(response);
-    
-    return response.data;
-  },
-
-  updateProfile: async (payload: {
-    fullName?: string;
-    email?: string;
-    phone?: string;
-    birthDate?: string;
-    gender?: string;
-    age?: number;
-    profileImage?: string;
-  }) => {
-    const response = await server.put("/users/profile", payload);
-    return response.data;
-  },
-
-  uploadProfileImage: async (file: File) => {
-    const formData = new FormData();
-    formData.append("image", file);
-
-    const response = await server.put("/users/profile/image", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
+  changePassword: async (payload: ChangePasswordPayload) => {
+    const response = await api.post("/change-password", payload);
     return response.data;
   },
 };

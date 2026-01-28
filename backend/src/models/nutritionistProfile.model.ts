@@ -19,67 +19,62 @@ export interface INutritionistProfile extends Document {
   cv?: string;
   certifications?: string[];
   totalExperienceYears?: number;
+  nutritionistStatus: "BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
+  totalPeopleCoached?:number;
   country: string;
   rating?: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const ExperienceSchema = new Schema<IExperience>(
-  {
-    role: { type: String, required: true, trim: true },
-    organization: { type: String, required: true, trim: true },
-    years: { type: Number, required: true, min: [1, "Experience years must be greater than 0"] },
+const ExperienceSchema = new Schema<IExperience>({
+  role: { type: String, required: true, trim: true },
+  organization: { type: String, required: true, trim: true },
+  years: { type: Number, required: true, min: [1, "Experience years must be greater than 0"] },
+},
+{ _id: false });
+
+const NutritionistDetailsSchema = new Schema<INutritionistProfile>({
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  profileImage: { type: String,default: "" },
+  qualifications: {
+    type: [String],
+    required: [true, "At least one qualification is required"],
   },
-  { _id: false }
-);
-
-const NutritionistDetailsSchema = new Schema<INutritionistProfile>(
-  {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    profileImage: { type: String },
-
-    qualifications: {
-      type: [String],
-      required: [true, "At least one qualification is required"],
-    },
-
-    specializations: {
-      type: [String],
-      required: [true, "At least one specialization is required"],
-    },
-
-    experiences: {
-      type: [ExperienceSchema],
-      required: [true, "Experience details are required"],
-      validate: [
-        (val: IExperience[]) => val.length > 0,
-        "At least one experience is required",
-      ],
-    },
-
+  specializations: {
+    type: [String],
+    required: [true, "At least one specialization is required"],
+  },
+  experiences: {
+    type: [ExperienceSchema],
+    required: [true, "Experience details are required"],
+    validate: [
+      (val: IExperience[]) => val.length > 0,
+      "At least one experience is required",
+    ]},
     bio: { type: String, trim: true, maxlength: [500, "Bio cannot exceed 500 characters"] },
-    
     languages: {
       type: [String],
       required: [true, "At least one language is required"],
     },
-
     availabilityStatus: {
       type: String,
       enum: ["available", "unavailable", "busy"],
       default: "available",
     },
-
     cv: { type: String },
     certifications: { type: [String] }, 
-
     totalExperienceYears: { type: Number, min: 0 },
-    
     country: {
       type: String,
       required: [true, "Country is required"],
       trim: true,
+    },
+    nutritionistStatus: {
+      type: String,
+      enum: ["BEGINNER", "VERIFIED", "EXPERT", "TOP_COACH"],
+      default: "BEGINNER",
+      index: true
     },
     rating: {
       type: Number,

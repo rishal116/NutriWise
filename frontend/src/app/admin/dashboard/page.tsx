@@ -1,13 +1,13 @@
-export const metadata = {
-  title: "NutriWise – Admin Dashboard",
-};
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function AdminDashboard() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold text-gray-800">
-        Admin Dashboard
-      </h1>
-    </div>
-  );
+export default async function AdminDashboardPage() {
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get("adminRefreshToken");
+
+  if (!adminToken) {
+    redirect("/admin/login");
+  }
+
+  return <div>Admin Dashboard</div>;
 }
