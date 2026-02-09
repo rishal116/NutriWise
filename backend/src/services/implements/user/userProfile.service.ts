@@ -7,6 +7,7 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
 import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
+import { log } from "winston";
 
 
 @injectable()
@@ -65,7 +66,11 @@ export class UserProfileService implements IUserProfileService {
   }
 
     async getNutritionistProfileImage(userId: string) {
+      console.log("userId: ",userId);
+      
     const result = await this._healthDetails.getProfileImageByUserId(userId);
+    console.log(result);
+    
     if (!result || !result.profileImage) {
       logger.warn(`No profile image found for user ${userId}`);
       return { profileImage: "/images/images.jpg" };
@@ -86,6 +91,8 @@ export class UserProfileService implements IUserProfileService {
       const updatedProfile = await this._healthDetails.updateByUserId(userId, {
         profileImage: cloudinaryUrl,
       });
+      console.log("db updated: ",updatedProfile);
+      
       if (!updatedProfile) {
         logger.error(`DB update failed for user ${userId}`);
         throw new Error("Failed to update profile image in database");

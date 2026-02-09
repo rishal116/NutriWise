@@ -21,14 +21,30 @@ export class UserPlanController implements IUserPlanController {
         message: AUTH_MESSAGES.UNAUTHORIZED,
       });
     }
-
     const { userId } = req.user;
     const plans = await this._userPlanService.getMyPlans(userId);
-
     return res.status(StatusCode.OK).json({
       success: true,
       message: USER_MESSAGES.PLANS_FETCHED,
       data: plans,
     });
   });
+  
+  getPlanById = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      return res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: AUTH_MESSAGES.UNAUTHORIZED,
+      });
+    }
+    const { planId } = req.params;
+    const { userId } = req.user;
+    const plan = await this._userPlanService.getPlanById(planId, userId);
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: USER_MESSAGES.PLANS_FETCHED,
+      data: plan,
+    });
+  });
+
 }

@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { jwtConfig } from "../configs/jwt";
 import { generateTokens, setAdminAuthCookies } from "../utils/jwt";
 import { Request, Response, NextFunction } from "express";
+import { ROLES } from "../constants";
 
 export const adminRefreshToken = async (
   req: Request,
@@ -9,7 +10,6 @@ export const adminRefreshToken = async (
   next: NextFunction
 ) => {
   try {
-    
     const token = req.cookies.adminRefreshToken;
 
     if (!token) {
@@ -20,11 +20,9 @@ export const adminRefreshToken = async (
       token,
       jwtConfig.refreshToken.secret
     ) as { userId: string; role: string };
-
-    console.log(decoded.role);
     
 
-    if (decoded.role !== "ADMIN") {
+    if (decoded.role !== ROLES.ADMIN) {
       return res.status(403).json({ message: "Not authorized as admin" });
     }
 

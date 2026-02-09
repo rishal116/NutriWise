@@ -56,5 +56,13 @@ export const TYPES = {
   IStripeWebhookService: Symbol.for("IStripeWebhookService"),
   IStripeWebhookController: Symbol.for("IStripeWebhookController"),
   IWalletRepository:Symbol.for("IWalletRepository"),
-  IPaymentRepository:Symbol.for("IPaymentRepository")
+  IPaymentRepository:Symbol.for("IPaymentRepository"),
+
+  // chat
+  IChatController:Symbol.for("IChatController"),
+  IChatService:Symbol.for("IChatService"),
+  IConversationRepository:Symbol.for("IConversationRepository"),
+  IMessageRepository:Symbol.for("IMessageRepository")
+
+
 };

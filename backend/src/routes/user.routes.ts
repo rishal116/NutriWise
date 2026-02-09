@@ -11,7 +11,10 @@ import { IStripeWebhookController } from "../controllers/interfaces/common/IStri
 import { IHealthDetailsController } from "../controllers/interfaces/user/IHealthDetailsController";
 import { IUserPlanController } from "../controllers/interfaces/user/IUserPlanController";
 import { upload } from "../middlewares/multer.middleware";
+import { IChatController } from "../controllers/interfaces/chat/IChatController";
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
+import { blockLoggedInUser } from "../middlewares/blockLoggedInUser.middleware";
+
 
 
 const router = express.Router();
@@ -24,6 +27,7 @@ const stripeController = container.get<IStripeWebhookController>(TYPES.IStripeWe
 const healthDetailsController = container.get<IHealthDetailsController>(TYPES.IHealthDetailsController)
 const userPlanController = container.get<IUserPlanController>(TYPES.IUserPlanController)
 const userAccountController = container.get<IUserAccountController>(TYPES.IUserAccountController)
+const chatController = container.get<IChatController>(TYPES.IChatController)
 
 router.post("/signup", userAuthController.signup);
 router.post("/verify-otp",userAuthController.verifyOtp)
@@ -34,7 +38,7 @@ router.post("/logout",userAuthController.logout)
 router.post("/forgot-password", userAuthController.forgotPassword);
 router.post("/reset-password", userAuthController.resetPassword);
 router.post("/refresh-token", refreshToken);
-router.get("/me",authMiddleware,userAuthController.getMe);
+router.get("/me",authMiddleware,blockLoggedInUser,userAuthController.getMe);
 router.post("/google-signin", userAuthController.googleSignin);
 
 router.get("/profile", authMiddleware,profileController.getProfile);
@@ -51,6 +55,9 @@ router.post("/stripe/webhook",authMiddleware,express.raw({ type: "application/js
 router.get("/health-details", authMiddleware, healthDetailsController.getMyDetails);
 router.post("/health-details", authMiddleware,authMiddleware,healthDetailsController.saveDetails);
 router.get("/plans",authMiddleware,userPlanController.getMyPlans)
+router.get("/plans/:planId",authMiddleware,userPlanController.getPlanById)
+
+router.post("/chat/conversation",authMiddleware,chatController.createDirectConversation)
 
 router.post("/change-password",authMiddleware,userAccountController.changePassword)
 

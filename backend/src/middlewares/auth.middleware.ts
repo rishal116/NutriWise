@@ -1,44 +1,60 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { jwtConfig } from "../configs/jwt";
-import { CustomError } from "../utils/customError";
 import { StatusCode } from "../enums/statusCode.enum";
 import { ROLES, Role } from "../types/role";
 import { AUTH_MESSAGES } from "../constants/index";
-import { log } from "winston";
 
 interface JwtPayload {
   userId: string;
   role: Role;
 }
 
-export const authMiddleware = (req: Request,res: Response,next: NextFunction) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      throw new CustomError(AUTH_MESSAGES.AUTH_HEADER_MISSING,StatusCode.UNAUTHORIZED);
-    }
-    const token = authHeader.split(" ")[1];
+export const authMiddleware = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const authHeader = req.headers.authorization;
 
-    
-    const decoded = jwt.verify(token, jwtConfig.accessToken.secret) as JwtPayload;
+  // Access token missing → soft 401
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(StatusCode.UNAUTHORIZED).json({
+      message: AUTH_MESSAGES.AUTH_HEADER_MISSING,
+      code: "ACCESS_TOKEN_MISSING",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(
+      token,
+      jwtConfig.accessToken.secret
+    ) as JwtPayload;
+
     if (!ROLES.includes(decoded.role)) {
-      throw new CustomError(AUTH_MESSAGES.INVALID_ROLE,StatusCode.UNAUTHORIZED);
+      return res.status(StatusCode.UNAUTHORIZED).json({
+        message: AUTH_MESSAGES.INVALID_ROLE,
+      });
     }
+
     req.user = {
       userId: decoded.userId,
       role: decoded.role,
     };
+
     next();
   } catch (error: any) {
-    console.log("",error);
-    
-    if (error.name === "TokenExpiredError") {      
-      return next(new CustomError(AUTH_MESSAGES.TOKEN_EXPIRED, StatusCode.UNAUTHORIZED));
+    if (error.name === "TokenExpiredError") {
+      return res.status(StatusCode.UNAUTHORIZED).json({
+        message: AUTH_MESSAGES.TOKEN_EXPIRED,
+        code: "ACCESS_TOKEN_EXPIRED",
+      });
     }
-    if (error.name === "JsonWebTokenError") {
-      return next(new CustomError(AUTH_MESSAGES.INVALID_TOKEN, StatusCode.UNAUTHORIZED));
-    }
-    next(new CustomError(AUTH_MESSAGES.AUTH_FAILED, StatusCode.UNAUTHORIZED));
+
+    return res.status(StatusCode.UNAUTHORIZED).json({
+      message: AUTH_MESSAGES.INVALID_TOKEN,
+    });
   }
 };

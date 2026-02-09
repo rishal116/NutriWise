@@ -43,5 +43,17 @@ export class UserPlanRepository extends BaseRepository<IUserPlan> implements IUs
         return docs as unknown as IUserPlanPopulated[];
     }
 
-    
+async findOnePopulated(
+  filter: Partial<IUserPlan>
+): Promise<IUserPlanPopulated | null> {
+  const doc = await this._model
+    .findOne(filter)
+    .populate("planId")
+    .populate("nutritionistId")
+    .populate("userId")
+    .exec();
+
+  return doc as unknown as IUserPlanPopulated | null;
+}
+
 }

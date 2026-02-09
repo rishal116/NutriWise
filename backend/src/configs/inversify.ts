@@ -100,10 +100,8 @@ import { INutritionistSubscriptionController } from "../controllers/interfaces/n
 // common
 import { ICheckoutController } from "../controllers/interfaces/user/ICheckoutController";
 import { CheckoutController } from "../controllers/implementations/user/checkout.controller";
-
 import { ICheckoutService } from "../services/interfaces/user/ICheckoutService";
 import { CheckoutService } from "../services/implements/user/checkout.service";
-
 import { IStripeService } from "../services/interfaces/common/IStripeService";
 import { StripeService } from "../services/implements/common/stripe.service";
 import { IStripeWebhookService } from "../services/interfaces/common/IStripeWebhookService";
@@ -114,6 +112,16 @@ import { IWalletRepository } from "../repositories/interfaces/common/IWalletRepo
 import { WalletRepository } from "../repositories/implements/common/wallet.repository";
 import { PaymentRepository } from "../repositories/implements/common/payment.repository";
 import { IPaymentRepository } from "../repositories/interfaces/common/IPaymentRepository";
+
+
+import { IChatController } from "../controllers/interfaces/chat/IChatController";
+import { ChatController } from "../controllers/implementations/chat/chat.controller";
+import { IChatService } from "../services/interfaces/chat/IChatService";
+import { ChatService } from "../services/implements/chat/chat.service";
+import { IConversationRepository } from "../repositories/interfaces/chat/IConversationRepository";
+import { ConversationRepository } from "../repositories/implements/chat/conversation.repository";
+import { IMessageRepository } from "../repositories/interfaces/chat/IMessageRepository";
+import { MessageRepository } from "../repositories/implements/chat/message.repository";
 // ---------------- CONTAINER ----------------
 const container = new Container();
 
@@ -183,8 +191,11 @@ container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
 container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepository);
 
 
-
-
+// chat
+container.bind<IChatController>(TYPES.IChatController).to(ChatController)
+container.bind<IChatService>(TYPES.IChatService).to(ChatService)
+container.bind<IConversationRepository>(TYPES.IConversationRepository).to(ConversationRepository)
+container.bind<IMessageRepository>(TYPES.IMessageRepository).to(MessageRepository)
 
 
 

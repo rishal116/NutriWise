@@ -3,7 +3,13 @@ import { NutritionistSubscriberDTO } from "../../../dtos/nutritionist/nutritioni
 
 export interface IUserPlanService {
   getMyPlans(userId: string): Promise<UserPlanResponseDTO[]>;
+
   getSubscribers(
     nutritionistId: string
   ): Promise<NutritionistSubscriberDTO[]>;
+
+  getPlanById(
+    planId: string,
+    userId: string
+  ): Promise<UserPlanResponseDTO>;
 }
