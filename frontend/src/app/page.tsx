@@ -1,19 +1,31 @@
-import React from "react";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import NutriWiseLanding from "./(public)/page";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-export const metadata = {
-  title: "NutriWise – Landing Page",
-};
+export default function Page() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.replace("/home");
+    } else {
+      setChecking(false);
+    }
+  }, []);
 
-const Page = () => {
+if (checking) return null;
+
   return (
-    <div>
+    <>
       <NutriWiseLanding />
       <ToastContainer position="top-right" autoClose={3000} />
-    </div>
+    </>
   );
-};
-
-export default Page;
+}

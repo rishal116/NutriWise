@@ -14,14 +14,7 @@ export default function HomePage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
-  useEffect(() => {
-    const token = localStorage.getItem("token")
 
-    if (!token) {
-      router.replace("/");
-    }
-  }, [router]);
 
 
   const challenges = [

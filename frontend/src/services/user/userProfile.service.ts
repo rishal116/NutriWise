@@ -1,4 +1,3 @@
-// userAccountService.ts
 import { api } from "@/lib/axios/api";
 
 export const userAccountService = {
@@ -24,13 +23,14 @@ export const userAccountService = {
     const response = await api.get("/profile/upload-image");
     return response.data; 
   },
-
+  
   uploadProfileImage: async (file: File) => {
     const formData = new FormData();
-    formData.append("image", file);
+    formData.append("image", file); 
     const response = await api.post("/profile/upload-image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
   },
+
 };

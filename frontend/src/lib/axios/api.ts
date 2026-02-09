@@ -14,8 +14,7 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");
-      
+      const token = localStorage.getItem("token");      
       if (token) config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
@@ -26,40 +25,51 @@ api.interceptors.request.use(
 // RESPONSE INTERCEPTOR
 api.interceptors.response.use(
   (response) => response,
-
   async (error) => {
     const originalRequest = error.config;
 
-    // Prevent endless loop
+    // 🚫 Auth endpoints should NOT trigger refresh
+    const authEndpoints = [
+      "/login",
+      "/signup",
+      "/google",
+    ];
+
+    if (authEndpoints.some((url) => originalRequest.url?.includes(url))) {
+      return Promise.reject(error);
+    }
+
+    // stop infinite loop
+    if (originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    // don't refresh on refresh endpoint itself
     if (originalRequest.url?.includes("/refresh-token")) {
       return Promise.reject(error);
     }
 
-    // 401 → try refresh
-  if ( error.response?.status === 401 && !originalRequest._retry && 
-    !originalRequest.url.includes("/login") && localStorage.getItem("token")) {
+    if (error.response?.status === 401) {
       originalRequest._retry = true;
+
       try {
-        const res = await api.post( "/refresh-token", {},
-          { headers: { Authorization: "" } }
-        );
+        const res = await api.post("/refresh-token");
+
         const newToken = res.data?.accessToken;
-        if (newToken) {
-          localStorage.setItem("token", newToken);
-          originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
-          return api(originalRequest);
-        }
-        throw new Error("No new token received");
+        if (!newToken) throw new Error("No access token");
+
+        localStorage.setItem("token", newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        return api(originalRequest);
       } catch (err) {
         store.dispatch(logout());
         localStorage.removeItem("token");
-        window.location.href = "/"
+        window.location.href = "/";
         return Promise.reject(err);
       }
     }
 
-
-    // 403 → blocked or forbidden
     if (error.response?.status === 403) {
       store.dispatch(logout());
       localStorage.removeItem("token");

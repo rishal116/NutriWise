@@ -54,6 +54,8 @@ export const protectRoutes = (req: NextRequest) => {
     }
 
     if (path.startsWith("/nutritionist") && !["nutritionist", "admin"].includes(role)) {
+      console.log(role);
+      
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 

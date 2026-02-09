@@ -1,4 +1,6 @@
+"use client"
 import axios from "axios";
+
 
 
 export const adminApi = axios.create({
@@ -25,42 +27,47 @@ adminApi.interceptors.request.use(
 // RESPONSE INTERCEPTOR
 adminApi.interceptors.response.use(
   (response) => response,
-
   async (error) => {
     const originalRequest = error.config;
-       if (!originalRequest) return Promise.reject(error);
+    if (!originalRequest) return Promise.reject(error);
 
-    // Prevent endless loop
+    // prevent infinite loop
+    if (originalRequest._retry) {
+      return Promise.reject(error);
+    }
+
+    // don't refresh on refresh endpoint
     if (originalRequest.url?.includes("/admin/refresh-token")) {
       return Promise.reject(error);
     }
 
-    // 401 → try refresh
-  if ( error.response?.status === 401 && !originalRequest._retry && 
-    !originalRequest.url.includes("/admin/login") && localStorage.getItem("adminToken")) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest.url.includes("/admin/login")
+    ) {
       originalRequest._retry = true;
+
       try {
-        const res = await adminApi.post( "/admin/refresh-token", {},
-          { headers: { Authorization: "" } }
-        );
+        const res = await adminApi.post("/admin/refresh-token");
+
         const newToken = res.data?.accessToken;
-        if (newToken) {
-          localStorage.setItem("adminToken", newToken);
-          originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
-          return adminApi(originalRequest);
-        }
-        throw new Error("No new token received");
+        if (!newToken) throw new Error("No admin access token");
+
+        localStorage.setItem("adminToken", newToken);
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+        return adminApi(originalRequest);
       } catch (err) {
         localStorage.removeItem("adminToken");
-        window.location.href = "/admin/login"
+        console.log("1");
+        window.location.href = "/admin/login";
         return Promise.reject(err);
       }
     }
 
-
-    // 403 → blocked or forbidden
     if (error.response?.status === 403) {
       localStorage.removeItem("adminToken");
+      console.log("2");
       window.location.href = "/admin/login";
     }
 

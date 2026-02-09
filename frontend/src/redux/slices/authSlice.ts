@@ -2,10 +2,12 @@ import { createSlice } from "@reduxjs/toolkit";
 
 interface AuthState {
   isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const initialState: AuthState = {
   isAuthenticated: false,
+  loading: true,
 };
 
 const authSlice = createSlice({
@@ -14,16 +16,19 @@ const authSlice = createSlice({
   reducers: {
     loginSuccess: (state) => {
       state.isAuthenticated = true;
+      state.loading = false;
     },
 
     restoreAuth: (state) => {
       if (typeof window !== "undefined") {
         state.isAuthenticated = !!localStorage.getItem("token");
       }
+      state.loading = false;
     },
 
     logout: (state) => {
       state.isAuthenticated = false;
+      state.loading = false;
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
       }

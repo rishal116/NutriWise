@@ -18,7 +18,7 @@ export default function LoginForm() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      router.push("/home");
+      router.replace("/home");
     }
   }, [router]);
 
@@ -64,8 +64,10 @@ const handleLogin = async (e?: any) => {
 
     localStorage.setItem("token", res.accessToken);
     dispatch(loginSuccess());
-    router.push("/home");
+    router.replace("/home");
   } catch (err: any) {
+    console.log(err);
+    
     const message =
       err.response?.data?.message ||
       err.message ||
