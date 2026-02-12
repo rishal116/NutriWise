@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
-import {Eye, EyeOff, User, Mail, Lock,XCircle, Users, Stethoscope,UserPlus,} from "lucide-react";
+import { Eye, EyeOff, User, Mail, Lock, XCircle, Users, Stethoscope, UserPlus, Loader2 } from "lucide-react";
 import { loginSuccess } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
@@ -60,7 +60,7 @@ export default function SignupForm() {
     if (!validateForm()) return;
     try {
       setLoading(true);
-      const {email} = formData
+      const { email } = formData;
       const data = await userAuthService.register(formData);
       if (data.success) {
         dispatch(setSignupEmail(email));
@@ -102,7 +102,7 @@ export default function SignupForm() {
       if (response.success) {
         const { user, accessToken } = response;
         localStorage.setItem("token", accessToken);
-        sessionStorage.setItem("tempUser", JSON.stringify({ email: user.email, role: user.role }))
+        sessionStorage.setItem("tempUser", JSON.stringify({ email: user.email, role: user.role }));
         dispatch(loginSuccess());
         if (user.isBlocked) {
           toast.error("Your account has been blocked. Please contact support.");
@@ -122,41 +122,40 @@ export default function SignupForm() {
             default:
               router.push("/home");
               break;
-            }
           }
-          else if (user.role === "client") {
-            router.push("/home");
-          }
-          toast.success(`Welcome ${user.fullName || "User"}!`);
-        } else {
-          toast.error(response.message || "Signup failed");
+        } else if (user.role === "client") {
+          router.push("/home");
         }
-      } catch (error: any) {
-        console.error("Google login error:", error);
-        toast.error(error?.response?.data?.message || "Google login failed");
+        toast.success(`Welcome ${user.fullName || "User"}!`);
+      } else {
+        toast.error(response.message || "Signup failed");
       }
+    } catch (error: any) {
+      console.error("Google login error:", error);
+      toast.error(error?.response?.data?.message || "Google login failed");
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 px-4 py-12 sm:py-16 lg:py-20">
-      <div className="max-w-md w-full bg-white shadow-2xl rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 px-4 py-8 sm:py-12 lg:py-16">
+      <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-100">
         {/* Header */}
-        <div className="text-center mb-8 lg:mb-10">
+        <div className="text-center mb-6 sm:mb-8 lg:mb-10">
           <div className="inline-flex items-center justify-center mb-4">
-            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-4xl">🍃</span>
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-3xl sm:text-4xl">🍃</span>
             </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
             Create Account
           </h1>
-          <p className="text-gray-500 text-sm sm:text-base">
+          <p className="text-gray-600 text-sm sm:text-base">
             Join NutriWise and start your wellness journey
           </p>
         </div>
 
         {/* Role Selection */}
-        <div className="mb-6">
+        <div className="mb-5 sm:mb-6">
           <label className="block text-sm font-semibold text-gray-700 mb-3">
             I am a
           </label>
@@ -186,35 +185,35 @@ export default function SignupForm() {
                       target: { name: "role", value: option.name },
                     } as any)
                   }
-                  className={`relative flex flex-col items-center justify-center p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 ${
+                  className={`relative flex flex-col items-center justify-center p-3 sm:p-4 lg:p-5 rounded-xl border-2 transition-all duration-200 ${
                     isActive
-                      ? "border-green-500 bg-green-50 shadow-md"
+                      ? "border-emerald-500 bg-emerald-50 shadow-md"
                       : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
                   }`}
                 >
                   <div
-                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center mb-2 sm:mb-3 transition-colors ${
-                      isActive ? "bg-green-500" : "bg-gray-100"
+                    className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center mb-2 transition-colors ${
+                      isActive ? "bg-emerald-500" : "bg-gray-100"
                     }`}
                   >
                     <Icon
-                      className={`w-6 h-6 sm:w-7 sm:h-7 ${
+                      className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${
                         isActive ? "text-white" : "text-gray-500"
                       }`}
                     />
                   </div>
                   <span
-                    className={`font-semibold text-sm sm:text-base ${
-                      isActive ? "text-green-700" : "text-gray-700"
+                    className={`font-semibold text-xs sm:text-sm lg:text-base ${
+                      isActive ? "text-emerald-700" : "text-gray-700"
                     }`}
                   >
                     {option.label}
                   </span>
-                  <span className="text-xs text-gray-500 mt-1 text-center">
+                  <span className="text-xs text-gray-500 mt-1 text-center hidden sm:block">
                     {option.subtext}
                   </span>
                   {isActive && (
-                    <div className="absolute top-2 right-2 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
                       <svg
                         className="w-3 h-3 text-white"
                         fill="currentColor"
@@ -235,19 +234,19 @@ export default function SignupForm() {
         </div>
 
         {/* Input Fields */}
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           {[
             {
               name: "fullName",
               type: "text",
               placeholder: "Enter your full name",
-              icon: <User className="text-green-500" size={18} />,
+              icon: <User className="text-emerald-600" size={18} />,
             },
             {
               name: "email",
               type: "email",
               placeholder: "you@example.com",
-              icon: <Mail className="text-green-500" size={18} />,
+              icon: <Mail className="text-emerald-600" size={18} />,
             },
           ].map((field) => (
             <div key={field.name}>
@@ -255,7 +254,7 @@ export default function SignupForm() {
                 {field.name.replace(/([A-Z])/g, " $1")}
               </label>
               <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2">
                   {field.icon}
                 </div>
                 <input
@@ -264,11 +263,13 @@ export default function SignupForm() {
                   value={(formData as any)[field.name]}
                   onChange={handleInputChange}
                   placeholder={field.placeholder}
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all"
+                  className={`w-full pl-10 sm:pl-11 pr-4 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border ${
+                    errors[field.name] ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
+                  } focus:bg-white focus:ring-2 outline-none transition-all text-sm sm:text-base`}
                 />
               </div>
               {errors[field.name] && (
-                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                <p className="text-red-500 text-xs sm:text-sm mt-1.5 flex items-center gap-1">
                   <XCircle size={12} />
                   {errors[field.name]}
                 </p>
@@ -298,7 +299,7 @@ export default function SignupForm() {
                 {item.label}
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-green-500" size={18} />
+                <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600" size={18} />
                 <input
                   type={item.show ? "text" : "password"}
                   name={item.name}
@@ -309,18 +310,20 @@ export default function SignupForm() {
                       ? "Create a strong password"
                       : "Confirm your password"
                   }
-                  className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-green-500 focus:bg-white focus:ring-2 focus:ring-green-100 outline-none transition-all"
+                  className={`w-full pl-10 sm:pl-11 pr-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border ${
+                    errors[item.name] ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
+                  } focus:bg-white focus:ring-2 outline-none transition-all text-sm sm:text-base`}
                 />
                 <button
                   type="button"
                   onClick={() => item.setShow(!item.show)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   {item.show ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
               {errors[item.name] && (
-                <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                <p className="text-red-500 text-xs sm:text-sm mt-1.5 flex items-center gap-1">
                   <XCircle size={12} />
                   {errors[item.name]}
                 </p>
@@ -333,10 +336,13 @@ export default function SignupForm() {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full mt-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 rounded-xl font-semibold transition-all flex justify-center items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full mt-6 sm:mt-8 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 sm:py-4 rounded-lg sm:rounded-xl font-semibold transition-all flex justify-center items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
         >
           {loading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Creating account...</span>
+            </>
           ) : (
             <>
               <span>Create Account</span>
@@ -346,36 +352,40 @@ export default function SignupForm() {
         </button>
 
         {/* Divider */}
-        <div className="relative my-6">
+        <div className="relative my-5 sm:my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-200"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-white text-gray-500">
+          <div className="relative flex justify-center text-xs sm:text-sm">
+            <span className="px-3 sm:px-4 bg-white text-gray-500">
               Or continue with
             </span>
           </div>
         </div>
         
         <div className="flex flex-col items-center space-y-3">
-<GoogleLogin
-  onSuccess={handleGoogleSuccess}
-  onError={handleGoogleError}
-  useOneTap
-  theme="outline"
-  size="large"
-/>
+          <div className="w-full max-w-sm">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              useOneTap
+              theme="outline"
+              size="large"
+              width="100%"
+            />
+          </div>
 
-        <p className="text-xs text-gray-500 mt-1">
-          (You’re signing up as a <strong>{formData.role}</strong>)
-        </p>
-      </div>
+          <p className="text-xs text-gray-500 mt-1">
+            (You're signing up as a <strong className="text-emerald-600">{formData.role}</strong>)
+          </p>
+        </div>
+
         {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-xs sm:text-sm text-gray-600 mt-5 sm:mt-6">
           Already have an account?{" "}
           <a
             href="/login"
-            className="text-green-600 hover:text-green-700 font-semibold hover:underline"
+            className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
           >
             Sign In
           </a>

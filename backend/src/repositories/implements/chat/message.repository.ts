@@ -12,16 +12,11 @@ export class MessageRepository
 
   async findMessagesByConversation(
     conversationId: string,
-    page: number,
-    limit: number
   ): Promise<IMessage[]> {
-    const skip = (page - 1) * limit;
 
     return this._model
-      .find({ conversation: conversationId })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
+      .find({ conversationId: conversationId })
+      .sort({ createdAt: 1 })
       .lean<IMessage[]>();
   }
 }

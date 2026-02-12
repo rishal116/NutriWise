@@ -1,46 +1,42 @@
 import { Schema, model, Document, Types } from "mongoose";
-
 export type MessageType = "text" | "image" | "file" | "video";
 
 export interface IMessage extends Document {
-  conversation: Types.ObjectId;     // Room reference
-  sender: Types.ObjectId;           // Who sent the message
-
-  content?: string;                 // Text message
-  mediaUrl?: string;                // Image/File/Video URL
-  type: MessageType;
-
-  readBy: Types.ObjectId[];         // Users who read
+  _id:Types.ObjectId
+  conversationId: Types.ObjectId;
+  senderId: Types.ObjectId;
+  text?: string;
+  fileUrl?: string;
+  messageType: MessageType;
+  readBy: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 const messageSchema = new Schema<IMessage>(
   {
-    conversation: {
+    conversationId: {
       type: Schema.Types.ObjectId,
       ref: "Conversation",
       required: true,
       index: true,
     },
 
-    sender: {
+    senderId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
     },
 
-    content: {
+    text: {
       type: String,
       trim: true,
     },
 
-    mediaUrl: {
-      type: String,
-    },
+    fileUrl: String,
 
-    type: {
+    messageType: {
       type: String,
       enum: ["text", "image", "file", "video"],
       default: "text",
@@ -56,7 +52,7 @@ const messageSchema = new Schema<IMessage>(
   { timestamps: true }
 );
 
-// Load latest messages faster
-messageSchema.index({ conversation: 1, createdAt: -1 });
+// For loading latest messages quickly
+messageSchema.index({ conversationId: 1, createdAt: -1 });
 
 export const MessageModel = model<IMessage>("Message", messageSchema);

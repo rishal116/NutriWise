@@ -3,6 +3,7 @@ import { IBaseRepository } from "../common/IBaseRepository";
 
 export interface IUserRepository extends IBaseRepository<IUser> {
   findByEmail(email: string): Promise<IUser | null>;
+  findByIds(ids: string[]): Promise<IUser[]>;
   updatePasswordById(userId: string, hashedPassword: string): Promise<void>;
   updatePasswordByEmail(email: string, hashedPassword: string): Promise<void>;
   findByGoogleId(googleId: string): Promise<IUser | null>;

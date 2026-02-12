@@ -11,9 +11,12 @@ import { IStripeWebhookController } from "../controllers/interfaces/common/IStri
 import { IHealthDetailsController } from "../controllers/interfaces/user/IHealthDetailsController";
 import { IUserPlanController } from "../controllers/interfaces/user/IUserPlanController";
 import { upload } from "../middlewares/multer.middleware";
-import { IChatController } from "../controllers/interfaces/chat/IChatController";
+import { IConversationController } from "../controllers/interfaces/chat/IConversationController";
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
 import { blockLoggedInUser } from "../middlewares/blockLoggedInUser.middleware";
+import { IMessageController } from "../controllers/interfaces/chat/IMessageController";
+import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMeetingsController";
+
 
 
 
@@ -27,7 +30,9 @@ const stripeController = container.get<IStripeWebhookController>(TYPES.IStripeWe
 const healthDetailsController = container.get<IHealthDetailsController>(TYPES.IHealthDetailsController)
 const userPlanController = container.get<IUserPlanController>(TYPES.IUserPlanController)
 const userAccountController = container.get<IUserAccountController>(TYPES.IUserAccountController)
-const chatController = container.get<IChatController>(TYPES.IChatController)
+const conversationController = container.get<IConversationController>(TYPES.IConversationController)
+const messageController = container.get<IMessageController>(TYPES.IMessageController)
+const UserMeetingsController = container.get<IUserMeetingsController>(TYPES.IUserMeetingsController)
 
 router.post("/signup", userAuthController.signup);
 router.post("/verify-otp",userAuthController.verifyOtp)
@@ -57,9 +62,14 @@ router.post("/health-details", authMiddleware,authMiddleware,healthDetailsContro
 router.get("/plans",authMiddleware,userPlanController.getMyPlans)
 router.get("/plans/:planId",authMiddleware,userPlanController.getPlanById)
 
-router.post("/chat/conversation",authMiddleware,chatController.createDirectConversation)
+router.post("/chat/conversation",authMiddleware,conversationController.createDirectConversation)
+router.get("/chat/conversations",authMiddleware,conversationController.getUserChats)
+router.get("/chat/messages/:conversationId",authMiddleware,messageController.getMessages);
+router.post("/chat/message",authMiddleware,messageController.sendMessage);
 
 router.post("/change-password",authMiddleware,userAccountController.changePassword)
+
+router.get("/meetings",authMiddleware,UserMeetingsController.getMeetings)
 
 export default router;
 

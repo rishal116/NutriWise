@@ -1,21 +1,22 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-export type ConversationType = "direct" | "group";
+export type ChatType = "direct" | "group";
 
 export interface IConversation extends Document {
+  _id:Schema.Types.ObjectId;
   participants: Types.ObjectId[];
+  chatType: ChatType;
 
-  type: ConversationType;       // direct or group
+  // Group Only
+  title?: string;
+  groupAvatar?: string;
+  adminId?: Types.ObjectId;
 
-  name?: string;                // group name
-  groupImage?: string;          // optional group image
-  admin?: Types.ObjectId;       // group admin
+  // Direct Only
+  directKey?: string;
 
-  conversationKey?: string;     // only for direct chat
-
-  lastMessage?: Types.ObjectId;
+  lastMessageId?: Types.ObjectId;
   lastMessageAt?: Date;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,33 +31,29 @@ const conversationSchema = new Schema<IConversation>(
       },
     ],
 
-    type: {
+    chatType: {
       type: String,
       enum: ["direct", "group"],
       default: "direct",
     },
 
-    name: {
-      type: String,
-    },
+    // Group fields
+    title: String,
+    groupAvatar: String,
 
-    groupImage: {
-      type: String,
-    },
-
-    admin: {
+    adminId: {
       type: Schema.Types.ObjectId,
       ref: "User",
     },
 
-    // Only required for direct chat
-    conversationKey: {
+    // Direct unique key (user1_user2 sorted)
+    directKey: {
       type: String,
       unique: true,
-      sparse: true, // allows null for group chat
+      sparse: true,
     },
 
-    lastMessage: {
+    lastMessageId: {
       type: Schema.Types.ObjectId,
       ref: "Message",
     },
@@ -69,7 +66,7 @@ const conversationSchema = new Schema<IConversation>(
   { timestamps: true }
 );
 
-// Fast lookup of user's conversations
+// Index for faster user conversation lookup
 conversationSchema.index({ participants: 1 });
 
 export const ConversationModel = model<IConversation>(

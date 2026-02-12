@@ -16,6 +16,8 @@ export default function PlanDetailsPage() {
     async function fetchPlan() {
       try {
         const res = await userPlanService.getPlanById(id as string);
+        console.log(res);
+        
         setPlan(res.data);
       } catch (err) {
         console.error(err);
@@ -29,13 +31,15 @@ export default function PlanDetailsPage() {
 
   const handleChatClick = async () => {
     try {
+      console.log(plan.nutritionist.id);
+      
       const conversation = await userChatService.createChat(
-        plan.nutritionist._id
+        plan.nutritionist.id
       );
       console.log(conversation);
       
 
-      router.push(`/message/${conversation.id}`);
+      router.push(`/account/messages`);
     } catch (err) {
       console.error("Chat error:", err);
     }

@@ -1,6 +1,20 @@
 "use client";
+
+import { useEffect, useRef, useState } from "react";
 import MessageInput from "./MessageInput";
 import MessageBubble from "./MessageBubble";
+import { userChatService } from "@/services/user/userChat.service";
+import { connectSocket } from "@/lib/socket";
+
+interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  createdAt: string;
+  status?: "sent" | "delivered" | "read";
+}
+
+
 
 export default function ChatWindow({
   conversationId,
@@ -9,6 +23,85 @@ export default function ChatWindow({
   conversationId: string | null;
   onBack?: () => void;
 }) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  /* ============================= */
+  /* Fetch Messages */
+  /* ============================= */
+
+
+
+useEffect(() => {
+  if (!conversationId) return;
+
+  const socket = connectSocket();
+
+  // Join conversation room
+  socket.emit("joinConversation", conversationId);
+
+  // Listen for new messages
+  socket.on("receiveMessage", (message: any) => {
+    const formatted: Message = {
+      id: message.id,
+      senderId: message.senderId,
+      text: message.content,
+      createdAt: message.createdAt,
+    };
+
+    setMessages((prev) => [...prev, formatted]);
+  });
+
+  return () => {
+    socket.emit("leaveConversation", conversationId);
+    socket.off("receiveMessage");
+  };
+}, [conversationId]);
+
+
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    async function fetchMessages() {
+      try {
+        setLoading(true);
+
+        // 👇 This is already the array
+        const data = await userChatService.getMessages(conversationId as string);
+
+        // Normalize backend → frontend shape
+        const formatted: Message[] = data.map((msg: any) => ({
+          id: msg.id,
+          senderId: msg.senderId,
+          text: msg.content,
+          createdAt: msg.createdAt,
+        }));
+
+        setMessages(formatted);
+      } catch (err) {
+        console.error("Failed to fetch messages:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMessages();
+  }, [conversationId]);
+
+  /* ============================= */
+  /* Auto Scroll */
+  /* ============================= */
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  /* ============================= */
+  /* Empty State */
+  /* ============================= */
+
   if (!conversationId) {
     return (
       <div className="h-full flex items-center justify-center bg-[#f0f2f5]">
@@ -27,6 +120,15 @@ export default function ChatWindow({
     );
   }
 
+  /* ============================= */
+  /* Chat UI */
+  /* ============================= */
+
+  const currentUserId =
+    typeof window !== "undefined"
+      ? localStorage.getItem("userId")
+      : null;
+
   return (
     <div className="h-full flex flex-col bg-[#f0f2f5] overflow-hidden">
       {/* Header */}
@@ -39,41 +141,55 @@ export default function ChatWindow({
           )}
           <div className="w-10 h-10 rounded-full bg-gray-300" />
           <div>
-            <h3 className="text-sm font-semibold">Dr. Rahul Sharma</h3>
-            <p className="text-xs text-gray-500">online</p>
+            <h3 className="text-sm font-semibold">Conversation</h3>
+            <p className="text-xs text-gray-500">active</p>
           </div>
         </div>
       </div>
 
-      {/* Messages (ONLY SCROLL AREA) */}
-      <div className="flex-1 overflow-y-auto wa-bg px-4 md:px-12 py-4 space-y-2">
-        <div className="flex justify-center my-4">
-          <span className="bg-[#e1f3fb] text-[#54656f] text-[11.5px] px-3 py-1.5 rounded-lg">
-            Today
-          </span>
-        </div>
-
-        <MessageBubble
-          text="Hello! How can I help you?"
-          isSender={false}
-          timestamp="10:30 AM"
-        />
-        <MessageBubble
-          text="I need to check my reports."
-          isSender={true}
-          timestamp="10:32 AM"
-          status="read"
-        />
-        <MessageBubble
-          text="Sure, let me check that for you."
-          isSender={false}
-          timestamp="10:33 AM"
-        />
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-12 py-4 space-y-2">
+        {loading ? (
+          <p className="text-center text-gray-400 mt-4">
+            Loading messages...
+          </p>
+        ) : messages.length === 0 ? (
+          <p className="text-center text-gray-400 mt-4">
+            No messages yet
+          </p>
+        ) : (
+          messages.map((msg) => (
+            <MessageBubble
+              key={msg.id}
+              text={msg.text}
+              isSender={msg.senderId === currentUserId}
+              timestamp={new Date(msg.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })}
+              status={msg.status}
+            />
+          ))
+        )}
+        <div ref={bottomRef} />
       </div>
 
-      {/* Input (ALWAYS VISIBLE) */}
+      {/* Input */}
       <div className="shrink-0 bg-white border-t">
-        <MessageInput />
+        <MessageInput
+          conversationId={conversationId}
+          onMessageSent={(newMessage: any) => {
+            const formatted: Message = {
+              id: newMessage.id,
+              senderId: newMessage.senderId,
+              text: newMessage.content,
+              createdAt: newMessage.createdAt,
+            };
+
+            setMessages((prev) => [...prev, formatted]);
+          }}
+        />
       </div>
     </div>
   );

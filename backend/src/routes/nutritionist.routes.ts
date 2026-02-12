@@ -9,6 +9,7 @@ import { INutritionistPlanController } from "../controllers/interfaces/nutrition
 import { INutritionistSubscriptionController } from "../controllers/interfaces/nutritionist/INutritionistSubscriptionController";
 import { authorize } from "../middlewares/role.middleware";
 import { ROLES } from "../constants/index";
+import { INutriMeetingsController } from "../controllers/interfaces/nutritionist/INutriMeetingsController";
 
 
 const router = Router();
@@ -16,6 +17,7 @@ const nutritionistAuthController = container.get<INutritionistAuthController>(TY
 const nutritionistProfileController = container.get<INutritionistProfileController>(TYPES.INutritionistProfileController);
 const nutritionistPlanController = container.get<INutritionistPlanController>(TYPES.INutritionistPlanController)
 const nutritionistSubscriptionController = container.get<INutritionistSubscriptionController>(TYPES.INutritionistSubscriptionController)
+const nutritionistMeetingsController = container.get<INutriMeetingsController>(TYPES.INutriMeetingsController)
 
 router.post("/submit-details",authMiddleware,upload.fields([
   { name: "cv", maxCount: 1 },
@@ -38,9 +40,11 @@ router.get("/pricing", authMiddleware,nutritionistPlanController.getNutritionist
 router.get("/plans/:planId", authMiddleware, nutritionistPlanController.getPlanById);
 router.put("/plans/:planId", authMiddleware, nutritionistPlanController.updatePlan);
 
-
 router.get("/subscription",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistSubscriptionController.getSubscribers);
 
 
+
+router.get("/meetings",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistMeetingsController.getMeetings)
+router.post("/meetings",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistMeetingsController.createMeeting)
 
 export default router;

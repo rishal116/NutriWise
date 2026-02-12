@@ -19,6 +19,11 @@ export const TYPES = {
   IUserPlanController: Symbol.for("IUserPlanController"),
   IUserAccountService: Symbol.for("IUserAccountService"),
   IUserAccountController: Symbol.for("IUserAccountController"),
+
+  IUserMeetingsController:Symbol.for("IUserMeetingsController"),
+  IUserMeetingsService:Symbol.for("IUserMeetingsService"),
+
+  
   
 
   //Admin
@@ -50,6 +55,11 @@ export const TYPES = {
   INutritionistPlanRepository: Symbol.for("INutritionistPlanRepository"),
   INutritionistSubscriptionController: Symbol.for("INutritionistSubscriptionController"),
 
+  // meetings
+  INutriMeetingsController:Symbol.for("INutriMeetingsController"),
+  INutriMeetingsService:Symbol.for("INutriMeetingsService"),
+  INutriMeetingsRepository:Symbol.for("INutriMeetingsRepository"),
+
   // common
   IStripeService:Symbol.for("IStripeService"),
   ICheckoutController:Symbol.for("ICheckoutController"),
@@ -59,10 +69,11 @@ export const TYPES = {
   IPaymentRepository:Symbol.for("IPaymentRepository"),
 
   // chat
-  IChatController:Symbol.for("IChatController"),
-  IChatService:Symbol.for("IChatService"),
+  IConversationController:Symbol.for("IConversationController"),
+  IMessageController:Symbol.for("IMessageController"),
+  IConversationService:Symbol.for("IConversationService"),
+  IMessageService:Symbol.for("MessageService"),
   IConversationRepository:Symbol.for("IConversationRepository"),
   IMessageRepository:Symbol.for("IMessageRepository")
-
-
+    
 };

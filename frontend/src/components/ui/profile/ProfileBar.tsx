@@ -74,8 +74,7 @@ export default function ProfileSidebar({
   onClose,
   disableScroll
 }: ProfileSidebarProps) {
-  const linkRef = useRef<HTMLAnchorElement>(null);
-const [hovered, setHovered] = useState(false);
+
   return (
     <aside
       className={`h-full border-r bg-white lg:bg-gradient-to-b lg:from-white lg:to-gray-50 shadow-lg transition-all duration-300
@@ -155,39 +154,7 @@ const [hovered, setHovered] = useState(false);
                       )}
 
                       {/* Tooltip for compact mode */}
-{compact && (
-  <span
-    className="
-      pointer-events-none
-      absolute left-full top-1/2 -translate-y-1/2
-      ml-3
-      px-4 py-2
-      rounded-lg
-      text-sm font-medium
-      bg-[#202c33]
-      text-white
-      shadow-xl
-      opacity-0 scale-95
-      group-hover:opacity-100
-      group-hover:scale-100
-      transition-all duration-200 ease-out
-      whitespace-nowrap
-      z-50
-    "
-  >
-    {item.name}
 
-    {/* Small Arrow */}
-    <span
-      className="
-        absolute left-[-6px] top-1/2 -translate-y-1/2
-        w-3 h-3
-        bg-[#202c33]
-        rotate-45
-      "
-    />
-  </span>
-)}
 
                     </Link>
                   );

@@ -47,7 +47,7 @@ export default function Header() {
     const fetchMe = async () => {
       try {
         const res = await userAuthService.getMe();
-        console.log(res);
+    
         
         setUser(res.user);
       } catch {

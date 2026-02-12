@@ -1,6 +1,7 @@
 import { BaseRepository } from "../common/base.repository";
 import { IUserRepository } from "../../interfaces/user/IUserRepository";
 import { UserModel, IUser } from "../../../models/user.model";
+import { Types } from "mongoose";
 
 export class UserRepository extends BaseRepository<IUser> implements IUserRepository {
   constructor() {
@@ -47,5 +48,12 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
       resetPasswordExpires: { $gt: new Date() },
     });
   }
+  
+  async findByIds(ids: string[]): Promise<IUser[]> {
+    return this._model
+    .find({ _id: { $in: ids.map(id => new Types.ObjectId(id)) } })
+    .lean<IUser[]>();
+  }
+
 
 }

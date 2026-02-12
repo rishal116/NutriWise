@@ -97,6 +97,13 @@ import { NutritionistPlanRepository } from "../repositories/implements/nutrition
 import { NutritionistSubscriptionController } from "../controllers/implementations/nutritionist/nutritionistSubscription.controller";
 import { INutritionistSubscriptionController } from "../controllers/interfaces/nutritionist/INutritionistSubscriptionController";
 
+import { INutriMeetingsController } from "../controllers/interfaces/nutritionist/INutriMeetingsController";
+import { NutriMeetingsController } from "../controllers/implementations/nutritionist/nutriMeetings.controller";
+import { INutriMeetingsService } from "../services/interfaces/nutritionist/INutriMeetingsService";
+import { NutriMeetingsService } from "../services/implements/nutritionist/nutriMeetings.service";
+import { INutriMeetingsRepository } from "../repositories/interfaces/nutritionist/INutriMeetingsRepository";
+import { NutriMeetingsRepository } from "../repositories/implements/nutritionist/nutriMeetings.repository";
+
 // common
 import { ICheckoutController } from "../controllers/interfaces/user/ICheckoutController";
 import { CheckoutController } from "../controllers/implementations/user/checkout.controller";
@@ -114,14 +121,28 @@ import { PaymentRepository } from "../repositories/implements/common/payment.rep
 import { IPaymentRepository } from "../repositories/interfaces/common/IPaymentRepository";
 
 
-import { IChatController } from "../controllers/interfaces/chat/IChatController";
-import { ChatController } from "../controllers/implementations/chat/chat.controller";
-import { IChatService } from "../services/interfaces/chat/IChatService";
-import { ChatService } from "../services/implements/chat/chat.service";
+import { IConversationController } from "../controllers/interfaces/chat/IConversationController";
+import { ConversationController } from "../controllers/implementations/chat/conversation.controller";
+import { IMessageController } from "../controllers/interfaces/chat/IMessageController";
+import { MessageController } from "../controllers/implementations/chat/message.controller";
+
+import { IConversationService } from "../services/interfaces/chat/IConversationService";
+import { ConversationService } from "../services/implements/chat/conversation.service";
+import { IMessageService } from "../services/interfaces/chat/IMessageService";
+import { MessageService } from "../services/implements/chat/message.service";
+
 import { IConversationRepository } from "../repositories/interfaces/chat/IConversationRepository";
 import { ConversationRepository } from "../repositories/implements/chat/conversation.repository";
 import { IMessageRepository } from "../repositories/interfaces/chat/IMessageRepository";
 import { MessageRepository } from "../repositories/implements/chat/message.repository";
+
+import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMeetingsController";
+import { UserMeetingsController } from "../controllers/implementations/user/userMeetings.controller";
+import { IUserMeetingsService } from "../services/interfaces/user/IUserMeetingsService";
+import { UserMeetingsService } from "../services/implements/user/userMeetings.service";
+
+
+
 // ---------------- CONTAINER ----------------
 const container = new Container();
 
@@ -176,6 +197,10 @@ container.bind<INutritionistPlanRepository>(TYPES.INutritionistPlanRepository).t
 
 container.bind<INutritionistSubscriptionController>(TYPES.INutritionistSubscriptionController).to(NutritionistSubscriptionController);
 
+container.bind<INutriMeetingsController>(TYPES.INutriMeetingsController).to(NutriMeetingsController)
+container.bind<INutriMeetingsService>(TYPES.INutriMeetingsService).to(NutriMeetingsService)
+container.bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository).to(NutriMeetingsRepository)
+
 
 
 // common
@@ -192,10 +217,17 @@ container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepositor
 
 
 // chat
-container.bind<IChatController>(TYPES.IChatController).to(ChatController)
-container.bind<IChatService>(TYPES.IChatService).to(ChatService)
+container.bind<IConversationController>(TYPES.IConversationController).to(ConversationController)
+container.bind<IMessageController>(TYPES.IMessageController).to(MessageController)
+container.bind<IConversationService>(TYPES.IConversationService).to(ConversationService)
+container.bind<IMessageService>(TYPES.IMessageService).to(MessageService)
 container.bind<IConversationRepository>(TYPES.IConversationRepository).to(ConversationRepository)
 container.bind<IMessageRepository>(TYPES.IMessageRepository).to(MessageRepository)
+
+
+// video
+container.bind<IUserMeetingsController>(TYPES.IUserMeetingsController).to(UserMeetingsController)
+container.bind<IUserMeetingsService>(TYPES.IUserMeetingsService).to(UserMeetingsService)
 
 
 

@@ -5,7 +5,6 @@ import { HealthDetailsPayload } from "@/constants/user/healthDetails.constant";
 export const healthDetailsService = {
   get: async () => {
     const res = await api.get("/health-details");
-    console.log(res);
     return res.data;
   },
 
