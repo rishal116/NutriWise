@@ -39,31 +39,31 @@ const navSections: NavSection[] = [
   {
     title: "Account",
     items: [
-      { name: "Profile", href: "/account/profile", icon: User },
-      { name: "Health Details", href: "/account/health", icon: HeartPulse },
+      { name: "Profile", href: "/client/profile", icon: User },
+      { name: "Health Details", href: "/client/health", icon: HeartPulse },
     ],
   },
   {
     title: "My Journey",
     items: [
-      { name: "My Plan", href: "/account/plans", icon: Calendar },
-      { name: "Tasks", href: "/account/tasks", icon: ClipboardList },
-      { name: "Meetings", href: "/account/meetings", icon: Video },
-      { name: "Progress", href: "/account/progress", icon: Trophy },
+      { name: "My Plan", href: "/client/plans", icon: Calendar },
+      { name: "Tasks", href: "/client/tasks", icon: ClipboardList },
+      { name: "Meetings", href: "/client/meetings", icon: Video },
+      { name: "Progress", href: "/client/progress", icon: Trophy },
     ],
   },
   {
     title: "Communication",
     items: [
-      { name: "Messages", href: "/account/messages", icon: MessageCircle },
-      { name: "Resources", href: "/account/resources", icon: BookOpen },
+      { name: "Messages", href: "/client/messages", icon: MessageCircle },
+      { name: "Resources", href: "/client/resources", icon: BookOpen },
     ],
   },
   {
     title: "Billing & Settings",
     items: [
-      { name: "Payments", href: "/account/payments", icon: CreditCard },
-      { name: "Settings", href: "/account/settings", icon: Settings },
+      { name: "Payments", href: "/client/payments", icon: CreditCard },
+      { name: "Settings", href: "/client/settings", icon: Settings },
     ],
   },
 ];

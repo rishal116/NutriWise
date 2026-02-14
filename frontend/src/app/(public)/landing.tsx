@@ -52,10 +52,10 @@ export default function NutriWiseLanding() {
               className="flex items-center space-x-3 cursor-pointer group"
               onClick={() => handleScroll("home")}
             >
-            <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-white text-xl">🍃</span>
             </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-green-600 to-green-700 bg-clip-text text-transparent">NutriWise</span>
+              <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">NutriWise</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-2">
@@ -65,8 +65,8 @@ export default function NutriWiseLanding() {
                   onClick={() => handleScroll(link.id)}
                   className={`px-5 py-2.5 font-medium rounded-xl transition-all ${
                     activeSection === link.id
-                      ? "text-white bg-gradient-to-r from-green-600 to-green-700 shadow-lg"
-                      : "text-gray-700 hover:text-green-600 hover:bg-green-50"
+                      ? "text-white bg-gradient-to-r from-emerald-500 to-teal-600 shadow-lg"
+                      : "text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
                   }`}
                 >
                   {link.name}
@@ -76,12 +76,12 @@ export default function NutriWiseLanding() {
 
             <div className="flex items-center space-x-4">
               <button onClick={() => router.push("/signup")}
-              className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl font-semibold transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
               >
                 Get Started
               </button>
               <button onClick={() => router.push("/login")}
-              className="text-gray-700 hover:text-green-600 font-semibold transition-colors"
+              className="text-gray-700 hover:text-emerald-600 font-semibold transition-colors"
               >
                 Login
               </button>
@@ -91,52 +91,52 @@ export default function NutriWiseLanding() {
       </header>
 
       {/* Hero Section */}
-      <section id="home" className="pt-32 pb-24 bg-gradient-to-br from-green-50 via-white to-emerald-50 overflow-hidden">
+      <section id="home" className="pt-32 pb-24 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-8 text-center lg:text-left">
               <div className="inline-block">
-                <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-semibold">🎉 Join 100,000+ Happy Members</span>
+                <span className="px-4 py-2 bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 rounded-full text-sm font-semibold">🎉 Join 100,000+ Happy Members</span>
               </div>
               <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
-                Your Journey to <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">Better Health</span> Starts Here
+                Your Journey to <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">Better Health</span> Starts Here
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed max-w-2xl">
                 Personalized diet plans, expert nutritionists, and a supportive community—all in one place. Transform your life today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <button className="group px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white text-lg font-semibold rounded-full hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-2">
+                <button className="group px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-lg font-semibold rounded-full hover:from-emerald-600 hover:to-teal-700 transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center gap-2">
                   Explore Challenges
                   <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
                 </button>
-                <button className="px-8 py-4 bg-white text-gray-900 text-lg font-semibold rounded-full border-2 border-gray-200 hover:border-green-500 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
+                <button className="px-8 py-4 bg-white text-gray-900 text-lg font-semibold rounded-full border-2 border-gray-200 hover:border-emerald-500 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
                   Watch Demo
                 </button>
               </div>
               <div className="flex items-center gap-8 justify-center lg:justify-start pt-4">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">100K+</div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">100K+</div>
                   <div className="text-sm text-gray-600">Active Users</div>
                 </div>
                 <div className="h-12 w-px bg-gray-300"></div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">4.9★</div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">4.9★</div>
                   <div className="text-sm text-gray-600">App Rating</div>
                 </div>
                 <div className="h-12 w-px bg-gray-300"></div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900">50+</div>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">50+</div>
                   <div className="text-sm text-gray-600">Expert Coaches</div>
                 </div>
               </div>
             </div>
             <div className="flex-1 relative">
               <div className="relative w-full h-[500px] rounded-3xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-500">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-500">
                   <Heart className="w-40 h-40 text-white animate-pulse drop-shadow-2xl" />
                 </div>
-                <div className="absolute -top-6 -right-6 w-32 h-32 bg-yellow-400 rounded-full opacity-20 blur-2xl"></div>
-                <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-blue-400 rounded-full opacity-20 blur-2xl"></div>
+                <div className="absolute -top-6 -right-6 w-32 h-32 bg-emerald-300 rounded-full opacity-30 blur-2xl"></div>
+                <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-teal-300 rounded-full opacity-30 blur-2xl"></div>
               </div>
             </div>
           </div>
@@ -144,7 +144,7 @@ export default function NutriWiseLanding() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-12 bg-gradient-to-r from-green-600 to-emerald-600">
+      <section className="py-12 bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
             <div>
@@ -175,7 +175,7 @@ export default function NutriWiseLanding() {
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-green-600 font-semibold text-sm uppercase tracking-wider">Features</span>
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Features</span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-3 mb-4">
               Empowering Your Wellness Journey
             </h2>
@@ -185,11 +185,11 @@ export default function NutriWiseLanding() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { icon: Calendar, title: "Personalized Diet Plans", desc: "Custom-tailored diet plans designed by certified nutritionists, aligning with your health goals and dietary preferences.", gradient: "from-green-500 to-emerald-600" },
-              { icon: TrendingUp, title: "Progress Tracking", desc: "Monitor your progress, celebrate milestones, and adjust your plan as needed to stay on track.", gradient: "from-blue-500 to-cyan-600" },
-              { icon: Heart, title: "Expert Nutritionists", desc: "Access one-on-one consultations with experienced nutritionists for personalized guidance and support.", gradient: "from-pink-500 to-rose-600" },
-              { icon: Trophy, title: "Fun Challenges", desc: "Engage in fun and motivating community challenges to stay active and achieve your fitness goals together.", gradient: "from-purple-500 to-violet-600" },
-              { icon: Users, title: "Supportive Community", desc: "Connect with a vibrant community of like-minded individuals for motivation, support, and shared experiences.", gradient: "from-orange-500 to-amber-600" },
+              { icon: Calendar, title: "Personalized Diet Plans", desc: "Custom-tailored diet plans designed by certified nutritionists, aligning with your health goals and dietary preferences.", gradient: "from-emerald-500 to-teal-600" },
+              { icon: TrendingUp, title: "Progress Tracking", desc: "Monitor your progress, celebrate milestones, and adjust your plan as needed to stay on track.", gradient: "from-teal-500 to-cyan-600" },
+              { icon: Heart, title: "Expert Nutritionists", desc: "Access one-on-one consultations with experienced nutritionists for personalized guidance and support.", gradient: "from-emerald-400 to-teal-500" },
+              { icon: Trophy, title: "Fun Challenges", desc: "Engage in fun and motivating community challenges to stay active and achieve your fitness goals together.", gradient: "from-teal-600 to-cyan-700" },
+              { icon: Users, title: "Supportive Community", desc: "Connect with a vibrant community of like-minded individuals for motivation, support, and shared experiences.", gradient: "from-emerald-600 to-teal-700" },
               { icon: CheckCircle, title: "Achieve Your Goals", desc: "Set realistic goals and achieve them with our comprehensive tracking and support system.", gradient: "from-teal-500 to-emerald-600" }
             ].map((feature, idx) => (
               <div key={idx} className="group p-8 rounded-3xl bg-gradient-to-br from-gray-50 to-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
@@ -208,15 +208,15 @@ export default function NutriWiseLanding() {
       <section id="challenges" className="py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-green-600 font-semibold text-sm uppercase tracking-wider">Challenges</span>
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Challenges</span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-3 mb-4">Featured Challenges</h2>
             <p className="text-xl text-gray-600">Join thousands in achieving their health goals</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: Trophy, title: "7-Day Detox", desc: "Cleanse your body and reset your health in just one week.", gradient: "from-green-400 to-emerald-600", participants: "2.5K" },
-              { icon: TrendingUp, title: "30-Day Weight Loss", desc: "Achieve your weight loss goals with our comprehensive 30-day program.", gradient: "from-blue-400 to-cyan-600", participants: "5.2K" },
-              { icon: Heart, title: "Fitness Boost", desc: "Elevate your fitness levels with our dynamic and engaging fitness challenge.", gradient: "from-purple-400 to-violet-600", participants: "3.8K" }
+              { icon: Trophy, title: "7-Day Detox", desc: "Cleanse your body and reset your health in just one week.", gradient: "from-emerald-400 to-teal-600", participants: "2.5K" },
+              { icon: TrendingUp, title: "30-Day Weight Loss", desc: "Achieve your weight loss goals with our comprehensive 30-day program.", gradient: "from-teal-400 to-cyan-600", participants: "5.2K" },
+              { icon: Heart, title: "Fitness Boost", desc: "Elevate your fitness levels with our dynamic and engaging fitness challenge.", gradient: "from-emerald-500 to-teal-700", participants: "3.8K" }
             ].map((challenge, idx) => (
               <div key={idx} className="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                 <div className={`h-56 bg-gradient-to-br ${challenge.gradient} flex items-center justify-center relative overflow-hidden`}>
@@ -228,7 +228,7 @@ export default function NutriWiseLanding() {
                 <div className="p-6">
                   <h3 className="text-2xl font-bold text-gray-900 mb-3">{challenge.title}</h3>
                   <p className="text-gray-600 mb-6">{challenge.desc}</p>
-                  <button className="w-full py-3 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-xl hover:from-green-700 hover:to-green-800 transition-all">
+                  <button className="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all">
                     Join Challenge →
                   </button>
                 </div>
@@ -236,7 +236,7 @@ export default function NutriWiseLanding() {
             ))}
           </div>
           <div className="text-center mt-12">
-            <button className="px-8 py-4 bg-white text-green-600 font-semibold rounded-full border-2 border-green-600 hover:bg-green-50 transition-all transform hover:scale-105 shadow-lg">
+            <button className="px-8 py-4 bg-white text-emerald-600 font-semibold rounded-full border-2 border-emerald-600 hover:bg-emerald-50 transition-all transform hover:scale-105 shadow-lg">
               View All Challenges
             </button>
           </div>
@@ -244,27 +244,27 @@ export default function NutriWiseLanding() {
       </section>
 
       {/* Nutritionists Section */}
-      <section id="nutritionists" className="py-24 bg-gradient-to-b from-white to-green-50">
+      <section id="nutritionists" className="py-24 bg-gradient-to-b from-white to-emerald-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-green-600 font-semibold text-sm uppercase tracking-wider">Our Experts</span>
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Our Experts</span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-3 mb-4">Meet Our Expert Nutritionists</h2>
             <p className="text-xl text-gray-600">Learn from certified professionals dedicated to your success</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { initials: "ER", name: "Dr. Evelyn Reed", specialty: "Weight Management", desc: "With over 15 years of experience, Dr. Reed specializes in personalized weight management plans.", gradient: "from-green-400 to-emerald-600" },
-              { initials: "OB", name: "Dr. Owen Bennett", specialty: "Sports Nutrition", desc: "Dr. Bennett helps athletes optimize their performance through targeted nutrition strategies.", gradient: "from-blue-400 to-cyan-600" },
-              { initials: "CH", name: "Dr. Clara Hayes", specialty: "Holistic Wellness", desc: "Dr. Hayes integrates nutrition with lifestyle for overall health and wellbeing.", gradient: "from-purple-400 to-violet-600" }
+              { initials: "ER", name: "Dr. Evelyn Reed", specialty: "Weight Management", desc: "With over 15 years of experience, Dr. Reed specializes in personalized weight management plans.", gradient: "from-emerald-400 to-teal-600" },
+              { initials: "OB", name: "Dr. Owen Bennett", specialty: "Sports Nutrition", desc: "Dr. Bennett helps athletes optimize their performance through targeted nutrition strategies.", gradient: "from-teal-400 to-cyan-600" },
+              { initials: "CH", name: "Dr. Clara Hayes", specialty: "Holistic Wellness", desc: "Dr. Hayes integrates nutrition with lifestyle for overall health and wellbeing.", gradient: "from-emerald-500 to-teal-700" }
             ].map((expert, idx) => (
               <div key={idx} className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2">
                 <div className={`w-28 h-28 bg-gradient-to-br ${expert.gradient} rounded-full mx-auto mb-6 flex items-center justify-center shadow-xl`}>
                   <span className="text-4xl text-white font-bold">{expert.initials}</span>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 text-center mb-2">{expert.name}</h3>
-                <p className="text-green-600 text-center font-semibold mb-4">{expert.specialty}</p>
+                <p className="text-emerald-600 text-center font-semibold mb-4">{expert.specialty}</p>
                 <p className="text-gray-600 text-center leading-relaxed mb-6">{expert.desc}</p>
-                <button className="w-full py-3 text-green-600 font-semibold rounded-xl border-2 border-green-600 hover:bg-green-50 transition-all">
+                <button className="w-full py-3 text-emerald-600 font-semibold rounded-xl border-2 border-emerald-600 hover:bg-emerald-50 transition-all">
                   Book Consultation
                 </button>
               </div>
@@ -277,28 +277,28 @@ export default function NutriWiseLanding() {
       <section id="communities" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-green-600 font-semibold text-sm uppercase tracking-wider">Communities</span>
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Communities</span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-3 mb-4">Join Our Thriving Communities</h2>
             <p className="text-xl text-gray-600">Connect with people who share your health journey</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: Users, title: "Keto Enthusiasts", desc: "Connect with others following a ketogenic diet. Share recipes, tips, and support each other's progress.", gradient: "from-green-50 to-emerald-100", members: "12.5K" },
-              { icon: Trophy, title: "Running Club", desc: "Join fellow runners of all levels. Find training partners, discuss routes, and celebrate your runs.", gradient: "from-blue-50 to-cyan-100", members: "8.3K" },
-              { icon: Heart, title: "Mindful Eating", desc: "Practice mindful eating techniques together. Share experiences and support for a healthier relationship with food.", gradient: "from-purple-50 to-violet-100", members: "15.2K" }
+              { icon: Users, title: "Keto Enthusiasts", desc: "Connect with others following a ketogenic diet. Share recipes, tips, and support each other's progress.", gradient: "from-emerald-50 to-teal-100", members: "12.5K", iconColor: "text-emerald-600" },
+              { icon: Trophy, title: "Running Club", desc: "Join fellow runners of all levels. Find training partners, discuss routes, and celebrate your runs.", gradient: "from-teal-50 to-cyan-100", members: "8.3K", iconColor: "text-teal-600" },
+              { icon: Heart, title: "Mindful Eating", desc: "Practice mindful eating techniques together. Share experiences and support for a healthier relationship with food.", gradient: "from-emerald-50 to-teal-100", members: "15.2K", iconColor: "text-emerald-600" }
             ].map((community, idx) => (
               <div key={idx} className={`p-8 bg-gradient-to-br ${community.gradient} rounded-3xl hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 relative overflow-hidden`}>
                 <div className="absolute top-4 right-4 px-3 py-1 bg-white rounded-full text-xs font-semibold text-gray-900 shadow-lg">
                   {community.members} members
                 </div>
-                <community.icon className="w-14 h-14 text-green-600 mb-4" />
+                <community.icon className={`w-14 h-14 ${community.iconColor} mb-4`} />
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{community.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{community.desc}</p>
               </div>
             ))}
           </div>
           <div className="text-center mt-12">
-            <button className="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-full hover:from-green-700 hover:to-green-800 transition-all transform hover:scale-105 shadow-xl">
+            <button className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold rounded-full hover:from-emerald-600 hover:to-teal-700 transition-all transform hover:scale-105 shadow-xl">
               Explore All Communities
             </button>
           </div>
@@ -309,15 +309,15 @@ export default function NutriWiseLanding() {
       <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <span className="text-green-600 font-semibold text-sm uppercase tracking-wider">Testimonials</span>
+            <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">Testimonials</span>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-3 mb-4">Real People. Real Results.</h2>
             <p className="text-xl text-gray-600">See what our community has achieved</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: "Isabella", initial: "I", quote: "NutriWise transformed my relationship with food. I've never felt healthier or more energized!", gradient: "from-green-300 to-emerald-400" },
-              { name: "Liam", initial: "L", quote: "Thanks to NutriWise, I finally achieved my weight loss goals and gained a sustainable, healthy lifestyle.", gradient: "from-blue-300 to-cyan-400" },
-              { name: "Ava", initial: "A", quote: "The community support and expert guidance on NutriWise have been invaluable. I'm so grateful for this app!", gradient: "from-purple-300 to-violet-400" }
+              { name: "Isabella", initial: "I", quote: "NutriWise transformed my relationship with food. I've never felt healthier or more energized!", gradient: "from-emerald-300 to-teal-400" },
+              { name: "Liam", initial: "L", quote: "Thanks to NutriWise, I finally achieved my weight loss goals and gained a sustainable, healthy lifestyle.", gradient: "from-teal-300 to-cyan-400" },
+              { name: "Ava", initial: "A", quote: "The community support and expert guidance on NutriWise have been invaluable. I'm so grateful for this app!", gradient: "from-emerald-400 to-teal-500" }
             ].map((testimonial, idx) => (
               <div key={idx} className="bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300">
                 <div className="flex mb-4">
@@ -342,7 +342,7 @@ export default function NutriWiseLanding() {
       </section>
 
       {/* Call to Action Section */}
-      <section className="py-24 bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 relative overflow-hidden">
+      <section className="py-24 bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -355,7 +355,7 @@ export default function NutriWiseLanding() {
             Join thousands of members who are already on their journey to better health. Start your transformation today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-10 py-4 bg-white text-green-600 text-lg font-bold rounded-full hover:bg-gray-100 transition-all transform hover:scale-105 shadow-2xl">
+            <button className="px-10 py-4 bg-white text-emerald-600 text-lg font-bold rounded-full hover:bg-gray-100 transition-all transform hover:scale-105 shadow-2xl">
               Start Free Trial
             </button>
             <button className="px-10 py-4 bg-transparent text-white text-lg font-bold rounded-full border-2 border-white hover:bg-white/10 transition-all transform hover:scale-105">
@@ -371,7 +371,7 @@ export default function NutriWiseLanding() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
                   <span className="text-white text-2xl">🍃</span>
                 </div>
                 <span className="text-xl font-bold text-gray-900">NutriWise</span>
@@ -384,7 +384,7 @@ export default function NutriWiseLanding() {
               <h4 className="font-bold text-gray-900 mb-4">Company</h4>
               <ul className="space-y-2">
                 {["About", "Careers", "Press", "Blog"].map(item => (
-                  <li key={item}><a href="#" className="text-gray-600 hover:text-green-600 transition text-sm">{item}</a></li>
+                  <li key={item}><a href="#" className="text-gray-600 hover:text-emerald-600 transition text-sm">{item}</a></li>
                 ))}
               </ul>
             </div>
@@ -392,7 +392,7 @@ export default function NutriWiseLanding() {
               <h4 className="font-bold text-gray-900 mb-4">Support</h4>
               <ul className="space-y-2">
                 {["Help Center", "Contact", "Terms of Service", "Privacy Policy"].map(item => (
-                  <li key={item}><a href="#" className="text-gray-600 hover:text-green-600 transition text-sm">{item}</a></li>
+                  <li key={item}><a href="#" className="text-gray-600 hover:text-emerald-600 transition text-sm">{item}</a></li>
                 ))}
               </ul>
             </div>
@@ -410,7 +410,7 @@ export default function NutriWiseLanding() {
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-green-600 hover:text-white transition-all"
+                    className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:bg-emerald-600 hover:text-white transition-all"
                   >
                     <social.icon size={18} />
                   </a>

@@ -16,7 +16,10 @@ export default function NutritionistCard({ item }: NutritionistCardProps) {
   const router = useRouter();
 
   return (
-    <div className="bg-white border rounded-3xl p-8 flex flex-col items-center transition hover:shadow-lg relative">
+    <div
+      onClick={() => router.push(`/coaching/${item.id}`)}
+      className="cursor-pointer bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col items-center transition hover:shadow-xl hover:border-emerald-200 relative"
+    >
       
       {/* Image */}
       <div className="relative mb-4">
@@ -25,19 +28,19 @@ export default function NutritionistCard({ item }: NutritionistCardProps) {
             item.profileImage ||
             "https://cdn-icons-png.flaticon.com/512/3870/3870822.png"
           }
-          className="w-32 h-32 object-contain"
+          className="w-28 h-28 sm:w-32 sm:h-32 object-contain"
           alt={item.fullName}
         />
 
         {item.defaultPlan && (
-          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+          <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">
             {item.defaultPlan}
           </span>
         )}
       </div>
 
       {/* Name */}
-      <h3 className="text-xl font-bold mt-4 text-gray-900 text-center">
+      <h3 className="text-lg sm:text-xl font-bold mt-4 text-gray-900 text-center">
         {item.fullName}
       </h3>
 
@@ -54,8 +57,11 @@ export default function NutritionistCard({ item }: NutritionistCardProps) {
 
       {/* CTA */}
       <button
-        onClick={() => router.push(`/coaching/${item.id}/plans`)}
-        className="w-full mt-8 bg-green-600 text-white py-4 rounded-2xl font-medium hover:bg-green-700 transition"
+        onClick={(e) => {
+          e.stopPropagation(); // VERY IMPORTANT
+          router.push(`/coaching/${item.id}/plans`);
+        }}
+        className="w-full mt-6 sm:mt-8 bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 sm:py-4 rounded-2xl font-medium hover:from-emerald-600 hover:to-teal-700 transition"
       >
         See Plans
       </button>

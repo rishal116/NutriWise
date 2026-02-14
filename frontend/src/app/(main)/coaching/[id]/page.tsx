@@ -159,11 +159,6 @@ export default function NutritionistProfilePage() {
                   <CreditCard size={20} />
                   <span>View Plans</span>
                 </Link>
-
-                <button className="flex items-center justify-center gap-2 bg-white border-2 border-emerald-200 text-emerald-700 px-8 py-4 rounded-xl font-semibold hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300">
-                  <MessageCircle size={20} />
-                  <span>Start Chat</span>
-                </button>
               </div>
             </div>
           </div>

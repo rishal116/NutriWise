@@ -107,46 +107,84 @@ export default function NutritionistPlansPage() {
       </div>
 
       {/* HERO SECTION */}
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-          {/* Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500"></div>
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnptMCAxMmMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnpNMTIgMThjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6bTAgMTJjMy4zMTQgMCA2IDIuNjg2IDYgNnMtMi42ODYgNi02IDYtNi0yLjY4Ni02LTYgMi42ODYtNiA2LTZ6IiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iLjUiIG9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-20"></div>
-          
-          <div className="relative z-10 p-8 lg:p-12 flex flex-col md:flex-row items-center gap-8">
-            {/* Profile Image */}
-            <div className="relative flex-shrink-0">
-              <div className="absolute -inset-2 bg-white/30 rounded-full blur-xl"></div>
-              <img
-                src={profile.profileImage || "/images/images.jpg"}
-                className="relative w-32 h-32 rounded-full border-4 border-white shadow-2xl object-cover"
-                alt={profile.fullName}
-              />
-              {profile.nutritionistStatus === "TOP_COACH" && (
-                <div className="absolute -bottom-2 -right-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-2 shadow-lg border-2 border-white">
-                  <Award className="text-white" size={20} />
-                </div>
-              )}
-            </div>
+{/* HERO PROFILE CARD */}
+<div className="max-w-7xl mx-auto px-6 py-10">
+  <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-8 lg:p-10">
 
-            {/* Info */}
-            <div className="text-white text-center md:text-left">
-              <h2 className="text-3xl lg:text-4xl font-bold mb-2">{profile.fullName}</h2>
-              <p className="text-emerald-50 text-lg mb-4">Certified Nutrition Coach</p>
-              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                <span className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold">
-                  <Users size={16} />
-                  {profile.totalPeopleCoached || 0} Clients
-                </span>
-                <span className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-semibold">
-                  <TrendingUp size={16} />
-                  {profile.totalExperienceYears || 0} Years Exp
-                </span>
-              </div>
+    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+
+      {/* Image */}
+      <div className="relative">
+        <div className="absolute -inset-1 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full blur opacity-25"></div>
+        <img
+          src={profile.profileImage || "/images/images.jpg"}
+          className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-2xl object-cover"
+          alt={profile.fullName}
+        />
+        {profile.nutritionistStatus === "TOP_COACH" && (
+          <div className="absolute -top-2 -right-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-2 shadow-lg">
+            <Award className="text-white" size={20} />
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="text-center sm:text-left flex-1">
+        <div className="flex flex-col sm:flex-row items-center gap-3 mb-2">
+          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
+            {profile.fullName}
+          </h2>
+
+          <span
+            className={`px-4 py-1.5 text-xs font-bold rounded-full shadow-sm ${
+              profile.nutritionistStatus === "TOP_COACH"
+                ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white"
+                : "bg-emerald-100 text-emerald-700"
+            }`}
+          >
+            {profile.nutritionistStatus === "TOP_COACH"
+              ? "⭐ TOP COACH"
+              : profile.nutritionistStatus}
+          </span>
+        </div>
+
+        <p className="text-gray-600 font-medium mb-4">
+          Certified Nutrition Coach
+        </p>
+
+        {/* Stats */}
+        <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+          <div className="flex items-center gap-2">
+            <div className="bg-amber-50 p-2 rounded-lg">
+              <Users className="text-amber-600" size={16} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Clients</p>
+              <p className="text-sm font-bold text-gray-900">
+                {profile.totalPeopleCoached || 0}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="bg-purple-50 p-2 rounded-lg">
+              <TrendingUp className="text-purple-600" size={16} />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Experience</p>
+              <p className="text-sm font-bold text-gray-900">
+                {profile.totalExperienceYears || 0} Years
+              </p>
             </div>
           </div>
         </div>
       </div>
+
+    </div>
+
+  </div>
+</div>
+
 
       {/* MAIN CONTENT */}
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8">

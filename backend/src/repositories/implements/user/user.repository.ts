@@ -18,6 +18,8 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
       { $set: { password: hashedPassword } }
     );
   }
+
+
   
   async updatePasswordById(userId: string,hashedPassword: string): Promise<void> {
     await this._model.updateOne(
