@@ -14,7 +14,6 @@ export class AdminClientController implements IAdminClientController {
     private _adminClientService: IAdminClientService,
   ) {}
 
-
   getAllUsers = asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -25,23 +24,26 @@ export class AdminClientController implements IAdminClientController {
     res.status(StatusCode.OK).json(response);
   });
   
-  
   blockUser = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
-    logger.warn(`Admin attempting to block user | userId=${userId}`);
+    logger.warn(`Admin attempting to block account | accountId=${userId}`);
     await this._adminClientService.blockUser(userId);
-    logger.warn(`User blocked successfully | userId=${userId}`);
-    res.status(StatusCode.OK).json({ success: true, message: "User blocked successfully"});
+    logger.warn(`Account blocked successfully | accountId=${userId}`);
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Account blocked successfully"
+    });
   });
-  
   
   unblockUser = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
-    logger.info(`Admin attempting to unblock user | userId=${userId}`);
+    logger.info(`Admin attempting to unblock account | accountId=${userId}`);
     await this._adminClientService.unblockUser(userId);
-    logger.info(`User unblocked successfully | userId=${userId}`);
-    res.status(StatusCode.OK).json({ success: true, message: "User unblocked successfully"});
+    logger.info(`Account unblocked successfully | accountId=${userId}`);
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Account unblocked successfully",
+    });
   });
-
 
 }

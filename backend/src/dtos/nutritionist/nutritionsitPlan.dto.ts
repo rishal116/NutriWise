@@ -1,98 +1,50 @@
-import {
-  IsString,
-  IsNumber,
-  IsIn,
-  Min,
-  IsOptional,
-} from "class-validator";
 
-/* ================= CREATE ================= */
-
-export class CreatePlanDto {
-  @IsString()
-  title!: string;
-
-  @IsString()
-  category!: string;
-
-  @IsIn([30, 90, 180])
-  durationInDays!: 30 | 90 | 180;
-
-  @IsNumber()
-  @Min(1)
-  price!: number;
-
-  @IsString()
-  description!: string;
-}
-
-/* ================= UPDATE ================= */
-
-export class UpdatePlanDto {
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @IsOptional()
-  @IsString()
-  category?: string;
-
-  @IsOptional()
-  @IsIn([30, 90, 180])
-  durationInDays?: 30 | 90 | 180;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  price?: number;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-}
-
-/* ================= ADMIN ================= */
-
-export class ApprovePlanDto {
-  @IsString()
-  planId!: string;
-}
-
-export class RejectPlanDto {
-  @IsString()
-  planId!: string;
-
-  @IsString()
-  reason!: string;
-}
-
-export interface ICreatePlanDTO {
+export interface CreatePlanDTO {
   title: string;
   category: string;
   durationInDays: 30 | 90 | 180;
   price: number;
+  currency: string;
   description: string;
+  status: "draft" | "published";
+  features: string[];
 }
 
-export interface IUpdatePlanDTO {
+export interface UpdatePlanDTO {
   title?: string;
   category?: string;
   durationInDays?: 30 | 90 | 180;
   price?: number;
+  currency?: string;
   description?: string;
+  status?: "draft" | "published";
+  features?: string[];            
 }
 
 
 export interface PlanDTO {
-  id: string;
+  _id: string;
+  nutritionistId: string;
   title: string;
   category: string;
   durationInDays: number;
   price: number;
+  currency: string;
   description: string;
+  features: string[];
   status: "draft" | "published";
-  approvalStatus: "pending" | "approved" | "rejected";
-  rejectionReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+
+export interface GetSpecializationsDTO {
+  specializations: string[];
+}
+
+export interface NutritionistPricingDTO {
+  status: string;
+  currency: string;
+  minPrice: number;
+  maxPrice: number;
 }

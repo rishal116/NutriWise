@@ -15,7 +15,6 @@ export class PlanMapper {
       durationInDays: dto.durationInDays,
       price: dto.price,
       description: dto.description.trim(),
-      status: "pending", // admin approval required
     };
   }
 

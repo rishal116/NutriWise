@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, IndianRupee, Eye, FileText } from "lucide-react";
+import { Clock, Eye, FileText } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { nutritionistPlanService } from "@/services/nutritionist/nutritionistPlan.service";
 
 interface Plan {
@@ -11,13 +12,15 @@ interface Plan {
   durationInDays: 30 | 90 | 180;
   price: number;
   status: "draft" | "published";
-  approvalStatus: "pending" | "approved" | "rejected";
-  rejectionReason?: string | null;
+  currency: string;
+  features: string[];
+  description: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export default function MyPlansPage() {
+  const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,14 +28,27 @@ export default function MyPlansPage() {
     const fetchPlans = async () => {
       try {
         const res = await nutritionistPlanService.getPlans();
-        setPlans(res.data.data); // Access nested array
+  
+        const mappedPlans: Plan[] = res.data.data.map((p: any) => ({
+          id: p._id,
+          title: p.title,
+          category: p.category,
+          durationInDays: p.durationInDays,
+          price: p.price,
+          status: p.status,
+          currency: p.currency,
+          features: p.features || [],
+          description: p.description,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+        }));
+        setPlans(mappedPlans);
       } catch (error) {
         console.error("Failed to fetch plans", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchPlans();
   }, []);
 
@@ -43,25 +59,38 @@ export default function MyPlansPage() {
     return `${days} Days`;
   };
 
-  const getStatusStyle = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "approved":
-        return "bg-green-100 text-green-700"; // green
-      case "pending":
-        return "bg-yellow-100 text-yellow-700"; // yellow
-      case "draft":
-        return "bg-gray-100 text-gray-600"; // gray
-      case "rejected":
-        return "bg-red-100 text-red-700"; // optional
+  const getCurrencySymbol = (currency: string) => {
+    switch (currency) {
+      case "INR":
+        return "₹";
+      case "USD":
+        return "$";
+      case "EUR":
+        return "€";
       default:
-        return "bg-gray-100 text-gray-600";
+        return currency + " ";
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Loading plans...
+      <div className="min-h-screen flex flex-col items-center justify-center text-gray-500">
+        <div className="loader mb-4"></div>
+        <p>Loading plans...</p>
+        <style jsx>{`
+          .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #34d399;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -85,24 +114,39 @@ export default function MyPlansPage() {
             {plans.map((plan) => (
               <div
                 key={plan.id}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-gray-100 overflow-hidden group"
+                className="relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 border border-gray-100 overflow-hidden group"
               >
+                {/* Status Badge */}
+                <div className="absolute top-3 right-3">
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      plan.status === "published"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {plan.status.toUpperCase()}
+                  </span>
+                </div>
+
                 <div className="p-6 space-y-4">
-                  {/* Header */}
+                  {/* Title & Category */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <h2 className="font-bold text-lg text-gray-800 group-hover:text-green-600 transition-colors">
                         {plan.title}
                       </h2>
                       <p className="text-sm text-gray-500 mt-1">{plan.category}</p>
+
+                      {/* Features */}
+                      {plan.features.length > 0 && (
+                        <ul className="text-sm text-gray-600 mt-2 space-y-1">
+                          {plan.features.map((f, idx) => (
+                            <li key={idx}>• {f}</li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
-                    <span
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-full ${getStatusStyle(
-                        plan.approvalStatus
-                      )}`}
-                    >
-                      {plan.approvalStatus.toUpperCase()}
-                    </span>
                   </div>
 
                   {/* Duration & Price */}
@@ -112,17 +156,28 @@ export default function MyPlansPage() {
                       <span>{getDurationLabel(plan.durationInDays)}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <IndianRupee size={16} className="text-green-600" />
-                      <span className="font-semibold">₹{plan.price}</span>
+                      <span className="font-semibold">
+                        {getCurrencySymbol(plan.currency)}
+                        {plan.price}
+                      </span>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="flex gap-3 pt-2">
-                    <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200">
+                    <button
+                      onClick={() => {
+  if (!plan.id) return console.error("Plan ID missing");
+  router.push(`/nutritionist/plans/${plan.id}`);
+}}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200"
+                    >
                       <Eye size={16} /> View
                     </button>
-                    <button className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-400 text-white font-medium rounded-xl hover:shadow-lg">
+                    <button
+                      onClick={() => router.push(`/nutritionist/plans/edit/${plan.id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-green-600 to-green-400 text-white font-medium rounded-xl hover:shadow-lg"
+                    >
                       <FileText size={16} /> Edit
                     </button>
                   </div>

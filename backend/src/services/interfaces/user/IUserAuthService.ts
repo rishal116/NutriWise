@@ -1,14 +1,17 @@
-import { Request } from "express"; 
-import { UserRegisterDto, VerifyOtpDto, ResendOtpDto, LoginDto } from "../../../dtos/user/UserAuth.dto";
+import { Request } from "express";
+import { UserRegisterDto,VerifyOtpDto,ResendOtpDto,LoginDto} from "../../../dtos/user/UserAuth.dto";
+import {MessageResponseDto,VerifyOtpResponseDto,LoginResponseDto,
+  GoogleLoginRequestDto,GoogleLoginResponseDto,GoogleSigninRequestDto,GetMeResponseDto
+} from "../../../dtos/user/userAuth.response.dto";
 
 export interface IUserAuthService {
-  signup(req: Request, data: UserRegisterDto): Promise<{ message: string }>;
-  verifyOtp(req: Request, data: VerifyOtpDto): Promise<{ message: string; accessToken: string; refreshToken:string , role:string }>;
-  resendOtp(data: ResendOtpDto): Promise<{ message: string }>;
-  login(data: LoginDto): Promise<{ user: any; accessToken: string; refreshToken: string }>;
-  googleLogin(payload: {credential: string; role: "client" | "nutritionist" | "admin";}): Promise<{user: any; accessToken: string; refreshToken: string}>;
-  requestPasswordReset(email: string): Promise<{ message: string }>;
-  resetPassword(token: string, newPassword: string): Promise<{ message: string }>;
-  googleSignin(payload: { credential: string; }): Promise<{ user: any; accessToken: string; refreshToken: string; }>;
-  getMe(userId: string): Promise<{ id: string; fullName: string; email: string; role: "client" | "nutritionist" | "admin"; nutritionistStatus: string; }>;
+  signup(req: Request,data: UserRegisterDto): Promise<MessageResponseDto>;
+  verifyOtp(req: Request,data: VerifyOtpDto): Promise<VerifyOtpResponseDto>;
+  resendOtp(data: ResendOtpDto): Promise<MessageResponseDto>;
+  login(data: LoginDto): Promise<LoginResponseDto>;
+  googleLogin(payload: GoogleLoginRequestDto): Promise<GoogleLoginResponseDto>;
+  googleSignin(payload: GoogleSigninRequestDto): Promise<GoogleLoginResponseDto>;
+  requestPasswordReset(email: string): Promise<MessageResponseDto>;
+  resetPassword(token: string,newPassword: string): Promise<MessageResponseDto>;
+  getMe(userId: string): Promise<GetMeResponseDto>;
 }

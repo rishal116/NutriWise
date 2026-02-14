@@ -1,42 +1,72 @@
-import { BaseRepository } from "../base.repository";
+import { BaseRepository } from "../common/base.repository";
 import { IAdminClientRepository } from "../../interfaces/admin/IAdminClientRepository";
 import { UserModel, IUser } from "../../../models/user.model";
-import { Types } from "mongoose";
+import { FilterQuery } from "mongoose";
+import { WithRequiredId } from "../../../dtos/admin/user.dto";
 
-export class AdminClientRepository extends BaseRepository<IUser> implements IAdminClientRepository {
+export class AdminClientRepository
+  extends BaseRepository<IUser>
+  implements IAdminClientRepository {
+
   constructor() {
     super(UserModel);
   }
   
-  async getAllUsers(skip: number, limit: number, search?: string): Promise<{ users: Partial<IUser>[]; total: number }> {
-    const filter: Record<string, any> = {};
+  async getAllUsers(skip: number,limit: number,search?: string): 
+  Promise<{ users: WithRequiredId<Partial<IUser>>[]; total: number }> {
+    const filter: FilterQuery<IUser> = {};
+
     if (search) {
       filter.$or = [
         { fullName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
       ];
     }
+
     const users = await this._model
-    .find(filter, "_id fullName email role isBlocked")
-    .skip(skip)
-    .limit(limit)
-    .lean<Partial<IUser>[]>();
+      .find(filter)
+      .select("_id fullName email role isBlocked")
+      .skip(skip)
+      .limit(limit)
+      .lean<WithRequiredId<Partial<IUser>>[]>();
+
     const total = await this._model.countDocuments(filter);
+
     return { users, total };
   }
-  
-  private async toggleBlock(userId: string, state: boolean) {
-    if (!Types.ObjectId.isValid(userId)) throw new Error("Invalid userId");
-    await this._model.updateOne({ _id: userId }, { $set: { isBlocked: state } });
-  }
-  
-  blockUser(userId: string) {
-    return this.toggleBlock(userId, true);
+
+async getAllNutritionists(
+  skip: number,
+  limit: number,
+  search?: string
+): Promise<{ nutritionists: WithRequiredId<Partial<IUser>>[]; total: number }> {
+
+    const filter: FilterQuery<IUser> = { role: "nutritionist" };
+
+    if (search) {
+      filter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const nutritionists = await this._model
+      .find(filter)
+      .select("_id fullName email role isBlocked nutritionistStatus")
+      .skip(skip)
+      .limit(limit)
+       .lean<WithRequiredId<Partial<IUser>>[]>();
+
+    const total = await this._model.countDocuments(filter);
+
+    return { nutritionists, total };
   }
 
-  unblockUser(userId: string) {
-    return this.toggleBlock(userId, false);
+  async blockUser(userId: string): Promise<void> {
+    await this._model.updateOne({ _id: userId }, { $set: { isBlocked: true } });
   }
 
-  
+  async unblockUser(userId: string): Promise<void> {
+    await this._model.updateOne({ _id: userId }, { $set: { isBlocked: false } });
+  }
 }

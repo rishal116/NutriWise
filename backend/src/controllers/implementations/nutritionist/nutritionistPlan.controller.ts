@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
@@ -10,41 +10,63 @@ import { INutritionistPlanController } from "../../interfaces/nutritionist/INutr
 export class NutritionistPlanController implements INutritionistPlanController {
   constructor(
     @inject(TYPES.INutritionistPlanService)
-    private _planService: INutritionistPlanService
+    private  _planService: INutritionistPlanService
   ) {}
   
-  
-  createPlan = asyncHandler(async (req, res, NextFunction) => {
-    console.log("controller")
-    const nutritionistId = req.user?.userId;
-    if (!nutritionistId) throw new Error("Unauthorized");
-    const plan = await this._planService.createPlan(
-      nutritionistId,
-      req.body
-    );
-    res.status(201).json({ success: true, data: plan });
+  createPlan = asyncHandler(async (req: Request, res: Response ) => {
+    if (!req.user) {
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+    }
+    const nutritionistId = req.user.userId;
+    const plan = await this._planService.createPlan(nutritionistId,req.body);
+    res.status(StatusCode.CREATED).json({success: true,data: plan });
   });
   
+  updatePlan = asyncHandler(async (req: Request, res: Response ) => {
+    if (!req.user) {
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+    }
+    const { planId } = req.params;
+    const nutritionistId = req.user.userId;
+    const plan = await this._planService.updatePlan(nutritionistId,planId,req.body);
+    res.status(StatusCode.OK).json({success: true,data: plan});
+  });
   
-  updatePlan = asyncHandler(async (req, res, NextFunction) => {
+  getMyPlans = asyncHandler(async (req: Request, res: Response ) => {
+    if (!req.user) {
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+    }
+    const nutritionistId = req.user.userId;
+    const plans = await this._planService.getPlansByNutritionist(nutritionistId);
+    res.status(StatusCode.OK).json({success: true,data: plans});
+  });
+  
+  getSpecializations = asyncHandler(async (req: Request, res: Response ) => {
+    if (!req.user) {
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+    }
+    const nutritionistId = req.user.userId;
+    const specializations = await this._planService.getSpecializations(nutritionistId);
+    res.status(StatusCode.OK).json({success: true,data: specializations});
+  });
+  
+  getNutritionistPricing = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" })
+    }
+    const nutritionistId = req.user.userId;
+    const pricing = await this._planService.getNutritionistPricing(nutritionistId);
+    res.status(StatusCode.OK).json({success: true,data: pricing });
+  });
+  
+  getPlanById = asyncHandler(async (req: Request, res: Response) => {
     const nutritionistId = req.user?.userId;
     const { planId } = req.params;
-    const plan = await this._planService.updatePlan(
-      nutritionistId!,
-      planId,
-      req.body
-    );
-    res.json({ success: true, data: plan });
-  });
-  
-  
-  getMyPlans = asyncHandler(async (req, res, NextFunction) => {
-    const nutritionistId = req.user?.userId;
-    const plans = await this._planService.getPlansByNutritionist(
-      nutritionistId!
-    );
-    res.json({ success: true, data: plans });
+    if (!nutritionistId) return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+    const plan = await this._planService.getPlanById(nutritionistId, planId);
+    res.status(StatusCode.OK).json({ success: true, data: plan });
   });
 
-  
+
+
 }

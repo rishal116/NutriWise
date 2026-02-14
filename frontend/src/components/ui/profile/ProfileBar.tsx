@@ -1,60 +1,169 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-
-// Icons (lucide-react)
+import { useRef, useState } from "react";
 import {
   User,
   HeartPulse,
   Calendar,
-  CreditCard,
+  ClipboardList,
+  Video,
+  Trophy,
   MessageCircle,
   BookOpen,
-  Trophy,
-  FileText,
-  Video,
+  CreditCard,
   Settings,
+  X,
 } from "lucide-react";
+import SidebarTooltip from "@/components/ui/profile/SidebarTooltip";
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  badge?: number;
+}
 
-const navItems = [
-  { name: "Personal Info", href: "/profile", icon: User },
-  { name: "Health Details", href: "/health", icon: HeartPulse },
-  { name: "Appointments", href: "/appointments", icon: Calendar },
-  { name: "Payments", href: "/payments", icon: CreditCard },
-  { name: "Messages", href: "/messages", icon: MessageCircle },
-  { name: "Resources", href: "/resources", icon: BookOpen },
-  { name: "Challenges", href: "/challenges", icon: Trophy },
-  { name: "Posts", href: "/posts", icon: FileText },
-  { name: "Sessions", href: "/sessions", icon: Video },
-  { name: "Settings", href: "/settings", icon: Settings },
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+interface ProfileSidebarProps {
+  compact?: boolean;
+  activePath: string;
+  onClose?: () => void;
+  disableScroll?: boolean;
+}
+
+const navSections: NavSection[] = [
+  {
+    title: "Account",
+    items: [
+      { name: "Profile", href: "/client/profile", icon: User },
+      { name: "Health Details", href: "/client/health", icon: HeartPulse },
+    ],
+  },
+  {
+    title: "My Journey",
+    items: [
+      { name: "My Plan", href: "/client/plans", icon: Calendar },
+      { name: "Tasks", href: "/client/tasks", icon: ClipboardList },
+      { name: "Meetings", href: "/client/meetings", icon: Video },
+      { name: "Progress", href: "/client/progress", icon: Trophy },
+    ],
+  },
+  {
+    title: "Communication",
+    items: [
+      { name: "Messages", href: "/client/messages", icon: MessageCircle },
+      { name: "Resources", href: "/client/resources", icon: BookOpen },
+    ],
+  },
+  {
+    title: "Billing & Settings",
+    items: [
+      { name: "Payments", href: "/client/payments", icon: CreditCard },
+      { name: "Settings", href: "/client/settings", icon: Settings },
+    ],
+  },
 ];
 
-export default function ProfileBar() {
-  const pathname = usePathname();
+export default function ProfileSidebar({
+  compact = false,
+  activePath,
+  onClose,
+  disableScroll
+}: ProfileSidebarProps) {
 
   return (
-    <div className="w-64 bg-white border-r h-full p-6 space-y-1">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const active = pathname === item.href;
-
-        return (
-          <Link
-            key={item.name}
-            href={item.href}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all
-                ${
-                  active
-                    ? "bg-green-100 text-green-700 font-semibold shadow-sm"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
+    <aside
+      className={`h-full border-r bg-white lg:bg-gradient-to-b lg:from-white lg:to-gray-50 shadow-lg transition-all duration-300
+        ${compact ? "w-20" : "w-72 sm:w-80 lg:w-64"}
+      `}
+    >
+      {/* Mobile Header */}
+      <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
+            <span className="text-white text-lg">🍃</span>
+          </div>
+          <span className="text-lg font-bold text-gray-900">Menu</span>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Close menu"
           >
-            <Icon className="w-5 h-5" />
-            {item.name}
-          </Link>
-        );
-      })}
-    </div>
+            <X className="w-5 h-5 text-gray-700" />
+          </button>
+        )}
+      </div>
+
+      {/* Scroll Container */}
+      <div
+  className={`
+    h-full
+    ${disableScroll ? "" : "overflow-y-auto"}
+    ${compact ? "px-2 py-4" : "px-4 sm:px-5 py-6"}
+  `}
+>
+        <div className={compact ? "space-y-2" : "space-y-6 sm:space-y-8"}>
+          {navSections.map((section) => (
+            <div key={section.title}>
+              {/* Section Title */}
+              {!compact && (
+                <p className="px-3 mb-3 text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-200 pb-2">
+                  {section.title}
+                </p>
+              )}
+
+              <div className="space-y-1.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activePath.startsWith(item.href);
+
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={onClose}
+                      title={compact ? item.name : undefined}
+                      className={`flex items-center rounded-xl transition-all duration-200 relative group
+                        ${compact ? "justify-center px-3 py-3" : "gap-3 px-4 py-3"}
+                        ${
+                          isActive
+                            ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-md"
+                            : "text-gray-700 hover:bg-gray-100 hover:text-emerald-600"
+                        }
+                      `}
+                    >
+                      <Icon className={`${compact ? "w-5 h-5" : "w-5 h-5 flex-shrink-0"}`} />
+
+                      {!compact && (
+                        <span className="flex-1 text-sm font-medium">
+                          {item.name}
+                        </span>
+                      )}
+
+                      {/* Badge */}
+                      {!compact && item.badge && (
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
+                          {item.badge}
+                        </span>
+                      )}
+
+                      {/* Tooltip for compact mode */}
+
+
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
   );
 }

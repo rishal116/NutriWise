@@ -14,14 +14,7 @@ export default function HomePage() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  
-  useEffect(() => {
-    const token = localStorage.getItem("token")
 
-    if (!token) {
-      router.replace("/");
-    }
-  }, [router]);
 
 
   const challenges = [
@@ -35,13 +28,13 @@ export default function HomePage() {
       img: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80",
       title: "30-Day Weight Loss",
       desc: "Structured plan to gradually reduce weight with guidance.",
-      color: "from-blue-400 to-indigo-500"
+      color: "from-teal-400 to-cyan-500"
     },
     {
       img: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80",
       title: "Fitness Boost",
       desc: "Improve stamina and build discipline for a healthier lifestyle.",
-      color: "from-purple-400 to-pink-500"
+      color: "from-emerald-500 to-teal-600"
     }
   ];
 
@@ -76,7 +69,7 @@ export default function HomePage() {
           
           {/* Animated Background */}
           <div 
-            className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 mix-blend-overlay z-10"
+            className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-teal-500/20 to-cyan-500/20 mix-blend-overlay z-10"
             style={{ transform: `translateY(${scrollY * 0.3}px)` }}
           />
           
@@ -89,13 +82,13 @@ export default function HomePage() {
           <div className="absolute inset-0 flex items-center z-20 px-12 lg:px-20">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2 mb-6 animate-fade-in">
-                <Sparkles className="w-4 h-4 text-yellow-300" />
+                <Sparkles className="w-4 h-4 text-emerald-300" />
                 <span className="text-white text-sm font-medium">Transform Your Life Today</span>
               </div>
               
               <h1 className="text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight animate-slide-up">
                 Your Journey to<br />
-                <span className="bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
                   Better Health
                 </span>
               </h1>
@@ -104,7 +97,7 @@ export default function HomePage() {
                 Join thousands who've transformed their lives with personalized nutrition and expert guidance
               </p>
               
-              <button className="group/btn px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-full text-white font-semibold shadow-xl shadow-green-500/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl flex items-center gap-2">
+              <button className="group/btn px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-full text-white font-semibold shadow-xl shadow-emerald-500/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl flex items-center gap-2">
                 Explore Challenges
                 <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
               </button>
@@ -120,7 +113,7 @@ export default function HomePage() {
             <h2 className="text-4xl font-bold text-slate-900 mb-2">Featured Challenges</h2>
             <p className="text-slate-600">Start your transformation journey today</p>
           </div>
-          <button className="hidden md:flex items-center gap-2 px-6 py-3 text-green-600 hover:bg-green-50 rounded-full transition font-medium">
+          <button className="hidden md:flex items-center gap-2 px-6 py-3 text-emerald-600 hover:bg-emerald-50 rounded-full transition font-medium">
             View All <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -142,13 +135,13 @@ export default function HomePage() {
               </div>
               
               <div className="p-6">
-                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-green-600 transition">
+                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-emerald-600 transition">
                   {challenge.title}
                 </h3>
                 <p className="text-slate-600 leading-relaxed mb-4">
                   {challenge.desc}
                 </p>
-                <button className="text-green-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all">
+                <button className="text-emerald-600 font-semibold flex items-center gap-2 group-hover:gap-3 transition-all">
                   Learn More 
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -169,12 +162,12 @@ export default function HomePage() {
           {communities.map((community, i) => (
             <div
               key={i}
-              className="relative group bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200/60 hover:border-green-300 overflow-hidden"
+              className="relative group bg-gradient-to-br from-white to-slate-50 p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-slate-200/60 hover:border-emerald-300 overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-400/20 to-blue-400/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-500" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-400/20 via-teal-400/20 to-cyan-400/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-500" />
               
               <div className="relative">
-                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                   <community.icon className="w-7 h-7 text-white" />
                 </div>
                 
@@ -191,7 +184,7 @@ export default function HomePage() {
         </div>
 
         <div className="text-center mt-10">
-          <button className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <button className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             View More Communities
           </button>
         </div>
@@ -219,7 +212,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 
                 <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                  <button className="w-full py-2 bg-white text-green-600 rounded-full font-semibold hover:bg-green-50 transition">
+                  <button className="w-full py-2 bg-white text-emerald-600 rounded-full font-semibold hover:bg-emerald-50 transition">
                     Book Consultation
                   </button>
                 </div>
@@ -227,7 +220,7 @@ export default function HomePage() {
               
               <div className="p-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <Award className="w-5 h-5 text-green-600" />
+                  <Award className="w-5 h-5 text-emerald-600" />
                   <h3 className="text-xl font-bold text-slate-900">{expert.name}</h3>
                 </div>
                 <p className="text-slate-600 leading-relaxed">{expert.specialty}</p>
@@ -237,7 +230,7 @@ export default function HomePage() {
         </div>
 
         <div className="text-center mt-10">
-          <button className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <button className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             Meet More Experts
           </button>
         </div>
@@ -257,13 +250,13 @@ export default function HomePage() {
               className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer"
             >
               <img src={img} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="Transformation" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-emerald-600/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </div>
           ))}
         </div>
 
         <div className="text-center mt-10">
-          <button className="px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <button className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             Read More Stories
           </button>
         </div>

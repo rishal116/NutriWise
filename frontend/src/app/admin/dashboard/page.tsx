@@ -1,13 +1,5 @@
-export const metadata = {
-  title: "NutriWise – Admin Dashboard",
-};
 
-export default function AdminDashboard() {
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold text-gray-800">
-        Admin Dashboard
-      </h1>
-    </div>
-  );
+
+export default async function AdminDashboardPage() {
+  return <div>Admin Dashboard</div>;
 }

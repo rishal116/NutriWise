@@ -5,8 +5,6 @@ import { TYPES } from "../../../types/types";
 import { UserDTO } from "../../../dtos/admin/user.dto";
 import { PaginatedResponseDto } from "../../../dtos/base/BaseResponse.dtos";
 
-
-
 @injectable()
 export class AdminClientService implements IAdminClientService {
   constructor(

@@ -6,9 +6,9 @@ export default function NutritionistLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50/30">
       <NutritionistHeader />
-      <div className="pt-10">{children}</div>
+      <div>{children}</div>
     </div>
   );
 }

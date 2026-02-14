@@ -30,14 +30,7 @@ export const setAuthCookies = (res: Response, refreshToken: string) => {
   });
 };
 
-export const setAdminAuthCookies = (res: Response, refreshToken: string) => {
-  res.cookie("adminRefreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
-  });
-};
+
 
 
 export const clearAuthCookies = (res: Response) => {
@@ -48,7 +41,18 @@ export const clearAuthCookies = (res: Response) => {
   });
 };
 
+
+export const setAdminAuthCookies = (res: Response, refreshToken: string) => {
+  res.cookie("adminRefreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000, 
+  });
+};
+
 export const clearAdminAuthCookies = (res: Response) => {
+  console.log("hello");
   res.clearCookie("adminRefreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
