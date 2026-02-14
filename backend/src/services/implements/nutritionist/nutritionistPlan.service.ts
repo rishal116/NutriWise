@@ -9,7 +9,7 @@ import { INutritionistProfileRepository } from "../../../repositories/interfaces
 import { GetSpecializationsDTO } from "../../../dtos/nutritionist/nutritionsitPlan.dto";
 import { toSpecializationsDTO, toPlanDTO, toNutritionistPricingDTO } from "../../../mapper/nutritionist/nutritionistPlan.mapper";
 import logger from "../../../utils/logger";
-import { PRICING_RULES,COUNTRY_CURRENCY_MAP, DEFAULT_CURRENCY,} from "../../../constants/nutritionist/nutritionistPlan.constants";
+import { PRICING_RULES,COUNTRY_CURRENCY_MAP, DEFAULT_CURRENCY,} from "../../../constants/nutritionist/nutritionistPlan.constant";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 

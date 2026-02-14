@@ -1,6 +1,6 @@
-import { INotification } from "../../models/notification.model";
-import { NotificationDto } from "../../dtos/common/notification.dto";
-import { NotificationQuery } from "../../dtos/common/notification.dto";
+import { INotification } from "../../../models/notification.model";
+import { NotificationDto } from "../../../dtos/common/notification.dto";
+import { NotificationQuery } from "../../../dtos/common/notification.dto";
 
 export interface INotificationRepository {
   getNotifications(query: NotificationQuery): Promise<{ data: INotification[]; total: number }>;

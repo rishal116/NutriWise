@@ -1,4 +1,4 @@
-import { IOTP } from "../../models/otp.model";
+import { IOTP } from "../../../models/otp.model";
 
 export interface IOtpRepository {
   saveOtp(data: Partial<IOTP>): Promise<IOTP>;
