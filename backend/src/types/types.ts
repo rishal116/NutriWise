@@ -74,6 +74,9 @@ export const TYPES = {
   IConversationService:Symbol.for("IConversationService"),
   IMessageService:Symbol.for("MessageService"),
   IConversationRepository:Symbol.for("IConversationRepository"),
-  IMessageRepository:Symbol.for("IMessageRepository")
+  IMessageRepository:Symbol.for("IMessageRepository"),
+
+  // socket
+  ISocketService:Symbol.for("ISocketService"),
     
 };

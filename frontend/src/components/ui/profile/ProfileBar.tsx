@@ -1,26 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
 import {
-  User,
-  HeartPulse,
-  Calendar,
-  ClipboardList,
-  Video,
-  Trophy,
-  MessageCircle,
-  BookOpen,
-  CreditCard,
-  Settings,
-  X,
+  User, HeartPulse, Calendar, ClipboardList, Video, 
+  Trophy, MessageCircle, BookOpen, CreditCard, Settings, X,
 } from "lucide-react";
-import SidebarTooltip from "@/components/ui/profile/SidebarTooltip";
+
+
+
 interface NavItem {
   name: string;
   href: string;
   icon: any;
-  badge?: number;
 }
 
 interface NavSection {
@@ -68,102 +59,83 @@ const navSections: NavSection[] = [
   },
 ];
 
+
+
+
 export default function ProfileSidebar({
   compact = false,
   activePath,
   onClose,
-  disableScroll
+  disableScroll,
 }: ProfileSidebarProps) {
-
   return (
     <aside
-      className={`h-full border-r bg-white lg:bg-gradient-to-b lg:from-white lg:to-gray-50 shadow-lg transition-all duration-300
-        ${compact ? "w-20" : "w-72 sm:w-80 lg:w-64"}
+      className={`
+        h-full bg-white transition-all duration-300 ease-in-out flex flex-col
+        ${compact ? "w-20" : "w-64"}
       `}
     >
-      {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-lg">🍃</span>
-          </div>
-          <span className="text-lg font-bold text-gray-900">Menu</span>
-        </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            aria-label="Close menu"
-          >
-            <X className="w-5 h-5 text-gray-700" />
+      {/* Mobile Close Button */}
+      {!compact && (
+        <div className="lg:hidden flex items-center justify-between p-6 border-b border-gray-50">
+          <span className="text-xl font-bold text-gray-900 tracking-tight">Menu</span>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+            <X className="w-6 h-6" />
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Scroll Container */}
-      <div
+<nav
   className={`
-    h-full
-    ${disableScroll ? "" : "overflow-y-auto"}
-    ${compact ? "px-2 py-4" : "px-4 sm:px-5 py-6"}
+    flex-1 py-6
+    ${disableScroll ? "overflow-hidden" : "overflow-y-auto"} // Use overflow-hidden to hide scrollbar
+    ${compact ? "px-3" : "px-4"}
   `}
 >
-        <div className={compact ? "space-y-2" : "space-y-6 sm:space-y-8"}>
-          {navSections.map((section) => (
-            <div key={section.title}>
-              {/* Section Title */}
-              {!compact && (
-                <p className="px-3 mb-3 text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-200 pb-2">
-                  {section.title}
-                </p>
-              )}
 
-              <div className="space-y-1.5">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = activePath.startsWith(item.href);
+        {navSections.map((section) => (
+          <div key={section.title} className={`w-full ${compact ? "mb-2" : "mb-6"}`}>
+            {!compact && (
+              <h3 className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400/80">
+                {section.title}
+              </h3>
+            )}
 
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={onClose}
-                      title={compact ? item.name : undefined}
-                      className={`flex items-center rounded-xl transition-all duration-200 relative group
-                        ${compact ? "justify-center px-3 py-3" : "gap-3 px-4 py-3"}
-                        ${
-                          isActive
-                            ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-semibold shadow-md"
-                            : "text-gray-700 hover:bg-gray-100 hover:text-emerald-600"
-                        }
-                      `}
-                    >
-                      <Icon className={`${compact ? "w-5 h-5" : "w-5 h-5 flex-shrink-0"}`} />
+            <div className={`flex flex-col gap-1 ${compact ? "items-center" : ""}`}>
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = activePath.startsWith(item.href);
 
-                      {!compact && (
-                        <span className="flex-1 text-sm font-medium">
-                          {item.name}
-                        </span>
-                      )}
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={onClose}
+                    title={compact ? item.name : ""} 
+                    className={`
+                      relative flex items-center group transition-all duration-200
+                      ${compact 
+                        ? "justify-center h-12 w-12 rounded-xl" 
+                        : "gap-3 px-4 py-3 rounded-xl w-full"}
+                      ${isActive
+                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
+                        : "text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"}
+                    `}
+                  >
+                    <Icon className={`${compact ? "w-6 h-6" : "w-5 h-5"} shrink-0`} />
 
-                      {/* Badge */}
-                      {!compact && item.badge && (
-                        <span className="px-2 py-0.5 text-xs font-semibold bg-red-500 text-white rounded-full">
-                          {item.badge}
-                        </span>
-                      )}
-
-                      {/* Tooltip for compact mode */}
-
-
-                    </Link>
-                  );
-                })}
-              </div>
+                    {!compact && (
+                      <span className="text-sm font-semibold tracking-tight">
+                        {item.name}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        ))}
+      </nav>
     </aside>
   );
 }

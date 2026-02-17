@@ -94,10 +94,6 @@ export default function Header() {
         router.push("/login");
         return;
       }
-
-      if (user.role !== "nutritionist") {
-        router.push("/not-authorized");
-      }
     }
   }, [user, loading, router]);
 
@@ -111,10 +107,6 @@ export default function Header() {
     }
 
     const { role, nutritionistStatus } = user;
-
-    if (role !== "nutritionist") {
-      return router.push("/not-authorized");
-    }
 
     if (nutritionistStatus === "approved") {
       return router.push("/nutritionist/dashboard");

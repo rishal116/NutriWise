@@ -5,96 +5,70 @@ import { useState, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ProfileSidebar from "@/components/ui/profile/ProfileBar";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 
-export default function UserLayout({
+export default function ClientLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
-  const isMessagesPage =
-    pathname === "/account/messages" ||
-    pathname.startsWith("/account/messages");
+  const isMessagesPage = pathname.startsWith("/client/messages");
 
-  // Handle screen resize
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024);
-    };
-
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  // Close mobile menu when route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
-
-  // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [mobileOpen]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
 
       <div className="flex flex-1 overflow-hidden relative">
+        
         {/* Mobile Overlay */}
         {mobileOpen && (
           <div
+            className="fixed inset-0 bg-black/40 z-30 lg:hidden"
             onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
-            aria-hidden="true"
           />
         )}
 
         {/* Sidebar */}
         <div
           className={`
-            fixed lg:static z-50 lg:z-auto
-            h-full transition-transform duration-300 ease-in-out
+            fixed lg:relative z-40 h-full
+            transition-all duration-300 ease-in-out
             ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
             lg:translate-x-0
           `}
         >
-<ProfileSidebar
-  compact={isMessagesPage && isLargeScreen}
-  activePath={pathname}
-  onClose={() => setMobileOpen(false)}
-  disableScroll={isMessagesPage}
-/>
+          <ProfileSidebar
+            activePath={pathname}
+            compact={isMessagesPage}   // 🔥 shrink on messages
+            onClose={() => setMobileOpen(false)}
+          />
         </div>
 
         {/* Main Content */}
         <main
           className={`
-            flex-1 w-full overflow-y-auto transition-all duration-300
-            ${isMessagesPage ? "p-0" : "p-4 sm:p-6 lg:p-8"}
+            flex-1 transition-all duration-300
+            ${isMessagesPage
+              ? "overflow-hidden p-0"
+              : "overflow-y-auto p-6"}
           `}
         >
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="lg:hidden mb-4 p-3 rounded-lg bg-white shadow-md hover:shadow-lg transition-shadow border border-gray-200 flex items-center gap-2"
-            aria-label="Open menu"
-          >
-            <Menu className="w-5 h-5 text-gray-700" />
-            <span className="text-sm font-medium text-gray-700">Menu</span>
-          </button>
+          {/* Mobile Menu Button */}
+          {!isMessagesPage && (
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden mb-4 p-2 bg-white shadow rounded-md"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
 
           {children}
         </main>

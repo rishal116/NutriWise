@@ -18,9 +18,9 @@ export default function OtpForm() {
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  
+
   useEffect(() => {
-    if (isVerifying) return
+    if (isVerifying) return;
     const storedEmail = localStorage.getItem("signupEmail");
     if (!email && storedEmail) {
       dispatch(restoreSignupEmail(storedEmail));
@@ -29,8 +29,7 @@ export default function OtpForm() {
       toast.error("Session expired. Please sign up again.");
       router.replace("/signup");
     }
-  }, [email,  isVerifying,dispatch, router]);
-  
+  }, [email, isVerifying, dispatch, router]);
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
@@ -41,7 +40,7 @@ export default function OtpForm() {
       setCanResend(true);
       return;
     }
-    const interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+    const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
     return () => clearInterval(interval);
   }, [timer]);
 
@@ -56,7 +55,7 @@ export default function OtpForm() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
     if (e.key === "Backspace") {
       e.preventDefault();
       const newOtp = [...otp];
@@ -93,7 +92,7 @@ export default function OtpForm() {
     try {
       setIsVerifying(true);
       const otpString = otp.join("");
-      const res = await userAuthService.verifyOtp(email, otpString)
+      const res = await userAuthService.verifyOtp(email, otpString);
       if (res.success) {
         dispatch(clearSignupEmail());
         localStorage.removeItem("signupEmail");
@@ -115,7 +114,7 @@ export default function OtpForm() {
       setIsVerifying(false);
     }
   };
-  
+
   const handleResend = async () => {
     if (!email) {
       toast.error("Session expired. Please sign up again.");
@@ -140,63 +139,45 @@ export default function OtpForm() {
     return `${m}:${s}`;
   };
 
-  const isOtpComplete = otp.every(d => d !== "");
+  const isOtpComplete = otp.every((d) => d !== "");
 
   return (
     <>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            borderRadius: "12px",
-            background: "#333",
-            color: "#fff",
-          },
-        }}
-      />
+      <Toaster />
+      <div className="min-h-screen bg-gradient-to-br from-teal-50 via-emerald-50 to-cyan-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 border border-teal-100">
 
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 px-4 py-12 sm:py-16 lg:py-20">
-        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 lg:p-10 border border-gray-100">
           {/* Header */}
-          <div className="text-center mb-8 lg:mb-10">
-            <div className="inline-flex items-center justify-center mb-4">
-              <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white text-4xl">🍃</span>
-              </div>
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-200">
+              <span className="text-2xl">🍃</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">Verify Your Email</h1>
-            <p className="text-gray-500 text-sm sm:text-base mb-4">
-              We've sent a 6-digit code to
-            </p>
-            <div className="inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-xl">
-              <Mail className="w-4 h-4 text-green-600" />
-              <span className="font-semibold text-green-700 text-sm sm:text-base">{email}</span>
-            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">Verify Your Email</h1>
+            <p className="text-gray-500 text-sm">We've sent a 6-digit code to</p>
+            <p className="text-teal-600 font-semibold text-sm mt-1">{email}</p>
           </div>
 
           {/* OTP Inputs */}
-          <div className="mb-8">
-            <label className="block text-sm font-semibold text-gray-700 mb-4 text-center">
+          <div className="mb-6">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest text-center mb-4">
               Enter Verification Code
-            </label>
+            </p>
             <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
               {otp.map((digit, i) => (
                 <input
                   key={i}
                   type="text"
                   inputMode="numeric"
-                  pattern="\d*"
                   maxLength={1}
                   value={digit}
                   onChange={(e) => handleChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, i)}
-                  ref={(el) => { inputRefs.current[i] = el }}
+                  ref={(el) => { inputRefs.current[i] = el; }}
                   className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold border-2 rounded-xl transition-all ${
-                    digit 
-                      ? "border-green-500 bg-green-50 text-green-700" 
+                    digit
+                      ? "border-teal-500 bg-teal-50 text-teal-700"
                       : "border-gray-200 bg-gray-50 text-gray-900"
-                  } focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500`}
+                  } focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500`}
                 />
               ))}
             </div>
@@ -204,70 +185,70 @@ export default function OtpForm() {
 
           {/* Timer Progress */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span className="font-medium">
-                  {timer > 0 ? `Code expires in ${formatTime(timer)}` : "Code expired"}
-                </span>
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-teal-400" />
+                <span>{timer > 0 ? `Code expires in ${formatTime(timer)}` : "Code expired"}</span>
               </div>
-              <span className={`text-sm font-semibold ${timer > 20 ? "text-green-600" : "text-red-500"}`}>
+              <span className={`font-semibold tabular-nums ${timer > 20 ? "text-teal-600" : "text-red-500"}`}>
                 {timer}s
               </span>
             </div>
-            <div className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className={`absolute top-0 left-0 h-full transition-all duration-1000 rounded-full ${
-                  timer > 20 ? "bg-green-500" : "bg-red-500"
+                className={`h-full rounded-full transition-all duration-1000 ease-linear ${
+                  timer > 20 ? "bg-gradient-to-r from-teal-400 to-emerald-500" : "bg-red-400"
                 }`}
                 style={{ width: `${(timer / 60) * 100}%` }}
-              ></div>
+              />
             </div>
           </div>
 
           {/* Verify Button */}
           <button
             onClick={handleVerify}
-            disabled={!isOtpComplete || timer <= 0 || isVerifying}
-            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 rounded-xl font-semibold transition-all flex justify-center items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+            disabled={!isOtpComplete || isVerifying}
+            className={`w-full py-3.5 rounded-xl font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-md ${
+              isOtpComplete && !isVerifying
+                ? "bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 shadow-teal-200 hover:shadow-teal-300 hover:-translate-y-0.5 active:translate-y-0"
+                : "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+            }`}
           >
             {isVerifying ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>Verify Code</span>
                 <CheckCircle2 className="w-5 h-5" />
+                Verify Code
               </>
             )}
           </button>
 
           {/* Resend Section */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600 mb-3">Didn't receive the code?</p>
+          <div className="mt-5 text-center">
+            <p className="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
             <button
-              disabled={!canResend}
               onClick={handleResend}
+              disabled={!canResend}
               className={`inline-flex items-center gap-2 text-sm font-semibold transition-all ${
-                canResend 
-                  ? "text-green-600 hover:text-green-700 hover:underline" 
-                  : "text-gray-400 cursor-not-allowed"
+                canResend
+                  ? "text-teal-600 hover:text-emerald-600 cursor-pointer"
+                  : "text-gray-300 cursor-not-allowed"
               }`}
             >
-              <RotateCw className={`w-4 h-4 ${canResend ? "" : "opacity-50"}`} />
+              <RotateCw className={`w-4 h-4 ${canResend ? "text-teal-500" : "text-gray-300"}`} />
               Resend Code
             </button>
           </div>
 
           {/* Security Notice */}
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <div className="flex items-start gap-3 text-xs text-gray-500">
-              <Shield className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
-              <p>
-                For your security, this code will expire in 1 minute. 
-                Never share this code with anyone.
-              </p>
-            </div>
+          <div className="mt-6 flex items-start gap-2.5 bg-teal-50 border border-teal-100 rounded-xl p-3.5">
+            <Shield className="w-4 h-4 text-teal-500 mt-0.5 shrink-0" />
+            <p className="text-xs text-teal-700 leading-relaxed">
+              For your security, this code will expire in 1 minute. Never share this code with anyone.
+            </p>
           </div>
+
         </div>
       </div>
     </>

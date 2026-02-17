@@ -70,10 +70,8 @@ import { NotificationService } from "../services/implements/admin/adminNotificat
 import { INotificationRepository } from "../repositories/interfaces/common/INotificationRepository";
 import { NotificationRepository } from "../repositories/implements/common/notification.repository";
 
-import { IAdminPlanController } from "../controllers/interfaces/admin/IAdminPlanController";
-import { AdminPlanController } from "../controllers/implementations/admin/adminPlan.controller";
-import { IAdminPlanService } from "../services/interfaces/admin/IAdminPlanService";
-import { AdminPlanService } from "../services/implements/admin/adminPlan.service";
+
+
 
 // ---------------- NUTRITIONIST ----------------
 import { INutritionistAuthController } from "../controllers/interfaces/nutritionist/INutritionistAuthController";
@@ -142,6 +140,11 @@ import { IUserMeetingsService } from "../services/interfaces/user/IUserMeetingsS
 import { UserMeetingsService } from "../services/implements/user/userMeetings.service";
 
 
+// socket
+import { ISocketService } from "../services/interfaces/socket/ISocketService";
+import { SocketService } from "../services/implements/socket/socket.service";
+
+
 
 // ---------------- CONTAINER ----------------
 const container = new Container();
@@ -178,8 +181,7 @@ container.bind<IAdminNutritionistRepository>(TYPES.IAdminNutritionistRepository)
 container.bind<IAdminNotificationController>(TYPES.IAdminNotificationController).to(AdminNotificationController);
 container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService);
 container.bind<INotificationRepository>(TYPES.INotificationRepository).to(NotificationRepository);
-container.bind<IAdminPlanService>(TYPES.IAdminPlanService).to(AdminPlanService);
-container.bind<IAdminPlanController>(TYPES.IAdminPlanController).to(AdminPlanController);
+
 
 // -------- NUTRITIONIST BINDINGS --------
 container.bind<INutritionistAuthController>(TYPES.INutritionistAuthController).to(NutritionistAuthController);
@@ -229,7 +231,7 @@ container.bind<IMessageRepository>(TYPES.IMessageRepository).to(MessageRepositor
 container.bind<IUserMeetingsController>(TYPES.IUserMeetingsController).to(UserMeetingsController)
 container.bind<IUserMeetingsService>(TYPES.IUserMeetingsService).to(UserMeetingsService)
 
-
-
+// socket
+container.bind<ISocketService>(TYPES.ISocketService).to(SocketService)
 
 export { container };

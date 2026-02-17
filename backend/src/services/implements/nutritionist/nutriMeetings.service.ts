@@ -17,7 +17,6 @@ export class NutriMeetingsService implements INutriMeetingsService {
 
   async getMeetings(userId: string): Promise<MeetingResponseDTO[]> {
     const meetings = await this._nutriMeetingsRepository.findByNutritionistId(userId);
-    console.log("meetings",meetings);
     
     return MeetingMapper.toResponseDTOList(meetings);
   }

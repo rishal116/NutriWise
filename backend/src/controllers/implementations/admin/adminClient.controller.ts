@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { IAdminClientController } from "../../interfaces/admin/IAdminClientController";
 import { IAdminClientService } from "../../../services/interfaces/admin/IAdminClientService";
 import { asyncHandler } from "../../../utils/asyncHandler";
@@ -6,44 +6,47 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import logger from "../../../utils/logger";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { ADMIN_CLIENT_MESSAGES } from "../../../constants";
 
 @injectable()
 export class AdminClientController implements IAdminClientController {
   constructor(
     @inject(TYPES.IAdminClientService)
-    private _adminClientService: IAdminClientService,
+    private _adminClientService: IAdminClientService
   ) {}
-
+  
   getAllUsers = asyncHandler(async (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = req.query.search as string | undefined;
-    logger.info(`Admin fetching users | page=${page}, limit=${limit}, search=${search ?? "none"}`);
-    const response = await this._adminClientService.getAllUsers(page, limit, search);
-    logger.info(`Admin successfully fetched users list | total=${response.total}`);
-    res.status(StatusCode.OK).json(response);
+    const pageNumber = Number(req.query.page) || 1;
+    const pageLimit = Number(req.query.limit) || 10;
+    const searchKeyword = req.query.search as string | undefined;
+    const usersResult = await this._adminClientService.getAllUsers(
+      pageNumber,
+      pageLimit,
+      searchKeyword
+    );
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: ADMIN_CLIENT_MESSAGES.USERS_FETCH_SUCCESS,
+      data: usersResult,
+    });
   });
   
   blockUser = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
-    logger.warn(`Admin attempting to block account | accountId=${userId}`);
     await this._adminClientService.blockUser(userId);
-    logger.warn(`Account blocked successfully | accountId=${userId}`);
-    res.status(StatusCode.OK).json({
+    return res.status(StatusCode.OK).json({
       success: true,
-      message: "Account blocked successfully"
+      message: ADMIN_CLIENT_MESSAGES.ACCOUNT_BLOCK_SUCCESS,
     });
   });
   
   unblockUser = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
-    logger.info(`Admin attempting to unblock account | accountId=${userId}`);
     await this._adminClientService.unblockUser(userId);
-    logger.info(`Account unblocked successfully | accountId=${userId}`);
-    res.status(StatusCode.OK).json({
+    return res.status(StatusCode.OK).json({
       success: true,
-      message: "Account unblocked successfully",
+      message: ADMIN_CLIENT_MESSAGES.ACCOUNT_UNBLOCK_SUCCESS,
     });
   });
-
+  
 }

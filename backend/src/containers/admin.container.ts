@@ -29,11 +29,6 @@ import { NotificationService } from "../services/implements/admin/adminNotificat
 import { INotificationRepository } from "../repositories/interfaces/common/INotificationRepository";
 import { NotificationRepository } from "../repositories/implements/common/notification.repository";
 
-import { IAdminPlanController } from "../controllers/interfaces/admin/IAdminPlanController";
-import { AdminPlanController } from "../controllers/implementations/admin/adminPlan.controller";
-import { IAdminPlanService } from "../services/interfaces/admin/IAdminPlanService";
-import { AdminPlanService } from "../services/implements/admin/adminPlan.service";
-
 // -------- ADMIN BINDINGS --------
 container.bind<IAdminAuthController>(TYPES.IAdminAuthController).to(AdminAuthController);
 container.bind<IAdminAuthService>(TYPES.IAdminAuthService).to(AdminAuthService);
@@ -51,5 +46,3 @@ container.bind<IAdminNotificationController>(TYPES.IAdminNotificationController)
 container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService);
 container.bind<INotificationRepository>(TYPES.INotificationRepository).to(NotificationRepository);
 
-container.bind<IAdminPlanService>(TYPES.IAdminPlanService).to(AdminPlanService);
-container.bind<IAdminPlanController>(TYPES.IAdminPlanController).to(AdminPlanController);

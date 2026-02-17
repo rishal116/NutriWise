@@ -105,7 +105,7 @@ export default function UserPlansPage() {
               </div>
               
               <button
-                onClick={() => router.push(`/account/plans/${p.id}`)}
+                onClick={() => router.push(`/client/plans/${p.id}`)}
                 className="text-emerald-600 hover:text-emerald-700 font-medium text-sm flex items-center gap-1 hover:gap-2 transition-all whitespace-nowrap"
               >
                 View Details

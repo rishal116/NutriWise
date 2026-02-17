@@ -39,7 +39,7 @@ export default function PlanDetailsPage() {
       console.log(conversation);
       
 
-      router.push(`/account/messages`);
+      router.push(`/client/messages`);
     } catch (err) {
       console.error("Chat error:", err);
     }

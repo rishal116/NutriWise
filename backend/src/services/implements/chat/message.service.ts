@@ -6,90 +6,66 @@ import { IConversationRepository } from "../../../repositories/interfaces/chat/I
 import { IMessageRepository } from "../../../repositories/interfaces/chat/IMessageRepository";
 import { SendMessageDTO } from "../../../dtos/chat/sendMessage.dto";
 import { MessageResponseDTO } from "../../../dtos/chat/messageResponse.dto";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
-import { getIO } from "../../../infrastructures/socket/socket.server";
+import { ISocketService } from "../../interfaces/socket/ISocketService";
+import logger from "../../../utils/logger";
+import { CustomError } from "../../../utils/customError";
+import { StatusCode } from "../../../enums/statusCode.enum";
+import { MessageMapper } from "../../../mapper/message.mapper";
+
 
 @injectable()
 export class MessageService implements IMessageService {
   constructor(
     @inject(TYPES.IConversationRepository)
-    private _conversationRepo: IConversationRepository,
-    
+    private _conversationRepository: IConversationRepository,
+
     @inject(TYPES.IMessageRepository)
-    private _messageRepo: IMessageRepository,
+    private _messageRepository: IMessageRepository,
 
-    @inject(TYPES.IUserRepository)
-    private _userRepo: IUserRepository
+    @inject(TYPES.ISocketService)
+    private _socketService: ISocketService
   ) {}
+
+  async sendMessage(dto: SendMessageDTO): Promise<MessageResponseDTO> {
+    logger.info(`sending message ${dto.senderId}`);
+    const conversation = await this._conversationRepository.findById(dto.conversationId);
+    if (!conversation) {
+      logger.warn("Conversation not found");
+      throw new CustomError("Conversation not found",StatusCode.NOT_FOUND);
+    }
+    const isParticipant = conversation.participants.some(
+      (participantId: Types.ObjectId) =>
+        participantId.toString() === dto.senderId
+    );
+    if (!isParticipant) {
+      logger.warn("Unauthorized message attempt", {conversationId: dto.conversationId,senderId: dto.senderId});
+      throw new CustomError("Unauthorized message attempt",StatusCode.NOT_FOUND);
+    }
+    const createdMessage = await this._messageRepository.create({
+      conversationId: new Types.ObjectId(dto.conversationId),
+      senderId: new Types.ObjectId(dto.senderId),
+      text: dto.text,
+      fileUrl: dto.fileUrl,
+      messageType: dto.messageType,
+      readBy: new Map([[dto.senderId, new Date()]]),
+    });
+    await this._conversationRepository.updateById(dto.conversationId, {
+      lastMessageId: createdMessage._id,
+      lastMessageAt: new Date(),
+    });
+    const responseDTO = MessageMapper.toResponseDTO(createdMessage);
+    this._socketService.emitToRoom(dto.conversationId,"receiveMessage",responseDTO);
+    logger.info(`Message sent successfully ${responseDTO.id}`);
+    return responseDTO;
+  }
   
-
-private mapMessage(message: any): MessageResponseDTO {
-  return {
-    id: message._id.toString(),
-    conversationId: message.conversationId.toString(),
-    senderId: message.senderId.toString(),
-    content: message.text,
-    mediaUrl: message.fileUrl,
-    type: message.messageType,
-    createdAt: message.createdAt,
-  };
-}
-
-
-async sendMessage(dto: SendMessageDTO): Promise<MessageResponseDTO> {
-  const conversation = await this._conversationRepo.findById(dto.conversationId);
-
-  if (!conversation) {
-    throw new Error("Conversation not found");
+  async getMessages(conversationId: string): Promise<MessageResponseDTO[]> {
+    logger.info(`Fetching messages ${conversationId}`);
+    
+    const messages = await this._messageRepository.findMessagesByConversation(
+      conversationId
+    );
+    return messages.map(MessageMapper.toResponseDTO);
   }
 
-  const isParticipant = conversation.participants.some(
-    (p) => p.toString() === dto.senderId
-  );
-
-  if (!isParticipant) {
-    throw new Error("Not authorized");
-  }
-
-  const message = await this._messageRepo.create({
-    conversationId: new Types.ObjectId(dto.conversationId),
-    senderId: new Types.ObjectId(dto.senderId),
-    text: dto.text,
-    fileUrl: dto.fileUrl,
-    messageType: dto.messageType,
-    readBy: [new Types.ObjectId(dto.senderId)],
-  });
-
-
-  const mappedMessage = this.mapMessage(message);
-
-
-  const io = getIO();
-  io.to(dto.conversationId).emit("receiveMessage", mappedMessage);
-
-
-  await this._conversationRepo.updateById(dto.conversationId, {
-    lastMessageId: message._id,
-    lastMessageAt: new Date(),
-  });
-
-  return mappedMessage;
-}
-
-
-
-
-
-  async getMessages(
-    conversationId: string,
-  ): Promise<MessageResponseDTO[]> {
-
-    const messages =
-      await this._messageRepo.findMessagesByConversation(
-        conversationId,
-      );
-      
-
-    return messages.map(m => this.mapMessage(m));
-  }
 }

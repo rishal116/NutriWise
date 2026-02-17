@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Phone, Video, MoreVertical, ChevronLeft, ShieldCheck } from "lucide-react";
 import MessageInput from "./MessageInput";
 import MessageBubble from "./MessageBubble";
 import { userChatService } from "@/services/user/userChat.service";
-import { connectSocket } from "@/lib/socket";
+import { getSocket } from "@/lib/socket";
+import { getUserId } from "@/utils/jwt";
 
 interface Message {
   id: string;
@@ -14,182 +16,193 @@ interface Message {
   status?: "sent" | "delivered" | "read";
 }
 
-
-
-export default function ChatWindow({
-  conversationId,
-  onBack,
-}: {
+interface ChatWindowProps {
   conversationId: string | null;
   onBack?: () => void;
-}) {
+}
+
+export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const currentUserId = getUserId();
+  const [editingMessage, setEditingMessage] = useState<null | {id: string, text: string}>(null);
+  const socket = getSocket();
 
-  /* ============================= */
-  /* Fetch Messages */
-  /* ============================= */
+  // 1. Socket Logic: Messages, Typing, and Deletion
+  useEffect(() => {
+    if (!conversationId || !socket) return;
 
+    socket.emit("joinConversation", conversationId);
 
-
-useEffect(() => {
-  if (!conversationId) return;
-
-  const socket = connectSocket();
-
-  // Join conversation room
-  socket.emit("joinConversation", conversationId);
-
-  // Listen for new messages
-  socket.on("receiveMessage", (message: any) => {
-    const formatted: Message = {
-      id: message.id,
-      senderId: message.senderId,
-      text: message.content,
-      createdAt: message.createdAt,
+    const handleReceive = (message: any) => {
+      if (message.conversationId === conversationId) {
+        setMessages((prev) => [...prev, message]);
+        setIsTyping(false); // Reset typing when message arrives
+      }
     };
 
-    setMessages((prev) => [...prev, formatted]);
-  });
+    const handleTyping = (data: { conversationId: string; isTyping: boolean }) => {
+      if (data.conversationId === conversationId) {
+        setIsTyping(data.isTyping);
+      }
+    };
 
-  return () => {
-    socket.emit("leaveConversation", conversationId);
-    socket.off("receiveMessage");
-  };
-}, [conversationId]);
+    const handleDelete = (data: { messageId: string }) => {
+      setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
+    };
 
+    socket.on("receiveMessage", handleReceive);
+    socket.on("userTyping", handleTyping);
+    socket.on("messageDeleted", handleDelete);
 
+    return () => {
+      socket.emit("leaveConversation", conversationId);
+      socket.off("receiveMessage", handleReceive);
+      socket.off("userTyping", handleTyping);
+      socket.off("messageDeleted", handleDelete);
+    };
+  }, [conversationId, socket]);
 
+  // 2. Fetch History
   useEffect(() => {
     if (!conversationId) return;
-
-    async function fetchMessages() {
+    (async () => {
       try {
         setLoading(true);
-
-        // 👇 This is already the array
-        const data = await userChatService.getMessages(conversationId as string);
-
-        // Normalize backend → frontend shape
-        const formatted: Message[] = data.map((msg: any) => ({
+        const data = await userChatService.getMessages(conversationId);
+        setMessages(data.map((msg: any) => ({
           id: msg.id,
           senderId: msg.senderId,
           text: msg.content,
           createdAt: msg.createdAt,
-        }));
-
-        setMessages(formatted);
-      } catch (err) {
-        console.error("Failed to fetch messages:", err);
+          status: msg.status || "read",
+        })));
       } finally {
         setLoading(false);
       }
-    }
-
-    fetchMessages();
+    })();
   }, [conversationId]);
 
-  /* ============================= */
-  /* Auto Scroll */
-  /* ============================= */
+  // 3. Message Deletion Handler
+  const onDeleteMessage = async (messageId: string) => {
+    try {
+      await userChatService.deleteMessage(messageId); // API Call
+      setMessages((prev) => prev.filter((m) => m.id !== messageId)); // Local Update
+      socket?.emit("deleteMessage", { conversationId, messageId }); // Sync with other user
+    } catch (err) {
+      console.error("Failed to delete", err);
+    }
+  };
 
+  
+
+// Pass this to MessageBubble
+const handleEditInitiated = (id: string, text: string) => {
+  setEditingMessage({ id, text });
+  // This could open a modal or change the MessageInput to "Edit Mode"
+};
+
+  // 4. Auto scroll
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    bottomRef.current?.scrollIntoView({
+      behavior: messages.length > 1 ? "smooth" : "auto",
+    });
+  }, [messages, isTyping]);
 
-  /* ============================= */
-  /* Empty State */
-  /* ============================= */
-
-  if (!conversationId) {
-    return (
-      <div className="h-full flex items-center justify-center bg-[#f0f2f5]">
-        <div className="text-center max-w-sm px-6">
-          <div className="bg-gray-200 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            💬
-          </div>
-          <h2 className="text-2xl font-light text-gray-600">
-            Select a conversation
-          </h2>
-          <p className="text-gray-500 text-sm mt-2">
-            Choose a chat to start messaging
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  /* ============================= */
-  /* Chat UI */
-  /* ============================= */
-
-  const currentUserId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("userId")
-      : null;
+  if (!conversationId) return null;
 
   return (
-    <div className="h-full flex flex-col bg-[#f0f2f5] overflow-hidden">
+    <div className="flex flex-col h-full bg-white relative">
       {/* Header */}
-      <div className="h-14 shrink-0 px-4 border-b flex items-center justify-between bg-[#f0f2f5]">
-        <div className="flex items-center gap-3">
-          {onBack && (
-            <button onClick={onBack} className="md:hidden text-lg">
-              ←
-            </button>
-          )}
-          <div className="w-10 h-10 rounded-full bg-gray-300" />
-          <div>
-            <h3 className="text-sm font-semibold">Conversation</h3>
-            <p className="text-xs text-gray-500">active</p>
+      <header className="h-20 border-b border-gray-100 flex items-center justify-between px-6 bg-white/90 backdrop-blur-xl sticky top-0 z-30">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="md:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full">
+            <ChevronLeft className="w-6 h-6 text-gray-600" />
+          </button>
+          
+          <div className="relative">
+            <div className="w-11 h-11 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold shadow-inner">
+              N
+            </div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
           </div>
+
+          <div>
+            <div className="flex items-center gap-1">
+              <h2 className="font-bold text-gray-900 tracking-tight">Dr. Nutritionist</h2>
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            </div>
+            <p className="text-xs font-medium text-emerald-500">Active now</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all">
+            <Phone className="w-5 h-5" />
+          </button>
+          <button className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all">
+            <Video className="w-5 h-5" />
+          </button>
+        </div>
+      </header>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-8 bg-gray-50/50">
+        <div className="max-w-3xl mx-auto space-y-6">
+          
+          {/* Encryption Notice */}
+          <div className="flex justify-center mb-8">
+            <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] text-gray-400 font-medium uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck className="w-3 h-3" /> End-to-end encrypted
+            </span>
+          </div>
+
+          {loading ? (
+            <div className="flex flex-col gap-4 animate-pulse">
+              <div className="h-12 w-1/2 bg-gray-200 rounded-2xl" />
+              <div className="h-12 w-1/3 bg-gray-200 rounded-2xl self-end" />
+            </div>
+          ) : (
+            <>
+              {messages.map((msg) => (
+                <MessageBubble
+                  key={msg.id}
+                  id={msg.id}
+                  text={msg.text}
+                  isSender={msg.senderId === currentUserId}
+                  timestamp={msg.createdAt}
+                  status={msg.status}
+                  onDelete={onDeleteMessage}
+                />
+              ))}
+              
+              {/* Real-time Typing Indicator */}
+              {isTyping && (
+                <div className="flex items-center gap-2 px-4 py-2 animate-in fade-in duration-300">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.2s]" />
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  </div>
+                  <span className="text-xs text-gray-400 font-medium italic">Nutritionist is typing...</span>
+                </div>
+              )}
+            </>
+          )}
+          <div ref={bottomRef} />
         </div>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-12 py-4 space-y-2">
-        {loading ? (
-          <p className="text-center text-gray-400 mt-4">
-            Loading messages...
-          </p>
-        ) : messages.length === 0 ? (
-          <p className="text-center text-gray-400 mt-4">
-            No messages yet
-          </p>
-        ) : (
-          messages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              text={msg.text}
-              isSender={msg.senderId === currentUserId}
-              timestamp={new Date(msg.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}
-              status={msg.status}
-            />
-          ))
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      {/* Input */}
-      <div className="shrink-0 bg-white border-t">
-        <MessageInput
-          conversationId={conversationId}
-          onMessageSent={(newMessage: any) => {
-            const formatted: Message = {
-              id: newMessage.id,
-              senderId: newMessage.senderId,
-              text: newMessage.content,
-              createdAt: newMessage.createdAt,
-            };
-
-            setMessages((prev) => [...prev, formatted]);
-          }}
-        />
+      {/* Input Area */}
+      <div className="p-4 bg-white border-t border-gray-100">
+        <div className="max-w-4xl mx-auto">
+          <MessageInput
+            conversationId={conversationId}
+            onMessageSent={(newMessage) => setMessages((prev) => [...prev, newMessage])}
+          />
+        </div>
       </div>
     </div>
   );

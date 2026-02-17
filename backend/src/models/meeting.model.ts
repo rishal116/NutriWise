@@ -1,21 +1,34 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Types, Document } from "mongoose";
 
-export type MeetingStatus =
-  | "scheduled"
-  | "ongoing"
-  | "completed"
-  | "cancelled";
+export enum MeetingStatus {
+  SCHEDULED = "scheduled",
+  ONGOING = "ongoing",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
+}
+
+export enum MeetingType {
+  VIDEO = "video",
+  AUDIO = "audio",
+}
 
 export interface IMeeting extends Document {
-  _id:Types.ObjectId;
+  _id: Types.ObjectId;
   title: string;
   nutritionistId: Types.ObjectId;
   userId: Types.ObjectId;
   roomId: string;
   scheduledAt: Date;
+  durationInMinutes: number;
   status: MeetingStatus;
+  type: MeetingType;
   startedAt?: Date;
   endedAt?: Date;
+  nutritionistJoinedAt?: Date;
+  userJoinedAt?: Date;
+  isCancelledByUser: boolean;
+  isCancelledByNutritionist: boolean;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,37 +45,66 @@ const meetingSchema = new Schema<IMeeting>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     roomId: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
 
     scheduledAt: {
       type: Date,
       required: true,
+      index: true,
+    },
+
+    durationInMinutes: {
+      type: Number,
+      required: true,
+      min: 1,
     },
 
     status: {
       type: String,
-      enum: ["scheduled", "ongoing", "completed", "cancelled"],
-      default: "scheduled",
+      enum: Object.values(MeetingStatus),
+      default: MeetingStatus.SCHEDULED,
+      index: true,
     },
 
-    startedAt: {
-      type: Date,
+    type: {
+      type: String,
+      enum: Object.values(MeetingType),
+      default: MeetingType.VIDEO,
+    },
+    startedAt: Date,
+    endedAt: Date,
+    nutritionistJoinedAt: Date,
+    userJoinedAt: Date,
+
+    isCancelledByUser: {
+      type: Boolean,
+      default: false,
     },
 
-    endedAt: {
-      type: Date,
+    isCancelledByNutritionist: {
+      type: Boolean,
+      default: false,
+    },
+    
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
   },
   {

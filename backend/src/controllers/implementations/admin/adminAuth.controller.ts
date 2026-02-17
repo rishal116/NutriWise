@@ -6,6 +6,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import { setAdminAuthCookies, clearAdminAuthCookies } from "../../../utils/jwt";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { ADMIN_AUTH_MESSAGES } from "../../../constants";
 import logger from "../../../utils/logger";
 
 @injectable()
@@ -16,21 +17,26 @@ export class AdminAuthController implements IAdminAuthController {
   ) {}
   
   login = asyncHandler(async (req: Request, res: Response) => {
-    const result = await this._adminAuthService.login(req.body);
-    setAdminAuthCookies(res, result.refreshToken);
-    res.status(StatusCode.OK).json({
-    success: true,
-    message: "Login successful",
-    admin: result.admin,
-    accessToken: result.accessToken,})
-  });
-
-  logout = asyncHandler(async ( req: Request, res: Response) => {
-    clearAdminAuthCookies(res);
-    logger.info("Admin logged out successfully");
+    const loginPayload = req.body;
+    const loginResult = await this._adminAuthService.login(loginPayload);
+    setAdminAuthCookies(res, loginResult.refreshToken);
     return res.status(StatusCode.OK).json({
       success: true,
-      message: "Logged out successfully",
+      message: ADMIN_AUTH_MESSAGES.LOGIN_SUCCESS,
+      data: {
+        admin: loginResult.admin,
+        accessToken: loginResult.accessToken,
+      },
     });
   });
+  
+  logout = asyncHandler(async (_req: Request, res: Response) => {
+    clearAdminAuthCookies(res);
+    logger.info("Admin logout successful");
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: ADMIN_AUTH_MESSAGES.LOGOUT_SUCCESS,
+    });
+  });
+
 }

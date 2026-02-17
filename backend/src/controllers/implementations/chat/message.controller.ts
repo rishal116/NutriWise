@@ -15,6 +15,7 @@ export class MessageController implements IMessageController {
   
   sendMessage = asyncHandler(async (req: Request, res: Response ) => {
     const { conversationId, text, fileUrl, messageType } = req.body;
+    
     if (!conversationId) {
         return res.status(StatusCode.BAD_REQUEST).json({
             message: "conversationId is required"
@@ -34,9 +35,7 @@ export class MessageController implements IMessageController {
   getMessages = asyncHandler(async (req: Request, res: Response ) => {  
     const messages = await this._messageService.getMessages(
       req.params.conversationId,
-    );
-    console.log(messages);
-    
+    ); 
     res.json(messages);
   });
   

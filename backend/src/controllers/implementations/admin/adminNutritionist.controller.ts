@@ -1,11 +1,12 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { IAdminNutritionistController } from "../../interfaces/admin/IAdminNutritionistController";
 import { IAdminNutritionistService } from "../../../services/interfaces/admin/IAdminNutritionistService";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
-import logger from "../../../utils/logger";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { ADMIN_NUTRITIONIST_MESSAGES } from "../../../constants";
+import { CustomError } from "../../../utils/customError";
 
 @injectable()
 export class AdminNutritionistController implements IAdminNutritionistController {
@@ -13,52 +14,75 @@ export class AdminNutritionistController implements IAdminNutritionistController
     @inject(TYPES.IAdminNutritionistService)
     private _adminNutritionistService: IAdminNutritionistService
   ) {}
-
-  getAllNutritionist = asyncHandler(async (req: Request, res: Response) => {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = req.query.search as string | undefined;
-    const response = await this._adminNutritionistService.getAllNutritionists(
-      page,
-      limit,
-      search
+  
+  getAllNutritionists = asyncHandler(async (req: Request, res: Response) => {
+    const pageNumber = Number(req.query.page) || 1;
+    const pageLimit = Number(req.query.limit) || 10;
+    const searchKeyword = req.query.search as string | undefined;
+    const nutritionistResult = await this._adminNutritionistService.getAllNutritionists(
+      pageNumber,
+      pageLimit,
+      searchKeyword
     );
-    res.status(StatusCode.OK).json(response);
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: ADMIN_NUTRITIONIST_MESSAGES.FETCH_ALL_SUCCESS,
+      data: nutritionistResult,
+    });
   });
-
+  
   getNutritionistDetails = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     const nutritionist = await this._adminNutritionistService.getNutritionistById(userId);
     if (!nutritionist) {
-      return res.status(StatusCode.NOT_FOUND).json({ success: false, message: "Nutritionist not found" });
+      throw new CustomError(ADMIN_NUTRITIONIST_MESSAGES.NOT_FOUND,StatusCode.NOT_FOUND);
     }
-    res.status(StatusCode.OK).json({ success: true, nutritionist });
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: ADMIN_NUTRITIONIST_MESSAGES.DETAILS_FETCH_SUCCESS,
+      data: nutritionist,
+    });
   });
   
   approveNutritionist = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.params.userId;
+    const { userId } = req.params;
     await this._adminNutritionistService.approveNutritionist(userId);
-    res.status(StatusCode.OK).json({ success: true, message: "Nutritionist approved" });
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: ADMIN_NUTRITIONIST_MESSAGES.APPROVED,
+    });
   });
   
   rejectNutritionist = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.params.userId;
+    const { userId } = req.params;
     const { reason } = req.body;
     if (!reason) {
-      return res.status(StatusCode.BAD_REQUEST).json({ success: false, message: "Rejection reason is required" });
+      throw new CustomError(ADMIN_NUTRITIONIST_MESSAGES.REJECTION_REASON_REQUIRED,
+        StatusCode.BAD_REQUEST
+      );
     }
-    await this._adminNutritionistService.rejectNutritionist(userId, reason);
-    res.status(StatusCode.OK).json({ success: true, message: "Nutritionist rejected" });
+    await this._adminNutritionistService.rejectNutritionist(
+      userId,
+      reason
+    );
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: ADMIN_NUTRITIONIST_MESSAGES.REJECTED,
+    });
   });
   
   getNutritionistProfile = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     const profile = await this._adminNutritionistService.getNutritionistProfile(userId);
     if (!profile) {
-      return res.status(StatusCode.NOT_FOUND).json({success: false,message: "Nutritionist profile not found"});
+      throw new CustomError(
+        ADMIN_NUTRITIONIST_MESSAGES.PROFILE_NOT_FOUND,
+        StatusCode.NOT_FOUND
+      );
     }
-    res.status(StatusCode.OK).json({ success: true,
-      message: "Nutritionist profile fetched successfully",
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: ADMIN_NUTRITIONIST_MESSAGES.PROFILE_FETCH_SUCCESS,
       data: profile,
     });
   });
@@ -66,13 +90,14 @@ export class AdminNutritionistController implements IAdminNutritionistController
   updateNutritionistLevel = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     const { level } = req.body;
-    await this._adminNutritionistService.updateNutritionistLevel(userId, level);
-    res.status(StatusCode.OK).json({
+    await this._adminNutritionistService.updateNutritionistLevel(
+      userId,
+      level
+    );
+    return res.status(StatusCode.OK).json({
       success: true,
-      message: "Nutritionist level updated successfully",
+      message: ADMIN_NUTRITIONIST_MESSAGES.LEVEL_UPDATED,
     });
   });
-
-
   
 }

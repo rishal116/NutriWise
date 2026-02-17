@@ -15,12 +15,12 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-white border-t border-gray-200 mt-auto">
+    <footer className="bg-white border-t border-gray-200 mt-auto flex-shrink-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
-        
+
         {/* Main Content */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-6">
-          
+
           {/* Logo & Description */}
           <div className="flex flex-col items-center md:items-start gap-3 max-w-xs w-full md:w-auto">
             <div className="flex items-center gap-2">
@@ -38,26 +38,26 @@ export default function Footer() {
 
           {/* Links */}
           <div className="flex flex-wrap gap-4 sm:gap-6 text-sm sm:text-base text-gray-600 justify-center">
-            <Link 
-              href="/about" 
+            <Link
+              href="/about"
               className="hover:text-emerald-600 transition-colors font-medium hover:underline underline-offset-4"
             >
               About
             </Link>
-            <Link 
-              href="/contact" 
+            <Link
+              href="/contact"
               className="hover:text-emerald-600 transition-colors font-medium hover:underline underline-offset-4"
             >
               Contact
             </Link>
-            <Link 
-              href="/terms" 
+            <Link
+              href="/terms"
               className="hover:text-emerald-600 transition-colors font-medium hover:underline underline-offset-4"
             >
               Terms
             </Link>
-            <Link 
-              href="/privacy" 
+            <Link
+              href="/privacy"
               className="hover:text-emerald-600 transition-colors font-medium hover:underline underline-offset-4"
             >
               Privacy
@@ -77,9 +77,9 @@ export default function Footer() {
                   className="w-10 h-10 sm:w-11 sm:h-11 bg-gray-100 hover:bg-gradient-to-br hover:from-emerald-500 hover:to-teal-600 rounded-full flex items-center justify-center text-gray-600 hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-lg group"
                   aria-label={social.label}
                 >
-                  <Icon 
-                    size={18} 
-                    className="sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" 
+                  <Icon
+                    size={18}
+                    className="sm:w-5 sm:h-5 group-hover:scale-110 transition-transform"
                   />
                 </a>
               );

@@ -1,189 +1,109 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { userChatService } from "@/services/user/userChat.service";
 
-/* ============================= */
-/* 1️⃣ API Response Type */
-/* ============================= */
-
-interface ConversationAPI {
-  id: string;
-  chatType: "direct" | "group";
-  otherUserName?: string;
-  otherUserProfile?: string | null;
-}
-
-/* ============================= */
-/* 2️⃣ UI Model Type */
-/* ============================= */
-
-interface Conversation {
-  id: string;
-  name: string;
-  message: string;
-  time: string;
-  unread: number;
-  initials: string;
-  online: boolean;
-  category: string;
-}
-
-/* ============================= */
-/* 3️⃣ Mapper Function */
-/* ============================= */
-
-function mapToUIModel(data: ConversationAPI[]): Conversation[] {
-  return data.map((item) => {
-    const name = item.otherUserName ?? "Unknown";
-
-    return {
-      id: item.id,
-      name,
-      message: "Start conversation",
-      time: "",
-      unread: 0,
-      initials: name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase(),
-      online: false,
-      category: item.chatType,
-    };
-  });
-}
-
-/* ============================= */
-/* 4️⃣ Component */
-/* ============================= */
-
-export default function ConversationList({
-  selectedId,
-  onSelect,
-}: {
+interface Conversation { id: string; name: string }
+interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
-}) {
-  const [searchTerm, setSearchTerm] = useState("");
+  isMobile?: boolean;
+  onCloseMobile?: () => void;
+}
+
+export default function ConversationList({ selectedId, onSelect, isMobile, onCloseMobile }: Props) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    async function fetchConversations() {
+    (async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-
-        const apiData: ConversationAPI[] =
-          await userChatService.listUsers();
-
-        const formatted = mapToUIModel(apiData);
-
-        setConversations(formatted);
-      } catch (err) {
-        console.error("Failed to fetch conversations:", err);
-      } finally {
-        setLoading(false);
+        const data = await userChatService.listUsers();
+        setConversations(data.map((u: any) => ({ 
+          id: u.id, 
+          name: u.otherUserName || "Unknown" 
+        })));
+      } catch (err) { 
+        console.error(err); 
+      } finally { 
+        setLoading(false); 
       }
-    }
-
-    fetchConversations();
+    })();
   }, []);
 
-  /* ============================= */
-  /* 5️⃣ Search Filter */
-  /* ============================= */
-
-  const filteredConversations = conversations.filter((c) =>
-    c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = conversations.filter(c => 
+    c.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  /* ============================= */
-  /* 6️⃣ UI */
-  /* ============================= */
-
   return (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200">
-      {/* Header */}
-      <div className="p-5 border-b border-slate-100 bg-white/50 backdrop-blur-sm sticky top-0 z-20">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">
-              Messages
-            </h2>
-            <p className="text-xs text-slate-500 font-medium">
-              {conversations.length} Active Conversations
-            </p>
-          </div>
-          <button className="p-2 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-600 hover:text-white transition-all duration-200">
-            <Plus className="w-5 h-5" />
+    <div className="flex flex-col h-full bg-white">
+      {/* Header - Simple & White */}
+      <div className="px-6 pt-6 pb-4 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Messages</h1>
+        {isMobile && onCloseMobile && (
+          <button onClick={onCloseMobile} className="p-2 -mr-2 text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
           </button>
-        </div>
+        )}
+      </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Search - Subtle & Integrated */}
+      <div className="px-4 mb-4">
+        <div className="relative group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
           <input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            type="text"
             placeholder="Search conversations..."
-            className="w-full bg-slate-100 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all placeholder:text-gray-500"
           />
         </div>
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Conversations List */}
+      <div className="flex-1 overflow-y-auto px-2">
         {loading ? (
-          <p className="text-center mt-5 text-slate-400">
-            Loading...
-          </p>
-        ) : filteredConversations.length === 0 ? (
-          <p className="text-center mt-5 text-slate-400">
-            No conversations found
-          </p>
+          <div className="flex flex-col gap-3 p-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 w-full bg-gray-50 animate-pulse rounded-xl" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-sm text-gray-400">No conversations found</p>
+          </div>
         ) : (
-          filteredConversations.map((c) => {
-            const isActive = selectedId === c.id;
-
-            return (
+          <div className="space-y-1">
+            {filtered.map(conv => (
               <button
-                key={c.id}
-                onClick={() => onSelect(c.id)}
-                className={`w-full flex items-center gap-4 px-5 py-4 text-left transition-all duration-200
-                  ${isActive ? "bg-emerald-50" : "hover:bg-slate-50"}`}
+                key={conv.id}
+                onClick={() => onSelect(conv.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  selectedId === conv.id 
+                    ? "bg-emerald-50 text-emerald-700 shadow-sm" 
+                    : "text-gray-600 hover:bg-gray-50 active:scale-[0.98]"
+                }`}
               >
-                {/* Avatar */}
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white
-                    ${isActive ? "bg-emerald-600" : "bg-slate-400"}`}
-                >
-                  {c.initials}
+                {/* Minimal Avatar Placeholder */}
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-xs flex-shrink-0 ${
+                  selectedId === conv.id ? "bg-emerald-600 text-white" : "bg-gray-100 text-gray-400"
+                }`}>
+                  {conv.name.charAt(0)}
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between">
-                    <p className="font-semibold truncate">
-                      {c.name}
-                    </p>
-                    <span className="text-xs text-slate-400">
-                      {c.time}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-emerald-600 uppercase">
-                    {c.category}
+                <div className="flex-1 text-left">
+                  <p className={`text-sm font-semibold ${selectedId === conv.id ? "text-emerald-900" : "text-gray-900"}`}>
+                    {conv.name}
                   </p>
-
-                  <p className="text-sm text-slate-500 truncate">
-                    {c.message}
-                  </p>
+                  <p className="text-xs text-gray-500 line-clamp-1">Click to view chat</p>
                 </div>
               </button>
-            );
-          })
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -1,19 +1,16 @@
 import { api } from "@/lib/axios/api";
 
 export const userChatService = {
-  // Create or get direct chat
   createChat: async (otherUserId: string) => {
     const res = await api.post("/chat/conversation", { otherUserId });
     return res.data;
   },
 
-  // Get all user conversations
   listUsers: async () => {
     const res = await api.get("/chat/conversations");
     return res.data;
   },
 
-  // ✅ Get messages of a conversation
   getMessages: async (conversationId: string) => {
     const res = await api.get(`/chat/messages/${conversationId}`);
     console.log(res);
@@ -21,7 +18,6 @@ export const userChatService = {
     return res.data;
   },
 
-  // ✅ Send text message
   sendMessage: async (conversationId: string, text: string) => {
     const res = await api.post("/chat/message", {
       conversationId,
@@ -31,7 +27,6 @@ export const userChatService = {
     return res.data;
   },
 
-  // ✅ Send file (image / document)
   sendFile: async (conversationId: string, file: File) => {
     const formData = new FormData();
     formData.append("conversationId", conversationId);
@@ -47,8 +42,11 @@ export const userChatService = {
     return res.data;
   },
 
-  // ✅ Mark conversation as read
   markAsRead: async (conversationId: string) => {
     await api.patch(`/chat/read/${conversationId}`);
+  },
+
+  deleteMessage:async (message: string) => {
+    await api.patch(`/chat/read/${message}`);
   },
 };
