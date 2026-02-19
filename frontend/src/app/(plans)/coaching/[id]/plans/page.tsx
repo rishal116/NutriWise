@@ -14,7 +14,6 @@ interface Plan {
   category: string;
   durationInDays: number;
   price: number;
-  currency: string;
   features: string[];
 }
 
@@ -238,7 +237,7 @@ export default function NutritionistPlansPage() {
                     <div className="text-right">
                       <p className="text-sm text-gray-500">Total Price</p>
                       <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                        {plan.currency} {plan.price}
+                       {plan.price}
                       </div>
                     </div>
                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
@@ -275,10 +274,10 @@ export default function NutritionistPlansPage() {
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 mb-6 border border-emerald-200">
                   <p className="text-sm text-gray-600 mb-2">Total Investment</p>
                   <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                    {selectedPlan.currency} {selectedPlan.price}
+                    {selectedPlan.price}
                   </div>
                   <p className="text-sm text-emerald-700 mt-2">
-                    ~{selectedPlan.currency} {(selectedPlan.price / selectedPlan.durationInDays).toFixed(2)} per day
+                    ~ {(selectedPlan.price / selectedPlan.durationInDays).toFixed(2)} per day
                   </p>
                 </div>
 
@@ -381,7 +380,7 @@ export default function NutritionistPlansPage() {
             <div className="text-center sm:text-left">
               <p className="text-sm text-gray-500">Selected Plan</p>
               <p className="font-bold text-gray-900">
-                {selectedPlan.title} • <span className="text-emerald-600">{selectedPlan.currency} {selectedPlan.price}</span>
+                {selectedPlan.title} • <span className="text-emerald-600"> {selectedPlan.price}</span>
               </p>
             </div>
 

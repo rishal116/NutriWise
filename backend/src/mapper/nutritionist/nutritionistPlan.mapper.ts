@@ -19,7 +19,6 @@ export function toPlanDTO(plan: IPlan): PlanDTO {
     category: plan.category,
     durationInDays: plan.durationInDays,
     price: plan.price,
-    currency: plan.currency || "INR",
     description: plan.description,
     features: plan.features || [],
     status: plan.status,
@@ -32,12 +31,10 @@ import { NutritionistPricingDTO } from "../../dtos/nutritionist/nutritionsitPlan
 
 export const toNutritionistPricingDTO = (
   status: string,
-  currency: string,
   minPrice: number,
   maxPrice: number
 ): NutritionistPricingDTO => ({
   status,
-  currency,
   minPrice,
   maxPrice,
 });

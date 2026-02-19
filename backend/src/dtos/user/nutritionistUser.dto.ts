@@ -45,7 +45,6 @@ export interface NutritionistUserDto {
   email: string;
   specializations: string[];
   rating: number;
-  country?: string;
   bio?: string;
   totalExperienceYears?: number;
   profileImage?: string;
@@ -65,7 +64,6 @@ export class NutritionistUserDTO implements NutritionistUserDto {
   email: string;
   specializations: string[];
   rating: number;
-  country?: string;
   bio?: string;
   totalExperienceYears?: number;
   profileImage?: string;
@@ -92,7 +90,6 @@ export class NutritionistUserDTO implements NutritionistUserDto {
     this.experiences = profile?.experiences ?? [];
     this.availabilityStatus = profile?.availabilityStatus;
     this.certifications = profile?.certifications ?? [];
-    this.country = profile?.country ?? "";
     
     // NEW FIELDS
     this.totalPeopleCoached = profile?.totalPeopleCoached ?? 0;
@@ -108,7 +105,6 @@ export class NutritionistPlanDTO {
   durationInDays: number;
   category:string;
   price: number;
-  currency: string;
   features: string[];
   status: string;
   createdAt: Date;
@@ -122,7 +118,6 @@ export class NutritionistPlanDTO {
     this.price = plan.price;
     this.price = plan.price;
     this.category = plan.category;
-    this.currency = plan.currency;
     this.features = plan.features;
     this.status = plan.status;
     this.createdAt = plan.createdAt;

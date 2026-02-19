@@ -25,7 +25,7 @@ export const useNutritionistGuard = () => {
             router.replace("/nutritionist/details");
             break;
           case "rejected":
-            router.replace("/nutritionist/repply");
+            router.replace("/nutritionist/reapply");
             break;
           default:
             router.replace("/nutritionist/details");

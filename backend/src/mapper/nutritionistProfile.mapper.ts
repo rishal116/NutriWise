@@ -16,8 +16,6 @@ export const toNutritionistGeneralInfoDTO = (
     fullName: profile.userId?.fullName ?? "",
     phone: profile.userId?.phone ?? "",
     gender: profile.userId?.gender ?? "",
-
-    country: profile.country ?? "",
     languages: profile.languages ?? [],
     bio: profile.bio ?? "",
   };

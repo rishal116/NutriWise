@@ -19,6 +19,8 @@ const nutritionistPlanController = container.get<INutritionistPlanController>(TY
 const nutritionistSubscriptionController = container.get<INutritionistSubscriptionController>(TYPES.INutritionistSubscriptionController)
 const nutritionistMeetingsController = container.get<INutriMeetingsController>(TYPES.INutriMeetingsController)
 
+
+router.get("/details/me",authMiddleware,nutritionistAuthController.getMyDetails)
 router.post("/submit-details",authMiddleware,upload.fields([
   { name: "cv", maxCount: 1 },
   { name: "certifications", maxCount: 10 }

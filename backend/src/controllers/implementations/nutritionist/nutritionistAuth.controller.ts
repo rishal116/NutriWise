@@ -13,8 +13,17 @@ export class NutritionistAuthController implements INutritionistAuthController {
     @inject(TYPES.INutritionistAuthService)
     private _nutritionistAuthService: INutritionistAuthService
   ) {}
+
+  getMyDetails = asyncHandler(async(req:Request, res:Response)=>{
+    if (!req.user) {
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
+    }
+    const { userId } = req.user;
+    const response = await this._nutritionistAuthService.getMyDetails(userId);
+    res.status(StatusCode.OK).json({success: true,message: "Details fetch successfully",data: response,});
+  })
   
-  submitDetails = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  submitDetails = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) {
       return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
     }
@@ -23,7 +32,7 @@ export class NutritionistAuthController implements INutritionistAuthController {
     res.status(StatusCode.OK).json({success: true,message: "Details submitted successfully",data: response,});
   });
   
-  getRejectionReason = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  getRejectionReason = asyncHandler(async (req: Request, res: Response ) => {
     const { userId } = req.params;
     const dto = await this._nutritionistAuthService.getRejectionReason(userId);
     res.status(StatusCode.OK).json({
@@ -33,7 +42,7 @@ export class NutritionistAuthController implements INutritionistAuthController {
   });
   
   
-  getName = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  getName = asyncHandler(async (req: Request, res: Response) => {
     if (!req.user) {
       return res.status(StatusCode.UNAUTHORIZED).json({ message: "Unauthorized" });
     }

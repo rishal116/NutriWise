@@ -8,10 +8,18 @@ import { getSocket } from "@/lib/socket";
 
 interface MessageInputProps {
   conversationId: string;
+  editingMessage?: { id: string; text: string } | null;
+  onCancelEdit?: () => void;
   onMessageSent: (message: any) => void;
 }
 
-export default function MessageInput({ conversationId, onMessageSent }: MessageInputProps) {
+export default function MessageInput({
+  conversationId,
+  editingMessage,
+  onCancelEdit,
+  onMessageSent
+}: MessageInputProps)
+{
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
   const [showEmojis, setShowEmojis] = useState(false);
@@ -24,6 +32,11 @@ export default function MessageInput({ conversationId, onMessageSent }: MessageI
   const socket = getSocket();
 
   // Close emoji picker when clicking outside
+useEffect(() => {
+  if (editingMessage) {
+    setText(editingMessage.text);
+  }
+}, [editingMessage]);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
@@ -63,30 +76,66 @@ export default function MessageInput({ conversationId, onMessageSent }: MessageI
       setFilePreview("file");
     }
   };
+const handleSend = async () => {
+  if ((!text.trim() && !selectedFile) || sending) return;
 
-  const handleSend = async () => {
-    if ((!text.trim() && !selectedFile) || sending) return;
-    setSending(true);
-    try {
-      let newMessage;
-      if (selectedFile) {
-        newMessage = await userChatService.sendFile(conversationId, selectedFile);
-      } else {
-        newMessage = await userChatService.sendMessage(conversationId, text.trim());
-      }
-      onMessageSent(newMessage);
-      socket?.emit("sendMessage", { conversationId, ...newMessage });
-      socket?.emit("typing", { conversationId, isTyping: false });
+  setSending(true);
+
+  try {
+    // 🟢 EDIT MODE
+    if (editingMessage) {
+      const updated = await userChatService.editMessage(
+        editingMessage.id,
+        text.trim()
+      );
+
+      socket?.emit("editMessage", {
+        conversationId,
+        messageId: editingMessage.id,
+        newText: text.trim(),
+      });
+
+      onCancelEdit?.();
       setText("");
-      setSelectedFile(null);
-      setFilePreview(null);
-      setShowEmojis(false);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSending(false);
+      return;
     }
-  };
+
+    // 🟢 NORMAL SEND
+    let newMessage;
+
+    if (selectedFile) {
+      newMessage = await userChatService.sendFile(conversationId, selectedFile);
+    } else {
+      newMessage = await userChatService.sendMessage(
+        conversationId,
+        text.trim()
+      );
+    }
+
+    onMessageSent(newMessage);
+
+    socket?.emit("sendMessage", {
+      conversationId,
+      ...newMessage,
+    });
+
+    socket?.emit("typing", {
+      conversationId,
+      isTyping: false,
+    });
+
+    setText("");
+    setSelectedFile(null);
+    setFilePreview(null);
+    setShowEmojis(false);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setSending(false);
+  }
+};
+
 
   return (
     <div className="border-t border-gray-100 bg-white p-4 relative">

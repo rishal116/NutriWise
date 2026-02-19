@@ -21,7 +21,6 @@ export interface INutritionistProfile extends Document {
   totalExperienceYears?: number;
   nutritionistStatus: "BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
   totalPeopleCoached?:number;
-  country: string;
   rating?: number;
   createdAt: Date;
   updatedAt: Date;
@@ -65,11 +64,6 @@ const NutritionistDetailsSchema = new Schema<INutritionistProfile>({
     cv: { type: String },
     certifications: { type: [String] }, 
     totalExperienceYears: { type: Number, min: 0 },
-    country: {
-      type: String,
-      required: [true, "Country is required"],
-      trim: true,
-    },
     nutritionistStatus: {
       type: String,
       enum: ["BEGINNER", "VERIFIED", "EXPERT", "TOP_COACH"],

@@ -7,7 +7,6 @@ export interface IUserPlan {
   nutritionistId: Types.ObjectId;
   stripeSessionId: string;
   amount: number;
-  currency: string;
   status: "ACTIVE" | "CANCELLED" | "EXPIRED";
   startDate: Date;
   endDate: Date;
@@ -44,12 +43,6 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
     amount: {
       type: Number,
-      required: true,
-    },
-
-    currency: {
-      type: String,
-      enum: ["INR", "USD", "EUR"],
       required: true,
     },
 

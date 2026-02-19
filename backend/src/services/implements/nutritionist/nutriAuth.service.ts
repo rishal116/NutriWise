@@ -11,6 +11,8 @@ import { NutritionistDetailsUpdateDto, NutritionistRejectionDTO } from "../../..
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
 import { NutritionistNameDTO } from "../../../dtos/nutritionist/nutritionistAuth.dto";
 import { NutritionistMapper } from "../../../mapper/nutritionist/nutritionistAuth.mapper";
+import { CustomError } from "../../../utils/customError";
+import { NutritionistDetailsDTO } from "../../../dtos/nutritionist/nutritionistAuth.dto";
 
 interface NutritionistFiles {
   cv?: Express.Multer.File[];
@@ -25,9 +27,30 @@ export class NutritionistAuthService implements INutritionistAuthService {
     @inject(TYPES.INutritionistProfileRepository) private _nutritionistProfileRepository: INutritionistProfileRepository,
   ) {}
   
+  async getMyDetails(userId: string): Promise<NutritionistDetailsDTO> {
+    const nutritionist = await this._nutritionistProfileRepository.findByUserId(userId)
+    if (!nutritionist) {
+      throw new CustomError("Nutritionist profile not found");
+    }
+    const dto: NutritionistDetailsDTO = {
+      qualifications: nutritionist.qualifications,
+      specializations: nutritionist.specializations,
+      experiences: nutritionist.experiences,
+      languages: nutritionist.languages,
+      bio: nutritionist.bio,
+      cvUrl: nutritionist.cv,
+      certificationUrls: nutritionist.certifications,
+    };
+
+    return dto;
+  }
+
+  
+  
   async submitDetails(req: Request, userId: string): Promise<{ success: boolean; message: string }> {
-    const { bio,country } = req.body;
-    if (!country) throw new Error("Country is required");
+    console.log("sere");
+    
+    const { bio } = req.body;
     const qualification = req.body["qualification[]"] || req.body.qualification;
     const specialization = req.body["specialization[]"] || req.body.specialization;
     const normalizedQualification = Array.isArray(qualification) ? qualification : [qualification];
@@ -56,7 +79,6 @@ export class NutritionistAuthService implements INutritionistAuthService {
       languages: normalizedLanguages,
       experiences,
       totalExperienceYears,
-      country,
       cv: cvUrl,
       certifications: certUrls,
     };
@@ -75,7 +97,7 @@ export class NutritionistAuthService implements INutritionistAuthService {
       rejectionReason: "",
     });
     const nutritionist = await this._nutritionistAuthRepository.findById(userId);
-    if (!nutritionist) throw new Error("Nutritionist not found");
+    if (!nutritionist) throw new CustomError("Nutritionist not found");
     const notification: NotificationDto = {
       title: "New Nutritionist Profile Submitted",
       message: `Nutritionist ${nutritionist.fullName} has submitted their profile. Please review and approve.`,
@@ -101,8 +123,9 @@ export class NutritionistAuthService implements INutritionistAuthService {
   async getName(userId: string): Promise<NutritionistNameDTO> {
     const user = await this._nutritionistAuthRepository.findById(userId);
     if (!user) {
-      throw new Error("Nutritionist not found");
+      throw new CustomError("Nutritionist not found");
     }
+  
     const nutritionistProfile = await this._nutritionistProfileRepository.findByUserId(userId);
     return NutritionistMapper.toNameDTO(user,nutritionistProfile ?? undefined );
   }

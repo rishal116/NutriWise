@@ -7,7 +7,6 @@ export interface IPlan {
   category: string;
   durationInDays: number;
   price: number;
-  currency: string; 
   description: string;
   features: string[];
   status: "draft" | "published";
@@ -30,12 +29,6 @@ const PlanSchema = new Schema<IPlan>({
   },
   price: {
     type: Number,
-    required: true,
-  },
-  currency: {
-    type: String,
-    enum: ["INR", "USD", "EUR"],
-    default: "INR",
     required: true,
   },
   description: { type: String, required: true },

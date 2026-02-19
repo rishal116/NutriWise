@@ -75,7 +75,6 @@ export class StripeWebhookService implements IStripeWebhookService {
       planId: planObjectId,
       nutritionistId: nutritionistObjectId,
       amount: totalAmount,
-      currency: plan.currency,
       type: "PLAN_PURCHASE",
       stripeSessionId: session.id,
     });
@@ -84,7 +83,6 @@ export class StripeWebhookService implements IStripeWebhookService {
       userId: userObjectId,
       nutritionistId: nutritionistObjectId,
       amount: adminAmount,
-      currency: plan.currency,
       type: "ADMIN_COMMISSION",
       stripeSessionId: session.id,
     });
@@ -93,7 +91,6 @@ export class StripeWebhookService implements IStripeWebhookService {
       userId: userObjectId,
       nutritionistId: nutritionistObjectId,
       amount: nutritionistAmount,
-      currency: plan.currency,
       type: "NUTRITIONIST_EARNING",
       stripeSessionId: session.id,
     });
@@ -115,7 +112,6 @@ export class StripeWebhookService implements IStripeWebhookService {
       nutritionistId: nutritionistObjectId,
       stripeSessionId: session.id,
       amount: totalAmount,
-      currency: plan.currency,
       status: "ACTIVE",
       startDate,
       endDate,

@@ -4,7 +4,6 @@ export interface CreatePlanDTO {
   category: string;
   durationInDays: 30 | 90 | 180;
   price: number;
-  currency: string;
   description: string;
   status: "draft" | "published";
   features: string[];
@@ -15,7 +14,6 @@ export interface UpdatePlanDTO {
   category?: string;
   durationInDays?: 30 | 90 | 180;
   price?: number;
-  currency?: string;
   description?: string;
   status?: "draft" | "published";
   features?: string[];            
@@ -29,7 +27,6 @@ export interface PlanDTO {
   category: string;
   durationInDays: number;
   price: number;
-  currency: string;
   description: string;
   features: string[];
   status: "draft" | "published";
@@ -44,7 +41,6 @@ export interface GetSpecializationsDTO {
 
 export interface NutritionistPricingDTO {
   status: string;
-  currency: string;
   minPrice: number;
   maxPrice: number;
 }

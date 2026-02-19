@@ -49,48 +49,14 @@ export const NUTRITIONIST_SPECIALIZATIONS = [
   "Immunity & Wellness"
 ];
 
-export const COUNTRIES = [
-  "India",
-  "United States",
-  "United Kingdom",
-  "Canada",
-  "Australia",
-  "Germany",
-  "France",
-  "Italy",
-  "Spain",
-  "Netherlands",
-  "Switzerland",
-  "Sweden",
-  "Norway",
-  "Denmark",
-  "Finland",
-  "Ireland",
-  "Brazil",
-  "Mexico",
-  "Argentina",
-  "South Africa",
-  "Nigeria",
-  "Egypt",
-  "Saudi Arabia",
-  "United Arab Emirates",
-  "Qatar",
-  "Turkey",
-  "Russia",
-  "China",
-  "Japan",
-  "South Korea",
-  "Singapore",
-  "Malaysia",
-  "Indonesia",
-  "Philippines",
-  "Thailand",
-  "Vietnam",
-  "New Zealand",
-  "Bangladesh",
-  "Pakistan",
-  "Sri Lanka",
-  "Nepal",
-];
 
 export const GENDERS = ["Male", "Female", "Other"];
+
+
+export const ALLOWED_FILE_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "image/png",
+  "image/jpeg",
+];

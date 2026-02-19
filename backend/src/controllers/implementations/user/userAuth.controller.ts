@@ -55,7 +55,7 @@ export class UserAuthController implements IUserAuthController {
   resendOtp = asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;
 
-    const response = await this._userAuthService.resendOtp({ email });
+    await this._userAuthService.resendOtp({ email });
 
     return res.status(StatusCode.OK).json({
       success: true,

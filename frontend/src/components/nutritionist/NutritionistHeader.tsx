@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import { Bell, User, Settings, Home, Menu, X, Loader2 } from "lucide-react";
+import {  Settings, Home,LayoutDashboard, Bell, User,LogOut, CheckCircle2 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { nutritionistAuthService } from "@/services/nutritionist/nutritionistAuth.service";
 
@@ -13,6 +13,7 @@ interface Notification {
   unread: boolean;
 }
 
+
 export default function NutritionistHeader() {
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -20,7 +21,6 @@ export default function NutritionistHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const notifRef = useRef<HTMLDivElement>(null);
@@ -29,39 +29,30 @@ export default function NutritionistHeader() {
   const router = useRouter();
   const pathname = usePathname();
 
-  /* ---------------- Fetch Header Data ---------------- */
   useEffect(() => {
     const fetchHeaderData = async () => {
       try {
         const profileRes = await nutritionistAuthService.getName();
-
         setName(profileRes.data?.name || profileRes.name);
         setEmail(profileRes.data?.email || profileRes.email);
         setProfileImage(profileRes.data?.profileImage || "");
 
         const notifRes = await nutritionistAuthService.getNotifications();
-        setNotifications(notifRes.data || notifRes);
+        setNotifications(notifRes.data || notifRes || []);
       } catch (err) {
         console.error("Header data error:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchHeaderData();
   }, []);
 
-  /* ---------------- Click Outside Handler ---------------- */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setNotifOpen(false);
-      }
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -69,95 +60,70 @@ export default function NutritionistHeader() {
   const unreadCount = notifications.filter(n => n.unread).length;
 
   return (
-    <header className="h-16 sm:h-20 bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <header className="h-16 sm:h-20 bg-white/80 backdrop-blur-md border-b border-emerald-50 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-full">
           
-          {/* ---------------- LEFT SECTION ---------------- */}
-          <div className="flex items-center gap-3 sm:gap-6">
-            
-            {/* Logo */}
-            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
-              🍃
+          {/* --- LEFT: Logo & Brand --- */}
+          <div
+            className="flex items-center gap-2 cursor-pointer group"
+            onClick={() => router.push("/home")}
+          >
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
+              <span className="text-base sm:text-lg">🍃</span>
             </div>
-
-            {/* Divider - Hidden on mobile */}
-            <div className="hidden sm:block h-8 w-px bg-gray-200"></div>
-
-            {/* Page Title */}
-            <div className="hidden sm:block">
-              <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
-              {loading ? (
-                <div className="h-3 w-32 bg-gray-200 rounded animate-pulse mt-1"></div>
-              ) : (
-                <p className="text-xs text-gray-500">
-                  {name && `Welcome back, Dr. ${name}`}
-                </p>
-              )}
-            </div>
+            <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+              NutriWise
+            </span>
           </div>
 
-          {/* ---------------- RIGHT SECTION ---------------- */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* --- RIGHT: Tools & Profile --- */}
+          <div className="flex items-center gap-1 sm:gap-4">
 
-            {/* Home Button */}
+            {/* Home Icon */}
             <button
-              onClick={() => router.push("/home")}
-              title="Home"
-              className="p-2 sm:p-2.5 rounded-xl hover:bg-emerald-50 transition-colors group"
+              onClick={() => router.push("/nutritionist/dashboard")}
+              className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 ${
+                pathname === "/home" ? "bg-emerald-50 text-emerald-600 shadow-inner" : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+              }`}
             >
-              <Home
-                className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${
-                  pathname === "/home"
-                    ? "text-emerald-600"
-                    : "text-gray-600 group-hover:text-emerald-600"
-                }`}
-              />
+              <LayoutDashboard className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
 
-            {/* Notifications */}
+            {/* Notification Center */}
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
-                className="relative p-2 sm:p-2.5 rounded-xl hover:bg-emerald-50 transition-colors group"
+                className={`relative p-2 sm:p-2.5 rounded-xl transition-all duration-200 ${
+                  notifOpen ? "bg-emerald-50 text-emerald-600" : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+                }`}
               >
-                <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600 group-hover:text-emerald-600 transition-colors" />
+                <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+                  <span className="absolute top-2 right-2.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
                 )}
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white shadow-2xl border border-gray-200 rounded-2xl overflow-hidden">
-                  <div className="px-4 sm:px-5 py-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-200">
-                    <h3 className="font-bold text-sm sm:text-base text-gray-900">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <p className="text-xs text-gray-600 mt-0.5">
-                        {unreadCount} unread message{unreadCount > 1 ? 's' : ''}
-                      </p>
-                    )}
+                <div className="absolute right-[-40px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 bg-white shadow-2xl shadow-emerald-900/10 border border-emerald-50 rounded-[2rem] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="px-6 py-5 bg-emerald-50/40 border-b border-emerald-50 flex justify-between items-center">
+                    <h3 className="font-bold text-emerald-900">Notifications</h3>
+                    <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">{unreadCount} New</span>
                   </div>
-
-                  <div className="max-h-80 overflow-y-auto">
+                  <div className="max-h-[60vh] overflow-y-auto">
                     {notifications.length === 0 ? (
-                      <div className="p-8 text-center">
-                        <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-sm text-gray-500">No notifications</p>
+                      <div className="p-12 text-center">
+                        <CheckCircle2 className="mx-auto text-emerald-100 mb-3" size={40} />
+                        <p className="text-sm font-medium text-gray-400">All caught up!</p>
                       </div>
                     ) : (
                       notifications.map(notif => (
-                        <div
-                          key={notif.id}
-                          className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                            notif.unread ? "bg-emerald-50/30" : ""
-                          }`}
-                        >
-                          <p className={`text-sm ${
-                            notif.unread ? "font-semibold text-gray-900" : "text-gray-700"
-                          }`}>
-                            {notif.text}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
+                        <div key={notif.id} className="group p-5 border-b border-gray-50 hover:bg-emerald-50/30 transition-colors flex gap-4 cursor-pointer">
+                           <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                           <div>
+                            <p className="text-sm text-gray-700 font-medium group-hover:text-emerald-900">{notif.text}</p>
+                            <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-tight">{notif.time}</p>
+                           </div>
                         </div>
                       ))
                     )}
@@ -166,67 +132,54 @@ export default function NutritionistHeader() {
               )}
             </div>
 
-            {/* Profile Menu */}
+            {/* Profile Dropdown */}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 sm:gap-2.5 p-1 sm:p-1.5 pr-2 sm:pr-3 rounded-2xl hover:bg-emerald-50 transition-colors"
+                className="flex items-center gap-3 p-1 sm:pl-2 sm:pr-2 rounded-2xl hover:bg-emerald-50 transition-all border border-transparent hover:border-emerald-100"
               >
-                {loading ? (
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded-xl animate-pulse"></div>
-                ) : (
+                <div className="hidden lg:block text-right">
+                  <p className="text-xs font-black text-gray-900 truncate w-24 uppercase tracking-tighter">
+                    {name ? `Dr. ${name}` : "Nutritionist"}
+                  </p>
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Expert</p>
+                </div>
+                <div className="relative w-9 h-9 sm:w-11 sm:h-11">
                   <Image
                     src={profileImage || "/images/images.jpg"}
-                    width={40}
-                    height={40}
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-cover border-2 border-emerald-100"
+                    fill
+                    className="rounded-xl object-cover border-2 border-white shadow-md shadow-emerald-100/50"
                     alt="Profile"
                     unoptimized
                   />
-                )}
-                <div className="hidden md:block text-left">
-                  {loading ? (
-                    <div className="space-y-1">
-                      <div className="h-3 w-20 bg-gray-200 rounded animate-pulse"></div>
-                      <div className="h-2 w-16 bg-gray-200 rounded animate-pulse"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm font-semibold text-gray-900">{name ? `Dr. ${name}` : "Nutritionist"}</p>
-                      <p className="text-xs text-gray-500">Nutritionist</p>
-                    </>
-                  )}
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full"></div>
                 </div>
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-64 sm:w-72 bg-white shadow-2xl border border-gray-200 rounded-2xl overflow-hidden">
-                  <div className="px-4 sm:px-5 py-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-200">
-                    <p className="font-semibold text-sm sm:text-base text-gray-900">{name}</p>
-                    <p className="text-xs text-gray-600 mt-0.5">{email}</p>
+                <div className="absolute right-0 mt-3 w-64 bg-white shadow-2xl shadow-emerald-900/20 border border-emerald-50 rounded-[1.5rem] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-5 border-b border-emerald-50 bg-emerald-50/20">
+                    <p className="font-black text-sm text-gray-900 uppercase tracking-tighter leading-none">{name}</p>
+                    <p className="text-[11px] text-emerald-600 font-bold mt-1 truncate">{email}</p>
                   </div>
-
-                  <div className="py-2">
-                    <button
-                      onClick={() => {
-                        router.push("/nutritionist/profile");
-                        setMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 sm:px-5 py-3 hover:bg-emerald-50 flex items-center gap-3 text-sm text-gray-700 transition-colors"
-                    >
-                      <User className="h-5 w-5 text-emerald-600" />
-                      <span className="font-medium">My Profile</span>
-                    </button>
-
+                  <div className="p-2">
                     <button 
-                      onClick={() => {
-                        router.push("/nutritionist/settings");
-                        setMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 sm:px-5 py-3 hover:bg-emerald-50 flex items-center gap-3 text-sm text-gray-700 transition-colors"
+                       onClick={() => { router.push("/nutritionist/profile"); setMenuOpen(false); }}
+                       className="w-full text-left px-4 py-3 hover:bg-emerald-50 rounded-xl flex items-center gap-3 text-sm font-bold text-gray-700 transition-colors"
                     >
-                      <Settings className="h-5 w-5 text-emerald-600" />
-                      <span className="font-medium">Settings</span>
+                      <User className="h-4 w-4 text-emerald-600" /> My Profile
+                    </button>
+                    <button 
+                       onClick={() => { router.push("/nutritionist/settings"); setMenuOpen(false); }}
+                       className="w-full text-left px-4 py-3 hover:bg-emerald-50 rounded-xl flex items-center gap-3 text-sm font-bold text-gray-700 transition-colors"
+                    >
+                      <Settings className="h-4 w-4 text-emerald-600" /> Settings
+                    </button>
+                    <div className="my-1 border-t border-emerald-50" />
+                    <button 
+                       className="w-full text-left px-4 py-3 hover:bg-rose-50 rounded-xl flex items-center gap-3 text-sm font-bold text-rose-600 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" /> Log out
                     </button>
                   </div>
                 </div>

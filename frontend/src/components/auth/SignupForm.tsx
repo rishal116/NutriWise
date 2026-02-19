@@ -10,6 +10,8 @@ import { loginSuccess } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
+import { useEffect } from "react";
+
 
 type Role = "client" | "nutritionist";
 interface FormData {
@@ -34,6 +36,12 @@ export default function SignupForm() {
     role: "client",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      router.replace("/home");
+    }
+  }, [router]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

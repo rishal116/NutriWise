@@ -11,7 +11,6 @@ interface UpdateNutritionistInput {
   fullName?: string;
   gender?: string;
   phone?: string;
-  country?: string;
   bio?: string;
   languages?: string[];
 }
@@ -38,9 +37,8 @@ export class NutritionistProfileService implements INutritionistProfileService {
   
   async updateNutritionistProfile(userId: string, data: UpdateNutritionistInput) {
     try {
-      const { fullName, gender, phone, country,bio,languages} = data;
+      const { fullName, gender, phone,bio,languages} = data;
       await this._nutritionistProfileRepository.updateByUserId(userId, {
-        country: country ?? "",
         bio: bio ?? "",
         languages: languages ?? [],
       });

@@ -48,9 +48,11 @@ export default function NutritionistTable() {
         perPage,
         debouncedSearch
       );
+      console.log(res);
+      
 
-      setNutritionists(res.data);
-      setTotalPages(res.totalPages);
+  setNutritionists(res.data.data);
+setTotalPages(res.data.totalPages);
     } catch {
       toast.error("Failed to load nutritionists");
     }

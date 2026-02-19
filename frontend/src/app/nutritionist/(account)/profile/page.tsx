@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Cropper from "react-easy-crop";
 import { nutritionistProfileService } from "@/services/nutritionist/nutritionistProfile.service";
-import { COUNTRIES, LANGUAGE_OPTIONS, GENDERS } from "@/constants/nutritionistDetails.constants";
+import { LANGUAGE_OPTIONS, GENDERS } from "@/constants/nutritionistDetails.constants";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
 import { parsePhoneNumberFromString, isValidPhoneNumber } from "libphonenumber-js";
@@ -16,7 +16,6 @@ interface FormData {
   fullName: string;
   gender: string;
   phone: string;
-  country: string;
   bio: string;
   languages: string[];
 }
@@ -51,7 +50,6 @@ export default function GeneralInfoPage() {
     fullName: "",
     gender: "",
     phone: "",
-    country: "",
     bio: "",
     languages: [],
   });
@@ -68,7 +66,6 @@ export default function GeneralInfoPage() {
           fullName: data.fullName || "",
           gender: data.gender || "",
           phone: data.phone || "",
-          country: data.country || "",
           bio: data.bio || "",
           languages: Array.isArray(data.languages) ? data.languages : [],
         };
@@ -100,7 +97,6 @@ const phoneNumberObj = parsePhoneNumberFromString(formData.phone, "IN");
 const errors = {
   fullName: !formData.fullName.trim(),
   phone: !formData.phone.trim() || !(phoneNumberObj?.isValid() ?? false),
-  country: !formData.country.trim(),
   languages: formData.languages.length === 0,
   bio: !formData.bio.trim(),
 };
@@ -274,14 +270,6 @@ const errors = {
   error={errors.phone}
   errorMessage="Please enter a valid phone number"
 />
-              <Select
-                label="Country"
-                name="country"
-                value={formData.country}
-                onChange={handleChange}
-                error={errors.country}
-                options={COUNTRIES}
-              />
               <Select
                 label="Gender"
                 name="gender"

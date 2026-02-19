@@ -20,7 +20,6 @@ export interface NutritionistGeneralInfoDTO {
   _id: string;
   fullName: string;
   phone: string;
-  country: string;
   gender: string;
   languages: string[];
   bio: string;

@@ -1,8 +1,7 @@
 import { SafeUserDto, UserRole, GetMeResponseDto } from "../../dtos/user/userAuth.response.dto";
 
-// Adjust this to your real User entity type from repository/model
 export interface UserEntity {
-  _id: unknown; // mongoose ObjectId-like
+  _id: unknown;
   fullName: string;
   email: string;
   role: string;
@@ -11,7 +10,6 @@ export interface UserEntity {
 }
 
 const toStringId = (id: unknown): string => {
-  // Works for ObjectId and string; safer than any
   if (typeof id === "string") return id;
   if (id && typeof (id as { toString: () => string }).toString === "function") {
     return (id as { toString: () => string }).toString();
@@ -27,9 +25,11 @@ const toUserRole = (role: string): UserRole => {
 const toNutritionistStatus = (
   status?: string
 ): GetMeResponseDto["nutritionistStatus"] => {
-  if (status === "submitted" || status === "approved" || status === "rejected") return status;
-  return "not_submitted";
+  if (status === "none" || status === "rejected" || status === "approved" || status === "pending") return status;
+  return "none";
 };
+
+
 
 export const mapUserToSafeUserDto = (user: UserEntity): SafeUserDto => ({
   id: toStringId(user._id),

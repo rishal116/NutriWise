@@ -2,87 +2,93 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { nutritionistAuthService } from "@/services/nutritionist/nutritionistAuth.service";
-import { X, Award, Briefcase, Globe, DollarSign, FileText } from "lucide-react";
-import {
-  Section,
+import { X, Award, Briefcase, Globe, FileText, Clock, RefreshCw} from "lucide-react";
+import { 
+  Section, 
   DynamicInput,
   InputField,
   SelectField,
   FileInput,
   AddButton,
   PrimaryButton,
-} from "@/components/auth/nutrtionistForm/FormComponents";
-import { useSearchParams } from "next/navigation";
+} 
+from "@/components/auth/nutrtionistForm/FormComponents";
 import {
   LANGUAGE_OPTIONS,
   NUTRITIONIST_SPECIALIZATIONS,
-  COUNTRIES,
 } from "../../../constants/nutritionistDetails.constants";
+import { userAuthService } from "@/services/user/userAuth.service";
 
 interface Experience {
   role: string;
   organization: string;
   years: string;
 }
-
 interface Language {
   name: string;
 }
-
 type ErrorState = Record<string, string>;
 
-export default function NutritionistDetailsPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-  const checkStatus = async () => {
-    const res = await nutritionistAuthService.getProfileStatus();
-
-    if (res.status === "approved") {
-      router.replace("/nutritionist/dashboard");
-    }
-
-    if (res.status === "pending") {
-      setMessage("pending");
-    }
-  };
-
-  checkStatus();
-}, []);
-
-    const searchParams = useSearchParams();
-  const status = searchParams.get("status");
-
-  if (status === "pending") {
-    return (
-      <div className="max-w-lg mx-auto mt-20 p-6 bg-white shadow-lg rounded-xl">
-        <h1 className="text-2xl font-bold text-green-600 mb-2">
-          Application Under Review
-        </h1>
-        <p className="text-gray-700">
-          Your nutritionist application is currently under review.  
-          You will be notified once the verification is complete.
-        </p>
-      </div>
-    );
-  }
-
-  // ------------------------------
-  // State Hooks
-  // ------------------------------
+export default function NutritionistDetailsPage() {  
   const [qualifications, setQualifications] = useState<string[]>([""]);
   const [specializations, setSpecializations] = useState<string[]>([]);
   const [experiences, setExperiences] = useState<Experience[]>([{ role: "", organization: "", years: "" }]);
   const [languages, setLanguages] = useState<Language[]>([]);
   const [languageInput, setLanguageInput] = useState("");
-  const [country, setCountry] = useState("");
   const [bio, setBio] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [cvFileName, setCvFileName] = useState("");
   const [certFiles, setCertFiles] = useState<File[]>([]);
+  const [cvUrl, setCvUrl] = useState<string | null>(null);
+const [certUrls, setCertUrls] = useState<string[]>([]);
   const [errors, setErrors] = useState<ErrorState>({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const router = useRouter();
+  
+useEffect(() => {
+  const initialize = async () => {
+    try {
+      const res = await userAuthService.getMe();
+      const status = res?.user?.nutritionistStatus;
+
+      if (status === "approved") {
+        router.replace("/nutritionist/dashboard");
+        return;
+      }
+
+      if (status === "pending") {
+        router.replace("/nutritionist/pending");
+        return;
+      }
+      if (status === "rejected") {
+        const detailsRes = await nutritionistAuthService.getMyDetails();
+        console.log(detailsRes);
+        
+        const data = detailsRes.data?.data;
+
+        if (!data) return;
+
+        setQualifications(data.qualifications || [""]);
+        setSpecializations(data.specializations || []);
+        setExperiences(data.experiences || [{ role: "", organization: "", years: "" }]);
+        setCvUrl(data.cvUrl || null);
+setCertUrls(data.certificationUrls || []);
+        setLanguages(
+          data.languages?.map((l: string) => ({ name: l })) || []
+        );
+        setBio(data.bio || "");
+      }
+
+    } catch (err) {
+      console.error("Failed to initialize page", err);
+    }
+  };
+
+  initialize();
+}, [router]);
+
+
 
   // ------------------------------
   // Validation
@@ -97,15 +103,12 @@ export default function NutritionistDetailsPage() {
           break;
       case "experiences":
         for (const exp of value) {
-          if (!exp.role.trim() || !exp.organization.trim() || !exp.years.trim()) return "Complete all experience fields";
+          if (!exp.role.trim() || !exp.organization.trim()) return "Complete all experience fields";
           if (isNaN(Number(exp.years))) return "Years must be a number";
         }
         break;
       case "languages":
         if (!value.length) return "Add at least one language";
-        break;
-      case "country":
-        if (!value.trim()) return "Select your country";
         break;
       case "bio":
         if (typeof value !== "string" || !value.trim()) return "Bio is required";
@@ -118,7 +121,7 @@ export default function NutritionistDetailsPage() {
   };
 
   const validateAll = () => {
-    const fields = ["qualifications", "specializations", "experiences", "languages", "country","bio"];
+    const fields = ["qualifications", "specializations", "experiences", "languages","bio"];
     const newErrors: ErrorState = {};
     fields.forEach((field) => {
       let value: any;
@@ -127,23 +130,25 @@ export default function NutritionistDetailsPage() {
         case "specializations": value = specializations; break;
         case "experiences": value = experiences; break;
         case "languages": value = languages; break;
-        case "country": value = country; break;
         case "bio": value = bio; break;
       }
-      // ---- File Validation ----
-      if (!cvFile) {
-        newErrors.cv = "CV / Resume is required";
-      } else {
-        const allowedTypes = [
+if (!cvFile && !cvUrl) {
+  newErrors.cv = "CV / Resume is required";
+} else if (cvFile) {
+  const allowedTypes = [
     "application/pdf",
     "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "image/png",
     "image/jpeg",
   ];
+
   if (!allowedTypes.includes(cvFile.type)) {
-    newErrors.cv = "Invalid file type. Allowed: PDF, DOC, DOCX, PNG, JPG";
+    newErrors.cv =
+      "Invalid file type. Allowed: PDF, DOC, DOCX, PNG, JPG";
   }
+
+
 
 }
 
@@ -210,7 +215,6 @@ certFiles.forEach((file, index) => {
       });
       const languageNames = languages.map(lang => lang.name);
       languageNames.forEach(lang => formData.append("languages[]", lang));
-      formData.append("country", country);
       formData.append("bio", bio);
       if (cvFile) formData.append("cv", cvFile);
       certFiles.forEach(file => formData.append("certifications", file));
@@ -316,7 +320,20 @@ onClick={() => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <InputField placeholder="Role/Position" value={exp.role} onChange={(v) => updateExperience(idx, "role", v)} />
                   <InputField placeholder="Organization/Hospital" value={exp.organization} onChange={(v) => updateExperience(idx, "organization", v)} />
-                  <InputField type="number" placeholder="Years" value={exp.years} onChange={(v) => updateExperience(idx, "years", v)} />
+                  <InputField 
+  type="text"
+  inputMode="numeric"
+  pattern="[0-9]*"
+  placeholder="Years"
+  value={exp.years}
+  onChange={(v) => {
+    if (/^\d*$/.test(v)) {
+      const updated = [...experiences];
+      updated[idx].years = v;
+      setExperiences(updated);
+    }
+  }}
+/>
                 </div>
                 {experiences.length > 1 && (
                   <button
@@ -379,13 +396,6 @@ onClick={() => {
             )}
           </Section>
 
-          {/* Country and Salary */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Section title="Country" error={errors.country} icon={Globe}>
-              <SelectField value={country} onChange={(e) => setCountry(e.target.value)} options={COUNTRIES} />
-            </Section>
-          </div>
-
 {/* Documents */}
 <Section title="Documents" icon={FileText}>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -408,46 +418,40 @@ onClick={() => {
   <p className="text-red-600 text-sm mt-1 font-medium">{errors.cv}</p>
 )}
 
-      {cvFile && (
+      {cvFile || cvUrl ? (
   <div className="mt-4 space-y-3">
-    <p className="text-sm font-semibold text-gray-700">Uploaded CV / Resume:</p>
+    <p className="text-sm font-semibold text-gray-700">
+      Uploaded CV / Resume:
+    </p>
 
     <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-      <div
-        onClick={() => window.open(URL.createObjectURL(cvFile), "_blank")}
-        className="cursor-pointer"
-      >
-        {/* Show image preview if CV is image, otherwise icon */}
-        {cvFile.type.startsWith("image/") ? (
-          <img
-            src={URL.createObjectURL(cvFile)}
-            className="w-12 h-12 object-cover rounded-md border"
-          />
-        ) : (
-          <div className="w-12 h-12 flex items-center justify-center bg-gray-200 rounded-md text-gray-600 text-lg">
-            📄
-          </div>
-        )}
-      </div>
-
-      <span
-        onClick={() => window.open(URL.createObjectURL(cvFile), "_blank")}
-        className="flex-1 text-gray-800 text-sm font-medium truncate cursor-pointer hover:text-emerald-600 hover:underline transition"
-      >
-        {cvFile.name}
-      </span>
-
-      <X
-        size={18}
-        className="cursor-pointer text-gray-400 hover:text-red-500 transition"
-        onClick={() => {
-          setCvFile(null);
-          setCvFileName("");
-        }}
-      />
+      
+      {/* If new file selected */}
+      {cvFile ? (
+        <>
+          <span
+            onClick={() => window.open(URL.createObjectURL(cvFile), "_blank")}
+            className="flex-1 cursor-pointer hover:underline"
+          >
+            {cvFile.name}
+          </span>
+          <X onClick={() => setCvFile(null)} />
+        </>
+      ) : (
+        <>
+          <span
+            onClick={() => window.open(cvUrl!, "_blank")}
+            className="flex-1 cursor-pointer hover:underline"
+          >
+            View Uploaded CV
+          </span>
+          <X onClick={() => setCvUrl(null)} />
+        </>
+      )}
     </div>
   </div>
-)}
+) : null}
+
     </div>
 
     {/* Certifications Upload */}
@@ -462,6 +466,36 @@ onClick={() => {
           setCertFiles(prev => [...prev, ...files]);
         }}
       />
+      {certUrls.length > 0 && (
+  <div className="mt-4 space-y-3">
+    <p className="text-sm font-semibold text-gray-700">
+      Uploaded Certifications:
+    </p>
+
+    {certUrls.map((url, index) => (
+      <div
+        key={index}
+        className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg"
+      >
+        <span
+          onClick={() => window.open(url, "_blank")}
+          className="flex-1 cursor-pointer hover:underline"
+        >
+          View Certification {index + 1}
+        </span>
+
+        <X
+          size={18}
+          className="cursor-pointer text-gray-400 hover:text-red-500"
+          onClick={() =>
+            setCertUrls(prev => prev.filter((_, i) => i !== index))
+          }
+        />
+      </div>
+    ))}
+  </div>
+)}
+
 
       {certFiles.length > 0 && (
         <div className="mt-4 space-y-3">

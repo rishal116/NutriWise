@@ -7,6 +7,7 @@ import { MeetingResponseDTO } from "../../../dtos/nutritionist/meetingResponse.d
 import { MeetingMapper } from "../../../mapper/nutritionist/meeting.mapper";
 import { v4 as uuidv4 } from "uuid";
 import { Types } from "mongoose";
+import { MeetingStatus } from "../../../models/meeting.model";
 
 @injectable()
 export class NutriMeetingsService implements INutriMeetingsService {
@@ -30,7 +31,7 @@ async createMeeting(data: CreateMeetingDTO): Promise<MeetingResponseDTO> {
     scheduledAt: new Date(data.scheduledAt),
     userId: new Types.ObjectId(data.userId),
     nutritionistId: new Types.ObjectId(data.nutritionistId),
-    status: "scheduled",
+    status: MeetingStatus.SCHEDULED
   });
 
 

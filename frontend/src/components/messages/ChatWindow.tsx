@@ -53,12 +53,26 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
       setMessages((prev) => prev.filter((m) => m.id !== data.messageId));
     };
 
+    const handleEdit = (data: { messageId: string; newText: string }) => {
+  setMessages((prev) =>
+    prev.map((m) =>
+      m.id === data.messageId
+        ? { ...m, text: data.newText }
+        : m
+    )
+  );
+};
+
+socket.on("messageEdited", handleEdit);
+
+
     socket.on("receiveMessage", handleReceive);
     socket.on("userTyping", handleTyping);
     socket.on("messageDeleted", handleDelete);
 
     return () => {
       socket.emit("leaveConversation", conversationId);
+      socket.off("messageEdited", handleEdit);
       socket.off("receiveMessage", handleReceive);
       socket.off("userTyping", handleTyping);
       socket.off("messageDeleted", handleDelete);
@@ -168,14 +182,15 @@ const handleEditInitiated = (id: string, text: string) => {
             <>
               {messages.map((msg) => (
                 <MessageBubble
-                  key={msg.id}
-                  id={msg.id}
-                  text={msg.text}
-                  isSender={msg.senderId === currentUserId}
-                  timestamp={msg.createdAt}
-                  status={msg.status}
-                  onDelete={onDeleteMessage}
-                />
+  key={msg.id}
+  id={msg.id}
+  text={msg.text}
+  isSender={msg.senderId === currentUserId}
+  timestamp={msg.createdAt}
+  status={msg.status}
+  onDelete={onDeleteMessage}
+  onEdit={handleEditInitiated}
+/>
               ))}
               
               {/* Real-time Typing Indicator */}
@@ -198,10 +213,14 @@ const handleEditInitiated = (id: string, text: string) => {
       {/* Input Area */}
       <div className="p-4 bg-white border-t border-gray-100">
         <div className="max-w-4xl mx-auto">
-          <MessageInput
-            conversationId={conversationId}
-            onMessageSent={(newMessage) => setMessages((prev) => [...prev, newMessage])}
-          />
+<MessageInput
+  conversationId={conversationId}
+  editingMessage={editingMessage}
+  onCancelEdit={() => setEditingMessage(null)}
+  onMessageSent={(newMessage) =>
+    setMessages((prev) => [...prev, newMessage])
+  }
+/>
         </div>
       </div>
     </div>

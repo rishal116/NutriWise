@@ -14,18 +14,9 @@ import { ResendOtpDto, UserRegisterDto, VerifyOtpDto, LoginDto } from "../../../
 import { generateTokens } from "../../../utils/jwt";
 import crypto from "crypto";
 import { sendResetPasswordEmail } from "../../../utils/sendOtp";
-
-import {
-  SignupResponseDto,
-  VerifyOtpResponseDto,
-  LoginResponseDto,
-  GoogleLoginRequestDto,
-  GoogleLoginResponseDto,
-  GoogleSigninRequestDto,
-  MessageResponseDto,
-  GetMeResponseDto,
+import {SignupResponseDto,VerifyOtpResponseDto,LoginResponseDto,GoogleLoginRequestDto,GoogleLoginResponseDto,
+  GoogleSigninRequestDto,MessageResponseDto,GetMeResponseDto,
 } from "../../../dtos/user/userAuth.response.dto";
-
 import { mapUserToSafeUserDto, mapUserToGetMeDto, UserEntity } from "../../../mapper/user/userAuth.mapper";
 
 type TempUserSession = {
@@ -35,7 +26,6 @@ type TempUserSession = {
   role: "client" | "nutritionist" | "admin";
 };
 
-// If your express-session typing isn't extended, you can keep this local safe access helper:
 const getTempUser = (req: Request): TempUserSession | undefined => {
   const sessionObj = req.session as unknown as { tempUser?: TempUserSession };
   return sessionObj.tempUser;
@@ -65,8 +55,6 @@ export class UserAuthService implements IUserAuthService {
 
     const existingUser = await this._userRepository.findByEmail(email);
     if (existingUser) throw new CustomError("User already exists", 409);
-
-    // store temp user in session
     (req.session as unknown as { tempUser?: TempUserSession }).tempUser = {
       fullName,
       email,
@@ -91,8 +79,6 @@ export class UserAuthService implements IUserAuthService {
     if (!tempUser) throw new CustomError("Temporary user data not found", StatusCode.NOT_FOUND);
 
     const hashedPassword = await bcrypt.hash(tempUser.password, 10);
-
-    // NO any: define a proper create payload type
     const createPayload: {
       fullName: string;
       email: string;
@@ -108,7 +94,6 @@ export class UserAuthService implements IUserAuthService {
     const newUser = (await this._userRepository.create(createPayload)) as unknown as UserEntity;
 
     const { accessToken, refreshToken } = generateTokens(
-      // mapper already handles id but token generator needs string id
       (newUser._id as { toString: () => string }).toString(),
       newUser.role || "client"
     );

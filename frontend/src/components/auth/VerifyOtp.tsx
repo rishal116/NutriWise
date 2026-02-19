@@ -20,14 +20,17 @@ export default function OtpForm() {
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    router.replace("/home");
+  }
+}, [router]);
+
+  useEffect(() => {
     if (isVerifying) return;
     const storedEmail = localStorage.getItem("signupEmail");
     if (!email && storedEmail) {
       dispatch(restoreSignupEmail(storedEmail));
-    }
-    if (!email && !storedEmail) {
-      toast.error("Session expired. Please sign up again.");
-      router.replace("/signup");
     }
   }, [email, isVerifying, dispatch, router]);
 

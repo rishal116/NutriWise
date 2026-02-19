@@ -4,14 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
-import {
-  Bell,
-  LogOut,
-  UserCircle,
-  Settings,
-  Menu,
-  X,
-} from "lucide-react";
+import {Bell,LogOut,UserCircle,Settings,Menu,X} from "lucide-react";
 import { logout } from "@/redux/slices/authSlice";
 import { userAuthService } from "@/services/user/userAuth.service";
 
@@ -21,13 +14,11 @@ export default function Header() {
   const dispatch = useDispatch();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
-
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-
-  /* ---------------- CLICK OUTSIDE ---------------- */
+  
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -49,14 +40,11 @@ export default function Header() {
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  /* ---------------- FETCH USER ---------------- */
+  
   useEffect(() => {
     const fetchMe = async () => {
       try {
         const res = await userAuthService.getMe();
-    
-        
         setUser(res.user);
       } catch {
         setUser(null);
@@ -64,18 +52,14 @@ export default function Header() {
         setLoading(false);
       }
     };
-
     fetchMe();
   }, []);
-
-  /* ---------------- CLOSE MOBILE ON ROUTE CHANGE ---------------- */
+  
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
   const isLoggedIn = !!user;
-
-  /* ---------------- LOGOUT ---------------- */
   const handleLogout = async () => {
     try {
       await userAuthService.logout();
@@ -87,7 +71,6 @@ export default function Header() {
       console.error("Logout failed:", error);
     }
   };
-
   useEffect(() => {
     if (!loading) {
       if (!user) {
@@ -96,31 +79,31 @@ export default function Header() {
       }
     }
   }, [user, loading, router]);
-
-  /* ---------------- DASHBOARD NAVIGATION (FIXED) ---------------- */
+  
   const handleNutritionistDashboard = () => {
     setOpen(false);
     setMobileOpen(false);
-
     if (!user) {
       return router.push("/");
     }
-
-    const { role, nutritionistStatus } = user;
-
-    if (nutritionistStatus === "approved") {
-      return router.push("/nutritionist/dashboard");
+    try {
+      const { nutritionistStatus } = user;
+      if (nutritionistStatus === "approved") {
+        return router.push("/nutritionist/dashboard");
+      }
+      if (nutritionistStatus === "pending") {
+        return router.push("/nutritionist/pending");
+      }
+      if (nutritionistStatus === "rejected") {
+        return router.push("/nutritionist/reapply");
+      }
+      if (nutritionistStatus === "none") {
+        return router.push("/nutritionist/details");
+      }
+    } catch (error) {
+      console.error("Failed to fetch nutritionist status", error);
+      router.push("/home");
     }
-
-    if (nutritionistStatus === "pending") {
-      return router.push("/nutritionist/details?status=pending");
-    }
-
-    if (nutritionistStatus === "rejected") {
-      return router.push("/nutritionist/reapply");
-    }
-
-    router.push("/nutritionist/details");
   };
 
   const getUserInitial = () => {
@@ -154,7 +137,7 @@ export default function Header() {
           {/* LOGO */}
           <div
             className="flex items-center gap-2 cursor-pointer group"
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/home")}
           >
             <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
               <span className="text-base sm:text-lg">🍃</span>

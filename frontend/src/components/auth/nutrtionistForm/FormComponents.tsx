@@ -24,10 +24,7 @@ type InputFieldProps = {
   label?: string;
   value: string;
   onChange: (value: string) => void;
-  type?: string;
-  className?: string;
-  placeholder?: string;
-};
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value">;
 
 type SelectFieldProps = {
   label?: string;
@@ -97,19 +94,30 @@ export const DynamicInput: React.FC<DynamicInputProps> = ({ value, placeholder, 
   </div>
 );
 
-export const InputField: React.FC<InputFieldProps> = ({ label, value, type = "text", onChange, className = "", placeholder, ...props }) => (
+export const InputField: React.FC<InputFieldProps> = ({
+  label,
+  value,
+  type = "text",
+  onChange,
+  className = "",
+  ...props
+}) => (
   <div className="space-y-2 w-full">
-    {label && <label className="font-medium text-gray-700 text-sm">{label}</label>}
+    {label && (
+      <label className="font-medium text-gray-700 text-sm">
+        {label}
+      </label>
+    )}
     <input
       {...props}
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
       className={`w-full border border-gray-300 px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition ${className}`}
     />
   </div>
 );
+
 
 export const SelectField: React.FC<SelectFieldProps> = ({ label, value, onChange, options, multiple = false, className = "" }) => (
   <div className="space-y-2 w-full">

@@ -20,14 +20,12 @@ export default function MessageBubble({
 }: MessageBubbleProps) {
   const [menuPos, setMenuPos] = useState<{ x: number, y: number } | null>(null);
   const [canEdit, setCanEdit] = useState(false);
-  const [canDelete, setCanDelete] = useState(false);
 
   // Time Limits: Edit (2m), Delete (5m)
   useEffect(() => {
     const checkLimits = () => {
       const diff = Date.now() - new Date(timestamp).getTime();
       setCanEdit(diff < 2 * 60 * 1000);
-      setCanDelete(diff < 5 * 60 * 1000);
     };
     checkLimits();
     const timer = setInterval(checkLimits, 30000);
@@ -102,7 +100,6 @@ export default function MessageBubble({
             <Pencil className="w-3.5 h-3.5" /> Edit
           </button>
           <button 
-            disabled={!canDelete}
             onClick={() => onDelete(id)}
             className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-red-50 text-red-600 disabled:opacity-30 disabled:cursor-not-allowed"
           >

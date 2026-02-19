@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@types/cors": "^2.8.19",
+    "adapter": "^1.0.0-beta.10",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "class-transformer": "^0.5.1",
@@ -42,6 +43,7 @@
     "redis": "^5.9.0",
     "reflect-metadata": "^0.2.2",
     "socket.io": "^4.8.3",
+    "socket.io-redis": "^5.4.0",
     "stripe": "^20.2.0",
     "uuid": "^13.0.0",
     "winston": "^3.18.3",

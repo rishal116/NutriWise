@@ -13,9 +13,8 @@ export const nutritionistAuthService = {
     return response.data;
   },
   
-  getProfileStatus:async () => {
-    const response = await api.get("/nutritionist/profileStatus");
-    return response.data;
+  getMyDetails:async () => {
+    return api.get("/nutritionist/details/me");
   },
   
   getName: async () => {

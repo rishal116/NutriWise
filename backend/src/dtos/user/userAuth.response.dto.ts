@@ -27,7 +27,7 @@ export interface LoginResponseDto {
 
 export interface GoogleLoginRequestDto {
   credential: string;
-  role: Exclude<UserRole, "admin">; // "client" | "nutritionist"
+  role: Exclude<UserRole, "admin">;
 }
 
 export interface GoogleLoginResponseDto {
@@ -45,7 +45,7 @@ export interface GetMeResponseDto {
   fullName: string;
   email: string;
   role: UserRole;
-  nutritionistStatus: "not_submitted" | "submitted" | "approved" | "rejected";
+  nutritionistStatus: "pending" | "approved" | "rejected" | "none";
 }
 
 export interface MessageResponseDto {

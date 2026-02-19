@@ -11,7 +11,6 @@ interface Plan {
   title: string;
   durationInDays: number;
   price: number;
-  currency: string;
   features: string[];
 }
 
@@ -176,21 +175,21 @@ export default function CheckoutPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-gray-700">
                     <span>Plan Price</span>
-                    <span className="font-semibold">{plan.currency} {plan.price}</span>
+                    <span className="font-semibold"> {plan.price}</span>
                   </div>
                   <div className="flex justify-between items-center text-gray-700">
                     <span>Processing Fee</span>
-                    <span className="font-semibold">{plan.currency} 0</span>
+                    <span className="font-semibold"> 0</span>
                   </div>
                   <div className="border-t border-gray-200 pt-3 mt-3">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-bold text-gray-900">Total Payable</span>
                       <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                        {plan.currency} {plan.price}
+                         {plan.price}
                       </span>
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
-                      ≈ {plan.currency} {(plan.price / plan.durationInDays).toFixed(2)} per day
+                      ≈ {(plan.price / plan.durationInDays).toFixed(2)} per day
                     </p>
                   </div>
                 </div>

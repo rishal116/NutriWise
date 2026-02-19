@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { nutritionistSubscriptionService } from "@/services/nutritionist/nutritionistSubscription.service";
-import { Users, Calendar, DollarSign, Clock, Mail, User, TrendingUp, Filter, Search } from "lucide-react";
+import { 
+  Users, Calendar, DollarSign, Clock, Mail, 
+  User, TrendingUp, Search, ArrowUpRight, CheckCircle2 
+} from "lucide-react";
 import { useNutritionistGuard } from "@/hooks/nutritionist/useNutritionistGuard";
 
 interface NutritionistSubscription {
@@ -24,7 +27,7 @@ interface NutritionistSubscription {
 }
 
 export default function NutritionistClient() {
-  useNutritionistGuard()
+  useNutritionistGuard();
   const [subscriptions, setSubscriptions] = useState<NutritionistSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "EXPIRED">("ALL");
@@ -37,8 +40,7 @@ export default function NutritionistClient() {
   const fetchSubscriptions = async () => {
     try {
       const res = await nutritionistSubscriptionService.getSubscriptions();
-      console.log("API RESPONSE:", res);
-      setSubscriptions(res.data);
+      setSubscriptions(res.data || []);
     } catch (error) {
       console.error("Failed to fetch nutritionist subscriptions", error);
     } finally {
@@ -46,8 +48,7 @@ export default function NutritionistClient() {
     }
   };
 
-  // Filter and search logic
-  const filteredSubscriptions = subscriptions.filter((sub) => {
+  const filteredSubscriptions = (subscriptions || []).filter((sub) => {
     const matchesFilter = filter === "ALL" || sub.status === filter;
     const matchesSearch = 
       sub.user.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -56,7 +57,6 @@ export default function NutritionistClient() {
     return matchesFilter && matchesSearch;
   });
 
-  // Stats
   const stats = {
     total: subscriptions.length,
     active: subscriptions.filter(s => s.status === "ACTIVE").length,
@@ -66,234 +66,158 @@ export default function NutritionistClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-        <div className="text-center">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-emerald-600 border-r-transparent mb-4"></div>
-          <p className="text-emerald-700 font-semibold text-lg">Loading dashboard...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#f8faf9]">
+        <div className="flex flex-col items-center">
+          <div className="relative w-16 h-16">
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-100"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-600 border-t-transparent animate-spin"></div>
+          </div>
+          <p className="mt-4 text-emerald-800 font-bold animate-pulse">Syncing client data...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
-            My Clients
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Manage and track your client subscriptions
-          </p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center">
-                <Users className="text-white" size={24} />
-              </div>
-              <TrendingUp className="text-emerald-600" size={20} />
-            </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Total Clients</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                <Users className="text-white" size={24} />
-              </div>
-            </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Active Clients</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.active}</p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl flex items-center justify-center">
-                <Clock className="text-white" size={24} />
-              </div>
-            </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Expired</p>
-            <p className="text-3xl font-bold text-gray-900">{stats.expired}</p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center">
-                <DollarSign className="text-white" size={24} />
-              </div>
-            </div>
-            <p className="text-gray-500 text-sm font-medium mb-1">Total Revenue</p>
-            <p className="text-3xl font-bold text-gray-900">₹{stats.revenue.toLocaleString()}</p>
-          </div>
-        </div>
-
-        {/* Filters and Search */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Search by client name, email, or plan..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all outline-none"
-              />
-            </div>
-
-            {/* Filter Buttons */}
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilter("ALL")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  filter === "ALL"
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilter("ACTIVE")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  filter === "ACTIVE"
-                    ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                Active
-              </button>
-              <button
-                onClick={() => setFilter("EXPIRED")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  filter === "EXPIRED"
-                    ? "bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-lg"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                Expired
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Table or Empty State */}
-        {filteredSubscriptions.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 border-2 border-dashed border-gray-300 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users className="text-gray-400" size={40} />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {search || filter !== "ALL" ? "No clients found" : "No clients yet"}
-            </h3>
-            <p className="text-gray-600 max-w-md mx-auto">
-              {search || filter !== "ALL"
-                ? "Try adjusting your search or filters"
-                : "No users have purchased your plans yet. Start promoting your services!"}
+    <div className="min-h-screen bg-[#f8faf9] p-4 lg:p-10">
+      <div className="max-w-7xl mx-auto space-y-10">
+        
+        {/* --- HEADER --- */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+              Client <span className="text-emerald-600">Roster</span>
+            </h1>
+            <p className="text-gray-500 font-medium mt-1">
+              Tracking {stats.active} active consultations today.
             </p>
           </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden">
-            {/* Table Header */}
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-gray-200 px-6 py-4">
-              <h2 className="text-lg font-bold text-gray-900">
-                Client Subscriptions ({filteredSubscriptions.length})
-              </h2>
-            </div>
-
-            {/* Table */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Client
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Plan Details
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Duration
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                      Revenue
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-gray-200">
-                  {filteredSubscriptions.map((sub) => (
-                    <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center">
-                            <User className="text-emerald-600" size={18} />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-900">{sub.user.name}</div>
-                            <div className="text-sm text-gray-500 flex items-center gap-1">
-                              <Mail size={12} />
-                              {sub.user.email}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <div>
-                          <div className="font-semibold text-gray-900">{sub.plan.title}</div>
-                          <div className="text-sm text-gray-500">
-                            {sub.plan.durationInDays} days program
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold ${
-                            sub.status === "ACTIVE"
-                              ? "bg-green-100 text-green-700 border border-green-200"
-                              : "bg-gray-100 text-gray-700 border border-gray-200"
-                          }`}
-                        >
-                          {sub.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <div className="space-y-1">
-                          <div className="text-sm text-gray-600 flex items-center gap-1">
-                            <Calendar size={14} className="text-emerald-600" />
-                            <span className="font-medium">Start:</span> {new Date(sub.startDate).toLocaleDateString()}
-                          </div>
-                          <div className="text-sm text-gray-600 flex items-center gap-1">
-                            <Calendar size={14} className="text-red-600" />
-                            <span className="font-medium">End:</span> {new Date(sub.endDate).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <div className="font-bold text-lg text-emerald-600">
-                          ₹{sub.plan.price.toLocaleString()}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100">
+             <TrendingUp size={18} className="text-emerald-600" />
+             <span className="text-emerald-700 font-bold text-sm">Growth: +12% this month</span>
           </div>
-        )}
+        </div>
+
+        {/* --- STATS GRID --- */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: "Total Network", val: stats.total, icon: Users, color: "from-emerald-500 to-teal-600" },
+            { label: "Active Plans", val: stats.active, icon: CheckCircle2, color: "from-emerald-400 to-emerald-600" },
+            { label: "Grace Period", val: stats.expired, icon: Clock, color: "from-slate-500 to-slate-700" },
+            { label: "Total Earnings", val: `₹${stats.revenue.toLocaleString()}`, icon: DollarSign, color: "from-teal-600 to-cyan-700" },
+          ].map((item, idx) => (
+            <div key={idx} className="group bg-white rounded-[2rem] p-6 shadow-sm border border-emerald-50 hover:shadow-xl hover:shadow-emerald-50 transition-all duration-300 relative overflow-hidden">
+              <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${item.color} opacity-[0.03] -mr-8 -mt-8 rounded-full`} />
+              <div className={`w-12 h-12 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-emerald-100`}>
+                <item.icon className="text-white" size={22} />
+              </div>
+              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest">{item.label}</p>
+              <p className="text-3xl font-black text-gray-900 mt-1">{item.val}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* --- SEARCH & ACTIONS --- */}
+        <div className="bg-white rounded-[2.5rem] p-4 shadow-sm border border-emerald-50 flex flex-col lg:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-emerald-600/50" size={20} />
+            <input
+              type="text"
+              placeholder="Search by name, email or plan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-14 pr-6 py-4 bg-emerald-50/30 border-none rounded-[1.8rem] focus:ring-2 focus:ring-emerald-500 transition-all font-medium text-gray-700"
+            />
+          </div>
+          
+          <div className="flex p-1.5 bg-emerald-50/50 rounded-[1.8rem] w-full lg:w-auto">
+            {["ALL", "ACTIVE", "EXPIRED"].map((t) => (
+              <button
+                key={t}
+                onClick={() => setFilter(t as any)}
+                className={`flex-1 lg:flex-none px-8 py-3 rounded-[1.5rem] text-sm font-bold transition-all ${
+                  filter === t 
+                  ? "bg-white text-emerald-700 shadow-sm" 
+                  : "text-emerald-600/60 hover:text-emerald-700"
+                }`}
+              >
+                {t.charAt(0) + t.slice(1).toLowerCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* --- DATA TABLE --- */}
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-emerald-50 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-emerald-50/30">
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800/50">Client Identity</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800/50">Program Type</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800/50">Status</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800/50">Timeline</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-emerald-800/50 text-right">Investment</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-emerald-50/50">
+                {filteredSubscriptions.map((sub) => (
+                  <tr key={sub.id} className="group hover:bg-emerald-50/20 transition-colors">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-100 to-teal-50 flex items-center justify-center text-emerald-700 font-bold shadow-inner">
+                          {sub.user.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{sub.user.name}</div>
+                          <div className="text-xs text-gray-400 font-medium flex items-center gap-1 mt-0.5">
+                            <Mail size={12} /> {sub.user.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="font-bold text-gray-700">{sub.plan.title}</div>
+                      <div className="text-[10px] font-bold text-teal-600/60 uppercase">{sub.plan.durationInDays} Day Protocol</div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                        sub.status === "ACTIVE" 
+                        ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200" 
+                        : "bg-gray-100 text-gray-500 ring-1 ring-gray-200"
+                      }`}>
+                        {sub.status}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2 text-xs font-bold text-gray-600">
+                         <Calendar size={14} className="text-emerald-500" />
+                         <span>{new Date(sub.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                         <span className="text-gray-300">→</span>
+                         <span className={sub.status === "ACTIVE" ? "text-emerald-600" : "text-gray-400"}>
+                            {new Date(sub.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                         </span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="font-black text-gray-900">₹{sub.plan.price.toLocaleString()}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredSubscriptions.length === 0 && (
+            <div className="py-20 flex flex-col items-center justify-center text-center">
+              <div className="w-20 h-20 bg-emerald-50 rounded-[2rem] flex items-center justify-center mb-4">
+                 <Users className="text-emerald-200" size={32} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900">No matches found</h3>
+              <p className="text-gray-400 text-sm max-w-xs">Try searching for a different name or changing your filters.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

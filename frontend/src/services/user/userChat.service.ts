@@ -49,4 +49,7 @@ export const userChatService = {
   deleteMessage:async (message: string) => {
     await api.patch(`/chat/read/${message}`);
   },
+  editMessage:async (message: string,text:string) => {
+    await api.patch(`/chat/read/${message}`);
+  },
 };

@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
-import {
-  Home, Calendar, Video, Users, FileText, Globe, Mail,
-  DollarSign, Settings, ChevronLeft, ChevronRight, Menu, X
+
+import React, { useState, useEffect } from "react";
+import { 
+  Home, Calendar, Video, Users, FileText, Globe, Mail, 
+  DollarSign, Settings, ChevronLeft, ChevronRight, Menu, X 
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const menu = [
   { label: "Dashboard", href: "/nutritionist/dashboard", icon: Home },
@@ -14,99 +14,87 @@ const menu = [
   { label: "My Clients", href: "/nutritionist/clients", icon: Users },
   { label: "Resource Records", href: "/nutritionist/records", icon: FileText },
   { label: "Communities", href: "/nutritionist/communities", icon: Globe },
-  { label: "Messages", href: "/nutritionist/messages", icon: Mail, badge: 3 },
+  { label: "Messages", href: "/nutritionist/messages", icon: Mail, badge: 3},
   { label: "Earnings", href: "/nutritionist/earnings", icon: DollarSign },
   { label: "Settings", href: "/nutritionist/settings", icon: Settings },
 ];
 
 export default function NutritionistSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const router = useRouter();
 
-  // Close mobile menu when route changes
+  // Auto-close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Prevent body scroll when mobile menu is open
+  // Lock body scroll when mobile menu is active
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    document.body.style.overflow = mobileOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
   }, [mobileOpen]);
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-white"
-      >
-        <Menu className="w-6 h-6" />
-      </button>
+      {/* --- MOBILE FLOATING ACTION BUTTON --- */}
+      {!mobileOpen && (
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="lg:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-xl flex items-center justify-center text-white active:scale-90 transition-transform"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      )}
 
-      {/* Mobile Overlay */}
+      {/* --- MOBILE OVERLAY --- */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-300"
         />
       )}
 
-      {/* Sidebar */}
+      {/* --- SIDEBAR CONTAINER --- */}
       <aside
         className={`
-          fixed left-0 top-16 sm:top-20 z-50 lg:z-40
-          h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)]
-          bg-white
-          border-r border-gray-200
+          fixed left-0 top-0 lg:top-16 z-50 lg:z-30
+          h-full lg:h-[calc(100vh-4rem)]
+          bg-white border-r border-emerald-50
           transition-all duration-300 ease-in-out
-          flex flex-col
-          shadow-lg lg:shadow-none
+          flex flex-col shadow-2xl lg:shadow-none
           ${collapsed ? "w-20" : "w-72"}
           ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        {/* Header */}
-        <div className={`px-4 py-4 sm:py-5 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-teal-50`}>
+        {/* Sidebar Header (Mobile & Desktop) */}
+        <div className="p-4 flex items-center justify-between border-b border-gray-50 bg-gradient-to-r from-emerald-50/50 to-teal-50/50">
           {!collapsed && (
-            <h2 className="font-bold text-gray-900 text-sm sm:text-base">Navigation</h2>
+            <span className="text-xs font-bold uppercase tracking-widest text-emerald-700">
+              Nutritionist Suite
+            </span>
           )}
           
-          <div className="flex items-center gap-2">
-            {/* Close button for mobile */}
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setMobileOpen(false)}
-              className="lg:hidden p-2 rounded-xl hover:bg-white transition-colors"
+              className="lg:hidden p-2 rounded-xl hover:bg-white text-gray-500 transition-colors"
             >
-              <X className="w-5 h-5 text-gray-600" />
+              <X size={20} />
             </button>
 
-            {/* Collapse button for desktop */}
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className={`hidden lg:block p-2 rounded-xl hover:bg-white transition-colors ${
-                collapsed ? "mx-auto" : ""
-              }`}
+              className="hidden lg:flex p-2 rounded-xl hover:bg-white text-emerald-600 transition-colors"
             >
-              {collapsed ? (
-                <ChevronRight className="w-5 h-5 text-gray-600" />
-              ) : (
-                <ChevronLeft className="w-5 h-5 text-gray-600" />
-              )}
+              {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
             </button>
           </div>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 sm:px-4">
+        {/* --- NAVIGATION LINKS --- */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-6 px-3 custom-scrollbar">
           <div className="space-y-1.5">
             {menu.map(({ href, label, icon: Icon, badge }) => {
               const isActive = pathname === href;
@@ -114,58 +102,49 @@ export default function NutritionistSidebar() {
               return (
                 <button
                   key={href}
-                  onClick={() => {
-                    router.push(href);
-                    setMobileOpen(false);
-                  }}
+                  onClick={() => router.push(href)}
                   className={`
-                    w-full flex items-center gap-3 rounded-2xl px-3 sm:px-4 py-3 sm:py-3.5
+                    w-full flex items-center gap-3 rounded-xl px-4 py-3
                     transition-all duration-200 relative group
-                    ${collapsed ? "justify-center" : ""}
-                    ${
-                      isActive
-                        ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md"
-                        : "text-gray-700 hover:bg-emerald-50"
-                    }
+                    ${collapsed ? "justify-center" : "justify-start"}
+                    ${isActive 
+                      ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-lg shadow-emerald-100" 
+                      : "text-gray-600 hover:bg-emerald-50 hover:text-emerald-700"}
                   `}
                 >
-                  <div className="relative flex-shrink-0">
-                    <Icon
-                      className={`w-5 h-5 sm:w-6 sm:h-6 transition-colors ${
-                        isActive ? "text-white" : "text-gray-600 group-hover:text-emerald-600"
-                      }`}
-                    />
-                    {badge && !collapsed && (
-                      <span
-                        className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1
-                          bg-red-500 text-white text-[10px] font-bold rounded-full
-                          flex items-center justify-center ring-2 ring-white"
-                      >
+                  <div className="relative">
+                    <Icon size={isActive ? 22 : 20} className={isActive ? "text-white" : "group-hover:scale-110 transition-transform"} />
+                    
+                    {/* Badge */}
+                    {badge && (
+                      <span className={`
+                        absolute -top-2 -right-2 min-w-[18px] h-[18px] px-1 
+                        bg-rose-500 text-white text-[10px] font-bold rounded-full 
+                        flex items-center justify-center border-2 border-white
+                        ${collapsed ? "scale-90" : ""}
+                      `}>
                         {badge}
                       </span>
                     )}
                   </div>
 
                   {!collapsed && (
-                    <span
-                      className={`font-semibold text-sm sm:text-base flex-1 text-left ${
-                        isActive ? "text-white" : "text-gray-700 group-hover:text-emerald-700"
-                      }`}
-                    >
+                    <span className={`text-sm font-semibold whitespace-nowrap ${isActive ? "text-white" : "text-gray-700"}`}>
                       {label}
                     </span>
                   )}
 
-                  {/* Tooltip for collapsed mode */}
+                  {/* Desktop Tooltip for Collapsed Mode */}
                   {collapsed && (
-                    <span className="absolute left-full ml-4 px-3 py-2 bg-gray-900 text-white text-sm rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-lg">
+                    <div className="absolute left-16 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 pointer-events-none">
                       {label}
-                      {badge && (
-                        <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
-                          {badge}
-                        </span>
-                      )}
-                    </span>
+                      <div className="absolute top-1/2 -left-1 -translate-y-1/2 w-2 h-2 bg-gray-900 rotate-45" />
+                    </div>
+                  )}
+
+                  {/* Active Indicator Line */}
+                  {isActive && !collapsed && (
+                    <div className="absolute left-0 w-1 h-6 bg-white rounded-r-full" />
                   )}
                 </button>
               );
@@ -173,6 +152,22 @@ export default function NutritionistSidebar() {
           </div>
         </nav>
       </aside>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #ecfdf5;
+          border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+          background: #d1fae5;
+        }
+      `}</style>
     </>
   );
 }

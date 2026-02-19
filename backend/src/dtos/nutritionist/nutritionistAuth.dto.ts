@@ -12,7 +12,6 @@ export interface NutritionistDetailsUpdateDto {
   experiences: ExperienceDto[];
   bio: string;
   languages: string[]; 
-  country: string;
   cv?: string;
   certifications?: string[];
   totalExperienceYears: number;
@@ -50,3 +49,22 @@ export class NutritionistNameDTO {
     this.profileImage = profileImage;
   }
 }
+
+
+export interface NutritionistDetailsDTO {
+  qualifications: string[];
+  specializations: string[];
+  experiences: {
+    role: string;
+    organization: string;
+    years: number;
+  }[];
+  languages: string[];
+  bio?: string;
+  cvUrl?: string;
+  certificationUrls?: string[];
+}
+
+
+
+

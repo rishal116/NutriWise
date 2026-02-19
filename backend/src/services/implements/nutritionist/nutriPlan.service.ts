@@ -24,7 +24,7 @@ export class NutritionistPlanService implements INutritionistPlanService {
 
   async createPlan(nutritionistId: string, dto: CreatePlanDTO): Promise<{ message: string }> {
     logger.info(`Creating plan for nutritionist ${nutritionistId}`);
-    const MAX_PUBLISHED_PLANS = 2;
+    const MAX_PUBLISHED_PLANS = 3;
 
     if (dto.status === "published") {
       const publishedCount = await this._nutritionistPlanRepository.count({
@@ -48,7 +48,6 @@ export class NutritionistPlanService implements INutritionistPlanService {
       price: dto.price,
       description: dto.description,
       features: dto.features || [],
-      currency: dto.currency || "INR",
       status: dto.status ?? "draft",
     };
 
@@ -122,7 +121,6 @@ export class NutritionistPlanService implements INutritionistPlanService {
     }
 
     const status = profile.nutritionistStatus;
-    const country = profile.country;
     const pricing = PRICING_RULES[status];
 
     if (!pricing) {
@@ -130,8 +128,7 @@ export class NutritionistPlanService implements INutritionistPlanService {
       throw new CustomError("Invalid nutritionist status", StatusCode.INTERNAL_SERVER_ERROR);
     }
 
-    const currency = COUNTRY_CURRENCY_MAP[country] ?? DEFAULT_CURRENCY;
-    return toNutritionistPricingDTO(status, currency, pricing.minPrice, pricing.maxPrice);
+    return toNutritionistPricingDTO(status, pricing.minPrice, pricing.maxPrice);
   }
   
   async getPlanById(nutritionistId: string, planId: string): Promise<PlanDTO> {
