@@ -6,7 +6,6 @@ import { injectable } from "inversify";
 export class StripeService implements IStripeService {
   async createCheckoutSession(data: {
     amount: number;
-    currency: string;
     title: string;
     description: string;
     successUrl: string;
@@ -18,7 +17,7 @@ export class StripeService implements IStripeService {
       mode: "payment",
       line_items: [{
         price_data: {
-          currency: data.currency.toLowerCase(),
+          currency: "inr",
           product_data: {
             name: data.title,
             description: data.description,

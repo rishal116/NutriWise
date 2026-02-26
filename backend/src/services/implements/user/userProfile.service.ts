@@ -7,7 +7,6 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
 import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
-import { log } from "winston";
 
 
 @injectable()
@@ -31,7 +30,6 @@ export class UserProfileService implements IUserProfileService {
       phone: user.phone,
       birthdate: user.birthdate,
       gender: user.gender,
-      age: user.age,
     };
   }
 
@@ -48,7 +46,6 @@ export class UserProfileService implements IUserProfileService {
       phone: data.phone ?? user.phone,
       birthdate: data.birthdate ?? user.birthdate,
       gender: data.gender ?? user.gender,
-      age: data.age ?? user.age,
     };
     
 
@@ -60,7 +57,6 @@ export class UserProfileService implements IUserProfileService {
       phone: updatedUser!.phone,
       birthdate: updatedUser!.birthdate,
       gender: updatedUser!.gender,
-      age: updatedUser!.age,
 
     };
   }
@@ -88,7 +84,7 @@ export class UserProfileService implements IUserProfileService {
     }
     try {
       const cloudinaryUrl = await uploadToCloudinary(file, "user-profile-images");
-      const updatedProfile = await this._healthDetails.updateByUserId(userId, {
+      const updatedProfile = await this._userRepository.updateById(userId, {
         profileImage: cloudinaryUrl,
       });
       console.log("db updated: ",updatedProfile);

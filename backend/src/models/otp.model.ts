@@ -22,7 +22,7 @@ const otpSchema = new Schema<IOTP>(
     otp: {
       type: String,
       required: true,
-      length: 6, // 6-digit OTP
+      length: 6, 
     },
     expiresAt: {
       type: Date,

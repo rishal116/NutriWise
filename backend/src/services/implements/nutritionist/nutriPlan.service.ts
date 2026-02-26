@@ -120,7 +120,7 @@ export class NutritionistPlanService implements INutritionistPlanService {
       throw new CustomError("Nutritionist profile not found", StatusCode.NOT_FOUND);
     }
 
-    const status = profile.nutritionistStatus;
+    const status = profile.coachLevel;
     const pricing = PRICING_RULES[status];
 
     if (!pricing) {

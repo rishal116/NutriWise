@@ -15,12 +15,7 @@ export default function LoginForm() {
   const router = useRouter();
   const dispatch = useDispatch();
   
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.replace("/home");
-    }
-  }, [router]);
+
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

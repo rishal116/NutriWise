@@ -15,7 +15,7 @@ export default function SuccessPage() {
   }, []);
 
   const handleGoPlans = () => {
-    router.push("/plans");
+    router.push("/client/plans");
   };
 
   return (
@@ -108,7 +108,7 @@ export default function SuccessPage() {
           </button>
 
           <button
-            onClick={() => router.push("/plans")}
+            onClick={() => router.push("/client/dashboard")}
             className="bg-white border-2 border-gray-200 text-gray-700 font-semibold py-4 px-8 rounded-xl hover:border-emerald-300 hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-2"
           >
             <span>Go to Dashboard</span>

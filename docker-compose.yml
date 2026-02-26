@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: ./backend
+    container_name: nutri_backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    environment:
+      - MONGO_URI=mongodb://host.docker.internal:27017/nutriwise
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontend
+    container_name: nutri_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      - backend
+
+  mongo:
+    image: mongo:7
+    container_name: nutri_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+  backend_node_modules:
+  frontend_node_modules:

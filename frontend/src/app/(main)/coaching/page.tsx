@@ -266,12 +266,13 @@ export default function NutritionistsPage() {
               <span className="text-sm text-slate-600">Active filter:</span>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full text-sm font-medium text-emerald-700">
                 {filters.specializations}
-                <button
-                  onClick={() => handleSelectSpecialization("")}
-                  className="hover:text-emerald-900"
-                >
-                  <X size={14} />
-                </button>
+                <button onClick={() => handleSelectSpecialization("")}
+  className="hover:text-emerald-900 transition-colors"
+  aria-label="Clear specialization filter" // This solves the error
+  title="Clear filter"
+>
+  <X size={14} />
+</button>
               </div>
             </div>
           )}

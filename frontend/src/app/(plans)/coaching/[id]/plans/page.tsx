@@ -5,7 +5,17 @@ import { useParams, useRouter } from "next/navigation";
 import { nutritionistListService } from "@/services/user/nutritionistList.service";
 import { NutritionistProfileDTO } from "@/constants/nutritionistProfile.constants";
 import BreadcrumbHeader from "@/components/ui/nutritionists/BreadcrumbHeader";
-import { CheckCircle, ArrowLeft, Award, Calendar, Users, TrendingUp, Sparkles, Clock, DollarSign } from "lucide-react";
+import { 
+  CheckCircle, 
+  ArrowLeft, 
+  Award, 
+  Calendar, 
+  Users, 
+  TrendingUp, 
+  Sparkles, 
+  Clock, 
+  IndianRupee 
+} from "lucide-react";
 import { getUserId, getUserRole } from "@/utils/jwt";
 
 interface Plan {
@@ -40,7 +50,6 @@ export default function NutritionistPlansPage() {
 
         const userId = getUserId();
         const role = getUserRole();
-        console.log(userId, " ", role);
 
         if (role === "nutritionist" && userId === profileRes.id) {
           setIsOwnProfile(true);
@@ -74,7 +83,7 @@ export default function NutritionistPlansPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pb-32">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pb-32 font-sans">
       {/* HEADER */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-6">
@@ -86,7 +95,7 @@ export default function NutritionistPlansPage() {
             <span className="font-medium">Back to Profile</span>
           </button>
 
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
             Choose Your Plan
           </h1>
           <p className="text-gray-600 text-lg mb-4">
@@ -105,85 +114,63 @@ export default function NutritionistPlansPage() {
         </div>
       </div>
 
-      {/* HERO SECTION */}
-{/* HERO PROFILE CARD */}
-<div className="max-w-7xl mx-auto px-6 py-10">
-  <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-8 lg:p-10">
-
-    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-
-      {/* Image */}
-      <div className="relative">
-        <div className="absolute -inset-1 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full blur opacity-25"></div>
-        <img
-          src={profile.profileImage || "/images/images.jpg"}
-          className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-2xl object-cover"
-          alt={profile.fullName}
-        />
-        {profile.nutritionistStatus === "TOP_COACH" && (
-          <div className="absolute -top-2 -right-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-2 shadow-lg">
-            <Award className="text-white" size={20} />
-          </div>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="text-center sm:text-left flex-1">
-        <div className="flex flex-col sm:flex-row items-center gap-3 mb-2">
-          <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
-            {profile.fullName}
-          </h2>
-
-          <span
-            className={`px-4 py-1.5 text-xs font-bold rounded-full shadow-sm ${
-              profile.nutritionistStatus === "TOP_COACH"
-                ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white"
-                : "bg-emerald-100 text-emerald-700"
-            }`}
-          >
-            {profile.nutritionistStatus === "TOP_COACH"
-              ? "⭐ TOP COACH"
-              : profile.nutritionistStatus}
-          </span>
-        </div>
-
-        <p className="text-gray-600 font-medium mb-4">
-          Certified Nutrition Coach
-        </p>
-
-        {/* Stats */}
-        <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-          <div className="flex items-center gap-2">
-            <div className="bg-amber-50 p-2 rounded-lg">
-              <Users className="text-amber-600" size={16} />
+      {/* HERO PROFILE CARD */}
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-200 p-8 lg:p-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full blur opacity-25"></div>
+              <img
+                src={profile.profileImage || "/images/images.jpg"}
+                className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full border-4 border-white shadow-2xl object-cover"
+                alt={profile.fullName}
+              />
+              {profile.nutritionistStatus === "TOP_COACH" && (
+                <div className="absolute -top-2 -right-2 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full p-2 shadow-lg">
+                  <Award className="text-white" size={20} />
+                </div>
+              )}
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Clients</p>
-              <p className="text-sm font-bold text-gray-900">
-                {profile.totalPeopleCoached || 0}
-              </p>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <div className="bg-purple-50 p-2 rounded-lg">
-              <TrendingUp className="text-purple-600" size={16} />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Experience</p>
-              <p className="text-sm font-bold text-gray-900">
-                {profile.totalExperienceYears || 0} Years
-              </p>
+            <div className="text-center sm:text-left flex-1">
+              <div className="flex flex-col sm:flex-row items-center gap-3 mb-2">
+                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
+                  {profile.fullName}
+                </h2>
+                <span className={`px-4 py-1.5 text-xs font-bold rounded-full shadow-sm ${
+                  profile.nutritionistStatus === "TOP_COACH"
+                    ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white"
+                    : "bg-emerald-100 text-emerald-700"
+                }`}>
+                  {profile.nutritionistStatus === "TOP_COACH" ? "⭐ TOP COACH" : profile.nutritionistStatus}
+                </span>
+              </div>
+              <p className="text-gray-600 font-medium mb-4">Certified Nutrition Coach</p>
+
+              <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+                <div className="flex items-center gap-2">
+                  <div className="bg-amber-50 p-2 rounded-lg">
+                    <Users className="text-amber-600" size={16} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Clients</p>
+                    <p className="text-sm font-bold text-gray-900">{profile.totalPeopleCoached || 0}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-purple-50 p-2 rounded-lg">
+                    <TrendingUp className="text-purple-600" size={16} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium">Experience</p>
+                    <p className="text-sm font-bold text-gray-900">{profile.totalExperienceYears || 0} Years</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-    </div>
-
-  </div>
-</div>
-
 
       {/* MAIN CONTENT */}
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -223,30 +210,31 @@ export default function NutritionistPlansPage() {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1.5 italic font-medium">
                         <Clock size={16} className="text-emerald-600" />
                         {plan.durationInDays} days
                       </span>
-                      <span className="flex items-center gap-1.5">
+                      <span className="flex items-center gap-1.5 font-medium">
                         <Sparkles size={16} className="text-teal-600" />
                         {plan.category}
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">Total Price</p>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                       {plan.price}
+                      <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Price</p>
+                      <div className="text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent flex items-center justify-end">
+                        <IndianRupee size={22} className="text-emerald-600 mr-0.5" strokeWidth={3} />
+                        {plan.price}
                       </div>
                     </div>
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
                       selectedPlan?.id === plan.id
                         ? "border-emerald-600 bg-emerald-600"
                         : "border-gray-300 group-hover:border-emerald-400"
                     }`}>
                       {selectedPlan?.id === plan.id && (
-                        <CheckCircle className="text-white" size={16} />
+                        <CheckCircle className="text-white" size={20} />
                       )}
                     </div>
                   </div>
@@ -263,49 +251,52 @@ export default function NutritionistPlansPage() {
               <>
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <h3 className="text-2xl font-bold text-gray-900 mb-1">{selectedPlan.title}</h3>
-                    <p className="text-gray-500 flex items-center gap-2">
-                      <Calendar size={16} />
+                    <h3 className="text-2xl font-black text-gray-900 mb-1">{selectedPlan.title}</h3>
+                    <p className="text-gray-500 flex items-center gap-2 font-medium">
+                      <Calendar size={16} className="text-emerald-600" />
                       {selectedPlan.durationInDays} days program
                     </p>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 mb-6 border border-emerald-200">
-                  <p className="text-sm text-gray-600 mb-2">Total Investment</p>
-                  <div className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 mb-6 border border-emerald-200 shadow-inner">
+                  <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-2">Total Investment</p>
+                  <div className="text-5xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent flex items-center">
+                    <IndianRupee size={42} className="text-emerald-600 mr-1" strokeWidth={3} />
                     {selectedPlan.price}
                   </div>
-                  <p className="text-sm text-emerald-700 mt-2">
-                    ~ {(selectedPlan.price / selectedPlan.durationInDays).toFixed(2)} per day
+                  <p className="text-sm text-emerald-700/80 mt-2 italic font-medium">
+                    That's approx <span className="font-bold">₹{(selectedPlan.price / selectedPlan.durationInDays).toFixed(0)}</span> per day
                   </p>
                 </div>
 
                 <div className="mb-8">
-                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 uppercase text-xs tracking-wider">
                     <Sparkles size={18} className="text-emerald-600" />
                     What's Included
                   </h4>
                   <ul className="space-y-3">
                     {selectedPlan.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-3 text-gray-700">
-                        <CheckCircle className="text-emerald-600 flex-shrink-0 mt-0.5" size={20} />
+                      <li key={i} className="flex items-start gap-3 text-gray-700 font-medium leading-tight">
+                        <CheckCircle className="text-emerald-600 flex-shrink-0 mt-0.5" size={18} />
                         <span>{f}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
-                  <p className="text-sm text-blue-900">
-                    💡 <strong>Pro Tip:</strong> This plan is designed to give you sustainable results with expert guidance every step of the way.
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                  <p className="text-sm text-blue-900 leading-relaxed">
+                    💡 <strong>Pro Tip:</strong> This plan focuses on sustainable results with expert guidance throughout your journey.
                   </p>
                 </div>
               </>
             ) : (
               <div className="text-center py-12">
-                <DollarSign className="mx-auto text-gray-300 mb-4" size={48} />
-                <p className="text-gray-500">Select a plan to see details</p>
+                <div className="inline-flex p-4 bg-gray-50 rounded-full mb-4">
+                  <IndianRupee className="text-gray-300" size={48} />
+                </div>
+                <p className="text-gray-500 font-medium">Select a plan to see full details</p>
               </div>
             )}
           </div>
@@ -315,56 +306,50 @@ export default function NutritionistPlansPage() {
       {/* HOW IT WORKS */}
       <div className="max-w-7xl mx-auto px-6 mt-24">
         <div className="text-center mb-16">
-          <h2 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
-            How Our Coaching Program Works
+          <h2 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
+            How Our Program Works
           </h2>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            A simple, proven process to help you achieve your nutrition and wellness goals
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto font-medium">
+            A simple, proven process to help you achieve your wellness goals
           </p>
         </div>
 
         <div className="relative max-w-4xl mx-auto">
           <div className="absolute left-1/2 top-0 h-full w-1 bg-gradient-to-b from-emerald-200 via-teal-200 to-cyan-200 -translate-x-1/2 hidden md:block" />
-
           <div className="space-y-12">
             {[
               {
                 step: "01",
                 icon: Sparkles,
-                title: "Choose a Suitable Plan",
-                desc: "Select a nutrition program aligned with your health and fitness goals.",
+                title: "Choose a Plan",
+                desc: "Select a program aligned with your fitness goals.",
                 color: "from-emerald-500 to-teal-500",
               },
               {
                 step: "02",
                 icon: Users,
-                title: "Get Assigned a Certified Coach",
+                title: "Get Your Coach",
                 desc: "A professional nutritionist will guide and monitor your progress.",
                 color: "from-teal-500 to-cyan-500",
               },
               {
                 step: "03",
                 icon: TrendingUp,
-                title: "Start Your Wellness Journey",
-                desc: "Follow your plan with continuous expert support and measurable results.",
+                title: "Start Growing",
+                desc: "Follow your plan with expert support and measurable results.",
                 color: "from-cyan-500 to-blue-500",
               },
             ].map((item, i) => (
-              <div
-                key={item.step}
-                className={`flex flex-col md:flex-row items-center gap-8 ${
-                  i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-                }`}
-              >
-                <div className="bg-white shadow-lg border border-gray-200 rounded-2xl p-8 w-full md:w-[45%] hover:shadow-xl transition-shadow">
-                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} text-white mb-4`}>
+              <div key={item.step} className={`flex flex-col md:flex-row items-center gap-8 ${i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}`}>
+                <div className="bg-white shadow-lg border border-gray-200 rounded-2xl p-8 w-full md:w-[45%] hover:shadow-2xl transition-all duration-300">
+                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} text-white mb-4 shadow-lg`}>
                     <item.icon size={24} />
                   </div>
-                  <div className="text-emerald-600 font-bold text-sm mb-2">STEP {item.step}</div>
+                  <div className="text-emerald-600 font-black text-xs mb-2 tracking-widest uppercase">STEP {item.step}</div>
                   <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-600">{item.desc}</p>
+                  <p className="text-gray-600 font-medium">{item.desc}</p>
                 </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full z-10 hidden md:flex items-center justify-center text-white font-bold shadow-lg">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full z-10 hidden md:flex items-center justify-center text-white font-black shadow-xl ring-4 ring-white">
                   {item.step}
                 </div>
               </div>
@@ -375,42 +360,33 @@ export default function NutritionistPlansPage() {
 
       {/* STICKY CTA */}
       {selectedPlan && (
-        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-2xl p-4 z-50">
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)] p-4 z-50">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 px-6">
             <div className="text-center sm:text-left">
-              <p className="text-sm text-gray-500">Selected Plan</p>
-              <p className="font-bold text-gray-900">
-                {selectedPlan.title} • <span className="text-emerald-600"> {selectedPlan.price}</span>
-              </p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Selected Selection</p>
+              <div className="flex items-center gap-2">
+                 <p className="font-bold text-gray-900 text-lg">{selectedPlan.title}</p>
+                 <span className="text-gray-300">|</span>
+                 <p className="font-black text-emerald-600 text-xl flex items-center">
+                    <IndianRupee size={18} strokeWidth={3} />
+                    {selectedPlan.price}
+                 </p>
+              </div>
             </div>
 
             {isOwnProfile ? (
-              <button
-                disabled
-                className="w-full sm:w-auto bg-gray-200 text-gray-500 px-8 py-4 rounded-xl font-semibold cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <span>You cannot purchase your own plan</span>
+              <button disabled className="w-full sm:w-auto bg-gray-100 text-gray-400 px-8 py-4 rounded-xl font-bold cursor-not-allowed">
+                Own Profile Selection Disabled
               </button>
             ) : (
-            <button
-            onClick={() =>
-              router.push(`/coaching/${id}/checkout?planId=${selectedPlan.id}`)}
-              className="
-              w-full sm:w-auto
-              min-h-[64px]
-              px-8 py-5
-              bg-gradient-to-r from-emerald-600 to-teal-600
-              text-white text-lg
-              rounded-xl
-              font-semibold
-              hover:shadow-xl
-              transition-all duration-300
-              hover:scale-105
-              flex items-center justify-center gap-2">
+              <button
+                onClick={() => router.push(`/coaching/${id}/checkout?planId=${selectedPlan.id}`)}
+                className="w-full sm:w-auto min-h-[64px] px-10 py-5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-lg rounded-2xl font-black shadow-lg hover:shadow-emerald-200 transition-all duration-300 hover:scale-[1.03] flex items-center justify-center gap-3"
+              >
                 <span>Proceed to Checkout</span>
-                <ArrowLeft className="rotate-180" size={20} />
-                </button>
-              )}
+                <ArrowLeft className="rotate-180" size={22} />
+              </button>
+            )}
           </div>
         </div>
       )}

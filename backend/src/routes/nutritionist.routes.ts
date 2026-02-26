@@ -4,7 +4,6 @@ import { TYPES } from "../types/types";
 import { upload } from "../middlewares/multer.middleware"
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { INutritionistAuthController } from "../controllers/interfaces/nutritionist/INutritionistAuthController";
-import { INutritionistProfileController } from "../controllers/interfaces/nutritionist/INutritionistProfileController";
 import { INutritionistPlanController } from "../controllers/interfaces/nutritionist/INutritionistPlanController";
 import { INutritionistSubscriptionController } from "../controllers/interfaces/nutritionist/INutritionistSubscriptionController";
 import { authorize } from "../middlewares/role.middleware";
@@ -14,7 +13,7 @@ import { INutriMeetingsController } from "../controllers/interfaces/nutritionist
 
 const router = Router();
 const nutritionistAuthController = container.get<INutritionistAuthController>(TYPES.INutritionistAuthController);
-const nutritionistProfileController = container.get<INutritionistProfileController>(TYPES.INutritionistProfileController);
+
 const nutritionistPlanController = container.get<INutritionistPlanController>(TYPES.INutritionistPlanController)
 const nutritionistSubscriptionController = container.get<INutritionistSubscriptionController>(TYPES.INutritionistSubscriptionController)
 const nutritionistMeetingsController = container.get<INutriMeetingsController>(TYPES.INutriMeetingsController)
@@ -29,10 +28,8 @@ router.get("/rejection/:userId",authMiddleware,nutritionistAuthController.getRej
 router.get("/getName",authMiddleware,nutritionistAuthController.getName)
 
 
-router.get("/profile",authMiddleware,nutritionistProfileController.getNutritionistProfile)
-router.put("/profile",authMiddleware,nutritionistProfileController.updateNutritionistProfile)
-router.post("/profile/upload-image",authMiddleware,upload.single("image"),nutritionistProfileController.updateNutritionistProfileImage)
-router.get("/profile/upload-image",authMiddleware,nutritionistProfileController.getNutritionistProfileImage)
+
+
 
 router.post("/plans",authMiddleware,nutritionistPlanController.createPlan);
 router.put("/plans/:planId",authMiddleware,nutritionistPlanController.updatePlan);

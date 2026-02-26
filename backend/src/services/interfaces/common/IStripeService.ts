@@ -1,7 +1,6 @@
 export interface IStripeService {
   createCheckoutSession(data: {
     amount: number;
-    currency: string;
     title: string;
     description: string;
     successUrl: string;

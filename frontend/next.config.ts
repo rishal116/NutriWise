@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: true,
   async headers() {
     return [
       {
@@ -12,10 +13,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  reactStrictMode: true,
   images: {
-    domains: ["res.cloudinary.com"], // allow Cloudinary URLs
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
   },
 };
 
 export default nextConfig;
+
+

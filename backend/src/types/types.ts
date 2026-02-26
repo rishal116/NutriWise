@@ -47,8 +47,6 @@ export const TYPES = {
   INutritionistAuthService: Symbol.for("INutritionistAuthService"),
   INutritionistAuthRepository: Symbol.for("INutritionistAuthRepository"),
   INutritionistDetailsRepository: Symbol.for("INutritionistDetailsRepository"),
-  INutritionistProfileController : Symbol.for("INutritionistProfileController"),
-  INutritionistProfileService : Symbol.for("INutritionistProfileService"),
   INutritionistProfileRepository : Symbol.for("INutritionistProfileRepository"),
   INutritionistPlanController: Symbol.for("INutritionistPlanController"),
   INutritionistPlanService: Symbol.for("INutritionistPlanService"),

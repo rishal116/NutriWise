@@ -79,10 +79,7 @@ import { NutritionistAuthController } from "../controllers/implementations/nutri
 import { INutritionistAuthService } from "../services/interfaces/nutritionist/INutritionistAuthService";
 import { NutritionistAuthService } from "../services/implements/nutritionist/nutriAuth.service";
 
-import { INutritionistProfileController } from "../controllers/interfaces/nutritionist/INutritionistProfileController";
-import { NutritionistProfileController } from "../controllers/implementations/nutritionist/nutritionistProfile.controller";
-import { INutritionistProfileService } from "../services/interfaces/nutritionist/INutritionistProfileService";
-import { NutritionistProfileService } from "../services/implements/nutritionist/nutriProfile.service";
+
 import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutritionistProfileRepository";
 import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutritionistProfile.repository";
 
@@ -188,8 +185,7 @@ container.bind<INutritionistAuthController>(TYPES.INutritionistAuthController).t
 container.bind<INutritionistAuthService>(TYPES.INutritionistAuthService).to(NutritionistAuthService);
 container.bind<IUserNutritionistProfileRepository>(TYPES.IUserNutritionistProfileRepository).to(UserNutritionistRepository);
 
-container.bind<INutritionistProfileController>(TYPES.INutritionistProfileController).to(NutritionistProfileController);
-container.bind<INutritionistProfileService>(TYPES.INutritionistProfileService).to(NutritionistProfileService);
+
 container.bind<INutritionistProfileRepository>(TYPES.INutritionistProfileRepository).to(NutritionistProfileRepository);
 
 

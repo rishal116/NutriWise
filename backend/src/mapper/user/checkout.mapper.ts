@@ -5,7 +5,6 @@ export class CheckoutStripeMapper {
   static toStripeInput(plan: IPlan, userId: string): StripeCheckoutInputDTO {
     return {
       amount: plan.price,
-      currency: plan.currency.toUpperCase(), // Stripe prefers ISO format
       title: plan.title,
       description: `${plan.durationInDays} days program`,
       successUrl: `${process.env.FRONTEND_URL}/coaching/${plan.nutritionistId}/success?session_id={CHECKOUT_SESSION_ID}`,

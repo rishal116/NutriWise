@@ -10,10 +10,10 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   googleId?: string;
+  profileImage?: string;
   phone?: string;
-  birthdate?: string;
+  birthdate?: Date;
   gender?: Gender;
-  age?: number;
   role: UserRole;
   nutritionistStatus?: "pending" | "approved" | "rejected" | "none";
   rejectionReason?: string;
@@ -39,6 +39,7 @@ const userSchema = new Schema<IUser>({
     lowercase: true,
     trim: true,
     match: [/\S+@\S+\.\S+/, "Invalid email format"],
+    index: true
   },
   phone: {
     type: String,
@@ -46,10 +47,10 @@ const userSchema = new Schema<IUser>({
     match: [/^\d{10}$/, "Phone number must be 10 digits"],
   },
   password: { type: String },
-  googleId: { type: String },
-  birthdate: { type: String },
+  googleId: { type: String, index: true },
+  profileImage: { type: String, default: "" },
+  birthdate: { type: Date },
   gender: { type: String, enum: ["male", "female", "other"] },
-  age: { type: Number },
   role: {
     type: String,
     enum: ["client", "nutritionist", "admin"],

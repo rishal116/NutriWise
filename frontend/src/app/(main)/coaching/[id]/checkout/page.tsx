@@ -4,7 +4,17 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { nutritionistListService } from "@/services/user/nutritionistList.service";
 import { checkoutService } from "@/services/user/checkout.service";
-import { CheckCircle, Lock, Shield, CreditCard, ArrowLeft, Calendar, Sparkles, AlertCircle } from "lucide-react";
+import { 
+  CheckCircle, 
+  Lock, 
+  Shield, 
+  CreditCard, 
+  ArrowLeft, 
+  Calendar, 
+  Sparkles, 
+  AlertCircle,
+  IndianRupee 
+} from "lucide-react";
 
 interface Plan {
   id: string;
@@ -45,14 +55,14 @@ export default function CheckoutPage() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-        <div className="text-center">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+        <div className="text-center p-8 bg-white rounded-3xl shadow-xl border border-red-100">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6 mx-auto">
             <AlertCircle className="text-red-600" size={40} />
           </div>
-          <p className="text-red-600 font-semibold text-lg mb-4">{error}</p>
+          <p className="text-red-600 font-bold text-xl mb-4">{error}</p>
           <button
             onClick={() => router.back()}
-            className="text-emerald-600 hover:underline font-medium"
+            className="px-6 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors"
           >
             Go back
           </button>
@@ -66,7 +76,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50">
         <div className="text-center">
           <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-emerald-600 border-r-transparent mb-4"></div>
-          <p className="text-emerald-700 font-semibold">Loading checkout...</p>
+          <p className="text-emerald-700 font-bold tracking-tight">Securing your session...</p>
         </div>
       </div>
     );
@@ -74,7 +84,6 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     if (!agree) return;
-
     try {
       setLoading(true);
       setError(null);
@@ -87,177 +96,162 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pb-20 font-sans">
       {/* HEADER */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-emerald-600 transition-colors mb-4 group"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Back to Plans</span>
-          </button>
-
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl">
-              <CreditCard className="text-white" size={24} />
+      <div className="bg-white border-b border-gray-200/60 shadow-sm sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+          <div>
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-gray-500 hover:text-emerald-600 transition-colors mb-2 group font-bold text-sm"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              <span>Back to Plans</span>
+            </button>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                Checkout
+              </h1>
             </div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-              Secure Checkout
-            </h1>
           </div>
-          <p className="text-gray-600 text-lg">
-            Complete your purchase and start your transformation journey
-          </p>
+          <div className="hidden sm:flex items-center gap-2 text-gray-400 font-bold text-xs uppercase tracking-widest">
+            <Lock size={14} className="text-emerald-500" />
+            Secure Encrypted
+          </div>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-10">
-        {/* Security Banner */}
-        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-2xl p-6 mb-8 flex items-center gap-4">
-          <div className="bg-blue-100 p-3 rounded-xl">
-            <Shield className="text-blue-600" size={24} />
-          </div>
-          <div>
-            <h3 className="font-bold text-blue-900 mb-1">Secure & Encrypted Payment</h3>
-            <p className="text-sm text-blue-700">
-              Your payment information is protected with bank-level 256-bit SSL encryption
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
+          
           {/* LEFT — ORDER SUMMARY */}
-          <div className="lg:col-span-3 space-y-6">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-8 py-6 border-b border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <div className="w-1 h-6 bg-gradient-to-b from-emerald-500 to-teal-500 rounded-full"></div>
+          <div className="lg:col-span-3 space-y-8">
+            <div className="bg-white rounded-[2rem] shadow-xl shadow-emerald-900/5 border border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-emerald-50/50 to-teal-50/50 px-8 py-6 border-b border-gray-100">
+                <h2 className="text-xl font-black text-gray-900 flex items-center gap-3">
+                  <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
                   Order Summary
                 </h2>
               </div>
 
               <div className="p-8">
-                {/* Plan Details */}
-                <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-6 mb-6">
-                  <div className="flex items-start justify-between mb-4">
+                {/* Plan Card */}
+                <div className="bg-gray-50/50 border border-gray-100 rounded-2xl p-6 mb-8">
+                  <div className="flex items-start justify-between mb-6">
                     <div>
-                      <h3 className="font-bold text-xl text-gray-900 mb-2">{plan.title}</h3>
-                      <div className="flex items-center gap-2 text-gray-600">
+                      <h3 className="font-black text-2xl text-gray-900 mb-2">{plan.title}</h3>
+                      <div className="flex items-center gap-2 text-gray-500 font-bold text-sm">
                         <Calendar size={16} className="text-emerald-600" />
-                        <span>{plan.durationInDays} days program</span>
+                        <span>{plan.durationInDays} Days Program Access</span>
                       </div>
                     </div>
-                    <div className="bg-emerald-100 px-4 py-2 rounded-lg">
-                      <span className="text-emerald-700 font-bold">Selected</span>
+                    <div className="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-200">
+                      Active
                     </div>
                   </div>
 
                   {/* Features */}
-                  <div className="border-t border-gray-200 pt-4 mt-4">
-                    <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <Sparkles size={16} className="text-emerald-600" />
-                      What's Included
-                    </h4>
-                    <ul className="space-y-2.5">
-                      {plan.features.map((f: string, i: number) => (
-                        <li key={i} className="flex items-start gap-3 text-gray-700">
-                          <CheckCircle size={18} className="text-emerald-600 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm">{f}</span>
-                        </li>
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Program Highlights</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {plan.features.map((f, i) => (
+                        <div key={i} className="flex items-center gap-3 text-gray-600">
+                          <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                          <span className="text-sm font-medium leading-tight">{f}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 </div>
 
                 {/* Price Breakdown */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-gray-700">
-                    <span>Plan Price</span>
-                    <span className="font-semibold"> {plan.price}</span>
+                <div className="space-y-4 pt-4">
+                  <div className="flex justify-between items-center text-gray-500 font-bold">
+                    <span>Base Program Price</span>
+                    <span className="flex items-center text-gray-900">
+                      <IndianRupee size={16} strokeWidth={2.5} />
+                      {plan.price.toLocaleString()}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center text-gray-700">
-                    <span>Processing Fee</span>
-                    <span className="font-semibold"> 0</span>
+                  <div className="flex justify-between items-center text-gray-500 font-bold">
+                    <span>Platform & Secure Processing</span>
+                    <span className="text-emerald-600 uppercase text-xs tracking-widest font-black">Free</span>
                   </div>
-                  <div className="border-t border-gray-200 pt-3 mt-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-gray-900">Total Payable</span>
-                      <span className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                         {plan.price}
-                      </span>
+                  
+                  <div className="h-px bg-gray-100 my-4"></div>
+                  
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <span className="text-sm font-black text-gray-400 uppercase tracking-tighter">Total Payable</span>
+                      <p className="text-sm text-emerald-600 font-bold">
+                        ≈ <IndianRupee size={12} className="inline" />{(plan.price / plan.durationInDays).toFixed(0)} / day
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      ≈ {(plan.price / plan.durationInDays).toFixed(2)} per day
-                    </p>
+                    <div className="text-4xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent flex items-center">
+                      <IndianRupee size={32} className="text-emerald-600 mr-1" strokeWidth={3} />
+                      {plan.price.toLocaleString()}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Money Back Guarantee */}
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-500 rounded-2xl p-6 text-white shadow-lg">
-              <div className="flex items-start gap-4">
-                <div className="bg-white/20 p-3 rounded-xl">
-                  <Shield size={24} />
+            <div className="bg-gray-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+              <div className="flex items-start gap-5 relative z-10">
+                <div className="bg-emerald-500/20 p-3 rounded-2xl border border-emerald-500/30">
+                  <Shield className="text-emerald-400" size={28} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg mb-2">30-Day Money Back Guarantee</h3>
-                  <p className="text-emerald-50 text-sm">
-                    Not satisfied? Get a full refund within 30 days, no questions asked. Your satisfaction is our priority.
+                  <h3 className="font-black text-xl mb-2">30-Day Happiness Guarantee</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed font-medium">
+                    We're confident in our transformation plans. If you're not satisfied within your first 30 days, we'll refund your investment in full—no questions asked.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT — PAYMENT */}
+          {/* RIGHT — PAYMENT ACTION */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 sticky top-24">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Lock size={20} className="text-emerald-600" />
-                Payment
-              </h2>
-
-              {/* Stripe Badge */}
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-5 mb-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="bg-white p-2 rounded-lg shadow-sm">
-                    <Lock className="text-emerald-600" size={18} />
-                  </div>
-                  <span className="font-bold text-emerald-900">Secured by Stripe</span>
+            <div className="bg-white rounded-[2rem] shadow-2xl shadow-emerald-900/10 border border-gray-100 p-8 sticky top-32">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-emerald-50 rounded-lg">
+                  <CreditCard className="text-emerald-600" size={20} />
                 </div>
-                <p className="text-sm text-emerald-800">
-                  Industry-leading payment security trusted by millions worldwide
+                <h2 className="text-xl font-black text-gray-900">Final Step</h2>
+              </div>
+
+              {/* Stripe Trust Box */}
+              <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 mb-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <Lock className="text-emerald-600" size={16} strokeWidth={3} />
+                  <span className="font-black text-emerald-900 text-xs uppercase tracking-widest">Stripe Secure</span>
+                </div>
+                <p className="text-xs text-emerald-800/70 font-bold leading-relaxed">
+                  You will be redirected to Stripe to complete your purchase. We never store your card details.
                 </p>
               </div>
 
               {/* Terms Agreement */}
-              <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-emerald-300 transition-colors mb-6 group">
+              <label className="flex items-start gap-3 p-5 border-2 border-gray-100 rounded-2xl cursor-pointer hover:border-emerald-200 transition-all mb-8 group">
                 <input
                   type="checkbox"
                   checked={agree}
                   onChange={(e) => setAgree(e.target.checked)}
-                  className="mt-1 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  className="mt-1 w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 transition-all cursor-pointer"
                 />
-                <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                  I agree to the{" "}
-                  <a href="#" className="text-emerald-600 hover:underline font-medium">
-                    Terms of Service
-                  </a>{" "}
-                  and{" "}
-                  <a href="#" className="text-emerald-600 hover:underline font-medium">
-                    Privacy Policy
-                  </a>
+                <span className="text-xs text-gray-500 font-bold leading-normal group-hover:text-gray-700">
+                  I agree to the <a href="#" className="text-emerald-600 underline">Terms of Service</a> & <a href="#" className="text-emerald-600 underline">Refund Policy</a>.
                 </span>
               </label>
 
               {/* Error Message */}
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-                  <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={18} />
-                  <p className="text-sm text-red-800">{error}</p>
+                <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-6 flex items-start gap-3">
+                  <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={16} />
+                  <p className="text-xs text-red-800 font-bold">{error}</p>
                 </div>
               )}
 
@@ -265,64 +259,31 @@ export default function CheckoutPage() {
               <button
                 disabled={!agree || loading}
                 onClick={handleCheckout}
-                className={`w-full py-4 rounded-xl font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2 ${
+                className={`w-full py-5 rounded-2xl font-black text-lg transition-all duration-300 flex items-center justify-center gap-3 shadow-xl ${
                   agree && !loading
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:shadow-xl hover:scale-[1.02]"
-                    : "bg-gray-300 cursor-not-allowed"
+                    ? "bg-gray-900 text-white hover:bg-emerald-600 hover:shadow-emerald-200 hover:scale-[1.02] active:scale-95"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
                 }`}
               >
                 {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Redirecting to Stripe...</span>
-                  </>
+                  <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <Lock size={18} />
-                    <span>Proceed to Secure Payment</span>
+                    <span>Pay </span>
+                    <div className="flex items-center">
+                      <IndianRupee size={20} strokeWidth={3} />
+                      {plan.price.toLocaleString()}
+                    </div>
                   </>
                 )}
               </button>
 
-              <p className="text-xs text-gray-500 text-center mt-4">
-                You will be redirected to Stripe's secure checkout page
-              </p>
-
-              {/* Payment Methods */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center mb-3">We accept</p>
-                <div className="flex items-center justify-center gap-3 opacity-60">
-                  <div className="bg-gray-100 px-3 py-2 rounded text-xs font-semibold text-gray-600">VISA</div>
-                  <div className="bg-gray-100 px-3 py-2 rounded text-xs font-semibold text-gray-600">Mastercard</div>
-                  <div className="bg-gray-100 px-3 py-2 rounded text-xs font-semibold text-gray-600">Amex</div>
-                </div>
+              <div className="mt-8 flex justify-center gap-4 opacity-30 grayscale hover:grayscale-0 transition-all cursor-default">
+                <div className="text-[10px] font-black border border-gray-400 px-2 py-1 rounded">VISA</div>
+                <div className="text-[10px] font-black border border-gray-400 px-2 py-1 rounded">MASTERCARD</div>
+                <div className="text-[10px] font-black border border-gray-400 px-2 py-1 rounded">UPI</div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Trust Indicators */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
-            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Shield className="text-emerald-600" size={24} />
-            </div>
-            <h3 className="font-bold text-gray-900 mb-1">Secure Payment</h3>
-            <p className="text-sm text-gray-600">256-bit SSL encryption</p>
-          </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
-            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <CheckCircle className="text-teal-600" size={24} />
-            </div>
-            <h3 className="font-bold text-gray-900 mb-1">Instant Access</h3>
-            <p className="text-sm text-gray-600">Start immediately after payment</p>
-          </div>
-          <div className="bg-white rounded-xl p-6 border border-gray-200 text-center">
-            <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mx-auto mb-3">
-              <Lock className="text-cyan-600" size={24} />
-            </div>
-            <h3 className="font-bold text-gray-900 mb-1">Privacy Protected</h3>
-            <p className="text-sm text-gray-600">Your data is safe with us</p>
           </div>
         </div>
       </div>

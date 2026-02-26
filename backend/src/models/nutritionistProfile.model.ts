@@ -9,7 +9,6 @@ export interface IExperience {
 export interface INutritionistProfile extends Document {
   _id:Types.ObjectId,
   userId: Types.ObjectId;
-  profileImage?: string;
   qualifications: string[];
   specializations: string[];
   experiences: IExperience[];
@@ -19,7 +18,7 @@ export interface INutritionistProfile extends Document {
   cv?: string;
   certifications?: string[];
   totalExperienceYears?: number;
-  nutritionistStatus: "BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
+  coachLevel: "BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
   totalPeopleCoached?:number;
   rating?: number;
   createdAt: Date;
@@ -35,7 +34,6 @@ const ExperienceSchema = new Schema<IExperience>({
 
 const NutritionistDetailsSchema = new Schema<INutritionistProfile>({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  profileImage: { type: String,default: "" },
   qualifications: {
     type: [String],
     required: [true, "At least one qualification is required"],
@@ -64,7 +62,7 @@ const NutritionistDetailsSchema = new Schema<INutritionistProfile>({
     cv: { type: String },
     certifications: { type: [String] }, 
     totalExperienceYears: { type: Number, min: 0 },
-    nutritionistStatus: {
+    coachLevel: {
       type: String,
       enum: ["BEGINNER", "VERIFIED", "EXPERT", "TOP_COACH"],
       default: "BEGINNER",

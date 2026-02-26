@@ -5,38 +5,45 @@ export type ChatType = "direct" | "group";
 export interface IConversation extends Document {
   _id: Types.ObjectId;
   participants: Types.ObjectId[];
+  participantCount: number;
   chatType: ChatType;
-
   title?: string;
   groupAvatar?: string;
   adminId?: Types.ObjectId;
-
   directKey?: string;
-
   lastMessageId?: Types.ObjectId;
   lastMessageAt?: Date;
-
-  unreadCount?: Map<string, number>;
-  isDeleted?: boolean;
-
+  lastMessagePreview?: string;
+  isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const conversationSchema = new Schema<IConversation>(
   {
-    participants: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+    participants: {
+      type: [Schema.Types.ObjectId],
+      ref: "User",
+      required: true,
+      validate: {
+        validator: function (val: Types.ObjectId[]) {
+          return val.length >= 2;
+        },
+        message: "Conversation must have at least 2 participants",
       },
-    ],
+      index: true,
+    },
+
+    participantCount: {
+      type: Number,
+      required: true,
+    },
 
     chatType: {
       type: String,
       enum: ["direct", "group"],
       default: "direct",
+      index: true,
     },
 
     title: String,
@@ -45,12 +52,12 @@ const conversationSchema = new Schema<IConversation>(
     adminId: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      index: true,
     },
-
+    
     directKey: {
       type: String,
-      unique: true,
-      sparse: true,
+      trim: true,
     },
 
     lastMessageId: {
@@ -63,11 +70,7 @@ const conversationSchema = new Schema<IConversation>(
       index: true,
     },
 
-    unreadCount: {
-      type: Map,
-      of: Number,
-      default: {},
-    },
+    lastMessagePreview: String,
 
     isDeleted: {
       type: Boolean,
@@ -78,7 +81,15 @@ const conversationSchema = new Schema<IConversation>(
   { timestamps: true }
 );
 
-conversationSchema.index({ participants: 1 });
+conversationSchema.index(
+  { directKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { chatType: "direct" },
+  }
+);
+
+conversationSchema.index({ participants: 1, lastMessageAt: -1 });
 
 export const ConversationModel = model<IConversation>(
   "Conversation",
