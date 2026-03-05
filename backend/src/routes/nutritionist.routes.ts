@@ -9,6 +9,7 @@ import { INutritionistSubscriptionController } from "../controllers/interfaces/n
 import { authorize } from "../middlewares/role.middleware";
 import { ROLES } from "../constants/index";
 import { INutriMeetingsController } from "../controllers/interfaces/nutritionist/INutriMeetingsController";
+import { INutriProgramController } from "../controllers/interfaces/nutritionist/INutriProgramController";
 
 
 const router = Router();
@@ -17,7 +18,7 @@ const nutritionistAuthController = container.get<INutritionistAuthController>(TY
 const nutritionistPlanController = container.get<INutritionistPlanController>(TYPES.INutritionistPlanController)
 const nutritionistSubscriptionController = container.get<INutritionistSubscriptionController>(TYPES.INutritionistSubscriptionController)
 const nutritionistMeetingsController = container.get<INutriMeetingsController>(TYPES.INutriMeetingsController)
-
+const nutriProgramController = container.get<INutriProgramController>(TYPES.INutriProgramController)
 
 router.get("/details/me",authMiddleware,nutritionistAuthController.getMyDetails)
 router.post("/submit-details",authMiddleware,upload.fields([
@@ -27,20 +28,51 @@ router.post("/submit-details",authMiddleware,upload.fields([
 router.get("/rejection/:userId",authMiddleware,nutritionistAuthController.getRejectionReason);
 router.get("/getName",authMiddleware,nutritionistAuthController.getName)
 
-
-
-
-
 router.post("/plans",authMiddleware,nutritionistPlanController.createPlan);
 router.put("/plans/:planId",authMiddleware,nutritionistPlanController.updatePlan);
 router.get("/plans",authMiddleware,nutritionistPlanController.getMyPlans);
-router.get("/specializations",authMiddleware,nutritionistPlanController.getSpecializations);
+router.get("/allowed-plan-categories",authMiddleware,nutritionistPlanController.getAllowedPlanCategories);
 router.get("/pricing", authMiddleware,nutritionistPlanController.getNutritionistPricing);
 router.get("/plans/:planId", authMiddleware, nutritionistPlanController.getPlanById);
 router.put("/plans/:planId", authMiddleware, nutritionistPlanController.updatePlan);
 
 router.get("/subscription",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistSubscriptionController.getSubscribers);
 
+router.get("/programs",authMiddleware,authorize(ROLES.NUTRITIONIST),nutriProgramController.getPrograms)
+router.get("/programs/:programId",authMiddleware,authorize(ROLES.NUTRITIONIST),nutriProgramController.getProgramDetails);
+router.get(
+  "/programs/:programId/days",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriProgramController.getProgramDays
+);
+router.get(
+  "/program-days/:dayId",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriProgramController.getProgramDayDetails
+);
+
+router.post(
+  "/programs/:programId/days",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriProgramController.createProgramDay
+);
+
+router.patch(
+  "/program-days/:dayId",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriProgramController.updateProgramDay
+);
+
+router.delete(
+  "/program-days/:dayId",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriProgramController.deleteProgramDay
+);
 
 
 router.get("/meetings",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistMeetingsController.getMeetings)

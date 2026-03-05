@@ -38,6 +38,7 @@ const navSections: NavSection[] = [
     title: "My Journey",
     items: [
       { name: "My Plan", href: "/client/plans", icon: Calendar },
+      { name: "My Programs", href: "/client/programs", icon: Calendar },
       { name: "Tasks", href: "/client/tasks", icon: ClipboardList },
       { name: "Meetings", href: "/client/meetings", icon: Video },
       { name: "Progress", href: "/client/progress", icon: Trophy },
@@ -79,9 +80,15 @@ export default function ProfileSidebar({
       {!compact && (
         <div className="lg:hidden flex items-center justify-between p-6 border-b border-gray-50">
           <span className="text-xl font-bold text-gray-900 tracking-tight">Menu</span>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-            <X className="w-6 h-6" />
-          </button>
+          <button
+          type="button"
+  onClick={onClose}
+  aria-label="Close menu"
+  title="Close menu"
+  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+>
+  <X className="w-6 h-6" />
+</button>
         </div>
       )}
 

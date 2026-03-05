@@ -12,6 +12,7 @@ export interface IProgramDay {
   dayNumber: number;
 
   meals?: {
+    _id?: Types.ObjectId;
     mealType: MealType;
     title: string;
     description?: string;
@@ -19,12 +20,14 @@ export interface IProgramDay {
   }[];
 
   workouts?: {
+    _id?: Types.ObjectId;
     title: string;
     duration: number;
     instructions?: string;
   }[];
 
   habits?: {
+    _id?: Types.ObjectId;
     title: string;
     targetValue?: number;
     unit?: string;
@@ -108,8 +111,6 @@ ProgramDaySchema.index(
   { userProgramId: 1, dayNumber: 1 },
   { unique: true }
 );
-
-ProgramDaySchema.index({ userProgramId: 1, dayNumber: 1 });
 
 export const ProgramDayModel = model<IProgramDay>(
   "ProgramDay",

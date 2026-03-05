@@ -1,12 +1,25 @@
+import {
+  ActivityLevel,
+  FitnessLevel,
+  DietType,
+  GoalType,
+  TimelineType,
+} from "@/types/health.types";
+
 export interface HealthDetailsPayload {
-  height: number;
-  weight: number;
-  activityLevel: string;
-  dietType: string;
-  dailyWaterIntake: number;
-  sleepDuration: string;
-  goal: string;
-  targetWeight: number;
-  preferredTimeline: string;
-  focusArea: string;
+  heightCm: number;
+  weightKg: number;
+
+  activityLevel: ActivityLevel;
+  fitnessLevel: FitnessLevel;
+  dietType: DietType;
+
+  dailyWaterIntakeLiters: number;
+  sleepDurationHours: number;
+
+  goal: GoalType;
+  preferredTimeline: TimelineType;
+
+  targetWeightKg?: number;
+  focusAreas?: string[];
 }

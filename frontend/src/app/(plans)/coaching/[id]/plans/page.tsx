@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { nutritionistListService } from "@/services/user/nutritionistList.service";
-import { NutritionistProfileDTO } from "@/constants/nutritionistProfile.constants";
+import { NutritionistProfileDTO } from "@/constants/nutritionist/nutritionistProfile.constants";
 import BreadcrumbHeader from "@/components/ui/nutritionists/BreadcrumbHeader";
 import { 
   CheckCircle, 

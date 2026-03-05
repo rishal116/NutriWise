@@ -18,8 +18,6 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
       { $set: { password: hashedPassword } }
     );
   }
-
-
   
   async updatePasswordById(userId: string,hashedPassword: string): Promise<void> {
     await this._model.updateOne(
@@ -56,6 +54,11 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
     .find({ _id: { $in: ids.map(id => new Types.ObjectId(id)) } })
     .lean<IUser[]>();
   }
-
+  
+  async getProfileImageById(userId: string): Promise<Pick<IUser, "profileImage"> | null> {
+    return this._model.findById(userId)
+    .select("profileImage")
+    .lean();
+  }
 
 }

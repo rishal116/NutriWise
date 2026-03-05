@@ -3,7 +3,6 @@ import { UserPlanResponseDTO } from "../../dtos/user/userPlan.dto";
 
 export class UserPlanMapper {
   static toUserDTO(plan: IUserPlanPopulated): UserPlanResponseDTO {
-    console.log("4");
     
     return {
 

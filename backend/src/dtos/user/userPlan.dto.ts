@@ -11,8 +11,7 @@ export interface UserPlanResponseDTO {
     id: string;
     name: string;
   };
-
-  status: "ACTIVE" | "EXPIRED" | "CANCELLED";
+  status: "ACTIVE" | "EXPIRED" | "CANCELLED" | "PENDING";
   startDate: Date;
   endDate: Date;
 }

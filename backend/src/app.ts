@@ -2,19 +2,23 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
-import userRoutes from "./routes/user.routes";
-import adminRoutes from "./routes/admin.routes";
-import nutriRoutes from "./routes/nutritionist.routes";
-import { errorMiddleware } from "./middlewares/error.middleware";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 
+import userRoutes from "./routes/user.routes";
+import adminRoutes from "./routes/admin.routes";
+import nutriRoutes from "./routes/nutritionist.routes";
+import { errorMiddleware } from "./middlewares/error.middleware";
+import logger from "./utils/logger";
+
 dotenv.config();
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
 
-app.use("/stripe/webhook",
+app.use(
+  "/stripe/webhook",
   express.raw({ type: "application/json" })
 );
 
@@ -23,17 +27,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
-
 app.use(
   cors({
-    origin:process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );
 
+if (isProduction && !process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET is required in production");
+}
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "secret-key",
+    secret: process.env.SESSION_SECRET || "dev-secret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -42,9 +49,9 @@ app.use(
       ttl: 60 * 60 * 24,
     }),
     cookie: {
-      secure: process.env.NODE_ENV === "production",
+      secure: isProduction,
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      sameSite: isProduction ? "none" : "lax",
     },
   })
 );
@@ -52,8 +59,6 @@ app.use(
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
 app.use("/nutritionist", nutriRoutes);
-
-app.use(morgan("dev"));
 
 app.use(errorMiddleware);
 

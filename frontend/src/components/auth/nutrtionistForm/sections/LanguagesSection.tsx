@@ -1,7 +1,7 @@
 import React from "react";
 import { Section, SelectField, AddButton } from "../FormComponents";
 import { Globe } from "lucide-react";
-import { LANGUAGE_OPTIONS } from "@/constants/nutritionistDetails.constants";
+import { LANGUAGE_OPTIONS } from "@/constants/nutritionist/nutritionistDetails.constants";
 import { X } from "lucide-react";
 
 interface Props {

@@ -46,7 +46,18 @@ export const NUTRITIONIST_SPECIALIZATIONS = [
   "Plant-Based / Vegan Nutrition",
   "Nutrition Counseling & Lifestyle Coaching",
   "Prenatal & Maternal Nutrition",
-  "Immunity & Wellness"
+  "Immunity & Wellness",
+
+  // 🔥 HIGH-VALUE ADDITIONS
+  "Oncology Nutrition",
+  "Bariatric Nutrition",
+  "PCOS & Hormonal Health",
+  "Eating Disorders",
+  "Therapeutic Diet Planning",
+
+  // ⭐ OPTIONAL STRATEGIC
+  "Functional & Integrative Nutrition",
+  "Corporate Wellness"
 ];
 
 

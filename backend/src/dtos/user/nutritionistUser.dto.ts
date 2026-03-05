@@ -13,7 +13,7 @@ export class NutritionistUserSideDTO {
   constructor(user: IUser, profile: INutritionistProfile) {
     this.id = user._id.toString();
     this.fullName = user.fullName;
-    this.profileImage = profile.profileImage;
+    this.profileImage = user.profileImage;
     this.rating = profile.rating;
     this.totalPeopleCoached = profile.totalPeopleCoached;
     this.specializations = profile.specializations;
@@ -84,7 +84,7 @@ export class NutritionistUserDTO implements NutritionistUserDto {
     this.rating = profile?.rating ?? 0;
     this.bio = profile?.bio ?? "";
     this.totalExperienceYears = profile?.totalExperienceYears ?? 0;
-    this.profileImage = profile?.profileImage ?? "";
+     this.profileImage = user.profileImage;
     this.languages = profile?.languages ?? [];
     this.qualifications = profile?.qualifications ?? [];
     this.experiences = profile?.experiences ?? [];
@@ -93,7 +93,7 @@ export class NutritionistUserDTO implements NutritionistUserDto {
     
     // NEW FIELDS
     this.totalPeopleCoached = profile?.totalPeopleCoached ?? 0;
-    this.nutritionistStatus = profile?.nutritionistStatus ?? "BEGINNER";
+    this.nutritionistStatus = profile?.coachLevel ?? "BEGINNER";
   }
 }
 

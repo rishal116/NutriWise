@@ -82,6 +82,8 @@ export default function NutritionistHeader() {
 
             {/* Home Icon */}
             <button
+             type="button"
+  aria-label="Remove feature"
               onClick={() => router.push("/nutritionist/dashboard")}
               className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 ${
                 pathname === "/home" ? "bg-emerald-50 text-emerald-600 shadow-inner" : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"

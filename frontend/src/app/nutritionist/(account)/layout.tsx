@@ -5,41 +5,52 @@ import NutritionistProfileSidebar from "@/components/nutritionist/profile/Nutrit
 import { Menu } from "lucide-react";
 
 export default function NutritionistProfileLayout({ children }: { children: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Top Bar */}
-      <div className="lg:hidden flex items-center bg-white border-b px-4 h-16 fixed top-0 w-full z-30">
-        <button 
-          onClick={() => setIsSidebarOpen(true)}
-          className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md"
+    <div className="flex flex-col min-h-screen bg-white">
+      {/* Mobile breadcrumb bar */}
+      <div className="lg:hidden sticky top-16 left-0 right-0 bg-white border-b border-gray-100 px-4 h-10 flex items-center z-30">
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="flex items-center gap-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest"
         >
-          <Menu size={24} />
+          <Menu size={14} />
+          Settings Menu
         </button>
-        <span className="ml-4 font-bold text-slate-800">Profile Settings</span>
       </div>
 
-      {/* Overlay Backdrop */}
-      {isSidebarOpen && (
+      <NutritionistProfileSidebar 
+        isOpen={isMobileOpen} 
+        onClose={() => setIsMobileOpen(false)} 
+        onCollapseChange={(val) => setIsCollapsed(val)}
+      />
+
+      {/* Backdrop */}
+      {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 bg-slate-900/10 backdrop-blur-sm z-30 lg:hidden"
+          onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      {/* Sidebar Component */}
-      <NutritionistProfileSidebar 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
-
-      {/* Main Content Area */}
-      <main className="pt-16 lg:pt-10 lg:pl-72 transition-all">
-        <div className="p-4 md:p-8 max-w-5xl mx-auto">
-          {children}
-        </div>
-      </main>
+      {/* Main Content Area - Dynamic Margin */}
+      <main 
+  className={`
+    flex-1 transition-all duration-300 ease-in-out
+    /* Dynamic Left Padding based on Sidebar state */
+    ${isCollapsed ? "lg:pl-24" : "lg:pl-64"} 
+    pt-6 lg:pt-8
+  `}
+>
+  {/* Added 'w-full' to ensure content stretches to the remaining space */}
+  <div className="p-4 md:p-8 lg:p-10 max-w-full mx-auto">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+      {children}
+    </div>
+  </div>
+</main>
     </div>
   );
 }

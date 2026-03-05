@@ -22,6 +22,13 @@ export const TYPES = {
 
   IUserMeetingsController:Symbol.for("IUserMeetingsController"),
   IUserMeetingsService:Symbol.for("IUserMeetingsService"),
+  IUserProgramRepository:Symbol.for("IUserProgramRepository"),
+  IProgramDayRepository:Symbol.for("IProgramDayRepository"),
+  IUserProgramService:Symbol.for("IUserProgramService"),
+  IUserProgramController:Symbol.for("IUserProgramController"),
+  ITaskService:Symbol.for("ITaskService"),
+  ITaskLogRepository:Symbol.for("ITaskLogRepository"),
+  ITaskController:Symbol.for("ITaskController"),
 
   
   
@@ -52,6 +59,8 @@ export const TYPES = {
   INutritionistPlanService: Symbol.for("INutritionistPlanService"),
   INutritionistPlanRepository: Symbol.for("INutritionistPlanRepository"),
   INutritionistSubscriptionController: Symbol.for("INutritionistSubscriptionController"),
+  INutriProgramService:Symbol.for("INutriProgramService"),
+  INutriProgramController:Symbol.for("INutriProgramController"),
 
   // meetings
   INutriMeetingsController:Symbol.for("INutriMeetingsController"),

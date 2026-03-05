@@ -1,7 +1,7 @@
 import React from "react";
 import { Section } from "../FormComponents";
 import { Briefcase } from "lucide-react";
-import { NUTRITIONIST_SPECIALIZATIONS } from "@/constants/nutritionistDetails.constants";
+import { NUTRITIONIST_SPECIALIZATIONS } from "@/constants/nutritionist/nutritionistDetails.constants";
 
 interface Props {
   specializations: string[];

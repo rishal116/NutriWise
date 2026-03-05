@@ -35,3 +35,8 @@ body {
 .video-container-transition {
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+
+.progress-bar-fill {
+  @apply bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000;
+}

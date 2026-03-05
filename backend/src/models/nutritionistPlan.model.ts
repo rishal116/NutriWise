@@ -1,11 +1,10 @@
 import { Schema, model, Types } from "mongoose";
-import { HealthCategory } from "../constants/index";
 
 export interface IPlan {
   _id: Types.ObjectId;
   nutritionistId: Types.ObjectId;
   title: string;
-  category: HealthCategory;
+  category:string;
   durationInDays: number;
   price: number;
   currency: string;
@@ -15,7 +14,6 @@ export interface IPlan {
   tags?: string[];
   status: "draft" | "published" | "archived";
   isDeleted: boolean;
-  version: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -28,12 +26,16 @@ const PlanSchema = new Schema<IPlan>(
       required: true,
       index: true,
     },
-
-    title: { type: String, required: true },
+    
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
 
     category: {
       type: String,
-      enum: Object.values(HealthCategory),
       required: true,
       index: true,
     },
@@ -54,10 +56,15 @@ const PlanSchema = new Schema<IPlan>(
 
     currency: {
       type: String,
+      enum: ["INR", "USD"],
       default: "INR",
     },
-
-    description: { type: String, required: true },
+    
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
     features: {
       type: [String],
@@ -82,13 +89,14 @@ const PlanSchema = new Schema<IPlan>(
       default: false,
       index: true,
     },
-
-    version: {
-      type: Number,
-      default: 1,
-    },
   },
   { timestamps: true }
 );
+
+PlanSchema.index({
+  nutritionistId: 1,
+  status: 1,
+  isDeleted: 1,
+});
 
 export const PlanModel = model<IPlan>("Plan", PlanSchema);

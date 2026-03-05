@@ -26,10 +26,13 @@ export class NutritionistProfileRepository extends BaseRepository<INutritionistP
       { new: true, runValidators: true }
     ).exec();
   }
-  
-  async getProfileImageByUserId(userId: string): Promise<{ profileImage?: string } | null> {
-    return this._model.findOne({ userId }, { profileImage: 1, _id: 0 }).lean();
-  }
+async getProfileImageByUserId(
+  userId: string
+): Promise<{ profileImage?: string } | null> {
+  return this._model
+    .findOne({ userId }, { profileImage: 1, _id: 0 })
+    .lean<{ profileImage?: string }>();
+}
 
   async findCompleteProfile(
     userId: string

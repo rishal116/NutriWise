@@ -39,6 +39,8 @@ import { IUserAccountController } from "../controllers/interfaces/user/IUserAcco
 import { UserAccountController } from "../controllers/implementations/user/userAccount.controller";
 import { IUserAccountService } from "../services/interfaces/user/IUserAccountService";
 import { UserAccountService } from "../services/implements/user/userAccount.service";
+import { IUserProgramRepository } from "../repositories/interfaces/user/IUserProgramRepository";
+import { UserProgramRepository } from "../repositories/implements/user/userProgram.repository";
 
 
 // ---------------- ADMIN ----------------
@@ -140,6 +142,22 @@ import { UserMeetingsService } from "../services/implements/user/userMeetings.se
 // socket
 import { ISocketService } from "../services/interfaces/socket/ISocketService";
 import { SocketService } from "../services/implements/socket/socket.service";
+import { INutriProgramController } from "../controllers/interfaces/nutritionist/INutriProgramController";
+import { NutriProgramController } from "../controllers/implementations/nutritionist/nutriProgram.controller";
+import { INutriProgramService } from "../services/interfaces/nutritionist/INutriProgramService";
+import { NutriProgramService } from "../services/implements/nutritionist/nutriProgram.service";
+import { IProgramDayRepository } from "../repositories/interfaces/user/IProgramDayRepository";
+import { ProgramDayRepository } from "../repositories/implements/user/programDay.repository";
+import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
+import { UserProgramController } from "../controllers/implementations/user/userProgram.controller";
+import { IUserProgramService } from "../services/interfaces/user/IUserProgramService";
+import { UserProgramService } from "../services/implements/user/userProgram.service";
+import { ITaskController } from "../controllers/interfaces/user/ITaskController";
+import { TaskController } from "../controllers/implementations/user/task.controller";
+import { ITaskService } from "../services/interfaces/user/ITaskService";
+import { TaskService } from "../services/implements/user/task.service";
+import { ITaskLogRepository } from "../repositories/interfaces/user/ITaskLogRepository";
+import { TaskLogRepository } from "../repositories/implements/user/taskLog.repository";
 
 
 
@@ -164,7 +182,13 @@ container.bind<IUserPlanController>(TYPES.IUserPlanController).to(UserPlanContro
 container.bind<IUserPlanService>(TYPES.IUserPlanService).to(UserPlanService)
 container.bind<IUserAccountService>(TYPES.IUserAccountService).to(UserAccountService)
 container.bind<IUserAccountController>(TYPES.IUserAccountController).to(UserAccountController)
-
+container.bind<IUserProgramRepository>(TYPES.IUserProgramRepository).to(UserProgramRepository)
+container.bind<IProgramDayRepository>(TYPES.IProgramDayRepository).to(ProgramDayRepository)
+container.bind<IUserProgramController>(TYPES.IUserProgramController).to(UserProgramController)
+container.bind<IUserProgramService>(TYPES.IUserProgramService).to(UserProgramService)
+container.bind<ITaskController>(TYPES.ITaskController).to(TaskController)
+container.bind<ITaskService>(TYPES.ITaskService).to(TaskService)
+container.bind<ITaskLogRepository>(TYPES.ITaskLogRepository).to(TaskLogRepository)
 // -------- ADMIN BINDINGS --------
 container.bind<IAdminAuthController>(TYPES.IAdminAuthController).to(AdminAuthController);
 container.bind<IAdminAuthService>(TYPES.IAdminAuthService).to(AdminAuthService);
@@ -198,6 +222,8 @@ container.bind<INutritionistSubscriptionController>(TYPES.INutritionistSubscript
 container.bind<INutriMeetingsController>(TYPES.INutriMeetingsController).to(NutriMeetingsController)
 container.bind<INutriMeetingsService>(TYPES.INutriMeetingsService).to(NutriMeetingsService)
 container.bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository).to(NutriMeetingsRepository)
+container.bind<INutriProgramController>(TYPES.INutriProgramController).to(NutriProgramController)
+container.bind<INutriProgramService>(TYPES.INutriProgramService).to(NutriProgramService)
 
 
 

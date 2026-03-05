@@ -2,11 +2,12 @@
 import { useEffect, useState } from "react";
 import { 
   Sparkles, Plus, X, CheckCircle2, 
-  IndianRupee, Calendar, Briefcase, 
-  Info, Save, Send, AlertCircle  , PlusCircle
+  IndianRupee, Briefcase, 
+  Info, Save, Send, PlusCircle
 } from "lucide-react";
 import { nutritionistPlanService } from "@/services/nutritionist/nutritionistPlan.service";
 import { useRouter } from "next/navigation";
+import {Select, SummaryItem, SectionCard, Input, Textarea} from "@/components/nutritionist/NutritionistPlan"
 
 import { toast } from "sonner";
 
@@ -45,23 +46,38 @@ export default function CreatePlanPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof CreatePlanForm, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    const initData = async () => {
-      try {
-        const [specRes, priceRes] = await Promise.all([
-          nutritionistPlanService.getspecializations(),
-          nutritionistPlanService.getPricingRules()
-        ]);
-        setCategories(specRes.data.specializations.map((s: string) => ({ id: s, label: s })));
-        setPriceLimits({ min: priceRes.data.minPrice, max: priceRes.data.maxPrice });
-      } catch (err) {
-        console.error("Initialization failed", err);
-      } finally {
-        setLoadingCategories(false);
-      }
-    };
-    initData();
-  }, []);
+useEffect(() => {
+  const initData = async () => {
+    try {
+      const [catRes, priceRes] = await Promise.all([
+        nutritionistPlanService.getAllowedCategories(),
+        nutritionistPlanService.getPricingRules(),
+      ]);
+
+      const allowed = Array.isArray(catRes.data)
+        ? catRes.data
+        : [];        
+
+      setCategories(
+        allowed.map((c: string) => ({
+          id: c,
+          label: c.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+        }))
+      );
+
+      setPriceLimits({
+        min: priceRes.data.minPrice,
+        max: priceRes.data.maxPrice,
+      });
+    } catch (err) {
+      console.error("Initialization failed", err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  initData();
+}, []);
 
   const updateField = (field: keyof CreatePlanForm, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -73,7 +89,7 @@ export default function CreatePlanPage() {
     const price = Number(form.price);
 
     if (!form.title.trim()) newErrors.title = "Plan title is required";
-    if (!form.category) newErrors.category = "Select a specialization";
+    if (!form.category) newErrors.category = "Select a category";
     if (!form.duration) newErrors.duration = "Select plan length";
     if (!form.price) newErrors.price = "Price is required";
     if (priceLimits && (price < priceLimits.min || price > priceLimits.max)) {
@@ -87,6 +103,7 @@ export default function CreatePlanPage() {
   };
   
   const handleSubmit = async (status: "draft" | "published") => {
+    if (isSubmitting) return;
     if (!validateForm()) {
       toast.error("Please fix the errors in the form");
       return;
@@ -213,11 +230,13 @@ export default function CreatePlanPage() {
                   </div>
                   {form.features.length > 1 && (
                     <button
-                      onClick={() => updateField("features", form.features.filter((_, idx) => idx !== i))}
-                      className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                    >
-                      <X size={18} />
-                    </button>
+  type="button"
+  aria-label="Remove feature"
+  onClick={() => updateField("features", form.features.filter((_, idx) => idx !== i))}
+  className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+>
+  <X size={18} />
+  </button>
                   )}
                 </div>
               ))}
@@ -247,8 +266,8 @@ export default function CreatePlanPage() {
                <div className="flex gap-2 text-emerald-800">
                   <Info size={16} className="shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-relaxed">
-                    Choose a price that reflects your expertise. Most successful nutritionists set their 30-day plans between ₹2000 - ₹5000.
-                  </p>
+  {`Choose a price that reflects your expertise. Most successful nutritionists set their 30-day plans between ₹${priceLimits?.min} - ₹${priceLimits?.max}.`}
+</p>
                </div>
             </div>
           </SectionCard>
@@ -270,81 +289,3 @@ export default function CreatePlanPage() {
   );
 }
 
-/* ============================ SUB-COMPONENTS ============================ */
-
-function SectionCard({ icon: Icon, title, children }: any) {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-emerald-50 rounded-lg">
-                    <Icon className="w-5 h-5 text-emerald-600" />
-                </div>
-                <h2 className="font-bold text-gray-800">{title}</h2>
-            </div>
-            {children}
-        </div>
-    );
-}
-
-function SummaryItem({ label, value }: { label: string, value: string }) {
-    return (
-        <div>
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter">{label}</p>
-            <p className="text-sm font-medium line-clamp-1">{value}</p>
-        </div>
-    );
-}
-
-function Input({ label, value, onChange, error, prefix, placeholder }: any) {
-  return (
-    <div className="w-full">
-      <label className="block text-xs font-bold text-gray-600 mb-1.5 ml-1 uppercase">{label}</label>
-      <div className="relative group">
-        {prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 transition-colors group-focus-within:text-emerald-600">{prefix}</span>}
-        <input 
-          placeholder={placeholder}
-          value={value} 
-          onChange={(e) => onChange(e.target.value)} 
-          className={`w-full ${prefix ? "pl-11" : "px-4"} py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600 focus:bg-white transition-all outline-none text-sm text-gray-700`} 
-        />
-      </div>
-      {error && <p className="text-red-500 text-[10px] mt-1 ml-1 font-semibold">{error}</p>}
-    </div>
-  );
-}
-
-function Textarea({ label, value, onChange, error, placeholder }: any) {
-  return (
-    <div className="w-full">
-      <label className="block text-xs font-bold text-gray-600 mb-1.5 ml-1 uppercase">{label}</label>
-      <textarea 
-        placeholder={placeholder}
-        value={value} 
-        onChange={(e) => onChange(e.target.value)} 
-        rows={4} 
-        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600 focus:bg-white transition-all outline-none text-sm text-gray-700 resize-none" 
-      />
-      {error && <p className="text-red-500 text-[10px] mt-1 ml-1 font-semibold">{error}</p>}
-    </div>
-  );
-}
-
-function Select({ label, value, options, onChange, error, disabled }: any) {
-  return (
-    <div className="w-full">
-      <label className="block text-xs font-bold text-gray-600 mb-1.5 ml-1 uppercase">{label}</label>
-      <select 
-        value={value} 
-        disabled={disabled} 
-        onChange={(e) => onChange(e.target.value)} 
-        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-600 focus:bg-white transition-all outline-none text-sm text-gray-700 appearance-none cursor-pointer"
-      >
-        <option value="">{disabled ? "Loading..." : `Select ${label}`}</option>
-        {options.map((o: Option) => (
-          <option key={o.id} value={o.id}>{o.label}</option>
-        ))}
-      </select>
-      {error && <p className="text-red-500 text-[10px] mt-1 ml-1 font-semibold">{error}</p>}
-    </div>
-  );
-}

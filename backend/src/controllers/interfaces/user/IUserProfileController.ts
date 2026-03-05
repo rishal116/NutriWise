@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 
 export interface IUserProfileController {
-  getProfile(req: Request, res: Response, next: NextFunction): void;
-  updateProfile(req: Request, res: Response, next: NextFunction): void;
-  getUserProfileImage: (req: Request, res: Response, next: NextFunction) => void;
-  updateUserProfileImage: (req: Request, res: Response, next: NextFunction) => void;
+  getMyProfile(req: Request, res: Response, next: NextFunction): void;
+  updateMyProfile(req: Request, res: Response, next: NextFunction): void;
+  getMyProfileImage: (req: Request, res: Response, next: NextFunction) => void;
+  updateMyProfileImage: (req: Request, res: Response, next: NextFunction) => void;
 }

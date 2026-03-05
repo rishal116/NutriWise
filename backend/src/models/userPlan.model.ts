@@ -32,8 +32,10 @@ export interface IUserPlan {
   amount: number;
   currency: string;
   planSnapshot: {
-    name: string;
-    durationDays: number;
+      title: string;
+      durationInDays:number;
+      price: number;
+      currency: string;
   };
   status: SubscriptionStatus;
   userProgramId?: Types.ObjectId;
@@ -100,12 +102,15 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
     currency: {
       type: String,
+      enum: ["INR", "USD"],
       default: "INR",
     },
-
+    
     planSnapshot: {
-      name: { type: String, required: true },
-      durationDays: { type: Number, required: true },
+      title: { type: String, required: true },
+      durationInDays: { type: Number, required: true },
+      price: { type: Number, required: true },
+      currency: { type: String, required: true },
     },
 
     status: {

@@ -1,5 +1,5 @@
 export interface StripeCheckoutInputDTO {
-  amount: number;          // in main currency unit (we convert to cents in StripeService)        // "INR", "USD" etc.
+  amount: number;      
   title: string;
   description: string;
   successUrl: string;

@@ -6,12 +6,14 @@ import { IPlan } from "../../../models/nutritionistPlan.model";
 import { UpdatePlanDTO, CreatePlanDTO, PlanDTO, NutritionistPricingDTO } from "../../../dtos/nutritionist/nutritionsitPlan.dto";
 import { Types } from "mongoose";
 import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
-import { GetSpecializationsDTO } from "../../../dtos/nutritionist/nutritionsitPlan.dto";
-import { toSpecializationsDTO, toPlanDTO, toNutritionistPricingDTO } from "../../../mapper/nutritionist/nutritionistPlan.mapper";
+import { GetAllowedPlanCategoriesDTO} from "../../../dtos/nutritionist/nutritionsitPlan.dto";
+import { toPlanDTO, toNutritionistPricingDTO } from "../../../mapper/nutritionist/nutritionistPlan.mapper";
 import logger from "../../../utils/logger";
-import { PRICING_RULES,COUNTRY_CURRENCY_MAP, DEFAULT_CURRENCY,} from "../../../constants/nutritionist/nutritionistPlan.constant";
+import { PRICING_RULES } from "../../../constants/nutritionist/nutritionistPlan.constant";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { mapSpecializationsToCategories } from "../../../mapper/nutritionist/specializationCategory.mapper";
+import { NutritionistSpecialization } from "../../../constants";
 
 @injectable()
 export class NutritionistPlanService implements INutritionistPlanService {
@@ -63,6 +65,19 @@ export class NutritionistPlanService implements INutritionistPlanService {
 
   async updatePlan(nutritionistId: string, planId: string, data: UpdatePlanDTO): Promise<IPlan> {
     logger.info(`Updating plan ${planId} for nutritionist ${nutritionistId}`);
+    const MAX_PUBLISHED_PLANS = 3;
+    if (data.status === "published") {
+      const publishedCount = await this._nutritionistPlanRepository.count({
+        nutritionistId: new Types.ObjectId(nutritionistId),
+        status: "published",
+      });
+      if (publishedCount >= MAX_PUBLISHED_PLANS) {
+        throw new CustomError(
+          `Plan limit reached. You can publish only ${MAX_PUBLISHED_PLANS} plans.`,
+          StatusCode.CONFLICT
+        );
+      }
+    }
     const plan = await this._nutritionistPlanRepository.findById(planId);
 
     if (!plan || plan.nutritionistId.toString() !== nutritionistId) {
@@ -96,19 +111,20 @@ export class NutritionistPlanService implements INutritionistPlanService {
       throw new CustomError("Failed to fetch plans", StatusCode.INTERNAL_SERVER_ERROR);
     }
   }
-
-  async getSpecializations(nutritionistId: string): Promise<GetSpecializationsDTO> {
-    logger.info(`Fetching specializations for nutritionist ${nutritionistId}`);
-    const profile = await this._nutritionistProfileRepository.findByUserId(nutritionistId);
-
-    if (!profile) {
-      logger.warn(`Nutritionist profile not found for ${nutritionistId}`);
-      throw new CustomError("Nutritionist profile not found", StatusCode.NOT_FOUND);
+  
+  async getAllowedPlanCategories(nutritionistId: string): Promise<GetAllowedPlanCategoriesDTO> {
+    logger.info(`Fetching allowed categories for ${nutritionistId}`);
+    const nutritionist = await this._nutritionistProfileRepository.findByUserId(
+      nutritionistId
+    );
+    if (!nutritionist) {
+      throw new CustomError("Nutritionist not found", StatusCode.NOT_FOUND);
     }
-
-    const dto = toSpecializationsDTO(profile);
-    logger.info(`Fetched ${dto.specializations.length} specializations for nutritionist ${nutritionistId}`);
-    return dto;
+    const specializations = nutritionist.specializations as NutritionistSpecialization[];
+    console.log(specializations);
+    
+    const allowedCategories = mapSpecializationsToCategories(specializations);
+    return allowedCategories;
   }
 
   async getNutritionistPricing(nutritionistId: string): Promise<NutritionistPricingDTO> {

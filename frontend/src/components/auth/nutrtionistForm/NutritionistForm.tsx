@@ -16,7 +16,7 @@ from "@/components/auth/nutrtionistForm/FormComponents";
 import {
   LANGUAGE_OPTIONS,
   NUTRITIONIST_SPECIALIZATIONS,
-} from "../../../constants/nutritionistDetails.constants";
+} from "../../../constants/nutritionist/nutritionistDetails.constants";
 import { userAuthService } from "@/services/user/userAuth.service";
 
 interface Experience {
@@ -512,7 +512,11 @@ onClick={() => {
               >
                 <div onClick={() => window.open(fileURL, "_blank")} className="cursor-pointer">
                   {isImage ? (
-                    <img src={fileURL} className="w-12 h-12 object-cover rounded-md border" />
+                    <img
+  src={fileURL}
+  alt="Uploaded file preview"
+  className="w-12 h-12 object-cover rounded-md border"
+/>
                   ) : (
                     <div className="w-12 h-12 flex items-center justify-center bg-gray-200 rounded-md text-gray-600 text-lg">
                       📄

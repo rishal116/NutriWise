@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Phone, Video, MoreVertical, ChevronLeft, ShieldCheck } from "lucide-react";
+import { Phone, Video, ChevronLeft, ShieldCheck, X } from "lucide-react";
 import MessageInput from "./MessageInput";
 import MessageBubble from "./MessageBubble";
 import { userChatService } from "@/services/user/userChat.service";
@@ -30,7 +30,7 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
   const [editingMessage, setEditingMessage] = useState<null | {id: string, text: string}>(null);
   const socket = getSocket();
 
-  // 1. Socket Logic: Messages, Typing, and Deletion
+  // 1. Socket Logic
   useEffect(() => {
     if (!conversationId || !socket) return;
 
@@ -38,15 +38,19 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
 
     const handleReceive = (message: any) => {
       if (message.conversationId === conversationId) {
-        setMessages((prev) => [...prev, message]);
-        setIsTyping(false); // Reset typing when message arrives
+        setMessages((prev) => [...prev, {
+          id: message.id,
+          senderId: message.senderId,
+          text: message.content || message.text,
+          createdAt: message.createdAt,
+          status: message.status || "sent"
+        }]);
+        setIsTyping(false);
       }
     };
 
     const handleTyping = (data: { conversationId: string; isTyping: boolean }) => {
-      if (data.conversationId === conversationId) {
-        setIsTyping(data.isTyping);
-      }
+      if (data.conversationId === conversationId) setIsTyping(data.isTyping);
     };
 
     const handleDelete = (data: { messageId: string }) => {
@@ -54,18 +58,10 @@ export default function ChatWindow({ conversationId, onBack }: ChatWindowProps) 
     };
 
     const handleEdit = (data: { messageId: string; newText: string }) => {
-  setMessages((prev) =>
-    prev.map((m) =>
-      m.id === data.messageId
-        ? { ...m, text: data.newText }
-        : m
-    )
-  );
-};
+      setMessages((prev) => prev.map((m) => m.id === data.messageId ? { ...m, text: data.newText } : m));
+    };
 
-socket.on("messageEdited", handleEdit);
-
-
+    socket.on("messageEdited", handleEdit);
     socket.on("receiveMessage", handleReceive);
     socket.on("userTyping", handleTyping);
     socket.on("messageDeleted", handleDelete);
@@ -99,24 +95,20 @@ socket.on("messageEdited", handleEdit);
     })();
   }, [conversationId]);
 
-  // 3. Message Deletion Handler
+  // 3. Handlers
   const onDeleteMessage = async (messageId: string) => {
     try {
-      await userChatService.deleteMessage(messageId); // API Call
-      setMessages((prev) => prev.filter((m) => m.id !== messageId)); // Local Update
-      socket?.emit("deleteMessage", { conversationId, messageId }); // Sync with other user
+      await userChatService.deleteMessage(messageId);
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      socket?.emit("deleteMessage", { conversationId, messageId });
     } catch (err) {
       console.error("Failed to delete", err);
     }
   };
 
-  
-
-// Pass this to MessageBubble
-const handleEditInitiated = (id: string, text: string) => {
-  setEditingMessage({ id, text });
-  // This could open a modal or change the MessageInput to "Edit Mode"
-};
+  const handleEditInitiated = (id: string, text: string) => {
+    setEditingMessage({ id, text });
+  };
 
   // 4. Auto scroll
   useEffect(() => {
@@ -128,99 +120,129 @@ const handleEditInitiated = (id: string, text: string) => {
   if (!conversationId) return null;
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
-      {/* Header */}
-      <header className="h-20 border-b border-gray-100 flex items-center justify-between px-6 bg-white/90 backdrop-blur-xl sticky top-0 z-30">
+    <div className="flex flex-col h-full bg-[#fbfdfd] overflow-hidden relative">
+      
+      {/* --- STICKY HEADER --- */}
+      <header className="h-20 border-b border-slate-100 flex items-center justify-between px-6 bg-white/95 backdrop-blur-md z-30 shrink-0">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="md:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full">
-            <ChevronLeft className="w-6 h-6 text-gray-600" />
+          <button onClick={onBack} className="md:hidden p-2 -ml-2 hover:bg-slate-50 rounded-xl transition-colors">
+            <ChevronLeft className="w-6 h-6 text-slate-600" />
           </button>
           
           <div className="relative">
-            <div className="w-11 h-11 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold shadow-inner">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-600 flex items-center justify-center text-white font-black shadow-lg shadow-emerald-100">
               N
             </div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
           </div>
 
           <div>
-            <div className="flex items-center gap-1">
-              <h2 className="font-bold text-gray-900 tracking-tight">Dr. Nutritionist</h2>
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <div className="flex items-center gap-1.5">
+              <h2 className="font-black text-slate-900 tracking-tight text-sm">Dr. Nutritionist</h2>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
             </div>
-            <p className="text-xs font-medium text-emerald-500">Active now</p>
+            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Active now</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all">
+          <button className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all">
             <Phone className="w-5 h-5" />
           </button>
-          <button className="p-2.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all">
+          <button className="p-2.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all">
             <Video className="w-5 h-5" />
           </button>
         </div>
       </header>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto px-4 py-8 bg-gray-50/50">
+      {/* --- SCROLLABLE MESSAGES AREA --- */}
+      <div className="flex-1 overflow-y-auto px-4 py-8 bg-[#f8faf9]/50 scroll-smooth custom-scrollbar">
         <div className="max-w-3xl mx-auto space-y-6">
           
           {/* Encryption Notice */}
-          <div className="flex justify-center mb-8">
-            <span className="px-3 py-1 bg-white border border-gray-200 rounded-full text-[10px] text-gray-400 font-medium uppercase tracking-wider flex items-center gap-2">
-              <ShieldCheck className="w-3 h-3" /> End-to-end encrypted
+          <div className="flex justify-center mb-10">
+            <span className="px-4 py-1.5 bg-white border border-slate-100 rounded-full text-[10px] text-slate-400 font-black uppercase tracking-widest flex items-center gap-2 shadow-sm">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" /> End-to-end encrypted
             </span>
           </div>
 
           {loading ? (
-            <div className="flex flex-col gap-4 animate-pulse">
-              <div className="h-12 w-1/2 bg-gray-200 rounded-2xl" />
-              <div className="h-12 w-1/3 bg-gray-200 rounded-2xl self-end" />
+            <div className="flex flex-col gap-6 animate-pulse">
+              <div className="h-14 w-2/3 bg-slate-100 rounded-[2rem] rounded-bl-none" />
+              <div className="h-14 w-1/2 bg-emerald-50 rounded-[2rem] rounded-br-none self-end" />
             </div>
           ) : (
             <>
               {messages.map((msg) => (
                 <MessageBubble
-  key={msg.id}
-  id={msg.id}
-  text={msg.text}
-  isSender={msg.senderId === currentUserId}
-  timestamp={msg.createdAt}
-  status={msg.status}
-  onDelete={onDeleteMessage}
-  onEdit={handleEditInitiated}
-/>
+                  key={msg.id}
+                  id={msg.id}
+                  text={msg.text}
+                  isSender={msg.senderId === currentUserId}
+                  timestamp={msg.createdAt}
+                  status={msg.status}
+                  onDelete={onDeleteMessage}
+                  onEdit={handleEditInitiated}
+                />
               ))}
               
-              {/* Real-time Typing Indicator */}
+              {/* Typing Indicator */}
               {isTyping && (
-                <div className="flex items-center gap-2 px-4 py-2 animate-in fade-in duration-300">
-                  <div className="flex gap-1">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" />
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                <div className="flex items-center gap-3 px-2 py-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                  <div className="flex gap-1.5 p-3 bg-white rounded-2xl rounded-bl-none shadow-sm border border-slate-50">
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-duration:1s]" />
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-duration:1s] [animation-delay:0.2s]" />
+                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce [animation-duration:1s] [animation-delay:0.4s]" />
                   </div>
-                  <span className="text-xs text-gray-400 font-medium italic">Nutritionist is typing...</span>
                 </div>
               )}
             </>
           )}
-          <div ref={bottomRef} />
+          <div ref={bottomRef} className="h-4" />
         </div>
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 bg-white border-t border-gray-100">
-        <div className="max-w-4xl mx-auto">
-<MessageInput
-  conversationId={conversationId}
-  editingMessage={editingMessage}
-  onCancelEdit={() => setEditingMessage(null)}
-  onMessageSent={(newMessage) =>
-    setMessages((prev) => [...prev, newMessage])
-  }
-/>
+      {/* --- STICKY INPUT AREA --- */}
+      <div className="p-4 bg-white border-t border-slate-100 shrink-0 z-40">
+        <div className="max-w-4xl mx-auto relative">
+          
+          {/* Edit Mode Overlay */}
+          {editingMessage && (
+            <div className="absolute -top-14 left-0 right-0 bg-emerald-50 border border-emerald-100 p-3 flex justify-between items-center rounded-t-2xl animate-in slide-in-from-bottom-4">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="w-1 h-6 bg-emerald-500 rounded-full" />
+                <div>
+                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">Editing Message</span>
+                  <p className="text-xs text-slate-500 truncate italic max-w-[200px] md:max-w-md">
+                    {editingMessage.text}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setEditingMessage(null)}
+                className="p-1.5 hover:bg-emerald-100 rounded-full text-emerald-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
+          <MessageInput
+            conversationId={conversationId}
+            editingMessage={editingMessage}
+            onCancelEdit={() => setEditingMessage(null)}
+            onMessageSent={(newMessage) => {
+              // Only add if it's a new message (not an edit sync)
+              if (!editingMessage) {
+                setMessages((prev) => [...prev, {
+                  ...newMessage,
+                  text: newMessage.content || newMessage.text,
+                  status: 'sent'
+                }]);
+              }
+              setEditingMessage(null);
+            }}
+          />
         </div>
       </div>
     </div>

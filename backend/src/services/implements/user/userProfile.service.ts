@@ -6,101 +6,117 @@ import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
-import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
-
+import { UserProfile, UpdateUserProfileDto, UserProfileImage } from "../../../dtos/user/userProfile.dto";
+import { toUserProfileResponse } from "../../../mapper/user/userProfile.mapper";
+import { validateUpdateProfile } from "../../../validations/user/userProfile.validation";
 
 @injectable()
 export class UserProfileService implements IUserProfileService {
   constructor(
     @inject(TYPES.IUserRepository)
-    private _userRepository: IUserRepository,
-    @inject(TYPES.IHealthDetailsRepository)
-    private _healthDetails: IHealthDetailsRepository
-
+    private _userRepository: IUserRepository
   ) {}
-  
-  
-  async getUserProfile(userId: string) {
-    logger.info(`Fetching profile for user: ${userId}`);
-    const user = await this._userRepository.findById(userId);
-    if (!user) throw new CustomError("User not found", StatusCode.NOT_FOUND);
-    return {
-      fullName: user.fullName,
-      email: user.email,
-      phone: user.phone,
-      birthdate: user.birthdate,
-      gender: user.gender,
-    };
+
+  async getMyProfile(userId: string): Promise<UserProfile> {
+    logger.info("Fetching user profile", { userId });
+
+    const userData = await this._userRepository.findById(userId);
+
+    if (!userData) {
+      logger.warn("User not found", { userId });
+      throw new CustomError("User not found", StatusCode.NOT_FOUND);
+    }
+
+    return toUserProfileResponse(userData);
   }
 
-  async updateUserProfile(userId: string, data: any) {
-    console.log(data);
-    
-    logger.info(`Updating profile for user: ${userId}`);
+  async updateMyProfile(
+    userId: string,
+    data: UpdateUserProfileDto
+  ): Promise<UserProfile> {
+    logger.info("Updating user profile", {
+      userId,
+      fieldsUpdated: Object.keys(data),
+    });
 
-    const user = await this._userRepository.findById(userId);
-    if (!user) throw new CustomError("User not found", StatusCode.NOT_FOUND);
+    validateUpdateProfile(data);
 
-    const updatedProfile = {
-      fullName: data.fullName ?? user.fullName,
-      phone: data.phone ?? user.phone,
-      birthdate: data.birthdate ?? user.birthdate,
-      gender: data.gender ?? user.gender,
-    };
-    
+    const userData = await this._userRepository.findById(userId);
 
-    const updatedUser = await this._userRepository.updateById(userId, updatedProfile);
+    if (!userData) {
+      logger.warn("User not found", { userId });
+      throw new CustomError("User not found", StatusCode.NOT_FOUND);
+    }
 
-    return {
-      fullName: updatedUser!.fullName,
-      email: updatedUser!.email,
-      phone: updatedUser!.phone,
-      birthdate: updatedUser!.birthdate,
-      gender: updatedUser!.gender,
+    const updatedUser = await this._userRepository.updateById(userId, {
+      fullName: data.fullName ?? userData.fullName,
+      phone: data.phone ?? userData.phone,
+      birthdate: data.birthdate ?? userData.birthdate,
+      gender: data.gender ?? userData.gender,
+    });
 
-    };
+    if (!updatedUser) {
+      logger.error("Failed to update user profile", { userId });
+      throw new CustomError(
+        "Failed to update profile",
+        StatusCode.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    return toUserProfileResponse(updatedUser);
   }
 
-    async getNutritionistProfileImage(userId: string) {
-      console.log("userId: ",userId);
-      
-    const result = await this._healthDetails.getProfileImageByUserId(userId);
-    console.log(result);
-    
-    if (!result || !result.profileImage) {
-      logger.warn(`No profile image found for user ${userId}`);
+  async getMyProfileImage(userId: string): Promise<UserProfileImage> {
+    logger.info("Fetching user profile image", { userId });
+
+    const userData =
+      await this._userRepository.getProfileImageById(userId);
+
+    if (!userData?.profileImage) {
+      logger.warn("Profile image not found", { userId });
       return { profileImage: "/images/images.jpg" };
     }
-    logger.info(`Fetched Cloudinary profile image for user ${userId}`);
-    return { profileImage: result.profileImage}
+
+    return { profileImage: userData.profileImage };
   }
 
+  async updateMyProfileImage(
+    userId: string,
+    file: Express.Multer.File
+  ): Promise<UserProfileImage> {
+    logger.info("Updating user profile image", { userId });
 
-  async updateNutritionistProfileImage(userId: string, file: Express.Multer.File) {
-    logger.info(`Starting profile image update for user ${userId}`);
-    if (!file) {
-      logger.warn(`No file provided by user ${userId}`);
-      throw new Error("No file provided");
-    }
+    let cloudinaryUrl: string;
+
     try {
-      const cloudinaryUrl = await uploadToCloudinary(file, "user-profile-images");
-      const updatedProfile = await this._userRepository.updateById(userId, {
-        profileImage: cloudinaryUrl,
-      });
-      console.log("db updated: ",updatedProfile);
-      
-      if (!updatedProfile) {
-        logger.error(`DB update failed for user ${userId}`);
-        throw new Error("Failed to update profile image in database");
-      }
-      logger.info(`Profile image updated successfully for user ${userId}`);
-      return {
-        profileImage: cloudinaryUrl,
-        message: "Profile image updated successfully",
-      };
+      cloudinaryUrl = await uploadToCloudinary(
+        file,
+        "user-profile-images"
+      );
     } catch (error) {
-      logger.error(`Error updating profile image for user ${userId}`, error);
-      throw error;
+      logger.error("Cloudinary upload failed", {
+        userId,
+        error: error instanceof Error ? error.message : error,
+      });
+
+      throw new CustomError(
+        "Failed to upload profile image",
+        StatusCode.BAD_GATEWAY
+      );
     }
+
+    const updatedUser = await this._userRepository.updateById(userId, {
+      profileImage: cloudinaryUrl,
+    });
+
+    if (!updatedUser) {
+      logger.error("Failed to persist profile image", { userId });
+      throw new CustomError(
+        "Failed to update profile image",
+        StatusCode.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    return { profileImage: cloudinaryUrl };
   }
 }

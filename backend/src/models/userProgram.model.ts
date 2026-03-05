@@ -37,8 +37,8 @@ export interface IUserProgram {
   planId: Types.ObjectId;
   userPlanId: Types.ObjectId;
   nutritionistId: Types.ObjectId;
-  goal: ProgramGoal;
-  focusArea?: string;
+  goal: string;
+  focusAreas?: string[];
   dietType?: string;
   activityLevel?: string;
   startDate: Date;
@@ -58,6 +58,13 @@ export interface IUserProgram {
     medicalConditions?: string[];
     allergies?: string[];
   };
+  planSnapshot?: {
+    title?: string;
+    price?: number;
+    currency?: string;
+    durationInDays?: number;
+  };
+  isDeleted:boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -94,12 +101,13 @@ const UserProgramSchema = new Schema<IUserProgram>(
 
     goal: {
       type: String,
-      enum: PROGRAM_GOALS,
       required: true,
       index: true,
     },
 
-    focusArea: String,
+    focusAreas: {
+      type:[{ type: String }],
+    },
     dietType: String,
     activityLevel: String,
 
@@ -154,22 +162,28 @@ const UserProgramSchema = new Schema<IUserProgram>(
       medicalConditions: [String],
       allergies: [String],
     },
+    planSnapshot : {
+      title: String,
+      price: Number,
+      currency: String,
+      durationInDays: Number,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    }
   },
+
   { timestamps: true }
 );
 
-UserProgramSchema.index({ userPlanId: 1 }, { unique: true });
+
 
 UserProgramSchema.index({ userId: 1, status: 1 });
 UserProgramSchema.index({ nutritionistId: 1, status: 1 });
 UserProgramSchema.index({ userId: 1, startDate: -1 });
 
-UserProgramSchema.pre("save", function (next) {
-  if (this.currentDay > this.durationDays) {
-    return next(new Error("currentDay cannot exceed durationDays"));
-  }
-  next();
-});
 
 export const UserProgramModel = model<IUserProgram>(
   "UserProgram",

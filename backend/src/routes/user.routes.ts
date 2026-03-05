@@ -16,6 +16,10 @@ import { IUserAccountController } from "../controllers/interfaces/user/IUserAcco
 import { blockLoggedInUser } from "../middlewares/blockLoggedInUser.middleware";
 import { IMessageController } from "../controllers/interfaces/chat/IMessageController";
 import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMeetingsController";
+import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
+import { ITaskController } from "../controllers/interfaces/user/ITaskController";
+import { auth } from "google-auth-library";
+import { takeCoverage } from "v8";
 
 
 
@@ -32,7 +36,9 @@ const userPlanController = container.get<IUserPlanController>(TYPES.IUserPlanCon
 const userAccountController = container.get<IUserAccountController>(TYPES.IUserAccountController)
 const conversationController = container.get<IConversationController>(TYPES.IConversationController)
 const messageController = container.get<IMessageController>(TYPES.IMessageController)
-const UserMeetingsController = container.get<IUserMeetingsController>(TYPES.IUserMeetingsController)
+const userMeetingsController = container.get<IUserMeetingsController>(TYPES.IUserMeetingsController)
+const userProgramController = container.get<IUserProgramController>(TYPES.IUserProgramController)
+const taskController = container.get<ITaskController>(TYPES.ITaskController)
 
 router.post("/signup", userAuthController.signup);
 router.post("/verify-otp",userAuthController.verifyOtp)
@@ -46,17 +52,17 @@ router.post("/refresh-token", refreshToken);
 router.get("/me",authMiddleware,blockLoggedInUser,userAuthController.getMe);
 router.post("/google-signin", userAuthController.googleSignin);
 
-router.get("/profile", authMiddleware,profileController.getProfile);
-router.put("/profile", authMiddleware, profileController.updateProfile);
-router.post("/profile/upload-image",authMiddleware,upload.single("image"),profileController.updateUserProfileImage)
-router.get("/profile/upload-image",authMiddleware,profileController.getUserProfileImage)
+router.get("/profile", authMiddleware,profileController.getMyProfile);
+router.put("/profile", authMiddleware, profileController.updateMyProfile);
+router.post("/profile/upload-image",authMiddleware,upload.single("image"),profileController.updateMyProfileImage)
+router.get("/profile/upload-image",authMiddleware,profileController.getMyProfileImage)
 
 router.get("/nutritionists",nutritionistController.getAllNutritionists);
 router.get("/nutritionists/:nutritionistId",nutritionistController.getNutritionistById);
 router.get("/nutritionists/:nutritionistId/plans", nutritionistController.getNutritionistPlans);
 
 router.post("/checkout/session",authMiddleware, authMiddleware,checkoutController.createSession);
-router.post("/stripe/webhook",authMiddleware,express.raw({ type: "application/json" }),stripeController.handle);
+router.post("/stripe/webhook",stripeController.handle);
 router.get("/health-details", authMiddleware, healthDetailsController.getMyDetails);
 router.post("/health-details", authMiddleware,authMiddleware,healthDetailsController.saveDetails);
 router.get("/plans",authMiddleware,userPlanController.getMyPlans)
@@ -67,9 +73,16 @@ router.get("/chat/conversations",authMiddleware,conversationController.getUserCh
 router.get("/chat/messages/:conversationId",authMiddleware,messageController.getMessages);
 router.post("/chat/message",authMiddleware,messageController.sendMessage);
 
-router.post("/change-password",authMiddleware,userAccountController.changePassword)
+router.get("/programs",authMiddleware,userProgramController.getPrograms)
+router.get("/programs/:programId",authMiddleware,userProgramController.getProgramDetails);
+router.get("/programs/:programId/days",authMiddleware,userProgramController.getProgramDays);
+router.get("/program-days/:dayId",authMiddleware,userProgramController.getProgramDayDetails);
 
-router.get("/meetings",authMiddleware,UserMeetingsController.getMeetings)
+router.get("/tasks/today",authMiddleware,taskController.getTodayTasks)
+router.post("/tasks/today",authMiddleware,taskController.updateTodayTasks)
+
+router.post("/change-password",authMiddleware,userAccountController.changePassword)
+router.get("/meetings",authMiddleware,userMeetingsController.getMeetings)
 
 export default router;
 

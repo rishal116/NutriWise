@@ -15,7 +15,7 @@ export interface UpdatePlanDTO {
   durationInDays?: 30 | 90 | 180;
   price?: number;
   description?: string;
-  status?: "draft" | "published";
+  status?: "draft" | "published" ;
   features?: string[];            
 }
 
@@ -29,15 +29,15 @@ export interface PlanDTO {
   price: number;
   description: string;
   features: string[];
-  status: "draft" | "published";
+  status: "draft" | "published" | "archived";
   createdAt: Date;
   updatedAt: Date;
 }
 
 
-export interface GetSpecializationsDTO {
-  specializations: string[];
-}
+import { NutritionPlanCategory } from "../../constants/nutritionist/nutritionPlanCategory.constant";
+
+export type GetAllowedPlanCategoriesDTO = NutritionPlanCategory[];
 
 export interface NutritionistPricingDTO {
   status: string;

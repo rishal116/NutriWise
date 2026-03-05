@@ -143,9 +143,6 @@ export default function NutritionistMeetings() {
                       <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
                         <Video size={24} />
                       </div>
-                      <div className="px-3 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase tracking-wider rounded-full">
-                        Upcoming
-                      </div>
                     </div>
                     
                     <h3 className="text-lg font-bold text-gray-900 mb-4 line-clamp-1">{m.title}</h3>

@@ -168,10 +168,13 @@ export default function Header() {
           <div className="flex items-center gap-2 sm:gap-3">
 
             {isLoggedIn && (
-              <button className="p-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 relative transition-all group">
-                <Bell className="w-5 h-5 text-gray-600 group-hover:text-emerald-600 transition-colors" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-gradient-to-br from-red-500 to-rose-600 rounded-full shadow-lg" />
-              </button>
+<button
+  aria-label="Notifications"
+  className="p-2 rounded-lg hover:bg-emerald-50 hover:text-emerald-600 relative transition-all group"
+>
+  <Bell className="w-5 h-5 text-gray-600 group-hover:text-emerald-600 transition-colors" />
+  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-gradient-to-br rounded-full shadow-lg" />
+</button>
             )}
 
             {/* USER DROPDOWN (Desktop & Tablet) */}

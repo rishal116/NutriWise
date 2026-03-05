@@ -6,9 +6,10 @@ export interface ITaskLog {
   userProgramId: Types.ObjectId;
   programDayId: Types.ObjectId;
   date: Date;
-  mealsCompleted?: string[];
-  workoutsCompleted?: string[];
+  mealsCompleted?: Types.ObjectId[]; 
+  workoutsCompleted?: Types.ObjectId[]
   habitsProgress?: {
+    habitId: Types.ObjectId;  
     title: string;
     value: number;
   }[];

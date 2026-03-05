@@ -6,7 +6,7 @@ import { IHealthDetailsService } from "../../../services/interfaces/user/IHealth
 import { HealthDetailsRequestDTO } from "../../../dtos/user/healthDetails.dto";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { AUTH_MESSAGES, COMMON_MESSAGES, USER_MESSAGES } from "../../../constants";
+import { COMMON_MESSAGES, USER_MESSAGES } from "../../../constants";
 
 
 @injectable()
@@ -17,14 +17,8 @@ export class HealthDetailsController implements IHealthDetailsController {
     ) {}
     
     getMyDetails = asyncHandler(async (req: Request, res: Response) => {
-        if (!req.user) {
-            return res.status(StatusCode.UNAUTHORIZED).json({
-                success: false,
-                message: AUTH_MESSAGES.UNAUTHORIZED,
-            });
-        }
-        const { userId } = req.user;
-        const data = await this._healthDetailsService.getMyDetails(userId);
+        const {userId} = req.user!;
+        const data = await this._healthDetailsService.getHealthDetails(userId);
         return res.status(StatusCode.OK).json({
             success: true,
             message: COMMON_MESSAGES.SUCCESS,
@@ -33,15 +27,9 @@ export class HealthDetailsController implements IHealthDetailsController {
     });
     
     saveDetails = asyncHandler(async (req: Request, res: Response) => {
-        if (!req.user) {
-            return res.status(StatusCode.UNAUTHORIZED).json({
-                success: false,
-                message: AUTH_MESSAGES.UNAUTHORIZED,
-            });
-        }
-        const { userId } = req.user;
+        const { userId } = req.user!;
         const payload: HealthDetailsRequestDTO = req.body;
-        const data = await this._healthDetailsService.saveDetails(userId, payload);
+        const data = await this._healthDetailsService.saveHealthDetails(userId, payload);
         return res.status(StatusCode.OK).json({
             success: true,
             message: USER_MESSAGES.HEALTH_DETAILS_UPDATED,

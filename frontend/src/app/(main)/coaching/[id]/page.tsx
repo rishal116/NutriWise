@@ -5,7 +5,7 @@ import Link from "next/link";
 import { MessageCircle, CreditCard, Star, MapPin, Award, Users, Activity, Calendar, TrendingUp, CheckCircle, ArrowLeft } from "lucide-react";
 import { nutritionistListService } from "@/services/user/nutritionistList.service";
 import BreadcrumbHeader from "@/components/ui/nutritionists/BreadcrumbHeader";
-import { NutritionistProfileDTO} from "@/constants/nutritionistProfile.constants";
+import { NutritionistProfileDTO} from "@/constants/nutritionist/nutritionistProfile.constants";
 import { useRouter } from "next/navigation";
 
 export default function NutritionistProfilePage() {

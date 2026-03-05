@@ -1,6 +1,7 @@
 import axios from "axios";
 import { store } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
+import { userAuthService } from "@/services/user/userAuth.service";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -28,7 +29,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 🚫 Auth endpoints should NOT trigger refresh
+    // Auth endpoints should NOT trigger refresh
     const authEndpoints = [
       "/login",
       "/signup",
@@ -72,6 +73,8 @@ api.interceptors.response.use(
 
     if (error.response?.status === 403) {
       store.dispatch(logout());
+      await userAuthService.logout()
+      
       localStorage.removeItem("token");
       window.location.href = "/";
     }

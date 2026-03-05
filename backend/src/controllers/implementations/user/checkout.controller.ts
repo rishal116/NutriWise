@@ -15,14 +15,8 @@ export class CheckoutController implements ICheckoutController {
   ) {}
 
   createSession = asyncHandler(async (req: Request, res: Response) => {
-    if (!req.user) {
-      return res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: AUTH_MESSAGES.UNAUTHORIZED,
-      });
-    }
     const { planId, nutritionistId } = req.body;
-    const userId = req.user.userId;
+    const {userId}= req.user!
     const checkoutUrl = await this._checkoutService.createSession({
       planId,
       nutritionistId,

@@ -1,0 +1,25 @@
+export enum NutritionistSpecialization {
+  CLINICAL_NUTRITION = "Clinical Nutrition",
+  SPORTS_NUTRITION = "Sports Nutrition",
+  PEDIATRIC_NUTRITION = "Pediatric Nutrition",
+  GERIATRIC_NUTRITION = "Geriatric Nutrition",
+  WEIGHT_MANAGEMENT = "Weight Management",
+  DIABETES_METABOLIC = "Diabetes & Metabolic Disorders",
+  CARDIAC_NUTRITION = "Cardiac Nutrition",
+  RENAL_NUTRITION = "Renal Nutrition",
+  GUT_HEALTH = "Digestive / Gut Health",
+  FOOD_ALLERGIES = "Food Allergies & Intolerances",
+  VEGAN_NUTRITION = "Plant-Based / Vegan Nutrition",
+  LIFESTYLE_COACHING = "Nutrition Counseling & Lifestyle Coaching",
+  PRENATAL_MATERNAL = "Prenatal & Maternal Nutrition",
+  IMMUNITY_WELLNESS = "Immunity & Wellness",
+
+  ONCOLOGY_NUTRITION = "Oncology Nutrition",
+  BARIATRIC_NUTRITION = "Bariatric Nutrition",
+  PCOS_HORMONAL = "PCOS & Hormonal Health",
+  EATING_DISORDERS = "Eating Disorders",
+  THERAPEUTIC_DIET = "Therapeutic Diet Planning",
+
+  FUNCTIONAL_INTEGRATIVE = "Functional & Integrative Nutrition",
+  CORPORATE_WELLNESS = "Corporate Wellness",
+}

@@ -1,7 +1,7 @@
 import React from "react";
 import { Section, SelectField } from "../FormComponents";
 import { Globe } from "lucide-react";
-import { COUNTRIES } from "@/constants/nutritionistDetails.constants";
+import { COUNTRIES } from "@/constants/nutritionist/nutritionistDetails.constants";
 
 interface Props {
   country: string;

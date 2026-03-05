@@ -12,7 +12,6 @@ export class UserPlanRepository extends BaseRepository<IUserPlan> implements IUs
         return this._model.findOne({ stripeSessionId: sessionId });
     }
     async findActiveByUser(userId: string) {
-
         return this._model.findOne({
             userId,
             status: "ACTIVE",

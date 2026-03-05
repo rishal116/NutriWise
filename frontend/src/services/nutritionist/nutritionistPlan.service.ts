@@ -17,13 +17,17 @@ export const nutritionistPlanService = {
     return api.put(`/nutritionist/plans/${planId}`, payload);
   },
 
-  getspecializations: async () => {
-    const response = await api.get("/nutritionist/specializations");
+  getAllowedCategories: async () => {
+    const response = await api.get("/nutritionist/allowed-plan-categories");
+
+    
     return response.data;
   },
 
   getPricingRules: async () => {
     const response = await api.get("/nutritionist/pricing");
+  
+    
     return response.data;
   },
 };

@@ -2,22 +2,15 @@
 import { useState, useEffect } from "react";
 import { healthDetailsService } from "@/services/user/healthDetails.service";
 import { 
-  Activity, 
-  Ruler, 
-  Weight, 
-  Droplets, 
-  Moon, 
-  UtensilsCrossed, 
-  Target, 
-  TrendingUp,
-  Loader2,
-  Save,
-  AlertCircle
+  Activity, Ruler, Weight, Droplets, Moon, UtensilsCrossed, 
+  Target, TrendingUp, Loader2, Save, AlertCircle 
 } from "lucide-react";
+import { HealthDetailsPayload } from "@/constants/user/healthDetails.constant";
+import { TIMELINES, ACTIVITY_LEVELS, DIET_TYPES, FITNESS_LEVELS, GOALS } from "@/types/health.types";
 
 interface HealthDetailsFormProps {
   onSuccess: () => void;
-  initialData?: any;
+  initialData?: Partial<HealthDetailsPayload>;
 }
 
 export default function HealthDetailsForm({ onSuccess, initialData }: HealthDetailsFormProps) {
@@ -25,33 +18,37 @@ export default function HealthDetailsForm({ onSuccess, initialData }: HealthDeta
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
-    height: "",
-    weight: "",
+    heightCm: "",
+    weightKg: "",
     activityLevel: "",
+    fitnessLevel: "",
     dietType: "",
-    dailyWaterIntake: "",
-    sleepDuration: "",
+    dailyWaterIntakeLiters: "",
+    sleepDurationHours: "",
     goal: "",
-    targetWeight: "",
+    targetWeightKg: "",
     preferredTimeline: "",
-    focusArea: "",
+    focusAreas: "",
   });
 
+  // Helper to format enum strings for display
+  const formatLabel = (str: string) => str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
   useEffect(() => {
-    if (initialData) {
-      setForm({
-        height: initialData.height?.toString() || "",
-        weight: initialData.weight?.toString() || "",
-        activityLevel: initialData.activityLevel || "",
-        dietType: initialData.dietType || "",
-        dailyWaterIntake: initialData.dailyWaterIntake?.toString() || "",
-        sleepDuration: initialData.sleepDuration || "",
-        goal: initialData.goal || "",
-        targetWeight: initialData.targetWeight?.toString() || "",
-        preferredTimeline: initialData.preferredTimeline || "",
-        focusArea: initialData.focusArea || "",
-      });
-    }
+    if (!initialData) return;
+    setForm({
+      heightCm: initialData.heightCm?.toString() || "",
+      weightKg: initialData.weightKg?.toString() || "",
+      activityLevel: initialData.activityLevel || "",
+      fitnessLevel: initialData.fitnessLevel || "",
+      dietType: initialData.dietType || "",
+      dailyWaterIntakeLiters: initialData.dailyWaterIntakeLiters?.toString() || "",
+      sleepDurationHours: initialData.sleepDurationHours?.toString() || "",
+      goal: initialData.goal || "",
+      targetWeightKg: initialData.targetWeightKg?.toString() || "",
+      preferredTimeline: initialData.preferredTimeline || "",
+      focusAreas: initialData.focusAreas?.[0] || "",
+    });
   }, [initialData]);
 
   const handleChange = (k: string, v: string) => {
@@ -61,22 +58,16 @@ export default function HealthDetailsForm({ onSuccess, initialData }: HealthDeta
 
   const validate = () => {
     const e: Record<string, string> = {};
+    const h = +form.heightCm;
+    const w = +form.weightKg;
 
-    const h = +form.height;
-    const w = +form.weight;
-    const water = +form.dailyWaterIntake;
-    const target = +form.targetWeight;
-
-    if (!h || h < 50 || h > 300) e.height = "Enter valid height (50–300 cm)";
-    if (!w || w < 20 || w > 300) e.weight = "Enter valid weight (20–300 kg)";
+    if (!h || h < 50 || h > 300) e.heightCm = "Enter valid height (50–300 cm)";
+    if (!w || w < 20 || w > 300) e.weightKg = "Enter valid weight (20–300 kg)";
     if (!form.activityLevel) e.activityLevel = "Select activity level";
+    if (!form.fitnessLevel) e.fitnessLevel = "Select fitness level";
+    if (!form.dietType) e.dietType = "Select diet type";
     if (!form.goal) e.goal = "Select your goal";
-
-    if (form.dailyWaterIntake && (water < 0.5 || water > 10))
-      e.dailyWaterIntake = "0.5 – 10 L only";
-
-    if (form.targetWeight && (target < 20 || target > 300))
-      e.targetWeight = "20 – 300 kg only";
+    if (!form.preferredTimeline) e.preferredTimeline = "Select timeline";
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -86,161 +77,111 @@ export default function HealthDetailsForm({ onSuccess, initialData }: HealthDeta
     if (!validate()) return;
     try {
       setLoading(true);
-      await healthDetailsService.save({
-        ...form,
-        height: +form.height,
-        weight: +form.weight,
-        dailyWaterIntake: +form.dailyWaterIntake || 0,
-        targetWeight: +form.targetWeight || 0,
-      });
+      const payload: HealthDetailsPayload = {
+        heightCm: +form.heightCm,
+        weightKg: +form.weightKg,
+        activityLevel: form.activityLevel as any,
+        fitnessLevel: form.fitnessLevel as any,
+        dietType: form.dietType as any,
+        dailyWaterIntakeLiters: +form.dailyWaterIntakeLiters || 0,
+        sleepDurationHours: +form.sleepDurationHours || 0,
+        goal: form.goal as any,
+        preferredTimeline: form.preferredTimeline as any,
+        targetWeightKg: form.targetWeightKg ? +form.targetWeightKg : undefined,
+        focusAreas: form.focusAreas ? [form.focusAreas] : [],
+      };
+
+      await healthDetailsService.saveHealthDetails(payload);
       onSuccess();
+    } catch (error) {
+      console.error("Save Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-6 sm:py-8 lg:py-12 px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-12 px-4 sm:px-6">
       <div className="max-w-5xl mx-auto">
         {/* Header Card */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 sm:p-8 rounded-2xl shadow-xl mb-6 sm:mb-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 sm:w-64 sm:h-64 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 sm:w-48 sm:h-48 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-8 rounded-2xl shadow-xl mb-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
           <div className="relative z-10">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
-              Health Profile
-            </h2>
-            <p className="text-emerald-50 text-sm sm:text-base">
-              Let's personalize your wellness journey
-            </p>
+            <h2 className="text-3xl font-bold text-white mb-2">Health Profile</h2>
+            <p className="text-emerald-50">Personalize your emerald wellness journey</p>
           </div>
         </div>
 
-        {/* Main Form */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 lg:p-10 space-y-8 sm:space-y-10">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-10 space-y-10">
           
-          {/* Body Information Section */}
-          <Section 
-            title="Body Information" 
-            icon={<Ruler className="w-5 h-5" />}
-          >
+          <Section title="Body Information" icon={<Ruler />}>
             <Input 
-              label="Height (cm)" 
-              value={form.height} 
-              error={errors.height} 
-              onChange={v => handleChange("height", v)}
-              icon={<Ruler className="w-5 h-5 text-emerald-600" />}
-              required
+              label="Height (cm)" value={form.heightCm} error={errors.heightCm} 
+              onChange={v => handleChange("heightCm", v)} icon={<Ruler className="text-emerald-600" />} required 
             />
             <Input 
-              label="Weight (kg)" 
-              value={form.weight} 
-              error={errors.weight} 
-              onChange={v => handleChange("weight", v)}
-              icon={<Weight className="w-5 h-5 text-emerald-600" />}
-              required
+              label="Weight (kg)" value={form.weightKg} error={errors.weightKg} 
+              onChange={v => handleChange("weightKg", v)} icon={<Weight className="text-emerald-600" />} required 
             />
           </Section>
 
-          {/* Lifestyle Section */}
-          <Section 
-            title="Lifestyle" 
-            icon={<Activity className="w-5 h-5" />}
-          >
+          <Section title="Lifestyle" icon={<Activity />}>
             <Select 
-              label="Activity Level" 
-              value={form.activityLevel} 
-              error={errors.activityLevel}
-              options={["Sedentary", "Light", "Moderate", "Active"]}
-              onChange={v => handleChange("activityLevel", v)}
-              icon={<Activity className="w-5 h-5 text-emerald-600" />}
-              required
+              label="Fitness Level" value={form.fitnessLevel} error={errors.fitnessLevel}
+              options={FITNESS_LEVELS.map(f => ({ label: formatLabel(f), value: f }))}
+              onChange={v => handleChange("fitnessLevel", v)} required
             />
-
+            <Select 
+              label="Activity Level" value={form.activityLevel} error={errors.activityLevel}
+              options={ACTIVITY_LEVELS.map(a => ({ label: formatLabel(a), value: a }))}
+              onChange={v => handleChange("activityLevel", v)} icon={<Activity className="text-emerald-600" />} required
+            />
             <Input 
-              label="Daily Water Intake (L)" 
-              value={form.dailyWaterIntake} 
-              error={errors.dailyWaterIntake}
-              onChange={v => handleChange("dailyWaterIntake", v)}
-              icon={<Droplets className="w-5 h-5 text-emerald-600" />}
+              label="Daily Water (L)" value={form.dailyWaterIntakeLiters} error={errors.dailyWaterIntakeLiters}
+              onChange={v => handleChange("dailyWaterIntakeLiters", v)} icon={<Droplets className="text-emerald-600" />}
             />
-
-            <Select 
-              label="Sleep Duration" 
-              value={form.sleepDuration}
-              options={["<6 hrs", "6–7 hrs", "7–8 hrs", ">8 hrs"]}
-              onChange={v => handleChange("sleepDuration", v)}
-              icon={<Moon className="w-5 h-5 text-emerald-600" />}
+            <Input 
+              label="Sleep (Hours)" value={form.sleepDurationHours} error={errors.sleepDurationHours}
+              onChange={v => handleChange("sleepDurationHours", v)} icon={<Moon className="text-emerald-600" />}
             />
           </Section>
 
-          {/* Nutrition & Goals Section */}
-          <Section 
-            title="Nutrition & Goals" 
-            icon={<Target className="w-5 h-5" />}
-          >
+          <Section title="Nutrition & Goals" icon={<Target />}>
             <Select 
-              label="Diet Type" 
-              value={form.dietType}
-              options={["Veg", "Non-Veg", "Vegan", "Keto", "Balanced"]}
-              onChange={v => handleChange("dietType", v)}
-              icon={<UtensilsCrossed className="w-5 h-5 text-emerald-600" />}
+              label="Diet Type" value={form.dietType} options={DIET_TYPES.map(d => ({ label: formatLabel(d), value: d }))}
+              onChange={v => handleChange("dietType", v)} icon={<UtensilsCrossed className="text-emerald-600" />}
             />
-
             <Select 
-              label="Goal" 
-              value={form.goal} 
-              error={errors.goal}
-              options={["Weight Loss", "Muscle Gain", "Maintenance"]}
-              onChange={v => handleChange("goal", v)}
-              icon={<Target className="w-5 h-5 text-emerald-600" />}
-              required
+              label="Goal" value={form.goal} error={errors.goal}
+              options={GOALS.map(g => ({ label: formatLabel(g), value: g }))}
+              onChange={v => handleChange("goal", v)} icon={<Target className="text-emerald-600" />} required
             />
-
-            <Input 
-              label="Target Weight (kg)" 
-              value={form.targetWeight} 
-              error={errors.targetWeight}
-              onChange={v => handleChange("targetWeight", v)}
-              icon={<TrendingUp className="w-5 h-5 text-emerald-600" />}
+            <Select
+              label="Timeline" value={form.preferredTimeline} error={errors.preferredTimeline}
+              options={TIMELINES.map(t => ({ label: formatLabel(t), value: t }))}
+              onChange={v => handleChange("preferredTimeline", v)} required
             />
-
             <Input 
-              type="text" 
-              label="Focus Area" 
-              value={form.focusArea}
-              onChange={v => handleChange("focusArea", v)}
-              placeholder="e.g., Belly, Arms, Overall"
-              icon={<Target className="w-5 h-5 text-emerald-600" />}
+              label="Target Weight (kg)" value={form.targetWeightKg} error={errors.targetWeightKg}
+              onChange={v => handleChange("targetWeightKg", v)} icon={<TrendingUp className="text-emerald-600" />}
             />
           </Section>
 
-          {/* Submit Button */}
           <button
             disabled={loading}
             onClick={handleSubmit}
-            className="w-full py-4 sm:py-5 rounded-xl text-white font-bold text-base sm:text-lg relative overflow-hidden group
-            bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700
-            disabled:from-gray-300 disabled:to-gray-400 transition-all duration-300 shadow-lg
-            hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-xl text-white font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg"
           >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Saving...</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                <span>Save Health Profile</span>
-              </>
-            )}
+            {loading ? <Loader2 className="animate-spin" /> : <Save />}
+            <span>{loading ? "Saving..." : "Save Health Profile"}</span>
           </button>
         </div>
       </div>
     </div>
   );
 }
+
+
 
 /* ---------------- Section Component ---------------- */
 
@@ -297,19 +238,20 @@ function Input({ label, value, onChange, error, type = "number", icon, required,
 }
 
 /* ---------------- Select Component ---------------- */
-
 function Select({ label, value, options, onChange, error, icon, required }: any) {
+  const selectId = `select-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div className="space-y-2 group">
-      <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+      <label htmlFor={selectId} className="text-sm font-semibold text-gray-700 flex items-center gap-2">
         {icon}
         {label}
         {required && <span className="text-red-500">*</span>}
       </label>
       <div className="relative">
         <select
+          id={selectId}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           className={`w-full px-4 py-3 sm:px-5 sm:py-4 rounded-lg border-2 outline-none transition-all duration-300
           bg-white font-medium appearance-none cursor-pointer text-sm sm:text-base
           ${error 
@@ -318,10 +260,20 @@ function Select({ label, value, options, onChange, error, icon, required }: any)
           }`}
         >
           <option value="">Select {label}</option>
-          {options.map((o: string) => (
-            <option key={o} value={o}>{o}</option>
-          ))}
+          {options.map((o: any) => {
+            // Check if the option is an object or a simple string
+            const val = typeof o === "object" ? o.value : o;
+            const labelStr = typeof o === "object" ? o.label : o;
+            
+            return (
+              <option key={val} value={val}>
+                {labelStr}
+              </option>
+            );
+          })}
         </select>
+        
+        {/* Custom Arrow Icon */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

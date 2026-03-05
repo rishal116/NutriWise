@@ -8,6 +8,9 @@ import { IUserPlanRepository } from "../../../repositories/interfaces/user/IUser
 import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanRepository";
 import { IWalletRepository } from "../../../repositories/interfaces/common/IWalletRepository";
 import { IPaymentRepository } from "../../../repositories/interfaces/common/IPaymentRepository";
+import { calculateCommission } from "../../../helper/paymentCalculator";
+import { IUserProgramRepository } from "../../../repositories/interfaces/user/IUserProgramRepository";
+import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
 
 @injectable()
 export class StripeWebhookService implements IStripeWebhookService {
@@ -22,7 +25,14 @@ export class StripeWebhookService implements IStripeWebhookService {
     private _walletRepo: IWalletRepository,
 
     @inject(TYPES.IPaymentRepository)
-    private _paymentRepo: IPaymentRepository
+    private _paymentRepo: IPaymentRepository,
+
+    @inject(TYPES.IUserProgramRepository)
+    private _userProgram: IUserProgramRepository,
+
+    @inject(TYPES.IHealthDetailsRepository)
+    private _healthDetails: IHealthDetailsRepository
+
   ) {}
 
   async process(payload: Buffer, signature: string) {
@@ -46,13 +56,9 @@ export class StripeWebhookService implements IStripeWebhookService {
     const plan = await this._planRepo.findById(planId);
     if (!plan) throw new Error("Plan not found");
 
-    const totalAmount = plan.price;
-    const ADMIN_COMMISSION_PERCENT = 20;
-
-    const adminAmount = Math.round(
-      (totalAmount * ADMIN_COMMISSION_PERCENT) / 100
-    );
-    const nutritionistAmount = totalAmount - adminAmount;
+  const totalAmount = plan.price;
+  
+  const { adminAmount, nutritionistAmount } = calculateCommission(totalAmount);
 
     const userObjectId = new Types.ObjectId(userId);
     const planObjectId = new Types.ObjectId(planId);
@@ -96,26 +102,69 @@ export class StripeWebhookService implements IStripeWebhookService {
     });
 
 
-    await this._walletRepo.credit(adminWallet._id.toString(), adminAmount);
-    await this._walletRepo.credit(
+  await Promise.all([
+    this._walletRepo.credit(adminWallet._id.toString(), adminAmount),
+    this._walletRepo.credit(
       nutritionistWallet._id.toString(),
       nutritionistAmount
-    );
+    ),
+  ]);
 
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + plan.durationInDays);
 
-    await this._userPlanRepo.create({
-      userId: userObjectId,
-      planId: planObjectId,
-      nutritionistId: nutritionistObjectId,
-      stripeSessionId: session.id,
-      amount: totalAmount,
-      status: "ACTIVE",
-      startDate,
-      endDate,
-    });
+    const planSnapshot = {
+      title: plan.title,
+      durationInDays: plan.durationInDays,
+      price: plan.price,
+      currency: plan.currency ?? "INR",
+    };
+    const paymentId = session.payment_intent as string;
+
+  const userPlan = await this._userPlanRepo.create({
+    userId: userObjectId,
+    planId: planObjectId,
+    nutritionistId: nutritionistObjectId,
+    paymentProvider: "stripe",
+    paymentId: paymentId,
+    checkoutSessionId: session.id,
+    paymentStatus: "paid",
+    amount: totalAmount,
+    currency: planSnapshot.currency,
+    planSnapshot,
+    status: "ACTIVE",
+    startDate,
+    endDate,
+  });
+
+  const healthProfile = await this._healthDetails.findByUserId(userId);
+
+  await this._userProgram.create({
+  userId: userObjectId,
+  planId: planObjectId,
+  userPlanId: userPlan._id,
+  nutritionistId: nutritionistObjectId,
+
+  goal: healthProfile?.goal,
+  dietType: healthProfile?.dietType,
+  activityLevel: healthProfile?.activityLevel,
+  focusAreas: healthProfile?.focusAreas,
+
+  startDate,
+  endDate,
+  durationDays: plan.durationInDays,
+  currentDay: 1,
+  completionPercentage: 0,
+  status: "ACTIVE",
+
+  planSnapshot: {
+    title: plan.title,
+    price: plan.price,
+    currency: plan.currency ?? "INR",
+    durationInDays: plan.durationInDays,
+  },
+});
 
     console.log("✅ Stripe payment processed successfully");
   }

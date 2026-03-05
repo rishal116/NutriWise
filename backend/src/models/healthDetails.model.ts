@@ -8,30 +8,40 @@ import {
   FITNESS_LEVELS,
   DIET_TYPES,
   GOALS,
+  TIMELINES,
+  TimelineType
 } from "../types/health.types";
   
 export interface IHealthDetails extends Document {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  height: number;
-  weight: number;
+
+  heightCm: number;
+  weightKg: number;
   bmi?: number;
+
   activityLevel: ActivityLevel;
   fitnessLevel: FitnessLevel;
   dietType: DietType;
+
   allergies?: string[];
   dietaryRestrictions?: string[];
   medicalConditions?: string[];
   injuries?: string[];
-  dailyWaterIntake: number;
-  sleepDuration: number;
+
+  dailyWaterIntakeLiters: number;
+  sleepDurationHours: number;
+
   dailyStepGoal?: number;
   workoutDaysPerWeek?: number;
   workoutTimePerSession?: number;
+
   goal: GoalType;
-  targetWeight?: number;
-  preferredTimeline: string;
-  focusArea?: string;
+  targetWeightKg?: number;
+  preferredTimeline: TimelineType;
+  
+  focusAreas?: string[];
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,8 +55,8 @@ const healthDetailsSchema = new Schema<IHealthDetails>(
       unique: true,
       index: true,
     },
-    height: { type: Number, required: true },
-    weight: { type: Number, required: true },
+    heightCm: { type: Number, required: true },
+    weightKg: { type: Number, required: true },
     bmi: { type: Number },
     activityLevel: {
       type: String,
@@ -68,8 +78,8 @@ const healthDetailsSchema = new Schema<IHealthDetails>(
     dietaryRestrictions: [{ type: String }],
     medicalConditions: [{ type: String }],
     injuries: [{ type: String }],
-    dailyWaterIntake: { type: Number, required: true },
-    sleepDuration: { type: Number, required: true },
+    dailyWaterIntakeLiters: { type: Number, required: true },
+    sleepDurationHours: { type: Number, required: true },
     dailyStepGoal: { type: Number },
     workoutDaysPerWeek: { type: Number },
     workoutTimePerSession: { type: Number },
@@ -78,9 +88,9 @@ const healthDetailsSchema = new Schema<IHealthDetails>(
       enum: GOALS,
       required: true,
     },
-    targetWeight: { type: Number },
-    preferredTimeline: { type: String, required: true },
-    focusArea: { type: String },
+    targetWeightKg: { type: Number },
+    preferredTimeline: { type: String,enum: TIMELINES, required: true },
+    focusAreas: [{ type: String }],
   },
   { timestamps: true }
 );
