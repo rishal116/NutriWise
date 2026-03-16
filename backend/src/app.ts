@@ -10,7 +10,8 @@ import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
 import nutriRoutes from "./routes/nutritionist.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
-import logger from "./utils/logger";
+import chatRoutes from "./routes/chat.routes"
+
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ app.use(
 
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
+app.use("/chat", chatRoutes);
 app.use("/nutritionist", nutriRoutes);
 
 app.use(errorMiddleware);

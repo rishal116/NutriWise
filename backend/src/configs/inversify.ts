@@ -158,6 +158,10 @@ import { ITaskService } from "../services/interfaces/user/ITaskService";
 import { TaskService } from "../services/implements/user/task.service";
 import { ITaskLogRepository } from "../repositories/interfaces/user/ITaskLogRepository";
 import { TaskLogRepository } from "../repositories/implements/user/taskLog.repository";
+import { IConversationMemberRepository } from "../repositories/interfaces/chat/IConversationMemberRepository";
+import { ConversationMemberRepository } from "../repositories/implements/chat/conversationMember.repository";
+import { IMessageReceiptRepository } from "../repositories/interfaces/chat/IMessageReceiptRepository";
+import { MessageReceiptRepository } from "../repositories/implements/chat/messageReceipt.repository";
 
 
 
@@ -247,6 +251,8 @@ container.bind<IConversationService>(TYPES.IConversationService).to(Conversation
 container.bind<IMessageService>(TYPES.IMessageService).to(MessageService)
 container.bind<IConversationRepository>(TYPES.IConversationRepository).to(ConversationRepository)
 container.bind<IMessageRepository>(TYPES.IMessageRepository).to(MessageRepository)
+container.bind<IConversationMemberRepository>(TYPES.IConversationMemberRepository).to(ConversationMemberRepository)
+container.bind<IMessageReceiptRepository>(TYPES.IMessageReceiptRepository).to(MessageReceiptRepository)
 
 
 // video

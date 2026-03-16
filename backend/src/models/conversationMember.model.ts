@@ -6,15 +6,22 @@ export interface IConversationMember extends Document {
   _id: Types.ObjectId;
   conversationId: Types.ObjectId;
   userId: Types.ObjectId;
+
   role: MemberRole;
+
   lastReadAt?: Date;
   lastDeliveredAt?: Date;
+
   unreadCount: number;
+
   isMuted: boolean;
   isArchived: boolean;
   isPinned: boolean;
   isLeft: boolean;
+  isBlocked:boolean;
+
   joinedAt: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,22 +50,28 @@ const ConversationMemberSchema = new Schema<IConversationMember>(
     },
 
     lastReadAt: Date,
+
     lastDeliveredAt: Date,
 
     unreadCount: {
       type: Number,
       default: 0,
-      min: 0,
     },
 
     isMuted: { type: Boolean, default: false },
+
     isArchived: { type: Boolean, default: false },
+
     isPinned: { type: Boolean, default: false },
 
     isLeft: {
       type: Boolean,
       default: false,
       index: true,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false
     },
 
     joinedAt: {

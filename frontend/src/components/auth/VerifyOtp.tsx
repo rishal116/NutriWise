@@ -19,20 +19,27 @@ export default function OtpForm() {
   const [canResend, setCanResend] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  useEffect(() => {
-  const token = localStorage.getItem("token");
+const token = useSelector((state: RootState) => state.auth.token);
+
+useEffect(() => {
   if (token) {
     router.replace("/home");
   }
-}, [router]);
+}, [token, router]);
 
-  useEffect(() => {
-    if (isVerifying) return;
-    const storedEmail = localStorage.getItem("signupEmail");
-    if (!email && storedEmail) {
-      dispatch(restoreSignupEmail(storedEmail));
-    }
-  }, [email, isVerifying, dispatch, router]);
+useEffect(() => {
+  if (isVerifying) return;
+
+  const storedEmail = localStorage.getItem("signupEmail");
+
+  if (!email && storedEmail) {
+    dispatch(restoreSignupEmail(storedEmail));
+  }
+
+  if (!email && !storedEmail) {
+    router.replace("/signup");
+  }
+}, [email, isVerifying, dispatch, router]);
 
   useEffect(() => {
     inputRefs.current[0]?.focus();
@@ -87,6 +94,7 @@ export default function OtpForm() {
   };
 
   const handleVerify = async () => {
+    if (isVerifying) return;
     if (!email) {
       toast.error("Invalid session. Please sign up again.");
       router.replace(`/signup`);
@@ -101,8 +109,8 @@ export default function OtpForm() {
         localStorage.removeItem("signupEmail");
         toast.success(res.message || "OTP verified successfully!");
         if (res.accessToken) {
-          dispatch(loginSuccess(res.user));
-          localStorage.setItem("token", res.accessToken);
+          dispatch(loginSuccess(res.accessToken));
+        
         }
         setTimeout(() => {
           if (res.role === "nutritionist") router.replace("/nutritionist/details");
@@ -157,7 +165,10 @@ export default function OtpForm() {
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Verify Your Email</h1>
             <p className="text-gray-500 text-sm">We've sent a 6-digit code to</p>
-            <p className="text-teal-600 font-semibold text-sm mt-1">{email}</p>
+            <p className="text-teal-600 font-semibold text-sm mt-1 flex items-center justify-center gap-1">
+  <Mail className="w-4 h-4" />
+  {email}
+</p>
           </div>
 
           {/* OTP Inputs */}

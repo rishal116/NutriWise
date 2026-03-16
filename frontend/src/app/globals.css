@@ -1,22 +1,13 @@
+@import "tailwindcss";
 
+/* v4 doesn't need @tailwind base/components/utilities if you use the import above */
 
-@import 'tailwindcss';
-
-body {
-  margin: 0;
-  padding: 0;
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+  }
 }
-
-/* Leaflet CSS */
-.leaflet-container {
-  height: 300px;
-  width: 100%;
-  border-radius: 1rem;
-}
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 :root {
   --bg: #ffffff;
@@ -28,15 +19,34 @@ body {
   --text: #e5e7eb;
 }
 
-.mirror {
-  transform: scaleX(-1);
+/* Custom Components */
+@layer components {
+  .progress-bar-fill {
+    @apply bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000;
+  }
 }
 
-.video-container-transition {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
+/* Utilities */
+@layer utilities {
+  .mirror {
+    transform: scaleX(-1);
+  }
 
+  .video-container-transition {
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 
-.progress-bar-fill {
-  @apply bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-1000;
+  .leaflet-container {
+    height: 300px;
+    width: 100%;
+    border-radius: 1rem;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
 }

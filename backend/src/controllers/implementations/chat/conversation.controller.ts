@@ -14,19 +14,18 @@ export class ConversationController implements IConversationController {
   ) {}
   
   createDirectConversation = asyncHandler(async (req: Request, res: Response ) => {
-    
     const conversation = await this._conversationService.createDirectConversation({
       currentUserId: req.user?.userId as string,
       otherUserId: req.body.otherUserId,
     });
-    res.status(StatusCode.OK).json(conversation);
+    res.status(StatusCode.OK).json({success:true,data:conversation});
   });
   
   getUserChats = asyncHandler(async (req: Request, res: Response ) => {
     const conversations = await this._conversationService.getUserConversations(
       req.user?.userId as string
     );
-    res.json(conversations);
+    res.json({success:true,data:conversations});
   });
   
 }

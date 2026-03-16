@@ -2,6 +2,7 @@ import axios from "axios";
 import { store } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
 import { userAuthService } from "@/services/user/userAuth.service";
+import { setToken } from "@/redux/slices/authSlice";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -15,7 +16,7 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("token");      
+      const token = store.getState().auth.token     
       if (token) config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
@@ -30,11 +31,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Auth endpoints should NOT trigger refresh
-    const authEndpoints = [
-      "/login",
-      "/signup",
-      "/google",
-    ];
+    const authEndpoints = ["/login","/signup","/google"];
 
     if (authEndpoints.some((url) => originalRequest.url?.includes(url))) {
       return Promise.reject(error);
@@ -59,13 +56,12 @@ api.interceptors.response.use(
         const newToken = res.data?.accessToken;
         if (!newToken) throw new Error("No access token");
 
-        localStorage.setItem("token", newToken);
+        store.dispatch(setToken(newToken));
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return api(originalRequest);
       } catch (err) {
         store.dispatch(logout());
-        localStorage.removeItem("token");
         window.location.href = "/";
         return Promise.reject(err);
       }
@@ -74,8 +70,6 @@ api.interceptors.response.use(
     if (error.response?.status === 403) {
       store.dispatch(logout());
       await userAuthService.logout()
-      
-      localStorage.removeItem("token");
       window.location.href = "/";
     }
 

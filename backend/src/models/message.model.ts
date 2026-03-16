@@ -5,38 +5,48 @@ export enum MessageType {
   IMAGE = "image",
   FILE = "file",
   VIDEO = "video",
+  SYSTEM = "system",
 }
 
-export enum DeliveryStatus {
-  SENT = "sent",
-  DELIVERED = "delivered",
-  SEEN = "seen",
+interface IAttachment {
+  url: string;
+  fileName: string;
+  size?: number;
+  mimeType?: string;
+}
+
+interface IReaction {
+  userId: Types.ObjectId;
+  emoji: string;
 }
 
 export interface IMessage extends Document {
   _id: Types.ObjectId;
+
   conversationId: Types.ObjectId;
+
   senderId: Types.ObjectId;
+
   text?: string;
-  fileUrl?: string;
+
+  attachments?: IAttachment[];
+
   messageType: MessageType;
+
   replyTo?: Types.ObjectId;
-  isEdited: boolean;
-  editedAt?: Date;
-  deliveryStatus: DeliveryStatus;
-  reactions?: {
-    userId: Types.ObjectId;
-    emoji: string;
-  }[];
-  mediaMeta?: {
-    size?: number;
-    duration?: number;
-    width?: number;
-    height?: number;
-  };
+
+  reactions?: IReaction[];
+
   isCoachMessage: boolean;
+
+  isEdited: boolean;
+
+  editedAt?: Date;
+
   isDeleted: boolean;
+
   createdAt: Date;
+
   updatedAt: Date;
 }
 
@@ -56,8 +66,27 @@ const messageSchema = new Schema<IMessage>(
       index: true,
     },
 
-    text: String,
-    fileUrl: String,
+    text: {
+      type: String,
+      trim: true,
+    },
+
+    attachments: [
+      {
+        url: {
+          type: String,
+        },
+        fileName: {
+          type: String,
+        },
+        size: {
+          type: Number,
+        },
+        mimeType: {
+          type: String,
+        },
+      },
+    ],
 
     messageType: {
       type: String,
@@ -69,13 +98,6 @@ const messageSchema = new Schema<IMessage>(
     replyTo: {
       type: Schema.Types.ObjectId,
       ref: "Message",
-      index: true,
-    },
-
-    deliveryStatus: {
-      type: String,
-      enum: Object.values(DeliveryStatus),
-      default: DeliveryStatus.SENT,
       index: true,
     },
 
@@ -93,13 +115,6 @@ const messageSchema = new Schema<IMessage>(
       },
     ],
 
-    mediaMeta: {
-      size: Number,
-      duration: Number,
-      width: Number,
-      height: Number,
-    },
-
     isCoachMessage: {
       type: Boolean,
       default: false,
@@ -111,7 +126,9 @@ const messageSchema = new Schema<IMessage>(
       default: false,
     },
 
-    editedAt: Date,
+    editedAt: {
+      type: Date,
+    },
 
     isDeleted: {
       type: Boolean,
@@ -119,32 +136,21 @@ const messageSchema = new Schema<IMessage>(
       index: true,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
-
-
-messageSchema.pre("validate", function (next) {
-  if (this.isDeleted) return next();
-
-  const hasText = !!this.text?.trim();
-  const hasFile = !!this.fileUrl?.trim();
-
-  if (this.messageType === MessageType.TEXT && !hasText) {
-    return next(new Error("Text message must contain text"));
-  }
-
-  if (this.messageType !== MessageType.TEXT && !hasFile) {
-    return next(new Error("Media message must contain fileUrl"));
-  }
-
-  next();
-});
 
 messageSchema.index(
   { conversationId: 1, createdAt: -1 },
   { partialFilterExpression: { isDeleted: false } }
 );
 
-messageSchema.index({ replyTo: 1, createdAt: 1 });
+messageSchema.index({
+  conversationId: 1,
+  senderId: 1,
+});
+
+
 
 export const MessageModel = model<IMessage>("Message", messageSchema);

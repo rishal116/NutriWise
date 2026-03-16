@@ -92,7 +92,7 @@ export class UserAuthService implements IUserAuthService {
     };
 
     const newUser = (await this._userRepository.create(createPayload)) as unknown as UserEntity;
-    console.log("CREATED USER:", newUser);
+
 
     const { accessToken, refreshToken } = generateTokens(
       (newUser._id as { toString: () => string }).toString(),

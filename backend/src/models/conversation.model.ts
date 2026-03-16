@@ -4,8 +4,6 @@ export type ChatType = "direct" | "group";
 
 export interface IConversation extends Document {
   _id: Types.ObjectId;
-  participants: Types.ObjectId[];
-  participantCount: number;
   chatType: ChatType;
   title?: string;
   groupAvatar?: string;
@@ -14,6 +12,8 @@ export interface IConversation extends Document {
   lastMessageId?: Types.ObjectId;
   lastMessageAt?: Date;
   lastMessagePreview?: string;
+  lastMessageSenderId?:Types.ObjectId;
+  participantsCount?:number;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -21,32 +21,15 @@ export interface IConversation extends Document {
 
 const conversationSchema = new Schema<IConversation>(
   {
-    participants: {
-      type: [Schema.Types.ObjectId],
-      ref: "User",
-      required: true,
-      validate: {
-        validator: function (val: Types.ObjectId[]) {
-          return val.length >= 2;
-        },
-        message: "Conversation must have at least 2 participants",
-      },
-      index: true,
-    },
-
-    participantCount: {
-      type: Number,
-      required: true,
-    },
-
     chatType: {
       type: String,
       enum: ["direct", "group"],
       default: "direct",
       index: true,
     },
-
+    
     title: String,
+
     groupAvatar: String,
 
     adminId: {
@@ -54,7 +37,7 @@ const conversationSchema = new Schema<IConversation>(
       ref: "User",
       index: true,
     },
-    
+
     directKey: {
       type: String,
       trim: true,
@@ -69,8 +52,20 @@ const conversationSchema = new Schema<IConversation>(
       type: Date,
       index: true,
     },
-
-    lastMessagePreview: String,
+    
+    lastMessagePreview: {
+      type: String,
+      maxlength: 200
+    },
+    
+    lastMessageSenderId: {
+      type: Schema.Types.ObjectId,
+      ref: "User"
+    },
+    participantsCount: {
+      type: Number,
+      default: 2
+    },
 
     isDeleted: {
       type: Boolean,
@@ -89,7 +84,7 @@ conversationSchema.index(
   }
 );
 
-conversationSchema.index({ participants: 1, lastMessageAt: -1 });
+conversationSchema.index({ lastMessageAt: -1 });
 
 export const ConversationModel = model<IConversation>(
   "Conversation",

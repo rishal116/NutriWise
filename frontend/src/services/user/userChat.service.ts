@@ -13,8 +13,6 @@ export const userChatService = {
 
   getMessages: async (conversationId: string) => {
     const res = await api.get(`/chat/messages/${conversationId}`);
-    console.log(res);
-    
     return res.data;
   },
 
@@ -27,29 +25,33 @@ export const userChatService = {
     return res.data;
   },
 
-  sendFile: async (conversationId: string, file: File) => {
-    const formData = new FormData();
-    formData.append("conversationId", conversationId);
-    formData.append("file", file);
-    formData.append("messageType", "file");
+sendFile: async (conversationId: string, file: File) => {
 
-    const res = await api.post("/chat/message/file", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  const formData = new FormData();
 
-    return res.data;
-  },
+  formData.append("conversationId", conversationId);
+  formData.append("file", file);
+  formData.append("messageType", "file");
+
+  const res = await api.post("/chat/message/file", formData,{      
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }});
+
+  return res.data;
+
+},
 
   markAsRead: async (conversationId: string) => {
     await api.patch(`/chat/read/${conversationId}`);
   },
 
-  deleteMessage:async (message: string) => {
-    await api.patch(`/chat/read/${message}`);
-  },
-  editMessage:async (message: string,text:string) => {
-    await api.patch(`/chat/read/${message}`);
-  },
+deleteMessage: async (messageId: string) => {
+  await api.patch(`/chat/delete/${messageId}`);
+},
+
+editMessage: async (messageId: string, text: string) => {
+  const res = await api.patch(`/chat/edit/${messageId}`, { text });
+  return res.data;
+},
 };

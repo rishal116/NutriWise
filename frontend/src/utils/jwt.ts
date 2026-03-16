@@ -1,12 +1,13 @@
 import { jwtDecode } from "jwt-decode";
+import { store } from "@/redux/store";
 
 export const getUserRole = () => {
   try {
-    const token = localStorage.getItem("token");
+    const token = store.getState().auth.token;
     if (!token) return null;
 
     const decoded: any = jwtDecode(token);
-    return decoded.role;
+    return decoded.role || null;
   } catch {
     return null;
   }
@@ -14,7 +15,7 @@ export const getUserRole = () => {
 
 export const getUserId = () => {
   try {
-    const token = localStorage.getItem("token");
+    const token = store.getState().auth.token;
     if (!token) return null;
 
     const decoded: any = jwtDecode(token);
@@ -23,4 +24,3 @@ export const getUserId = () => {
     return null;
   }
 };
-
