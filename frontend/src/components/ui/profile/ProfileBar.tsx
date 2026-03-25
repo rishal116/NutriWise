@@ -2,11 +2,18 @@
 
 import Link from "next/link";
 import {
-  User, HeartPulse, Calendar, ClipboardList, Video, 
-  Trophy, MessageCircle, BookOpen, CreditCard, Settings, X,
+  User,
+  HeartPulse,
+  Calendar,
+  ClipboardList,
+  Video,
+  Trophy,
+  MessageCircle,
+  BookOpen,
+  CreditCard,
+  Settings,
+  X,
 } from "lucide-react";
-
-
 
 interface NavItem {
   name: string;
@@ -23,92 +30,82 @@ interface ProfileSidebarProps {
   compact?: boolean;
   activePath: string;
   onClose?: () => void;
-  disableScroll?: boolean;
 }
 
 const navSections: NavSection[] = [
   {
     title: "Account",
     items: [
-      { name: "Profile", href: "/client/profile", icon: User },
-      { name: "Health Details", href: "/client/health", icon: HeartPulse },
+      { name: "Profile",        href: "/client/profile", icon: User       },
+      { name: "Health Details", href: "/client/health",  icon: HeartPulse },
     ],
   },
   {
     title: "My Journey",
     items: [
-      { name: "My Plan", href: "/client/plans", icon: Calendar },
-      { name: "My Programs", href: "/client/programs", icon: Calendar },
-      { name: "Tasks", href: "/client/tasks", icon: ClipboardList },
-      { name: "Meetings", href: "/client/meetings", icon: Video },
-      { name: "Progress", href: "/client/progress", icon: Trophy },
+      { name: "My Plan",   href: "/client/plans",    icon: Calendar     },
+      { name: "Meetings",  href: "/client/meetings", icon: Video        },
+      { name: "Progress",  href: "/client/progress", icon: Trophy       },
     ],
   },
   {
     title: "Communication",
     items: [
-      { name: "Messages", href: "/client/messages", icon: MessageCircle },
-      { name: "Resources", href: "/client/resources", icon: BookOpen },
+      { name: "Messages",  href: "/client/messages",  icon: MessageCircle },
+      { name: "Resources", href: "/client/resources", icon: BookOpen      },
     ],
   },
   {
     title: "Billing & Settings",
     items: [
       { name: "Payments", href: "/client/payments", icon: CreditCard },
-      { name: "Settings", href: "/client/settings", icon: Settings },
+      { name: "Settings", href: "/client/settings", icon: Settings   },
     ],
   },
 ];
-
-
-
 
 export default function ProfileSidebar({
   compact = false,
   activePath,
   onClose,
-  disableScroll,
 }: ProfileSidebarProps) {
   return (
     <aside
       className={`
-        h-full bg-white transition-all duration-300 ease-in-out flex flex-col
-        ${compact ? "w-20" : "w-64"}
+        h-full bg-white border-r border-gray-100 flex flex-col
+        transition-all duration-300 ease-in-out
+        ${compact ? "w-16" : "w-56"}
       `}
     >
-      {/* Mobile Close Button */}
+      {/* Mobile close row — only on small screens, only in full mode */}
       {!compact && (
-        <div className="lg:hidden flex items-center justify-between p-6 border-b border-gray-50">
-          <span className="text-xl font-bold text-gray-900 tracking-tight">Menu</span>
+        <div className="lg:hidden flex items-center justify-between px-4 py-4 border-b border-gray-100">
+          <span className="text-sm font-bold text-gray-800">Menu</span>
           <button
-          type="button"
-  onClick={onClose}
-  aria-label="Close menu"
-  title="Close menu"
-  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
->
-  <X className="w-6 h-6" />
-</button>
+            type="button"
+            onClick={onClose}
+            aria-label="Close menu"
+            className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-<nav
-  className={`
-    flex-1 py-6
-    ${disableScroll ? "overflow-hidden" : "overflow-y-auto"} // Use overflow-hidden to hide scrollbar
-    ${compact ? "px-3" : "px-4"}
-  `}
->
+      {/* Nav */}
+      <nav className={`flex-1 overflow-y-auto py-4 ${compact ? "px-2" : "px-3"}`}>
+        {navSections.map((section, si) => (
+          <div key={section.title} className={si !== 0 ? "mt-5" : ""}>
 
-        {navSections.map((section) => (
-          <div key={section.title} className={`w-full ${compact ? "mb-2" : "mb-6"}`}>
+            {/* Section label */}
             {!compact && (
-              <h3 className="px-4 mb-3 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400/80">
+              <p className="px-2 mb-1.5 text-[9px] font-black uppercase tracking-widest text-gray-400">
                 {section.title}
-              </h3>
+              </p>
             )}
 
-            <div className={`flex flex-col gap-1 ${compact ? "items-center" : ""}`}>
+            {/* Items */}
+            <div className={`flex flex-col gap-0.5 ${compact ? "items-center" : ""}`}>
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = activePath.startsWith(item.href);
@@ -118,21 +115,20 @@ export default function ProfileSidebar({
                     key={item.name}
                     href={item.href}
                     onClick={onClose}
-                    title={compact ? item.name : ""} 
+                    title={compact ? item.name : undefined}
                     className={`
-                      relative flex items-center group transition-all duration-200
-                      ${compact 
-                        ? "justify-center h-12 w-12 rounded-xl" 
-                        : "gap-3 px-4 py-3 rounded-xl w-full"}
+                      flex items-center transition-all duration-150 rounded-lg
+                      ${compact
+                        ? "justify-center w-10 h-10 mx-auto"
+                        : "gap-2.5 px-3 py-2 w-full"}
                       ${isActive
-                        ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
-                        : "text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"}
+                        ? "bg-emerald-600 text-white"
+                        : "text-gray-400 hover:bg-gray-50 hover:text-emerald-600"}
                     `}
                   >
-                    <Icon className={`${compact ? "w-6 h-6" : "w-5 h-5"} shrink-0`} />
-
+                    <Icon className="w-4 h-4 flex-shrink-0" />
                     {!compact && (
-                      <span className="text-sm font-semibold tracking-tight">
+                      <span className="text-xs font-semibold truncate">
                         {item.name}
                       </span>
                     )}

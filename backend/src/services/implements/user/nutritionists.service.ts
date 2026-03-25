@@ -9,6 +9,7 @@ import { NutritionistUserSideDTO, NutritionistUserDTO,NutritionistPlanDTO } from
 import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanRepository";
 import { IPlan } from "../../../models/nutritionistPlan.model";
 import { NutritionistListFilter } from "../../../dtos/user/nutritionistUser.dto";
+import { toNutritionistPlanDTO } from "../../../mapper/user/nutritionistPlan.mapper";
 
 @injectable()
 export class NutritionistService implements INutritionistService {
@@ -73,7 +74,7 @@ export class NutritionistService implements INutritionistService {
       logger.warn(`No plans found for nutritionist ID: ${id}`);
       return [];
     }
-    const mappedPlans: NutritionistPlanDTO[] = plans.map(plan => new NutritionistPlanDTO(plan));
+    const mappedPlans = plans.map(toNutritionistPlanDTO);
     logger.info(`Returning ${mappedPlans.length} plans for nutritionist ID: ${id}`);
     return mappedPlans;
   }

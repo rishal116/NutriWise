@@ -1,6 +1,10 @@
-import { TodayTasksResponseDTO, UpdateTodayTasksDTO } from "../../../dtos/user/task.dto";
+import { TaskLogResponseDTO } from "../../../dtos/user/taskLog.dto";
 
 export interface ITaskService {
-  getTodayTasks(userId: string): Promise<TodayTasksResponseDTO>;
-  updateTodayTasks(userId: string, payload: UpdateTodayTasksDTO): Promise<void>;
+  updateTodayTasks(userId: string, payload: any): Promise<TaskLogResponseDTO>;
+  getTodayTasks(
+    userId: string,
+    programId: string,
+    dayNumber: number,
+  ): Promise<TaskLogResponseDTO>;
 }

@@ -18,6 +18,8 @@ import { IMessageController } from "../controllers/interfaces/chat/IMessageContr
 import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMeetingsController";
 import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
 import { ITaskController } from "../controllers/interfaces/user/ITaskController";
+import { IHealthProgressController } from "../controllers/interfaces/user/IHealthProgressController";
+import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 
 
 
@@ -37,6 +39,8 @@ const messageController = container.get<IMessageController>(TYPES.IMessageContro
 const userMeetingsController = container.get<IUserMeetingsController>(TYPES.IUserMeetingsController)
 const userProgramController = container.get<IUserProgramController>(TYPES.IUserProgramController)
 const taskController = container.get<ITaskController>(TYPES.ITaskController)
+const healthProgressController = container.get<IHealthProgressController>(TYPES.IHealthProgressController)
+const reviewController = container.get<IReviewController>(TYPES.IReviewController)
 
 router.post("/signup", userAuthController.signup);
 router.post("/verify-otp",userAuthController.verifyOtp)
@@ -63,24 +67,34 @@ router.post("/checkout/session",authMiddleware, authMiddleware,checkoutControlle
 router.post("/stripe/webhook",stripeController.handle);
 router.get("/health-details", authMiddleware, healthDetailsController.getMyDetails);
 router.post("/health-details", authMiddleware,authMiddleware,healthDetailsController.saveDetails);
-router.get("/plans",authMiddleware,userPlanController.getMyPlans)
-router.get("/plans/:planId",authMiddleware,userPlanController.getPlanById)
+
 
 router.post("/chat/conversation",authMiddleware,conversationController.createDirectConversation)
 router.get("/chat/conversations",authMiddleware,conversationController.getUserChats)
 router.get("/chat/messages/:conversationId",authMiddleware,messageController.getMessages);
 router.post("/chat/message",authMiddleware,messageController.sendMessage);
 
-router.get("/programs",authMiddleware,userProgramController.getPrograms)
-router.get("/programs/:programId",authMiddleware,userProgramController.getProgramDetails);
+router.get("/plans",authMiddleware,userPlanController.getMyPlans)
+router.get("/plans/:planId",authMiddleware,userPlanController.getPlanById);
 router.get("/programs/:programId/days",authMiddleware,userProgramController.getProgramDays);
-router.get("/program-days/:dayId",authMiddleware,userProgramController.getProgramDayDetails);
+router.get("/programs/:programId/day/:dayNumber",authMiddleware,userProgramController.getProgramDayByNumber)
 
-router.get("/tasks/today",authMiddleware,taskController.getTodayTasks)
+
 router.post("/tasks/today",authMiddleware,taskController.updateTodayTasks)
+router.get("/tasks/today", authMiddleware,taskController.getTodayTasks);
 
 router.post("/change-password",authMiddleware,userAccountController.changePassword)
 router.get("/meetings",authMiddleware,userMeetingsController.getMeetings)
+
+router.post("/review",authMiddleware,reviewController.submitReview)
+router.get("/review/:nutritionistId", authMiddleware, reviewController.getMyReview);
+router.put("/review/:reviewId", authMiddleware, reviewController.updateReview);
+router.delete("/review/:reviewId", authMiddleware,reviewController.deleteReview);
+
+router.get("/health-progress",authMiddleware,healthProgressController.getHealthProgress);
+router.get("/health-progress/date",authMiddleware,healthProgressController.getProgressByDate);
+router.get(`/health-progress/latest`,authMiddleware,healthProgressController.getLatestProgress);
+
 
 export default router;
 

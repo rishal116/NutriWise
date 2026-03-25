@@ -83,7 +83,6 @@ const PaymentSchema = new Schema<IPayment>(
     stripeSessionId: {
       type: String,
       required: true,
-      unique: true,
       index: true,
     },
 

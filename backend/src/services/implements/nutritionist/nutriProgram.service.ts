@@ -24,42 +24,45 @@ export class NutriProgramService implements INutriProgramService {
     private _nutriProgramRepository: IUserProgramRepository,
 
     @inject(TYPES.IProgramDayRepository)
-    private _programDayRepository: IProgramDayRepository
+    private _programDayRepository: IProgramDayRepository,
   ) {}
-
-
 
   async getPrograms(nutritionistId: string): Promise<ProgramResponseDTO[]> {
     logger.debug("Fetching programs for nutritionistId: %s", nutritionistId);
 
     const programs = await this._nutriProgramRepository.findByNutritionist(
-      new Types.ObjectId(nutritionistId)
+      new Types.ObjectId(nutritionistId),
     );
 
-    logger.info("Found %d programs for nutritionistId: %s", programs.length, nutritionistId);
+    logger.info(
+      "Found %d programs for nutritionistId: %s",
+      programs.length,
+      nutritionistId,
+    );
     return ProgramMapper.toResponseDTOList(programs);
   }
 
   async getProgramDetails(
     programId: string,
-    nutritionistId: string
+    nutritionistId: string,
   ): Promise<ProgramResponseDTO> {
     logger.debug("Fetching program details for programId: %s", programId);
 
-    const program = await this._nutriProgramRepository.findByIdPopulated(programId);
+    const program =
+      await this._nutriProgramRepository.findByIdPopulated(programId);
 
     if (!program) {
       logger.error("Program not found for programId: %s", programId);
       throw new CustomError("Program not found", StatusCode.NOT_FOUND);
     }
 
-    const programUserId = program.nutritionistId._id.toString()
+    const programUserId = program.nutritionistId._id.toString();
     console.log("userId program:", programUserId);
-    if (programUserId !== nutritionistId){
+    if (programUserId !== nutritionistId) {
       logger.warn(
         "Unauthorized access attempt on programId: %s by nutritionistId: %s",
         programId,
-        nutritionistId
+        nutritionistId,
       );
       throw new CustomError("Unauthorized access", StatusCode.FORBIDDEN);
     }
@@ -80,13 +83,17 @@ export class NutriProgramService implements INutriProgramService {
     });
 
     const programId = created._id.toString();
-    const populated = await this._nutriProgramRepository.findByIdPopulated(programId);
+    const populated =
+      await this._nutriProgramRepository.findByIdPopulated(programId);
 
     if (!populated) {
-      logger.error("Program created but population failed for programId: %s", programId);
+      logger.error(
+        "Program created but population failed for programId: %s",
+        programId,
+      );
       throw new CustomError(
         "Program created but population failed",
-        StatusCode.INTERNAL_SERVER_ERROR
+        StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
 
@@ -94,16 +101,15 @@ export class NutriProgramService implements INutriProgramService {
     return ProgramMapper.toResponseDTO(populated);
   }
 
-
   async getProgramDays(
     programId: string,
-    nutritionistId: string
+    nutritionistId: string,
   ): Promise<ProgramDayResponseDTO[]> {
     logger.debug("Fetching all days for programId: %s", programId);
     await this.getProgramDetails(programId, nutritionistId);
 
     const days = await this._programDayRepository.findByUserProgram(
-      new Types.ObjectId(programId)
+      new Types.ObjectId(programId),
     );
 
     logger.info("Found %d days for programId: %s", days.length, programId);
@@ -112,9 +118,9 @@ export class NutriProgramService implements INutriProgramService {
 
   async getProgramDayDetails(
     dayId: string,
-    nutritionistId: string
+    nutritionistId: string,
   ): Promise<ProgramDayResponseDTO> {
-    logger.debug("Fetching details for dayId: %s", {dayId});
+    logger.debug("Fetching details for dayId: %s", { dayId });
 
     const day = await this._programDayRepository.findById(dayId);
     if (!day) {
@@ -126,37 +132,89 @@ export class NutriProgramService implements INutriProgramService {
     logger.info("Program day details retrieved for dayId: %s", dayId);
     return ProgramDayMapper.toResponseDTO(day);
   }
-  
-  async createProgramDay(data: CreateProgramDayDTO,nutritionistId: string): Promise<ProgramDayResponseDTO> {
-    logger.debug("Creating program day with data: %o", {data});
-    await this.getProgramDetails(data.userProgramId, nutritionistId);
-    const dayExists = await this._programDayRepository.existsByDayNumber(
-  new Types.ObjectId(data.userProgramId),
-  data.dayNumber
-);
 
-if (dayExists) {
-  throw new CustomError(
-    `Day ${data.dayNumber} already exists for this program.`,
-    StatusCode.BAD_REQUEST
+ async createProgramDay(
+  data: CreateProgramDayDTO,
+  nutritionistId: string,
+): Promise<ProgramDayResponseDTO> {
+  logger.debug("Creating program day with data: %o", { data });
+
+  /* =========================
+     1. Validate Program Ownership
+  ========================= */
+  const program = await this.getProgramDetails(
+    data.userProgramId,
+    nutritionistId
   );
-}
 
-  
+  /* =========================
+     2. Validate Day Number
+  ========================= */
+  if (data.dayNumber < 1 || data.dayNumber > program.durationDays) {
+    throw new CustomError(
+      `Day must be between 1 and ${program.durationDays}`,
+      StatusCode.BAD_REQUEST
+    );
+  }
 
-    const created = await this._programDayRepository.create({
-      ...data,
-      userProgramId: new Types.ObjectId(data.userProgramId),
-    });
-    logger.info("Program day created with dayNumber: %d for programId: %s",created.dayNumber,data.userProgramId);
+  /* =========================
+     3. Validate Meals (no duplicates)
+  ========================= */
+  if (data.meals?.length) {
+    const mealTypes = data.meals.map((m) => m.mealType);
+    if (new Set(mealTypes).size !== mealTypes.length) {
+      throw new CustomError(
+        "Duplicate meal types are not allowed",
+        StatusCode.BAD_REQUEST
+      );
+    }
+  }
+
+  /* =========================
+     4. Prepare Data
+  ========================= */
+  const payload = {
+    ...data,
+    userProgramId: new Types.ObjectId(data.userProgramId),
+  };
+
+  try {
+    /* =========================
+       5. Create (rely on DB unique index)
+    ========================= */
+    const created = await this._programDayRepository.create(payload);
+
+    logger.info(
+      "Program day created: day %d for program %s",
+      created.dayNumber,
+      data.userProgramId
+    );
 
     return ProgramDayMapper.toResponseDTO(created);
+
+  } catch (error: any) {
+    /* =========================
+       6. Handle Duplicate (race condition safe)
+    ========================= */
+    if (error.code === 11000) {
+      throw new CustomError(
+        `Day ${data.dayNumber} already exists`,
+        StatusCode.BAD_REQUEST
+      );
+    }
+
+    logger.error("Error creating program day: %o", error);
+    throw new CustomError(
+      "Failed to create program day",
+      StatusCode.INTERNAL_SERVER_ERROR
+    );
   }
+}
 
   async updateProgramDay(
     dayId: string,
     data: UpdateProgramDayDTO,
-    nutritionistId: string
+    nutritionistId: string,
   ): Promise<ProgramDayResponseDTO> {
     logger.debug("Updating program dayId: %s with data: %o", dayId, data);
     await this.getProgramDayDetails(dayId, nutritionistId);
@@ -164,7 +222,10 @@ if (dayExists) {
     const updated = await this._programDayRepository.updateById(dayId, data);
 
     if (!updated) {
-      logger.error("Failed to update, program day not found for dayId: %s", dayId);
+      logger.error(
+        "Failed to update, program day not found for dayId: %s",
+        dayId,
+      );
       throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
     }
 

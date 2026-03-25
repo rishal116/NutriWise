@@ -1,16 +1,15 @@
 import express from "express";
 import cors from "cors";
-import morgan from "morgan";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-
 import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
 import nutriRoutes from "./routes/nutritionist.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import chatRoutes from "./routes/chat.routes"
+import sessionRoutes from "./routes/session.routes"
 
 
 dotenv.config();
@@ -61,6 +60,7 @@ app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
 app.use("/chat", chatRoutes);
 app.use("/nutritionist", nutriRoutes);
+app.use("/session", sessionRoutes);
 
 app.use(errorMiddleware);
 

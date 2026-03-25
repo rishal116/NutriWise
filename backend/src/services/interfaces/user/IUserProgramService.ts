@@ -2,7 +2,7 @@ import { ProgramResponseDTO,ProgramDayResponseDTO} from "../../../dtos/user/user
 
 
 export interface IUserProgramService {
-  getPrograms(userId: string): Promise<ProgramResponseDTO[]>;
+
 
   getProgramDetails(
     programId: string,
@@ -15,8 +15,5 @@ export interface IUserProgramService {
     userId: string
   ): Promise<ProgramDayResponseDTO[]>;
 
-  getProgramDayDetails(
-    dayId: string,
-    userId: string
-  ): Promise<ProgramDayResponseDTO>;
+  getProgramDayByNumber(dayNumber:number,programId:string):Promise<ProgramDayResponseDTO>;
 }

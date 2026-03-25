@@ -5,12 +5,13 @@ import {
   User,
   Camera,
   Save,
-  X,
   ShieldCheck,
   Mail,
   Phone,
   Calendar,
   Loader2,
+  Pencil,
+  X,
 } from "lucide-react";
 import ProfileImageUploader from "@/components/common/image";
 import Toast from "@/components/common/Toast";
@@ -19,9 +20,7 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
 
-
-/* ---------------- Types ---------------- */
-
+/* ── TYPES ── */
 interface UserProfile {
   _id: string;
   fullName: string;
@@ -37,32 +36,30 @@ interface ToastState {
   type: "success" | "error";
 }
 
-/* ---------------- Component ---------------- */
-
+/* ── PAGE ── */
 export default function AccountPage() {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [form, setForm] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [editingForm, setEditingForm] = useState(false);
+  const [user,             setUser]             = useState<UserProfile | null>(null);
+  const [form,             setForm]             = useState<UserProfile | null>(null);
+  const [loading,          setLoading]          = useState(true);
+  const [saving,           setSaving]           = useState(false);
+  const [editingForm,      setEditingForm]      = useState(false);
   const [showImageCropper, setShowImageCropper] = useState(false);
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [toast,            setToast]            = useState<ToastState | null>(null);
 
-  /* ---------------- Load Profile ---------------- */
-
+  /* ── fetch ── */
   useEffect(() => {
-    const fetchProfile = async () => {
+    async function fetchProfile() {
       try {
         const profileRes = await userAccountService.getProfile();
-        const imageRes = await userAccountService.getProfileImage();
+        const imageRes   = await userAccountService.getProfileImage();
 
         const profile: UserProfile = {
-          _id: profileRes.user._id,
-          fullName: profileRes.user.fullName || "",
-          email: profileRes.user.email || "",
-          phone: profileRes.user.phone || "",
-          gender: profileRes.user.gender || "",
-          birthdate: profileRes.user.birthdate || "",
+          _id:          profileRes.user._id,
+          fullName:     profileRes.user.fullName   || "",
+          email:        profileRes.user.email       || "",
+          phone:        profileRes.user.phone       || "",
+          gender:       profileRes.user.gender      || "",
+          birthdate:    profileRes.user.birthdate   || "",
           profileImage: imageRes.data?.profileImage || "",
         };
 
@@ -74,8 +71,7 @@ export default function AccountPage() {
       } finally {
         setLoading(false);
       }
-    };
-
+    }
     fetchProfile();
   }, []);
 
@@ -87,21 +83,18 @@ export default function AccountPage() {
   };
 
   const calculateAge = (birthdate: string): string => {
-    if (!birthdate) return "";
-    const birth = new Date(birthdate);
-    const diff = Date.now() - birth.getTime();
-    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25)).toString();
+    if (!birthdate) return "—";
+    const diff = Date.now() - new Date(birthdate).getTime();
+    return `${Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))} yrs`;
   };
 
   const phoneError = !!form?.phone && !isValidPhoneNumber(form.phone);
 
   const handleSaveForm = async () => {
     if (!form || phoneError) return;
-
     setSaving(true);
     try {
       await userAccountService.updateProfile(form);
-      
       setUser(form);
       setEditingForm(false);
       setToast({ message: "Profile updated successfully!", type: "success" });
@@ -117,215 +110,252 @@ export default function AccountPage() {
     setEditingForm(false);
   };
 
+  /* ── loading ── */
   if (loading || !user || !form) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50">
-        <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-emerald-600 mx-auto mb-3" />
-          <p className="text-gray-500 text-lg">Loading your profile...</p>
+      <div className="flex items-center justify-center py-24">
+        <div className="text-center space-y-3">
+          <Loader2 className="w-9 h-9 animate-spin text-emerald-500 mx-auto" />
+          <p className="text-emerald-700 font-semibold text-sm tracking-wide">
+            Loading your profile…
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 sm:p-8 rounded-2xl shadow-xl mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">
+    <div className="font-sans pb-12 space-y-6">
+
+      {/* ── PAGE HEADER ── */}
+      <div className="relative bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl px-7 py-9 text-white overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-14 -mt-14 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-28 h-28 bg-white/5 rounded-full -ml-8 -mb-8 blur-2xl pointer-events-none" />
+        <div className="relative">
+          <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight mb-1">
             Account Settings
           </h1>
-          <p className="text-emerald-50 mt-2 text-sm sm:text-base">
+          <p className="text-white/70 text-sm font-medium">
             Manage your profile information and preferences
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* LEFT COLUMN - Profile Card */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-              {/* Profile Image */}
-              <div className="relative mx-auto w-fit mb-6">
-                <img
-                  src={user.profileImage || "/images/images.jpg"}
-                  className="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover border-4 border-emerald-100 shadow-md"
-                  alt="Profile"
-                />
-                <button
-                  onClick={() => setShowImageCropper(true)}
-                  className="absolute bottom-2 right-2 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-full flex items-center justify-center text-white shadow-lg transition-all hover:scale-105"
-                  aria-label="Change profile picture"
-                >
-                  <Camera size={20} />
-                </button>
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-              {/* User Info */}
-              <div className="text-center">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {user.fullName}
-                </h2>
+        {/* ── LEFT — PROFILE CARD ── */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 
-                <div className="text-sm text-gray-600 mt-4 space-y-2">
-                  <p className="flex justify-center items-center gap-2">
-                    <Mail size={16} className="text-emerald-600 flex-shrink-0" />
-                    <span className="truncate">{user.email}</span>
-                  </p>
-                  {user.phone && (
-                    <p className="flex justify-center items-center gap-2">
-                      <Phone size={16} className="text-emerald-600 flex-shrink-0" />
-                      <span>{user.phone}</span>
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-6">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 text-sm font-medium rounded-full border border-emerald-200">
-                    <ShieldCheck size={16} /> Verified Account
-                  </span>
-                </div>
-              </div>
+            {/* Avatar */}
+            <div className="relative w-fit mx-auto mb-5">
+              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-full blur-sm opacity-25" />
+              <img
+                src={user.profileImage || "/images/images.jpg"}
+                className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg"
+                alt={user.fullName}
+              />
+              <button
+                onClick={() => setShowImageCropper(true)}
+                className="absolute bottom-1 right-1 w-9 h-9 bg-emerald-600 hover:bg-emerald-700 rounded-full flex items-center justify-center text-white shadow-md transition-colors"
+                aria-label="Change profile picture"
+              >
+                <Camera size={15} />
+              </button>
             </div>
 
-            {/* Edit Button */}
-            {!editingForm ? (
-              <button
-                onClick={() => setEditingForm(true)}
-                className="w-full py-3 rounded-xl font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all shadow-md hover:shadow-lg"
-              >
-                Edit Profile
-              </button>
-            ) : (
-              <button
-                onClick={handleCancelEdit}
-                className="w-full py-3 rounded-xl font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
-              >
-                Cancel Edit
-              </button>
-            )}
+            {/* Name + badge */}
+            <div className="text-center mb-5">
+              <h2 className="text-xl font-extrabold text-gray-900 mb-1">
+                {user.fullName}
+              </h2>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100">
+                <ShieldCheck size={12} />
+                Verified Account
+              </span>
+            </div>
+
+            {/* Contact info */}
+            <div className="space-y-2.5 pt-4 border-t border-gray-50">
+              <div className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
+                <div className="bg-emerald-100 p-1.5 rounded-lg flex-shrink-0">
+                  <Mail size={13} className="text-emerald-600" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Email</p>
+                  <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
+                </div>
+              </div>
+
+              {user.phone && (
+                <div className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
+                  <div className="bg-teal-100 p-1.5 rounded-lg flex-shrink-0">
+                    <Phone size={13} className="text-teal-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Phone</p>
+                    <p className="text-sm font-semibold text-gray-800">{user.phone}</p>
+                  </div>
+                </div>
+              )}
+
+              {user.birthdate && (
+                <div className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
+                  <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0">
+                    <Calendar size={13} className="text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Age</p>
+                    <p className="text-sm font-semibold text-gray-800">{calculateAge(user.birthdate)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* RIGHT COLUMN - Profile Form */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Personal Information
-              </h3>
+          {/* Edit / Cancel button */}
+          {!editingForm ? (
+            <button
+              onClick={() => setEditingForm(true)}
+              className="w-full inline-flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-emerald-100 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+            >
+              <Pencil size={14} className="flex-shrink-0" />
+              Edit Profile
+            </button>
+          ) : (
+            <button
+              onClick={handleCancelEdit}
+              className="w-full inline-flex items-center justify-center gap-2 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
+            >
+              <X size={14} className="flex-shrink-0" />
+              Cancel Edit
+            </button>
+          )}
+        </div>
+
+        {/* ── RIGHT — FORM ── */}
+        <div className="lg:col-span-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+            {/* Card header */}
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-1 h-5 bg-emerald-500 rounded-full flex-shrink-0" />
+                <h3 className="text-sm font-extrabold text-gray-900">Personal Information</h3>
+              </div>
               {editingForm && (
-                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full border border-emerald-200 w-fit">
-                  Editing Mode
+                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full">
+                  Editing
                 </span>
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <Input
-                label="Full Name"
-                name="fullName"
-                value={form.fullName}
-                onChange={handleChange}
-                disabled={!editingForm}
-                icon={<User size={16} className="text-emerald-600" />}
-                required
-              />
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-              <PhoneField
-                value={form.phone}
-                onChange={(phone) =>
-                  setForm((prev) => (prev ? { ...prev, phone } : prev))
-                }
-                error={phoneError}
-                disabled={!editingForm}
-              />
+                <FieldInput
+                  label="Full Name"
+                  name="fullName"
+                  value={form.fullName}
+                  onChange={handleChange}
+                  disabled={!editingForm}
+                  icon={<User size={13} className="text-emerald-600" />}
+                  required
+                />
 
-              <Input
-                label="Birthdate"
-                name="birthdate"
-                type="date"
-                value={form.birthdate}
-                onChange={handleChange}
-                disabled={!editingForm}
-                icon={<Calendar size={16} className="text-emerald-600" />}
-              />
+                <PhoneField
+                  value={form.phone}
+                  onChange={(phone: string) =>
+                    setForm((prev) => (prev ? { ...prev, phone } : prev))
+                  }
+                  error={phoneError}
+                  disabled={!editingForm}
+                />
 
-              <Select
-                label="Gender"
-                name="gender"
-                value={form.gender}
-                onChange={handleChange}
-                disabled={!editingForm}
-              />
+                <FieldInput
+                  label="Birthdate"
+                  name="birthdate"
+                  type="date"
+                  value={form.birthdate}
+                  onChange={handleChange}
+                  disabled={!editingForm}
+                  icon={<Calendar size={13} className="text-emerald-600" />}
+                />
 
-              <Input
-                label="Age"
-                value={calculateAge(form.birthdate)}
-                disabled
-                icon={<User size={16} className="text-gray-400" />}
-              />
+                <GenderSelect
+                  value={form.gender}
+                  onChange={handleChange}
+                  disabled={!editingForm}
+                />
 
-              <Input
-                label="Email"
-                value={form.email}
-                disabled
-                icon={<Mail size={16} className="text-gray-400" />}
-              />
-            </div>
+                <FieldInput
+                  label="Age"
+                  value={calculateAge(form.birthdate)}
+                  disabled
+                  icon={<User size={13} className="text-gray-400" />}
+                />
 
-            {/* Action Buttons */}
-            {editingForm && (
-              <div className="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row gap-3 sm:justify-end">
-                <button
-                  onClick={handleCancelEdit}
-                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors order-2 sm:order-1"
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveForm}
-                  disabled={phoneError || saving}
-                  className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium rounded-lg transition-all disabled:from-gray-300 disabled:to-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 order-1 sm:order-2"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save size={18} />
-                      Save Changes
-                    </>
-                  )}
-                </button>
+                <FieldInput
+                  label="Email"
+                  value={form.email}
+                  disabled
+                  icon={<Mail size={13} className="text-gray-400" />}
+                />
               </div>
-            )}
+
+              {/* Save / cancel row */}
+              {editingForm && (
+                <div className="pt-5 border-t border-gray-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                  <button
+                    onClick={handleCancelEdit}
+                    disabled={saving}
+                    className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-bold rounded-xl transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveForm}
+                    disabled={phoneError || saving}
+                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-emerald-100 hover:shadow-md transition-all disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin flex-shrink-0" />
+                        Saving…
+                      </>
+                    ) : (
+                      <>
+                        <Save size={15} className="flex-shrink-0" />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Image Cropper Modal */}
-{/* Inside AccountPage return... */}
-{showImageCropper && (
-  <ProfileImageUploader 
-    onClose={() => setShowImageCropper(false)} 
-    onUploadSuccess={(newUrl) => {
-      setUser(prev => prev ? { ...prev, profileImage: newUrl } : null);
-      setToast({ message: "Image updated successfully!", type: "success" });
-    }}
-  />
-)}
+      {showImageCropper && (
+        <ProfileImageUploader
+          onClose={() => setShowImageCropper(false)}
+          onUploadSuccess={(newUrl: string) => {
+            setUser((prev) => (prev ? { ...prev, profileImage: newUrl } : null));
+            setToast({ message: "Image updated successfully!", type: "success" });
+          }}
+        />
+      )}
 
-      {/* Toast Notifications */}
+      {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
 }
 
-/* ---------------- Reusable Input Components ---------------- */
-
-function Input({
+/* ── FIELD INPUT ── */
+function FieldInput({
   label,
   icon,
   error,
@@ -334,49 +364,62 @@ function Input({
   ...rest
 }: any) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        {icon} 
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wide">
+        {icon}
         {label}
-        {required && <span className="text-red-500">*</span>}
+        {required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       <input
         {...rest}
         disabled={disabled}
-        className={`w-full px-4 py-3 rounded-lg border ${
-          error 
-            ? "border-red-400 focus:ring-red-500" 
-            : "border-gray-300 focus:ring-emerald-500"
+        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 ${
+          error
+            ? "border-red-300 focus:ring-red-200"
+            : "border-gray-200 focus:ring-emerald-100 focus:border-emerald-400"
         } ${
-          disabled 
-            ? "bg-gray-50 text-gray-500 cursor-not-allowed" 
-            : "bg-white"
-        } focus:outline-none focus:ring-2 transition-all`}
+          disabled
+            ? "bg-gray-50 text-gray-400 cursor-not-allowed"
+            : "bg-white text-gray-800"
+        }`}
       />
       {error && (
-        <p className="text-xs text-red-600 mt-1">Please enter a valid value</p>
+        <p className="text-[10px] text-red-500 font-semibold">
+          Please enter a valid value
+        </p>
       )}
     </div>
   );
 }
 
-function Select({ label, disabled, ...rest }: any) {
+/* ── GENDER SELECT ── */
+function GenderSelect({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  disabled: boolean;
+}) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        <User size={16} className="text-emerald-600" />
-        {label}
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wide">
+        <User size={13} className="text-emerald-600" />
+        Gender
       </label>
       <select
-        {...rest}
+        name="gender"
+        value={value}
+        onChange={onChange}
         disabled={disabled}
-        className={`w-full px-4 py-3 rounded-lg border border-gray-300 ${
-          disabled 
-            ? "bg-gray-50 text-gray-500 cursor-not-allowed" 
-            : "bg-white"
-        } focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all`}
+        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-400 ${
+          disabled
+            ? "bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200"
+            : "bg-white text-gray-800 border-gray-200"
+        }`}
       >
-        <option value="">Select Gender</option>
+        <option value="">Select gender</option>
         <option value="male">Male</option>
         <option value="female">Female</option>
         <option value="other">Other</option>
@@ -385,39 +428,71 @@ function Select({ label, disabled, ...rest }: any) {
   );
 }
 
-function PhoneField({ value, onChange, error, disabled }: any) {
+/* ── PHONE FIELD ── */
+function PhoneField({
+  value,
+  onChange,
+  error,
+  disabled,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  error: boolean;
+  disabled: boolean;
+}) {
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-        <Phone size={16} className="text-emerald-600" />
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wide">
+        <Phone size={13} className="text-emerald-600" />
         Phone Number
       </label>
-      <PhoneInput
-        international
-        defaultCountry="IN"
-        value={value}
-        onChange={(val) => onChange(val || "")}
-        disabled={disabled}
-        className="phone-input-custom"
-      />
+      <div
+        className={`phone-wrap rounded-xl border transition-all ${
+          error ? "border-red-300" : "border-gray-200"
+        } ${disabled ? "bg-gray-50" : "bg-white"}`}
+      >
+        <PhoneInput
+          international
+          defaultCountry="IN"
+          value={value}
+          onChange={(val) => onChange(val || "")}
+          disabled={disabled}
+          className="nutriwise-phone"
+        />
+      </div>
       {error && (
-        <p className="text-xs text-red-600 mt-1">Please enter a valid phone number</p>
+        <p className="text-[10px] text-red-500 font-semibold">
+          Please enter a valid phone number
+        </p>
       )}
       <style jsx global>{`
-        .phone-input-custom input {
-          width: 100%;
-          padding: 0.75rem 1rem;
-          border-radius: 0.5rem;
-          border: 1px solid ${error ? '#f87171' : '#d1d5db'};
-          background-color: ${disabled ? '#f9fafb' : 'white'};
-          color: ${disabled ? '#6b7280' : '#111827'};
-          cursor: ${disabled ? 'not-allowed' : 'text'};
-          transition: all 0.2s;
+        .nutriwise-phone {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 0 12px;
+          height: 42px;
         }
-        .phone-input-custom input:focus {
+        .nutriwise-phone .PhoneInputCountrySelect {
+          background: transparent;
+          border: none;
           outline: none;
-          border-color: ${error ? '#ef4444' : '#10b981'};
-          box-shadow: 0 0 0 2px ${error ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'};
+          font-size: 13px;
+          color: ${disabled ? "#9ca3af" : "#374151"};
+          cursor: ${disabled ? "not-allowed" : "pointer"};
+        }
+        .nutriwise-phone .PhoneInputInput {
+          flex: 1;
+          border: none;
+          outline: none;
+          background: transparent;
+          font-size: 14px;
+          font-weight: 500;
+          color: ${disabled ? "#9ca3af" : "#1f2937"};
+          cursor: ${disabled ? "not-allowed" : "text"};
+        }
+        .nutriwise-phone .PhoneInputInput::placeholder {
+          color: #d1d5db;
         }
       `}</style>
     </div>

@@ -36,7 +36,8 @@ router.get("/pricing", authMiddleware,nutritionistPlanController.getNutritionist
 router.get("/plans/:planId", authMiddleware, nutritionistPlanController.getPlanById);
 router.put("/plans/:planId", authMiddleware, nutritionistPlanController.updatePlan);
 
-router.get("/subscription",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistSubscriptionController.getSubscribers);
+router.get("/subscription",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistSubscriptionController.getSubscriptions);
+router.get("/subscribers",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistSubscriptionController.getSubscribers);
 
 router.get("/programs",authMiddleware,authorize(ROLES.NUTRITIONIST),nutriProgramController.getPrograms)
 router.get("/programs/:programId",authMiddleware,authorize(ROLES.NUTRITIONIST),nutriProgramController.getProgramDetails);
@@ -77,5 +78,7 @@ router.delete(
 
 router.get("/meetings",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistMeetingsController.getMeetings)
 router.post("/meetings",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistMeetingsController.createMeeting)
+router.patch("/meetings/status/:roomId",authMiddleware,authorize(ROLES.NUTRITIONIST),nutritionistMeetingsController.updateMeetingStatus)
+
 
 export default router;

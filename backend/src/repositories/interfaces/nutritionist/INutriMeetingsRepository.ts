@@ -1,4 +1,4 @@
-import { IMeeting } from "../../../models/meeting.model";
+import { IMeeting, MeetingStatus } from "../../../models/meeting.model";
 import { IMeetingWithNutri } from "../../../types/meetingWithNutri.populated";
 import { IMeetingWithUser } from "../../../types/meetingWithUser.populated";
 
@@ -10,10 +10,10 @@ export interface INutriMeetingsRepository {
   findByUserId(userId: string): Promise<IMeetingWithNutri[]>;
 
   findByRoomId(roomId: string): Promise<IMeetingWithUser | null>;
-
-  updateMeetingStatus(
-    meetingId: string,
-    status: "scheduled" | "ongoing" | "completed" | "cancelled",
+  
+  updateStatusByRoomId(
+    roomId: string,
+    status: MeetingStatus,
     extraFields?: Partial<IMeeting>
   ): Promise<IMeeting | null>;
 }

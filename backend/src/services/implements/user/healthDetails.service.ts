@@ -11,12 +11,16 @@ import { HealthDetailsValidator } from "../../../validations/user/healthDetails.
 import logger from "../../../utils/logger";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { IHealthProgressRepository } from "../../../repositories/interfaces/user/IHealthProgressRepository";
 
 @injectable()
 export class HealthDetailsService implements IHealthDetailsService {
   constructor(
     @inject(TYPES.IHealthDetailsRepository)
-    private _healthDetailsRepository: IHealthDetailsRepository
+    private _healthDetailsRepository: IHealthDetailsRepository,
+    
+    @inject(TYPES.IHealthProgressRepository)
+    private _healthProgressRepository: IHealthProgressRepository
   ) {}
 
   async getHealthDetails(
@@ -53,48 +57,65 @@ export class HealthDetailsService implements IHealthDetailsService {
     }
   }
 
-  async saveHealthDetails(
-    userId: string,
-    payload: HealthDetailsRequestDTO
-  ): Promise<HealthDetailsResponseDTO> {
-    logger.info("Saving health details", { userId });
+async saveHealthDetails(
+  userId: string,
+  payload: HealthDetailsRequestDTO
+): Promise<HealthDetailsResponseDTO> {
+  logger.info("Saving health details", { userId });
 
-    try {
-      HealthDetailsValidator.validate(userId, payload);
+  try {
+    HealthDetailsValidator.validate(userId, payload);
 
-      const bmi = HealthDetailsValidator.calculateBMI(
-        payload.heightCm,
-        payload.weightKg
-      );
+    // ✅ 1. Calculate BMI
+    const bmi = HealthDetailsValidator.calculateBMI(
+      payload.heightCm,
+      payload.weightKg
+    );
 
-      const persistenceData = HealthDetailsMapper.toEntity(
+    // ✅ 2. Prepare data for HealthDetails
+    const persistenceData = HealthDetailsMapper.toEntity(
+      userId,
+      payload,
+      bmi
+    );
+
+    // ✅ 3. Update HealthDetails (latest profile)
+    const savedHealthDetails =
+      await this._healthDetailsRepository.upsertByUserId(
         userId,
-        payload,
-        bmi
+        persistenceData
       );
 
-      const savedHealthDetails =
-        await this._healthDetailsRepository.upsertByUserId(
-          userId,
-          persistenceData
-        );
+    // ✅ 4. Normalize today's date (IMPORTANT)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-      logger.info("Health details saved successfully", { userId });
+    // ✅ 5. Upsert HealthProgress (NO duplicates per day)
+    await this._healthProgressRepository.upsertDailyProgress({
+      userId,
+      date: today,
+      weightKg: payload.weightKg,
+      bmi,
+      dailyWaterIntakeLiters: payload.dailyWaterIntakeLiters,
+      sleepDurationHours: payload.sleepDurationHours,
+    });
 
-      return HealthDetailsMapper.toResponse(savedHealthDetails);
-    } catch (error) {
-      logger.error("Error saving health details", {
-        userId,
-        payload,
-        err: error,
-      });
+    logger.info("Health details + progress saved successfully", { userId });
 
-      if (error instanceof CustomError) throw error;
+    return HealthDetailsMapper.toResponse(savedHealthDetails);
+  } catch (error) {
+    logger.error("Error saving health details", {
+      userId,
+      payload,
+      err: error,
+    });
 
-      throw new CustomError(
-        "Failed to save health details",
-        StatusCode.INTERNAL_SERVER_ERROR
-      );
-    }
+    if (error instanceof CustomError) throw error;
+
+    throw new CustomError(
+      "Failed to save health details",
+      StatusCode.INTERNAL_SERVER_ERROR
+    );
   }
+}
 }

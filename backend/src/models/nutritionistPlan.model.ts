@@ -1,18 +1,23 @@
 import { Schema, model, Types } from "mongoose";
 
+export const PLAN_STATUS = ["draft", "published", "archived"] as const;
+
+export type PlanStatus = typeof PLAN_STATUS[number];
+
 export interface IPlan {
   _id: Types.ObjectId;
   nutritionistId: Types.ObjectId;
   title: string;
-  category:string;
+  slug: string;
+  category: string;
   durationInDays: number;
   price: number;
-  currency: string;
+  currency: "INR" | "USD";
   description: string;
   features: string[];
   thumbnailUrl?: string;
   tags?: string[];
-  status: "draft" | "published" | "archived";
+  status: PlanStatus;
   isDeleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -26,12 +31,20 @@ const PlanSchema = new Schema<IPlan>(
       required: true,
       index: true,
     },
-    
+
     title: {
       type: String,
       required: true,
       trim: true,
+    },
+
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
       index: true,
+      lowercase: true,
+      trim: true,
     },
 
     category: {
@@ -45,7 +58,6 @@ const PlanSchema = new Schema<IPlan>(
       required: true,
       min: 1,
       max: 365,
-      index: true,
     },
 
     price: {
@@ -59,7 +71,7 @@ const PlanSchema = new Schema<IPlan>(
       enum: ["INR", "USD"],
       default: "INR",
     },
-    
+
     description: {
       type: String,
       required: true,
@@ -71,7 +83,9 @@ const PlanSchema = new Schema<IPlan>(
       default: [],
     },
 
-    thumbnailUrl: String,
+    thumbnailUrl: {
+      type: String,
+    },
 
     tags: {
       type: [String],
@@ -80,8 +94,9 @@ const PlanSchema = new Schema<IPlan>(
 
     status: {
       type: String,
-      enum: ["draft", "published", "archived"],
+      enum: PLAN_STATUS,
       default: "draft",
+      index: true,
     },
 
     isDeleted: {
@@ -97,6 +112,22 @@ PlanSchema.index({
   nutritionistId: 1,
   status: 1,
   isDeleted: 1,
+  createdAt: -1,
+});
+
+PlanSchema.index(
+  { nutritionistId: 1, title: 1 },
+  { unique: true }
+);
+
+PlanSchema.pre("validate", function (next) {
+  if (this.title && !this.slug) {
+    this.slug = this.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+  next();
 });
 
 export const PlanModel = model<IPlan>("Plan", PlanSchema);

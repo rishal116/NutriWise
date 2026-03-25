@@ -3,4 +3,6 @@ export interface CreateMeetingDTO {
   userId: string;
   nutritionistId: string;
   scheduledAt: string;
+  durationInMinutes: number;
+  type: "video" | "audio";
 }

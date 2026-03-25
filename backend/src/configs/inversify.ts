@@ -26,7 +26,6 @@ import { UserProfileService } from "../services/implements/user/userProfile.serv
 import { IHealthDetailsController } from "../controllers/interfaces/user/IHealthDetailsController";
 import { HealthDetailsController } from "../controllers/implementations/user/healthDetails.controller";
 import { IHealthDetailsService } from "../services/interfaces/user/IHealthDetailsService";
-import { HealthDetailsService } from "../services/implements/user/healthDetails.service";
 import { HealthDetailsRepository } from "../repositories/implements/user/healthDetails.repository";
 import { IHealthDetailsRepository } from "../repositories/interfaces/user/IHealthDetailsRepository";
 import { IUserPlanRepository } from "../repositories/interfaces/user/IUserPlanRepository";
@@ -162,6 +161,21 @@ import { IConversationMemberRepository } from "../repositories/interfaces/chat/I
 import { ConversationMemberRepository } from "../repositories/implements/chat/conversationMember.repository";
 import { IMessageReceiptRepository } from "../repositories/interfaces/chat/IMessageReceiptRepository";
 import { MessageReceiptRepository } from "../repositories/implements/chat/messageReceipt.repository";
+import { INutriSubscriptionService } from "../services/interfaces/nutritionist/INutriSubcriptionService";
+import { NutriSubscriptionService } from "../services/implements/nutritionist/nutriSubscription.service";
+import { IHealthProgressRepository } from "../repositories/interfaces/user/IHealthProgressRepository";
+import { IHealthProgressService } from "../services/interfaces/user/IHealthProgress.Service";
+import { HealthProgressService } from "../services/implements/user/healthProgress.service";
+import { HealthDetailsService } from "../services/implements/user/healthDetails.service";
+import { IHealthProgressController } from "../controllers/interfaces/user/IHealthProgressController";
+import { HealthProgressController } from "../controllers/implementations/user/healthProgress.controller";
+import { HealthProgressRepository } from "../repositories/implements/user/healthProgress.repository";
+import { IReviewController } from "../controllers/interfaces/user/IReviewController";
+import { ReviewController } from "../controllers/implementations/user/review.controller";
+import { IReviewService } from "../services/interfaces/user/IReviewService";
+import { ReviewService } from "../services/implements/user/review.service";
+import { IReviewRepository } from "../repositories/interfaces/user/IReviewRepository";
+import { ReviewRepository } from "../repositories/implements/user/review.repository";
 
 
 
@@ -193,6 +207,16 @@ container.bind<IUserProgramService>(TYPES.IUserProgramService).to(UserProgramSer
 container.bind<ITaskController>(TYPES.ITaskController).to(TaskController)
 container.bind<ITaskService>(TYPES.ITaskService).to(TaskService)
 container.bind<ITaskLogRepository>(TYPES.ITaskLogRepository).to(TaskLogRepository)
+container.bind<IHealthProgressRepository>(TYPES.IHealthProgressRepository).to(HealthProgressRepository)
+container.bind<IHealthProgressService>(TYPES.IHealthProgressService).to(HealthProgressService)
+container.bind<IHealthProgressController>(TYPES.IHealthProgressController).to(HealthProgressController)
+container.bind<IReviewController>(TYPES.IReviewController).to(ReviewController)
+container.bind<IReviewService>(TYPES.IReviewService).to(ReviewService)
+container.bind<IReviewRepository>(TYPES.IReviewRepository).to(ReviewRepository)
+
+
+
+
 // -------- ADMIN BINDINGS --------
 container.bind<IAdminAuthController>(TYPES.IAdminAuthController).to(AdminAuthController);
 container.bind<IAdminAuthService>(TYPES.IAdminAuthService).to(AdminAuthService);
@@ -228,6 +252,7 @@ container.bind<INutriMeetingsService>(TYPES.INutriMeetingsService).to(NutriMeeti
 container.bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository).to(NutriMeetingsRepository)
 container.bind<INutriProgramController>(TYPES.INutriProgramController).to(NutriProgramController)
 container.bind<INutriProgramService>(TYPES.INutriProgramService).to(NutriProgramService)
+container.bind<INutriSubscriptionService>(TYPES.INutriSubscriptionService).to(NutriSubscriptionService)
 
 
 

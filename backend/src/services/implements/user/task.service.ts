@@ -8,139 +8,102 @@ import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { Types } from "mongoose";
 import logger from "../../../utils/logger";
+import { TaskLogMapper } from "../../../mapper/user/taskLog.mapper";
+import { ITaskLog } from "../../../models/taskLog.model";
+import { TaskLogResponseDTO } from "../../../dtos/user/taskLog.dto";
+
 
 @injectable()
 export class TaskService implements ITaskService {
-    constructor(
-        @inject(TYPES.IUserProgramRepository)
-        private _userProgramRepo: IUserProgramRepository,
-        
-        @inject(TYPES.IProgramDayRepository)
-        private _programDayRepo: IProgramDayRepository,
+  constructor(
+    @inject(TYPES.IUserProgramRepository)
+    private _userProgramRepo: IUserProgramRepository,
 
-        @inject(TYPES.ITaskLogRepository)
-        private _taskLogRepo: ITaskLogRepository
-    ) {}
-    
-async getTodayTasks(userId: string) {
-  logger.debug("Fetching today tasks for userId: %s", userId);
+    @inject(TYPES.IProgramDayRepository)
+    private _programDayRepo: IProgramDayRepository,
 
-  const userObjectId = new Types.ObjectId(userId);
+    @inject(TYPES.ITaskLogRepository)
+    private _taskLogRepo: ITaskLogRepository,
+  ) {}
 
- 
-  const program = await this._userProgramRepo.findActiveByUser(userObjectId);
+  async updateTodayTasks(userId: string, payload: any): Promise<TaskLogResponseDTO> {
+    const userObjectId = new Types.ObjectId(userId);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  if (!program) {
-    logger.warn("No active program for userId: %s", userId);
-    throw new CustomError("No active program", StatusCode.NOT_FOUND);
-  }
+    // 1️⃣ Find active program
+    const program = await this._userProgramRepo.findActiveByUser(userObjectId);
+    if (!program) throw new CustomError("No active program", StatusCode.NOT_FOUND);
 
-  logger.debug(
-    "Active program found. programId: %s, currentDay: %d",
-    program._id,
-    program.currentDay
-  );
+    // 2️⃣ Find program day
+    const programDay = await this._programDayRepo.findByDay(program._id, program.currentDay);
+    if (!programDay)
+      throw new CustomError("Program day definition not found", StatusCode.NOT_FOUND);
 
-  
-  const programDay = await this._programDayRepo.findByDay(
-    program._id,
-    program.currentDay
-  );
+    // 3️⃣ Prepare update payload
+    const { type, value, title } = payload;
+    if (!type || !value) throw new CustomError("Invalid payload", StatusCode.BAD_REQUEST);
 
-  if (!programDay) {
-    logger.error(
-      "Program day not found. programId: %s, day: %d",
-      program._id,
-      program.currentDay
-    );
-    throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
-  }
-
- 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  logger.debug(
-    "Looking for task log. userId: %s, programId: %s, date: %s",
-    userId,
-    program._id,
-    today.toISOString()
-  );
-
- 
-  let taskLog = await this._taskLogRepo.findByUserProgramAndDate(
-    userObjectId,
-    program._id,
-    today
-  );
-
- 
-  if (!taskLog) {
-    logger.info(
-      "Task log not found. Creating new log for userId: %s, programId: %s",
-      userId,
-      program._id
-    );
-
-    taskLog = await this._taskLogRepo.create({
+    const upsertData: Partial<ITaskLog> = {
       userId: userObjectId,
       userProgramId: program._id,
       programDayId: programDay._id,
       date: today,
-    });
-  } else {
-    logger.debug("Existing task log found. taskLogId: %s", taskLog._id);
+    };
+
+    switch (type) {
+      case "meals":
+        upsertData.mealsCompleted = [{ mealId: new Types.ObjectId(value), completed: true }];
+        break;
+      case "workouts":
+        upsertData.workoutsCompleted = [{ workoutId: new Types.ObjectId(value), completed: true }];
+        break;
+      case "habits":
+        upsertData.habitsProgress = [{ habitId: new Types.ObjectId(value), title: title || "", value: 1 }];
+        break;
+      default:
+        throw new CustomError(`Unknown task type: ${type}`, StatusCode.BAD_REQUEST);
+    }
+
+    const updatedLog = await this._taskLogRepo.upsertDailyLog(upsertData);
+    return TaskLogMapper.toResponseDTO(updatedLog, programDay);
   }
 
-  logger.info(
-    "Today tasks ready for userId: %s (programId: %s, day: %d)",
-    userId,
-    program._id,
-    program.currentDay
-  );
+  async getTodayTasks(userId: string, programId: string, dayNumber: number): Promise<TaskLogResponseDTO> {
+    if (!programId || dayNumber == null)
+      throw new CustomError("ProgramId and dayNumber are required", StatusCode.BAD_REQUEST);
 
-  return {
-    program,
-    programDay,
-    taskLog,
-  };
-}
+    const userObjectId = new Types.ObjectId(userId);
+    const programObjectId = new Types.ObjectId(programId);
 
-async updateTodayTasks(userId: string, payload: any) {
-  logger.debug("Updating today tasks for userId: %s", userId);
+    // 1️⃣ Find the program
+    const program = await this._userProgramRepo.findByIdAndUser(userObjectId, programObjectId);
+    if (!program) throw new CustomError("Program not found for this user", StatusCode.NOT_FOUND);
 
-  const userObjectId = new Types.ObjectId(userId);
+    // 2️⃣ Find program day
+    const programDay = await this._programDayRepo.findByDay(program._id, dayNumber);
+    if (!programDay) throw new CustomError(`Program day ${dayNumber} not found`, StatusCode.NOT_FOUND);
 
-  const program = await this._userProgramRepo.findActiveByUser(userObjectId);
-  if (!program) {
-    logger.warn("No active program while updating tasks. userId: %s", userId);
-    throw new CustomError("No active program", StatusCode.NOT_FOUND);
+    // 3️⃣ Find or create task log
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let taskLog = await this._taskLogRepo.findByUserProgramAndDate(userObjectId, program._id, today);
+    if (!taskLog) {
+      taskLog = {
+        _id: new Types.ObjectId(),
+        userId: userObjectId,
+        userProgramId: program._id,
+        programDayId: programDay._id,
+        date: today,
+        mealsCompleted: [],
+        workoutsCompleted: [],
+        habitsProgress: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as ITaskLog;
+    }
+
+    return TaskLogMapper.toResponseDTO(taskLog, programDay);
   }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const taskLog = await this._taskLogRepo.findByUserProgramAndDate(
-    userObjectId,
-    program._id,
-    today
-  );
-
-  if (!taskLog) {
-    logger.error(
-      "Task log missing during update. userId: %s, programId: %s",
-      userId,
-      program._id
-    );
-    throw new CustomError("Task log not found", StatusCode.NOT_FOUND);
-  }
-
-  await this._taskLogRepo.update(taskLog._id.toString(), payload);
-
-  logger.info(
-    "Today tasks updated successfully. userId: %s, taskLogId: %s",
-    userId,
-    taskLog._id
-  );
-}
 }

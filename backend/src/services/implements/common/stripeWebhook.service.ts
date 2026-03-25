@@ -1,6 +1,6 @@
 import Stripe from "stripe";
+import mongoose, { Types } from "mongoose";
 import { injectable, inject } from "inversify";
-import { Types } from "mongoose";
 import { stripe } from "../../../configs/stripe";
 import { IStripeWebhookService } from "../../interfaces/common/IStripeWebhookService";
 import { TYPES } from "../../../types/types";
@@ -11,6 +11,7 @@ import { IPaymentRepository } from "../../../repositories/interfaces/common/IPay
 import { calculateCommission } from "../../../helper/paymentCalculator";
 import { IUserProgramRepository } from "../../../repositories/interfaces/user/IUserProgramRepository";
 import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
+import logger from "../../../utils/logger";
 
 @injectable()
 export class StripeWebhookService implements IStripeWebhookService {
@@ -32,140 +33,173 @@ export class StripeWebhookService implements IStripeWebhookService {
 
     @inject(TYPES.IHealthDetailsRepository)
     private _healthDetails: IHealthDetailsRepository
-
   ) {}
-
+  
   async process(payload: Buffer, signature: string) {
-    const event = stripe.webhooks.constructEvent(
-      payload,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    let event: Stripe.Event;
+    
+    try {
+      event = stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
+    } catch (err) {
+      logger.error("❌ Stripe webhook signature verification failed", err);
+      throw new Error("Invalid webhook signature");
+    }
 
     if (event.type !== "checkout.session.completed") return;
 
     const session = event.data.object as Stripe.Checkout.Session;
-    const { userId, planId, nutritionistId } = session.metadata!;
+    
+    if (
+      !session.metadata?.userId ||
+      !session.metadata?.planId ||
+      !session.metadata?.nutritionistId
+    ) {
+      throw new Error("Missing metadata in Stripe session");
+    }
 
+    if (!session.payment_intent) {
+      throw new Error("Missing payment intent");
+    }
 
-    const alreadyProcessed =
-      await this._paymentRepo.existsBySessionId(session.id);
-    if (alreadyProcessed) return;
+    const { userId, planId, nutritionistId } = session.metadata;
 
+    const alreadyProcessed = await this._paymentRepo.existsBySessionId(session.id);
+    if (alreadyProcessed) {
+      logger.warn("⚠️ Duplicate webhook ignored", { sessionId: session.id });
+      return;
+    }
 
     const plan = await this._planRepo.findById(planId);
     if (!plan) throw new Error("Plan not found");
 
-  const totalAmount = plan.price;
-  
-  const { adminAmount, nutritionistAmount } = calculateCommission(totalAmount);
+    const totalAmount = plan.price;
+    const { adminAmount, nutritionistAmount } =
+      calculateCommission(totalAmount);
 
     const userObjectId = new Types.ObjectId(userId);
     const planObjectId = new Types.ObjectId(planId);
     const nutritionistObjectId = new Types.ObjectId(nutritionistId);
 
-  
-    const adminWallet = await this._walletRepo.findOrCreate(
-      process.env.ADMIN_ID!,
-      "ADMIN"
-    );
+    const dbSession = await mongoose.startSession();
+    dbSession.startTransaction();
 
-    const nutritionistWallet = await this._walletRepo.findOrCreate(
-      nutritionistId,
-      "NUTRITIONIST"
-    );
+    try {
+      const existingActive = await this._userPlanRepo.findActiveByUserAndNutritionist(
+        userObjectId,
+        nutritionistObjectId
+      );
+      if (existingActive) {
+        logger.warn("User already has active plan");
+        await dbSession.abortTransaction();
+        
+        return;
+      }
 
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + plan.durationInDays);
 
-    await this._paymentRepo.create({
-      userId: userObjectId,
-      planId: planObjectId,
-      nutritionistId: nutritionistObjectId,
-      amount: totalAmount,
-      type: "PLAN_PURCHASE",
-      stripeSessionId: session.id,
-    });
-
-    await this._paymentRepo.create({
-      userId: userObjectId,
-      nutritionistId: nutritionistObjectId,
-      amount: adminAmount,
-      type: "ADMIN_COMMISSION",
-      stripeSessionId: session.id,
-    });
-
-    await this._paymentRepo.create({
-      userId: userObjectId,
-      nutritionistId: nutritionistObjectId,
-      amount: nutritionistAmount,
-      type: "NUTRITIONIST_EARNING",
-      stripeSessionId: session.id,
-    });
-
-
-  await Promise.all([
-    this._walletRepo.credit(adminWallet._id.toString(), adminAmount),
-    this._walletRepo.credit(
-      nutritionistWallet._id.toString(),
-      nutritionistAmount
-    ),
-  ]);
-
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + plan.durationInDays);
-
-    const planSnapshot = {
-      title: plan.title,
-      durationInDays: plan.durationInDays,
-      price: plan.price,
-      currency: plan.currency ?? "INR",
-    };
-    const paymentId = session.payment_intent as string;
-
-  const userPlan = await this._userPlanRepo.create({
-    userId: userObjectId,
-    planId: planObjectId,
-    nutritionistId: nutritionistObjectId,
-    paymentProvider: "stripe",
-    paymentId: paymentId,
-    checkoutSessionId: session.id,
-    paymentStatus: "paid",
-    amount: totalAmount,
-    currency: planSnapshot.currency,
-    planSnapshot,
-    status: "ACTIVE",
-    startDate,
-    endDate,
-  });
-
-  const healthProfile = await this._healthDetails.findByUserId(userId);
-
-  await this._userProgram.create({
-  userId: userObjectId,
-  planId: planObjectId,
-  userPlanId: userPlan._id,
-  nutritionistId: nutritionistObjectId,
-
-  goal: healthProfile?.goal,
-  dietType: healthProfile?.dietType,
-  activityLevel: healthProfile?.activityLevel,
-  focusAreas: healthProfile?.focusAreas,
-
-  startDate,
-  endDate,
-  durationDays: plan.durationInDays,
-  currentDay: 1,
-  completionPercentage: 0,
-  status: "ACTIVE",
-
-  planSnapshot: {
-    title: plan.title,
-    price: plan.price,
-    currency: plan.currency ?? "INR",
-    durationInDays: plan.durationInDays,
-  },
-});
-
-    console.log("✅ Stripe payment processed successfully");
+      const planSnapshot = {
+        title: plan.title,
+        durationInDays: plan.durationInDays,
+        price: plan.price,
+        currency: plan.currency ?? "INR",
+      };
+      
+      const userPlan = await this._userPlanRepo.create({
+        userId: userObjectId,
+        planId: planObjectId,
+        nutritionistId: nutritionistObjectId,
+        paymentProvider: "stripe",
+        paymentId: session.payment_intent.toString(),
+        checkoutSessionId: session.id,
+        paymentStatus: "paid",
+        amount: totalAmount,
+        currency: planSnapshot.currency,
+        planSnapshot,
+        status: "ACTIVE",
+        pendingPayout: nutritionistAmount,
+        isPayoutDone: false,
+        adminCommission: adminAmount,
+        startDate,
+        endDate,
+      },dbSession);
+      
+      const healthProfile = await this._healthDetails.findByUserId(userId);
+      await this._userProgram.create({
+        userId: userObjectId,
+        planId: planObjectId,
+        userPlanId: userPlan._id,
+        nutritionistId: nutritionistObjectId,
+        goal: healthProfile?.goal ?? "general_wellness",
+        dietType: healthProfile?.dietType,
+        activityLevel: healthProfile?.activityLevel,
+        focusAreas: healthProfile?.focusAreas,
+        startDate,
+        endDate,
+        durationDays: plan.durationInDays,
+        currentDay: 1,
+        completionPercentage: 0,
+        status: "ACTIVE",
+        planSnapshot,
+      },dbSession);
+      
+      await this._paymentRepo.create({
+        userId: userObjectId,
+        planId: planObjectId,
+        nutritionistId: nutritionistObjectId,
+        amount: totalAmount,
+        type: "PLAN_PURCHASE",
+        status: "SUCCESS",
+        currency: "INR",
+        stripeSessionId: session.id,
+      },dbSession);
+      
+      await this._paymentRepo.create({
+        userId: userObjectId,
+        nutritionistId: nutritionistObjectId,
+        amount: adminAmount,
+        type: "ADMIN_COMMISSION",
+        status: "SUCCESS",
+        currency: "INR",
+        stripeSessionId: session.id,
+      },dbSession);
+      
+      await this._paymentRepo.create({
+        userId: userObjectId,
+        nutritionistId: nutritionistObjectId,
+        amount: nutritionistAmount,
+        type: "NUTRITIONIST_EARNING",
+        status: "PENDING",
+        currency: "INR",
+        stripeSessionId: session.id,
+      },dbSession);
+      
+      const adminWallet = await this._walletRepo.findOrCreate(
+        process.env.ADMIN_ID!,
+        "ADMIN",
+        dbSession
+      );
+      
+      await this._walletRepo.creditEscrow(
+        adminWallet._id.toString(),
+        totalAmount,
+        dbSession
+      );
+      await dbSession.commitTransaction();
+      logger.info("✅ Stripe payment processed successfully", {
+        sessionId: session.id,
+      });
+    } catch (err) {
+      await dbSession.abortTransaction();
+      logger.error("❌ Stripe webhook failed", err);
+      throw err;
+    } finally {
+      dbSession.endSession();
+    }
   }
 }

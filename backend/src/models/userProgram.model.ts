@@ -100,10 +100,10 @@ const UserProgramSchema = new Schema<IUserProgram>(
     },
 
     goal: {
-      type: String,
-      required: true,
-      index: true,
-    },
+  type: String,
+  enum: PROGRAM_GOALS,
+  required: true
+},
 
     focusAreas: {
       type:[{ type: String }],

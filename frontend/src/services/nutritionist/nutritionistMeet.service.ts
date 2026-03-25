@@ -9,29 +9,29 @@ export interface CreateMeetingDTO {
 }
 
 export const nutritionistMeetService = {
-  /**
-   * Fetches all meetings for the logged-in nutritionist
-   */
   getMeetings: async () => {
-    const res = await api.get("/nutritionist/meetings");
-    // Supporting both { data: [...] } and direct array responses
+    const res = await api.get("/session/meetings");
     return res.data;
   },
 
-  /**
-   * Creates a new consultation session
-   * @param data - The meeting details including duration and type
-   */
   createMeeting: async (data: CreateMeetingDTO) => {
-    const res = await api.post("/nutritionist/meetings", data);
+    const res = await api.post("/session/meetings", data);
     return res.data;
   },
 
-  /**
-   * Optional: Delete a meeting
-   */
   deleteMeeting: async (meetingId: string) => {
     const res = await api.delete(`/nutritionist/meetings/${meetingId}`);
     return res.data;
-  }
+  },
+
+  updateMeetingStatus: async (
+    roomId: string,
+    status: "scheduled" | "ongoing" | "completed" | "cancelled"
+  ) => {
+    const res = await api.patch(
+      `/session/meetings/status/${roomId}`,
+      { status }
+    );
+    return res.data;
+  },
 };

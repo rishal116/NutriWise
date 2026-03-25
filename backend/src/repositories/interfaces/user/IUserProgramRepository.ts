@@ -1,25 +1,33 @@
-import { Types } from "mongoose";
 import { IBaseRepository } from "../common/IBaseRepository";
 import { IUserProgram } from "../../../models/userProgram.model";
 import { IUserProgramPopulated } from "../../../types/userProgram.populated";
 
+import { Types, ClientSession } from "mongoose";
+
 export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
+  create(
+    data: Partial<IUserProgram>,
+    session?: ClientSession,
+  ): Promise<IUserProgram>;
+
   findActiveByUser(userId: Types.ObjectId): Promise<IUserProgram | null>;
 
   findByUser(userId: Types.ObjectId): Promise<IUserProgramPopulated[]>;
 
   findByNutritionist(
-    nutritionistId: Types.ObjectId
+    nutritionistId: Types.ObjectId,
   ): Promise<IUserProgramPopulated[]>;
 
   findByUserAndPlan(
     userId: Types.ObjectId,
-    planId: Types.ObjectId
+    planId: Types.ObjectId,
   ): Promise<IUserProgram[]>;
+  findByIdAndUser(userId: Types.ObjectId, programId: Types.ObjectId): Promise<IUserProgram | null>;
 
   updateProgress(
     programId: Types.ObjectId,
-    currentDay: number
+    currentDay: number,
+    session?: ClientSession,
   ): Promise<IUserProgram | null>;
 
   findByIdPopulated(id: string): Promise<IUserProgramPopulated | null>;

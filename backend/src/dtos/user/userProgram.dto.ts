@@ -41,6 +41,7 @@ export interface ProgramDayResponseDTO {
   dayNumber: number;
 
   meals?: {
+    _id: string;
     mealType: "breakfast" | "lunch" | "dinner" | "snack";
     title: string;
     description?: string;
@@ -48,12 +49,14 @@ export interface ProgramDayResponseDTO {
   }[];
 
   workouts?: {
+    _id: string;
     title: string;
     duration: number;
     instructions?: string;
   }[];
 
   habits?: {
+    _id: string;
     title: string;
     targetValue?: number;
     unit?: string;

@@ -40,6 +40,10 @@ export interface IUserPlan {
   status: SubscriptionStatus;
   userProgramId?: Types.ObjectId;
   startDate: Date;
+  isDeleted: boolean;
+  pendingPayout: number;
+  adminCommission: number;
+  isPayoutDone: boolean;
   endDate: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -51,21 +55,18 @@ const UserPlanSchema = new Schema<IUserPlan>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     planId: {
       type: Schema.Types.ObjectId,
       ref: "Plan",
       required: true,
-      index: true,
     },
 
     nutritionistId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     paymentProvider: {
@@ -78,7 +79,7 @@ const UserPlanSchema = new Schema<IUserPlan>(
     paymentId: {
       type: String,
       required: true,
-      index: true,
+      unique: true,
     },
 
     checkoutSessionId: {
@@ -125,26 +126,42 @@ const UserPlanSchema = new Schema<IUserPlan>(
       ref: "UserProgram",
       index: true,
     },
-
-    startDate: {
-      type: Date,
-      required: true,
+    isDeleted: {
+      type: Boolean,
+      default: false,
       index: true,
     },
-
+    pendingPayout:{
+      type:Number,
+    },
+    adminCommission:{
+      type:Number
+    },
+    isPayoutDone:{
+      type:Boolean,
+      default:false
+    },
+    startDate: {
+      type: Date,
+      default: null,
+    },
     endDate: {
       type: Date,
-      required: true,
-      index: true,
+      default: null,
     },
   },
   { timestamps: true }
 );
 
 UserPlanSchema.index(
-  { userId: 1, planId: 1, status: 1 },
-  { unique: true, partialFilterExpression: { status: "ACTIVE" } }
-);
+  { userId: 1, nutritionistId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: "ACTIVE" },
+  }
+)
+
+UserPlanSchema.index({ userId: 1, status: 1, isDeleted: 1 });
 
 UserPlanSchema.index({ status: 1, endDate: 1 });
 

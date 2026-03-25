@@ -1,10 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 
-export type MealType =
-  | "breakfast"
-  | "lunch"
-  | "dinner"
-  | "snack";
+export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
 export interface IProgramDay {
   _id: Types.ObjectId;
@@ -17,6 +13,7 @@ export interface IProgramDay {
     title: string;
     description?: string;
     calories?: number;
+    order?: number;
   }[];
 
   workouts?: {
@@ -24,6 +21,7 @@ export interface IProgramDay {
     title: string;
     duration: number;
     instructions?: string;
+    order?: number;
   }[];
 
   habits?: {
@@ -31,6 +29,7 @@ export interface IProgramDay {
     title: string;
     targetValue?: number;
     unit?: string;
+    order?: number;
   }[];
 
   createdAt: Date;
@@ -43,76 +42,109 @@ const ProgramDaySchema = new Schema<IProgramDay>(
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       required: true,
-      index: true,
     },
 
     dayNumber: {
       type: Number,
       required: true,
       min: 1,
-      index: true,
     },
 
     meals: [
       {
+        _id: { type: Schema.Types.ObjectId, auto: true },
+
         mealType: {
           type: String,
           enum: ["breakfast", "lunch", "dinner", "snack"],
           required: true,
         },
+
         title: {
           type: String,
           required: true,
           trim: true,
         },
-        description: String,
+
+        description: {
+          type: String,
+          trim: true,
+        },
+
         calories: {
           type: Number,
           min: 0,
+        },
+
+        order: {
+          type: Number,
+          default: 0,
         },
       },
     ],
 
     workouts: [
       {
+        _id: { type: Schema.Types.ObjectId, auto: true },
+
         title: {
           type: String,
           required: true,
           trim: true,
         },
+
         duration: {
           type: Number,
           required: true,
           min: 1,
         },
-        instructions: String,
+
+        instructions: {
+          type: String,
+          trim: true,
+        },
+
+        order: {
+          type: Number,
+          default: 0,
+        },
       },
     ],
 
     habits: [
       {
+        _id: { type: Schema.Types.ObjectId, auto: true },
+
         title: {
           type: String,
           required: true,
           trim: true,
         },
+
         targetValue: {
           type: Number,
           min: 0,
         },
-        unit: String,
+
+        unit: {
+          type: String,
+          trim: true,
+        },
+
+        order: {
+          type: Number,
+          default: 0,
+        },
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-ProgramDaySchema.index(
-  { userProgramId: 1, dayNumber: 1 },
-  { unique: true }
-);
+ProgramDaySchema.index({ userProgramId: 1, dayNumber: 1 }, { unique: true });
+
 
 export const ProgramDayModel = model<IProgramDay>(
   "ProgramDay",
-  ProgramDaySchema
+  ProgramDaySchema,
 );

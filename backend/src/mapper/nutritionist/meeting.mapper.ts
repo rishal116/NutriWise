@@ -2,9 +2,7 @@ import { IMeetingWithUser } from "../../types/meetingWithUser.populated";
 import { MeetingResponseDTO } from "../../dtos/nutritionist/meetingResponse.dto";
 
 export class MeetingMapper {
-  static toResponseDTO(
-    meeting: IMeetingWithUser
-  ): MeetingResponseDTO {
+  static toResponseDTO(meeting: IMeetingWithUser): MeetingResponseDTO {
     return {
       id: meeting._id.toString(),
       title: meeting.title,
@@ -17,18 +15,22 @@ export class MeetingMapper {
       },
 
       nutritionistId: meeting.nutritionistId.toString(),
+
       scheduledAt: meeting.scheduledAt,
+      durationInMinutes: meeting.durationInMinutes,
+      type: meeting.type,
+
       startedAt: meeting.startedAt,
       endedAt: meeting.endedAt,
+
       status: meeting.status,
+
       createdAt: meeting.createdAt,
       updatedAt: meeting.updatedAt,
     };
   }
 
-  static toResponseDTOList(
-    meetings: IMeetingWithUser[]
-  ): MeetingResponseDTO[] {
-    return meetings.map(this.toResponseDTO);
+  static toResponseDTOList(meetings: IMeetingWithUser[]): MeetingResponseDTO[] {
+    return meetings.map((m) => this.toResponseDTO(m));
   }
 }
