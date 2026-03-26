@@ -94,14 +94,19 @@ export default function DayDetailsPage() {
 
   const [taskLog, setTaskLog] = useState<TaskLogDTO | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchDayTasks() {
       setLoading(true);
       setError(null);
       try {
-        const log = await taskService.getTodayLog(programIdStr!, Number(dayNumber));
+        const log = await taskService.getTodayLog(
+          programIdStr!,
+          Number(dayNumber),
+        );
+        console.log(log);
+
         setTaskLog(log);
       } catch (err: any) {
         console.error("Failed to fetch task log:", err);
@@ -117,16 +122,22 @@ export default function DayDetailsPage() {
   const handleComplete = async (
     type: "meals" | "workouts" | "habits",
     value: string,
-    title?: string
+    title?: string,
   ) => {
     try {
-      const updated = await taskService.updateTodayTasks({ type, value, title });
+      const updated = await taskService.updateTodayTasks({
+        programId: String(programIdStr), // 🔥 REQUIRED
+        dayNumber: Number(dayNumber), // 🔥 OPTIONAL but recommended
+        type,
+        value,
+        title,
+      });
+
       setTaskLog(updated);
     } catch (err: any) {
       console.error("Failed to update task:", err);
     }
   };
-
   /* ── LOADING ── */
   if (loading) {
     return (
@@ -192,7 +203,6 @@ export default function DayDetailsPage() {
 
   return (
     <div className="font-sans pb-12 space-y-6">
-
       {/* ── BACK + TITLE ── */}
       <div>
         <button
@@ -271,7 +281,9 @@ export default function DayDetailsPage() {
                   </p>
                   <p
                     className={`text-sm font-semibold truncate ${
-                      meal.completed ? "text-gray-400 line-through" : "text-gray-800"
+                      meal.completed
+                        ? "text-gray-400 line-through"
+                        : "text-gray-800"
                     }`}
                   >
                     {meal.title}
@@ -328,7 +340,9 @@ export default function DayDetailsPage() {
                 <div className="min-w-0">
                   <p
                     className={`text-sm font-semibold truncate ${
-                      workout.completed ? "text-gray-400 line-through" : "text-gray-800"
+                      workout.completed
+                        ? "text-gray-400 line-through"
+                        : "text-gray-800"
                     }`}
                   >
                     {workout.title}

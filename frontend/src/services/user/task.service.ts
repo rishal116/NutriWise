@@ -44,7 +44,13 @@ export const taskService = {
     return res.data.data; // <-- use .data here
   },
 
-  async updateTodayTasks(payload: any): Promise<TaskLogDTO> {
+  async updateTodayTasks(payload: {
+  programId: string;
+  dayNumber: number;
+  type: string;
+  value: string;
+  title?: string;
+}): Promise<TaskLogDTO> {
     const res = await api.post("/tasks/today", payload);
     return res.data.data; // <-- use .data here
   },

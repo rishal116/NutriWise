@@ -12,6 +12,7 @@ export class TaskController implements ITaskController {
     @inject(TYPES.ITaskService)
     private _taskService: ITaskService,
   ) {}
+
   getTodayTasks = asyncHandler(async (req: Request, res: Response) => {
     const { programId, dayNumber } = req.query;
     const userId = req.user!.userId;
@@ -27,6 +28,7 @@ export class TaskController implements ITaskController {
 
   updateTodayTasks = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
+
     const updatedTask = await this._taskService.updateTodayTasks(
       userId,
       req.body,

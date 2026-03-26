@@ -5,7 +5,9 @@ import connectDB from "./configs/db";
 import { initializeSocket } from "./infrastructures/socket/socket.server";
 import { startPayoutCron } from "./crons/payout.cron";
 import { startPlanExpiryCron } from "./crons/planExpiry.cron";
-import bcrypt from "bcryptjs";
+import { startSubscriptionCron } from "./crons/subscription.cron";
+
+
 
 dotenv.config();
 const PORT = process.env.PORT;
@@ -13,6 +15,7 @@ const PORT = process.env.PORT;
 startPlanExpiryCron();
 connectDB();
 startPayoutCron();
+startSubscriptionCron();
 
 
 const server: HTTPServer = http.createServer(app);

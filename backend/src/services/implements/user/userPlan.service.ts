@@ -16,43 +16,43 @@ export class UserPlanService implements IUserPlanService {
     private _userProgramRepo: IUserProgramRepository,
   ) {}
 
-async getMyPlans(userId: string) {
-  const userObjectId = new Types.ObjectId(userId);
+  async getMyPlans(userId: string) {
+    const userObjectId = new Types.ObjectId(userId);
 
-  const [plans, programs] = await Promise.all([
-    this._userPlanRepo.findByUserId(userObjectId),
-    this._userProgramRepo.findByUser(userObjectId),
-  ]);
+    const [plans, programs] = await Promise.all([
+      this._userPlanRepo.findByUserId(userObjectId),
+      this._userProgramRepo.findByUser(userObjectId),
+    ]);
 
-  return plans.map((plan) => {
-    const program = programs.find(
-      (p) => p.planId.toString() === plan.planId._id.toString()
-    );
+    return plans.map((plan) => {
+      const program = programs.find(
+        (p) => p.planId.toString() === plan.planId._id.toString(),
+      );
 
-    return UserPlanMapper.toListDTO(plan, program);
-  });
-}
-
-async getPlanById(planId: string, userId: string) {
-  const userObjectId = new Types.ObjectId(userId);
-  const planObjectId = new Types.ObjectId(planId);
-
-  const plan = await this._userPlanRepo.findOnePopulated({
-    _id: planObjectId,
-    userId: userObjectId,
-  });
-
-  if (!plan) {
-    throw new Error("Plan not found");
+      return UserPlanMapper.toListDTO(plan, program);
+    });
   }
 
-  const programs = await this._userProgramRepo.findByUserAndPlan(
-    userObjectId,
-    plan.planId._id
-  );
+  async getPlanById(planId: string, userId: string) {
+    const userObjectId = new Types.ObjectId(userId);
+    const planObjectId = new Types.ObjectId(planId);
 
-  const program = programs?.[0];
+    const plan = await this._userPlanRepo.findOnePopulated({
+      _id: planObjectId,
+      userId: userObjectId,
+    });
 
-  return UserPlanMapper.toDetailDTO(plan, program);
-}
+    if (!plan) {
+      throw new Error("Plan not found");
+    }
+
+    const programs = await this._userProgramRepo.findByUserAndPlan(
+      userObjectId,
+      plan.planId._id,
+    );
+
+    const program = programs?.[0];
+
+    return UserPlanMapper.toDetailDTO(plan, program);
+  }
 }

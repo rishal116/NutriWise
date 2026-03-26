@@ -10,9 +10,8 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 export class UserProgramController implements IUserProgramController {
   constructor(
     @inject(TYPES.IUserProgramService)
-    private _userProgramService: IUserProgramService
+    private _userProgramService: IUserProgramService,
   ) {}
-
 
   getProgramDays = asyncHandler(async (req: Request, res: Response) => {
     const { programId } = req.params;
@@ -20,25 +19,21 @@ export class UserProgramController implements IUserProgramController {
 
     const days = await this._userProgramService.getProgramDays(
       programId,
-      userId
+      userId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data:days});
+    res.status(StatusCode.OK).json({ success: true, data: days });
   });
-
-
-
 
   getProgramDayByNumber = asyncHandler(async (req: Request, res: Response) => {
     const { dayNumber } = req.params;
     const { programId } = req.params;
 
-
     const day = await this._userProgramService.getProgramDayByNumber(
       Number(dayNumber),
-      programId
+      programId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data: day});
-  })
+    res.status(StatusCode.OK).json({ success: true, data: day });
+  });
 }

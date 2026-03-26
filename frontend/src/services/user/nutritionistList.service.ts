@@ -16,5 +16,9 @@ export const nutritionistListService = {
     const response = await api.get(`/nutritionists/${nutritionistId}/plans`);
     return response.data;
   },
+  getReviews: async (nutritionistId: string) => {
+    const response = await api.get(`/nutritionists/${nutritionistId}/review`);
+    return response.data;
+  },
 
 };

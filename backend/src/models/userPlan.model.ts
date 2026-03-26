@@ -7,44 +7,55 @@ export const PAYMENT_STATUS = [
   "refunded",
 ] as const;
 
-export type PaymentStatus = typeof PAYMENT_STATUS[number];
+export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 
 export const SUBSCRIPTION_STATUS = [
-  "ACTIVE",
-  "CANCELLED",
-  "EXPIRED",
   "PENDING",
+  "ACTIVE",
+  "UPCOMING",
+  "EXPIRED",
+  "CANCELLED",
 ] as const;
 
-export type SubscriptionStatus = typeof SUBSCRIPTION_STATUS[number];
-
-
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
 
 export interface IUserPlan {
   _id: Types.ObjectId;
+
   userId: Types.ObjectId;
   planId: Types.ObjectId;
   nutritionistId: Types.ObjectId;
+
   paymentProvider: "stripe" | "razorpay";
   paymentId: string;
   checkoutSessionId?: string;
+
   paymentStatus: PaymentStatus;
+
   amount: number;
   currency: string;
+
   planSnapshot: {
-      title: string;
-      durationInDays:number;
-      price: number;
-      currency: string;
+    title: string;
+    durationInDays: number;
+    price: number;
+    currency: string;
   };
+
   status: SubscriptionStatus;
+
+  purchaseDate: Date;
+  startDate: Date | null;
+  endDate: Date | null;
+
   userProgramId?: Types.ObjectId;
-  startDate: Date;
-  isDeleted: boolean;
+
   pendingPayout: number;
   adminCommission: number;
   isPayoutDone: boolean;
-  endDate: Date;
+
+  isDeleted: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,6 +66,7 @@ const UserPlanSchema = new Schema<IUserPlan>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     planId: {
@@ -67,13 +79,13 @@ const UserPlanSchema = new Schema<IUserPlan>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     paymentProvider: {
       type: String,
       enum: ["stripe", "razorpay"],
       required: true,
-      index: true,
     },
 
     paymentId: {
@@ -106,7 +118,7 @@ const UserPlanSchema = new Schema<IUserPlan>(
       enum: ["INR", "USD"],
       default: "INR",
     },
-    
+
     planSnapshot: {
       title: { type: String, required: true },
       durationInDays: { type: Number, required: true },
@@ -121,36 +133,52 @@ const UserPlanSchema = new Schema<IUserPlan>(
       index: true,
     },
 
+    purchaseDate: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
+
+    startDate: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    endDate: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
     userProgramId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       index: true,
     },
+
+    pendingPayout: {
+      type: Number,
+      default: 0,
+    },
+
+    adminCommission: {
+      type: Number,
+      default: 0,
+    },
+
+    isPayoutDone: {
+      type: Boolean,
+      default: false,
+    },
+
     isDeleted: {
       type: Boolean,
       default: false,
       index: true,
     },
-    pendingPayout:{
-      type:Number,
-    },
-    adminCommission:{
-      type:Number
-    },
-    isPayoutDone:{
-      type:Boolean,
-      default:false
-    },
-    startDate: {
-      type: Date,
-      default: null,
-    },
-    endDate: {
-      type: Date,
-      default: null,
-    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserPlanSchema.index(
@@ -158,11 +186,12 @@ UserPlanSchema.index(
   {
     unique: true,
     partialFilterExpression: { status: "ACTIVE" },
-  }
-)
+  },
+);
+
+UserPlanSchema.index({ userId: 1, nutritionistId: 1, endDate: -1 });
 
 UserPlanSchema.index({ userId: 1, status: 1, isDeleted: 1 });
-
 UserPlanSchema.index({ status: 1, endDate: 1 });
 
 export const UserPlanModel = model<IUserPlan>("UserPlan", UserPlanSchema);

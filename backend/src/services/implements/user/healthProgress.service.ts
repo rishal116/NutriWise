@@ -5,7 +5,10 @@ import logger from "../../../utils/logger";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IHealthProgressRepository } from "../../../repositories/interfaces/user/IHealthProgressRepository";
-import { HealthProgressResponseDTO, IHealthProgressData } from "../../../dtos/user/healthProgress.dto";
+import {
+  HealthProgressResponseDTO,
+  IHealthProgressData,
+} from "../../../dtos/user/healthProgress.dto";
 import { IHealthProgress } from "../../../models/healthProgress.model";
 
 interface IProgressPoint {
@@ -17,10 +20,13 @@ interface IProgressPoint {
 export class HealthProgressService implements IHealthProgressService {
   constructor(
     @inject(TYPES.IHealthProgressRepository)
-    private _healthProgressRepository: IHealthProgressRepository
+    private _healthProgressRepository: IHealthProgressRepository,
   ) {}
-  
-  async getHealthProgress(userId: string,days = 30): Promise<HealthProgressResponseDTO> {
+
+  async getHealthProgress(
+    userId: string,
+    days = 30,
+  ): Promise<HealthProgressResponseDTO> {
     try {
       if (!userId) {
         throw new CustomError("User ID is required", StatusCode.BAD_REQUEST);
@@ -34,7 +40,7 @@ export class HealthProgressService implements IHealthProgressService {
         await this._healthProgressRepository.findByUserAndDateRange(
           userId,
           fromDate,
-          toDate
+          toDate,
         );
 
       return this.formatProgress(progressRecords);
@@ -44,12 +50,15 @@ export class HealthProgressService implements IHealthProgressService {
     }
   }
 
-  async getProgressByDate(userId: string,date: Date): Promise<IHealthProgressData | null> {
+  async getProgressByDate(
+    userId: string,
+    date: Date,
+  ): Promise<IHealthProgressData | null> {
     try {
       if (!userId || !date) {
         throw new CustomError(
           "User ID and date required",
-          StatusCode.BAD_REQUEST
+          StatusCode.BAD_REQUEST,
         );
       }
 
@@ -57,7 +66,7 @@ export class HealthProgressService implements IHealthProgressService {
         await this._healthProgressRepository.findByUserAndDateRange(
           userId,
           date,
-          date
+          date,
         );
 
       return records.length > 0 ? records[0] : null;
@@ -67,10 +76,7 @@ export class HealthProgressService implements IHealthProgressService {
     }
   }
 
-  // ✅ 3. Get latest progress
-  async getLatestProgress(
-    userId: string
-  ): Promise<IHealthProgressData | null> {
+  async getLatestProgress(userId: string): Promise<IHealthProgressData | null> {
     try {
       if (!userId) {
         throw new CustomError("User ID required", StatusCode.BAD_REQUEST);
@@ -83,9 +89,8 @@ export class HealthProgressService implements IHealthProgressService {
     }
   }
 
-  // 🔥 Fully typed formatter (NO any)
   private formatProgress(
-    records: IHealthProgress[]
+    records: IHealthProgress[],
   ): HealthProgressResponseDTO {
     const weightProgress: IProgressPoint[] = [];
     const bmiProgress: IProgressPoint[] = [];

@@ -7,7 +7,11 @@ import { MeetingResponseDTO } from "../../../dtos/nutritionist/meetingResponse.d
 import { MeetingMapper } from "../../../mapper/nutritionist/meeting.mapper";
 import { v4 as uuidv4 } from "uuid";
 import { Types } from "mongoose";
-import { IMeeting, MeetingStatus, MeetingType } from "../../../models/meeting.model";
+import {
+  IMeeting,
+  MeetingStatus,
+  MeetingType,
+} from "../../../models/meeting.model";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
@@ -16,12 +20,13 @@ import logger from "../../../utils/logger";
 export class NutriMeetingsService implements INutriMeetingsService {
   constructor(
     @inject(TYPES.INutriMeetingsRepository)
-    private _nutriMeetingsRepository: INutriMeetingsRepository
+    private _nutriMeetingsRepository: INutriMeetingsRepository,
   ) {}
-  
+
   async getMeetings(userId: string): Promise<MeetingResponseDTO[]> {
     logger.info("Fetching meetings", { userId });
-    const meetings = await this._nutriMeetingsRepository.findByNutritionistId(userId);
+    const meetings =
+      await this._nutriMeetingsRepository.findByNutritionistId(userId);
     if (!meetings || meetings.length === 0) {
       logger.warn("No meetings found", { userId });
       throw new CustomError("No meetings found", StatusCode.NOT_FOUND);
@@ -32,7 +37,7 @@ export class NutriMeetingsService implements INutriMeetingsService {
     });
     return MeetingMapper.toResponseDTOList(meetings);
   }
-  
+
   async createMeeting(data: CreateMeetingDTO): Promise<MeetingResponseDTO> {
     const roomId = uuidv4();
     logger.info("Creating meeting", {
@@ -51,11 +56,13 @@ export class NutriMeetingsService implements INutriMeetingsService {
       nutritionistId: new Types.ObjectId(data.nutritionistId),
       status: MeetingStatus.SCHEDULED,
     });
-    const populatedMeeting =await this._nutriMeetingsRepository.findByRoomId(roomId);
+    const populatedMeeting =
+      await this._nutriMeetingsRepository.findByRoomId(roomId);
     if (!populatedMeeting) {
       logger.error("Meeting not found after creation", { roomId });
-      throw new CustomError("Meeting not found after creation",
-        StatusCode.INTERNAL_SERVER_ERROR
+      throw new CustomError(
+        "Meeting not found after creation",
+        StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
     logger.info("Meeting created successfully", {
@@ -64,10 +71,14 @@ export class NutriMeetingsService implements INutriMeetingsService {
     });
     return MeetingMapper.toResponseDTO(populatedMeeting);
   }
-  
-  async updateMeetingStatus(roomId: string,status: MeetingStatus): Promise<MeetingResponseDTO> {
+
+  async updateMeetingStatus(
+    roomId: string,
+    status: MeetingStatus,
+  ): Promise<MeetingResponseDTO> {
     logger.info("Updating meeting status", { roomId, newStatus: status });
-    const existingMeeting = await this._nutriMeetingsRepository.findByRoomId(roomId);
+    const existingMeeting =
+      await this._nutriMeetingsRepository.findByRoomId(roomId);
     if (!existingMeeting) {
       logger.warn("Meeting not found for update", { roomId });
       throw new CustomError("Meeting not found", StatusCode.NOT_FOUND);
@@ -77,13 +88,19 @@ export class NutriMeetingsService implements INutriMeetingsService {
       from: existingMeeting.status,
       to: status,
     });
-    if (existingMeeting.status === MeetingStatus.SCHEDULED &&status === MeetingStatus.COMPLETED) {
+    if (
+      existingMeeting.status === MeetingStatus.SCHEDULED &&
+      status === MeetingStatus.COMPLETED
+    ) {
       logger.warn("Invalid status transition attempted", {
         roomId,
         from: existingMeeting.status,
         to: status,
       });
-      throw new CustomError("Cannot complete a meeting before it starts",StatusCode.BAD_REQUEST);
+      throw new CustomError(
+        "Cannot complete a meeting before it starts",
+        StatusCode.BAD_REQUEST,
+      );
     }
     const updateData: Partial<IMeeting> = { status };
     if (status === MeetingStatus.ONGOING) {
@@ -95,22 +112,26 @@ export class NutriMeetingsService implements INutriMeetingsService {
     if (status === MeetingStatus.CANCELLED) {
       updateData.isCancelledByNutritionist = true;
     }
-    const updatedMeeting = await this._nutriMeetingsRepository.updateStatusByRoomId(
-      roomId,
-      status,
-      updateData
-    );
+    const updatedMeeting =
+      await this._nutriMeetingsRepository.updateStatusByRoomId(
+        roomId,
+        status,
+        updateData,
+      );
     if (!updatedMeeting) {
       logger.error("Failed to update meeting status", { roomId, status });
-      throw new CustomError("Failed to update meeting status",
-        StatusCode.INTERNAL_SERVER_ERROR
+      throw new CustomError(
+        "Failed to update meeting status",
+        StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
-    const populatedMeeting = await this._nutriMeetingsRepository.findByRoomId(roomId);
+    const populatedMeeting =
+      await this._nutriMeetingsRepository.findByRoomId(roomId);
     if (!populatedMeeting) {
       logger.error("Meeting not found after update", { roomId });
-      throw new CustomError("Meeting not found after update",
-        StatusCode.NOT_FOUND
+      throw new CustomError(
+        "Meeting not found after update",
+        StatusCode.NOT_FOUND,
       );
     }
     logger.info("Meeting status updated successfully", {

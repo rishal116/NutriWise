@@ -1,7 +1,6 @@
 import { IBaseRepository } from "../common/IBaseRepository";
 import { IUserProgram } from "../../../models/userProgram.model";
 import { IUserProgramPopulated } from "../../../types/userProgram.populated";
-
 import { Types, ClientSession } from "mongoose";
 
 export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
@@ -10,7 +9,15 @@ export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
     session?: ClientSession,
   ): Promise<IUserProgram>;
 
-  findActiveByUser(userId: Types.ObjectId): Promise<IUserProgram | null>;
+  findActiveByUserAndNutritionist(
+    userId: Types.ObjectId,
+    nutritionistId: Types.ObjectId,
+  ): Promise<IUserProgram | null>;
+
+  findLatestProgram(
+    userId: Types.ObjectId,
+    nutritionistId: Types.ObjectId,
+  ): Promise<IUserProgram | null>;
 
   findByUser(userId: Types.ObjectId): Promise<IUserProgramPopulated[]>;
 
@@ -22,7 +29,11 @@ export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
     userId: Types.ObjectId,
     planId: Types.ObjectId,
   ): Promise<IUserProgram[]>;
-  findByIdAndUser(userId: Types.ObjectId, programId: Types.ObjectId): Promise<IUserProgram | null>;
+
+  findByIdAndUser(
+    userId: Types.ObjectId,
+    programId: Types.ObjectId,
+  ): Promise<IUserProgram | null>;
 
   updateProgress(
     programId: Types.ObjectId,
@@ -31,4 +42,8 @@ export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   ): Promise<IUserProgram | null>;
 
   findByIdPopulated(id: string): Promise<IUserProgramPopulated | null>;
+
+  activatePrograms(): Promise<any>;
+
+  completePrograms(): Promise<any>;
 }

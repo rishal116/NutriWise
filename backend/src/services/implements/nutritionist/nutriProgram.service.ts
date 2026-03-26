@@ -57,7 +57,7 @@ export class NutriProgramService implements INutriProgramService {
     }
 
     const programUserId = program.nutritionistId._id.toString();
-    console.log("userId program:", programUserId);
+
     if (programUserId !== nutritionistId) {
       logger.warn(
         "Unauthorized access attempt on programId: %s by nutritionistId: %s",
@@ -133,83 +133,64 @@ export class NutriProgramService implements INutriProgramService {
     return ProgramDayMapper.toResponseDTO(day);
   }
 
- async createProgramDay(
-  data: CreateProgramDayDTO,
-  nutritionistId: string,
-): Promise<ProgramDayResponseDTO> {
-  logger.debug("Creating program day with data: %o", { data });
+  async createProgramDay(
+    data: CreateProgramDayDTO,
+    nutritionistId: string,
+  ): Promise<ProgramDayResponseDTO> {
+    logger.debug("Creating program day with data: %o", { data });
 
-  /* =========================
-     1. Validate Program Ownership
-  ========================= */
-  const program = await this.getProgramDetails(
-    data.userProgramId,
-    nutritionistId
-  );
-
-  /* =========================
-     2. Validate Day Number
-  ========================= */
-  if (data.dayNumber < 1 || data.dayNumber > program.durationDays) {
-    throw new CustomError(
-      `Day must be between 1 and ${program.durationDays}`,
-      StatusCode.BAD_REQUEST
-    );
-  }
-
-  /* =========================
-     3. Validate Meals (no duplicates)
-  ========================= */
-  if (data.meals?.length) {
-    const mealTypes = data.meals.map((m) => m.mealType);
-    if (new Set(mealTypes).size !== mealTypes.length) {
-      throw new CustomError(
-        "Duplicate meal types are not allowed",
-        StatusCode.BAD_REQUEST
-      );
-    }
-  }
-
-  /* =========================
-     4. Prepare Data
-  ========================= */
-  const payload = {
-    ...data,
-    userProgramId: new Types.ObjectId(data.userProgramId),
-  };
-
-  try {
-    /* =========================
-       5. Create (rely on DB unique index)
-    ========================= */
-    const created = await this._programDayRepository.create(payload);
-
-    logger.info(
-      "Program day created: day %d for program %s",
-      created.dayNumber,
-      data.userProgramId
+    const program = await this.getProgramDetails(
+      data.userProgramId,
+      nutritionistId,
     );
 
-    return ProgramDayMapper.toResponseDTO(created);
-
-  } catch (error: any) {
-    /* =========================
-       6. Handle Duplicate (race condition safe)
-    ========================= */
-    if (error.code === 11000) {
+    if (data.dayNumber < 1 || data.dayNumber > program.durationDays) {
       throw new CustomError(
-        `Day ${data.dayNumber} already exists`,
-        StatusCode.BAD_REQUEST
+        `Day must be between 1 and ${program.durationDays}`,
+        StatusCode.BAD_REQUEST,
       );
     }
 
-    logger.error("Error creating program day: %o", error);
-    throw new CustomError(
-      "Failed to create program day",
-      StatusCode.INTERNAL_SERVER_ERROR
-    );
+    if (data.meals?.length) {
+      const mealTypes = data.meals.map((m) => m.mealType);
+      if (new Set(mealTypes).size !== mealTypes.length) {
+        throw new CustomError(
+          "Duplicate meal types are not allowed",
+          StatusCode.BAD_REQUEST,
+        );
+      }
+    }
+
+    const payload = {
+      ...data,
+      userProgramId: new Types.ObjectId(data.userProgramId),
+    };
+
+    try {
+      const created = await this._programDayRepository.create(payload);
+
+      logger.info(
+        "Program day created: day %d for program %s",
+        created.dayNumber,
+        data.userProgramId,
+      );
+
+      return ProgramDayMapper.toResponseDTO(created);
+    } catch (error: any) {
+      if (error.code === 11000) {
+        throw new CustomError(
+          `Day ${data.dayNumber} already exists`,
+          StatusCode.BAD_REQUEST,
+        );
+      }
+
+      logger.error("Error creating program day: %o", error);
+      throw new CustomError(
+        "Failed to create program day",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
-}
 
   async updateProgramDay(
     dayId: string,

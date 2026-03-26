@@ -12,38 +12,34 @@ import { Types } from "mongoose";
 export class ReviewService implements IReviewService {
   constructor(
     @inject(TYPES.IReviewRepository)
-    private _reviewRepo: IReviewRepository
+    private _reviewRepo: IReviewRepository,
   ) {}
 
   async submitReview(data: SubmitReviewDTO): Promise<ReviewResponseDTO> {
     const { userId, nutritionistId, rating, review, planId } = data;
 
-    // 🔒 Validation
     if (!rating || rating < 1 || rating > 5) {
       throw new Error("Rating must be between 1 and 5");
     }
 
-    // 🔍 Check existing review
     const existing = await this._reviewRepo.findByUser(
       userId,
       nutritionistId,
-      planId
+      planId,
     );
 
     let saved;
 
     if (existing) {
-      // ✏️ Update
       saved = await this._reviewRepo.update(existing._id.toString(), {
         rating,
         review,
       });
     } else {
-      // 🆕 Create
       saved = await this._reviewRepo.create({
         user: new Types.ObjectId(userId),
         nutritionist: new Types.ObjectId(nutritionistId),
-        ...(planId && { plan: new Types.ObjectId(planId) }),
+        ...(planId && { userPlan: new Types.ObjectId(planId) }),
         rating,
         review,
       });
@@ -56,7 +52,7 @@ export class ReviewService implements IReviewService {
 
   async getMyReview(
     userId: string,
-    nutritionistId: string
+    nutritionistId: string,
   ): Promise<ReviewResponseDTO | null> {
     const review = await this._reviewRepo.findByUser(userId, nutritionistId);
 
@@ -67,7 +63,7 @@ export class ReviewService implements IReviewService {
 
   async updateReview(
     reviewId: string,
-    data: SubmitReviewDTO
+    data: SubmitReviewDTO,
   ): Promise<ReviewResponseDTO> {
     if (!data.rating || data.rating < 1 || data.rating > 5) {
       throw new Error("Rating must be between 1 and 5");
@@ -84,12 +80,11 @@ export class ReviewService implements IReviewService {
   }
 
   async deleteReview(reviewId: string): Promise<void> {
-    const deleted = await this._reviewRepo.delete(reviewId);
+    const deleted = await this._reviewRepo.softDelete(reviewId);
 
     if (!deleted) throw new Error("Delete failed");
   }
 
-  // 🎯 DTO mapper (VERY IMPORTANT for clean architecture)
   private mapToDTO(review: any): ReviewResponseDTO {
     return {
       id: review._id.toString(),

@@ -10,29 +10,31 @@ import { NutritionistSubscriptionDTO } from "../../../dtos/nutritionist/nutritio
 export class NutriSubscriptionService implements INutriSubscriptionService {
   constructor(
     @inject(TYPES.IUserPlanRepository)
-    private readonly _userPlanRepo: IUserPlanRepository
+    private readonly _userPlanRepo: IUserPlanRepository,
   ) {}
 
-  async getSubscriptions(nutritionistId: string): Promise<NutritionistSubscriptionDTO[]> {
+  async getSubscriptions(
+    nutritionistId: string,
+  ): Promise<NutritionistSubscriptionDTO[]> {
     const plans = await this._userPlanRepo.findByNutritionistId(nutritionistId);
     return NutritionistSubscriptionMapper.toSubscriptionDTOList(plans);
   }
-  
-  async getSubscribers(nutritionistId: string): Promise<NutritionistSubscriberDTO[]> {
-    const plans = await this._userPlanRepo.findByNutritionistId(nutritionistId);
-    const activePlans = plans.filter(plan => plan.status === "ACTIVE");
-    const subscriberDTOs = NutritionistSubscriptionMapper.toSubscriberDTOList(activePlans);
-    const uniqueSubscribersMap = new Map<string, NutritionistSubscriberDTO>();
-    
-    
 
-    subscriberDTOs.forEach(sub => {
+  async getSubscribers(
+    nutritionistId: string,
+  ): Promise<NutritionistSubscriberDTO[]> {
+    const plans = await this._userPlanRepo.findByNutritionistId(nutritionistId);
+    const activePlans = plans.filter((plan) => plan.status === "ACTIVE");
+    const subscriberDTOs =
+      NutritionistSubscriptionMapper.toSubscriberDTOList(activePlans);
+    const uniqueSubscribersMap = new Map<string, NutritionistSubscriberDTO>();
+
+    subscriberDTOs.forEach((sub) => {
       if (!uniqueSubscribersMap.has(sub.id)) {
         uniqueSubscribersMap.set(sub.id, sub);
       }
     });
 
-    console.log(uniqueSubscribersMap);
     return Array.from(uniqueSubscribersMap.values());
   }
 }

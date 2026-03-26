@@ -62,6 +62,7 @@ router.get("/profile/upload-image",authMiddleware,profileController.getMyProfile
 router.get("/nutritionists",nutritionistController.getAllNutritionists);
 router.get("/nutritionists/:nutritionistId",nutritionistController.getNutritionistById);
 router.get("/nutritionists/:nutritionistId/plans", nutritionistController.getNutritionistPlans);
+router.get("/nutritionists/:nutritionistId/review", nutritionistController.getNutritionistReviews);
 
 router.post("/checkout/session",authMiddleware, authMiddleware,checkoutController.createSession);
 router.post("/stripe/webhook",stripeController.handle);

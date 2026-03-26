@@ -5,25 +5,33 @@ import { IUserNutritionistProfileRepository } from "../../../repositories/interf
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
-import { NutritionistUserSideDTO, NutritionistUserDTO,NutritionistPlanDTO } from "../../../dtos/user/nutritionistUser.dto";
+import {
+  NutritionistUserSideDTO,
+  NutritionistUserDTO,
+  NutritionistPlanDTO,
+} from "../../../dtos/user/nutritionistUser.dto";
 import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanRepository";
 import { IPlan } from "../../../models/nutritionistPlan.model";
 import { NutritionistListFilter } from "../../../dtos/user/nutritionistUser.dto";
 import { toNutritionistPlanDTO } from "../../../mapper/user/nutritionistPlan.mapper";
+import { IReviewRepository } from "../../../repositories/interfaces/user/IReviewRepository";
+import { ReviewResponseDTO } from "../../../dtos/user/review.dto";
 
 @injectable()
 export class NutritionistService implements INutritionistService {
   constructor(
     @inject(TYPES.IUserNutritionistProfileRepository)
-    private  _nutritionistProfileRepo: IUserNutritionistProfileRepository,
+    private _nutritionistProfileRepo: IUserNutritionistProfileRepository,
     @inject(TYPES.INutritionistPlanRepository)
-    private  _nutritionistPlansRepo: INutritionistPlanRepository
-
+    private _nutritionistPlansRepo: INutritionistPlanRepository,
+    @inject(TYPES.IReviewRepository)
+    private _reviewRepo: IReviewRepository,
   ) {}
-  
+
   async getAll(filters: NutritionistListFilter) {
     const { page, limit } = filters;
-    const { data, total } = await this._nutritionistProfileRepo.findAllNutritionist(filters);
+    const { data, total } =
+      await this._nutritionistProfileRepo.findAllNutritionist(filters);
     if (page < 1) {
       throw new Error("Invalid page number");
     }
@@ -36,7 +44,7 @@ export class NutritionistService implements INutritionistService {
       };
     }
     const dtoList = data.map(
-      item => new NutritionistUserSideDTO(item.user, item.profile)
+      (item) => new NutritionistUserSideDTO(item.user, item.profile),
     );
     return {
       data: dtoList,
@@ -45,12 +53,15 @@ export class NutritionistService implements INutritionistService {
       totalPages: Math.ceil(total / limit),
     };
   }
-  
+
   async getById(id: string): Promise<NutritionistUserDTO> {
     logger.info(`Fetching nutritionist by ID: ${id}`);
     if (!id) {
       logger.error("Nutritionist ID is missing");
-      throw new CustomError("Nutritionist ID is required", StatusCode.BAD_REQUEST);
+      throw new CustomError(
+        "Nutritionist ID is required",
+        StatusCode.BAD_REQUEST,
+      );
     }
     const result = await this._nutritionistProfileRepo.findByUserId(id);
     if (!result) {
@@ -62,21 +73,51 @@ export class NutritionistService implements INutritionistService {
     logger.info(`Returning nutritionist: ${dto.fullName} (${dto.email})`);
     return dto;
   }
-  
+
   async getPlansByNutritionist(id: string): Promise<NutritionistPlanDTO[]> {
     logger.info(`Fetching plans for nutritionist ID: ${id}`);
     if (!id) {
       logger.error("Nutritionist ID is missing");
-      throw new CustomError("Nutritionist ID is required", StatusCode.BAD_REQUEST);
+      throw new CustomError(
+        "Nutritionist ID is required",
+        StatusCode.BAD_REQUEST,
+      );
     }
-    const plans: IPlan[] = await this._nutritionistPlansRepo.findByNutritionistId(id);
+    const plans: IPlan[] =
+      await this._nutritionistPlansRepo.findByNutritionistId(id);
     if (!plans || plans.length === 0) {
       logger.warn(`No plans found for nutritionist ID: ${id}`);
       return [];
     }
     const mappedPlans = plans.map(toNutritionistPlanDTO);
-    logger.info(`Returning ${mappedPlans.length} plans for nutritionist ID: ${id}`);
+    logger.info(
+      `Returning ${mappedPlans.length} plans for nutritionist ID: ${id}`,
+    );
     return mappedPlans;
   }
 
+  async getReviewsByNutritionist(
+    nutritionistId: string,
+  ): Promise<{ reviews: ReviewResponseDTO[]; averageRating: number }> {
+    const reviews = await this._reviewRepo.findByNutritionist(nutritionistId);
+
+    const reviewDTOs: ReviewResponseDTO[] = reviews.map((r) => ({
+      id: r._id.toString(),
+      userId: r.user._id.toString(),
+      userName: r.user.fullName,
+      userProfileImage: r.user.profileImage,
+      nutritionistId: r.nutritionist?.toString(),
+      planId: r.userPlan?.toString(),
+      rating: r.rating,
+      review: r.review,
+      createdAt: r.createdAt,
+    }));
+
+    const averageRating =
+      reviewDTOs.length > 0
+        ? reviewDTOs.reduce((sum, r) => sum + r.rating, 0) / reviewDTOs.length
+        : 0;
+
+    return { reviews: reviewDTOs, averageRating };
+  }
 }

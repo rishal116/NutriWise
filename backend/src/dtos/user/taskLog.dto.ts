@@ -32,3 +32,11 @@ export interface TaskLogResponseDTO {
     value: number;
   }[];
 }
+
+export interface UpdateTodayTasksPayload {
+  programId: string;
+  dayNumber: number;
+  type: "meals" | "workouts" | "habits"; // 🔥 strict typing
+  value: string;
+  title?: string;
+}

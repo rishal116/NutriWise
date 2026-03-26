@@ -25,9 +25,34 @@ export class UserProgramRepository
     return doc[0];
   }
 
-  async findActiveByUser(userId: Types.ObjectId): Promise<IUserProgram | null> {
+  async findActiveByUserAndNutritionist(
+    userId: Types.ObjectId,
+    nutritionistId: Types.ObjectId,
+  ): Promise<IUserProgram | null> {
     return this._model
-      .findOne({ userId, status: "ACTIVE", isDeleted: false })
+      .findOne({
+        userId,
+        nutritionistId,
+        status: "ACTIVE",
+        endDate: { $gt: new Date() },
+        isDeleted: false,
+      })
+      .lean()
+      .exec();
+  }
+
+  async findLatestProgram(
+    userId: Types.ObjectId,
+    nutritionistId: Types.ObjectId,
+  ): Promise<IUserProgram | null> {
+    return this._model
+      .findOne({
+        userId,
+        nutritionistId,
+        status: { $in: ["ACTIVE", "UPCOMING"] },
+        isDeleted: false,
+      })
+      .sort({ endDate: -1 })
       .lean()
       .exec();
   }
@@ -85,14 +110,41 @@ export class UserProgramRepository
   async updateProgress(
     programId: Types.ObjectId,
     currentDay: number,
+    session?: ClientSession,
   ): Promise<IUserProgram | null> {
     return this._model
       .findOneAndUpdate(
         { _id: programId, isDeleted: false },
         { currentDay },
-        { new: true },
+        { new: true, session },
       )
       .lean()
       .exec();
+  }
+
+  async activatePrograms(): Promise<any> {
+    return this._model.updateMany(
+      {
+        status: "UPCOMING",
+        startDate: { $lte: new Date() },
+        isDeleted: false,
+      },
+      {
+        $set: { status: "ACTIVE" },
+      },
+    );
+  }
+
+  async completePrograms(): Promise<any> {
+    return this._model.updateMany(
+      {
+        status: "ACTIVE",
+        endDate: { $lt: new Date() },
+        isDeleted: false,
+      },
+      {
+        $set: { status: "COMPLETED" },
+      },
+    );
   }
 }
