@@ -63,4 +63,24 @@ export class ConversationRepository
       .lean<IConversation[]>()
       .exec();
   }
+
+  async findGroups(limit: number, skip: number) {
+    return this._model
+      .find({
+        chatType: "group",
+        isDeleted: false,
+      })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean<IConversation[]>()
+      .exec();
+  }
+
+  async countGroups() {
+    return this._model.countDocuments({
+      chatType: "group",
+      isDeleted: false,
+    });
+  }
 }

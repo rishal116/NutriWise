@@ -180,6 +180,10 @@ import { INutriGroupController } from "../controllers/interfaces/nutritionist/IN
 import { NutriGroupController } from "../controllers/implementations/nutritionist/nutriGroup.controller";
 import { INutriGroupService } from "../services/interfaces/nutritionist/INutriGroupService";
 import { NutriGroupService } from "../services/implements/nutritionist/nutriGroup.service";
+import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupController";
+import { UserGroupController } from "../controllers/implementations/user/userGroup.controller";
+import { IUserGroupService } from "../services/interfaces/user/IUserGroupService";
+import { UserGroupService } from "../services/implements/user/userGroup.service";
 
 
 
@@ -217,6 +221,8 @@ container.bind<IHealthProgressController>(TYPES.IHealthProgressController).to(He
 container.bind<IReviewController>(TYPES.IReviewController).to(ReviewController)
 container.bind<IReviewService>(TYPES.IReviewService).to(ReviewService)
 container.bind<IReviewRepository>(TYPES.IReviewRepository).to(ReviewRepository)
+container.bind<IUserGroupController>(TYPES.IUserGroupController).to(UserGroupController)
+container.bind<IUserGroupService>(TYPES.IUserGroupService).to(UserGroupService)
 
 
 

@@ -42,11 +42,10 @@ const conversationSchema = new Schema<IConversation>(
 
     title: {
       type: String,
-      trim: true,
-      maxlength: 100,
       required: function () {
         return this.chatType === "group";
       },
+      trim: true,
     },
 
     groupAvatar: {
@@ -54,12 +53,13 @@ const conversationSchema = new Schema<IConversation>(
       default: null,
     },
 
-    admins: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
+    admins: {
+      type: [Schema.Types.ObjectId],
+      ref: "User",
+      required: function () {
+        return this.chatType === "group";
       },
-    ],
+    },
 
     description: {
       type: String,
@@ -159,7 +159,6 @@ conversationSchema.pre("validate", function (next) {
     this.description = undefined;
     this.visibility = undefined;
     this.joinRequests = [];
-    this.admins = [];
   }
 
   if (this.chatType === "group") {

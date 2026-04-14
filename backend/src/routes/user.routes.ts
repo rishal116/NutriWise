@@ -20,6 +20,8 @@ import { IUserProgramController } from "../controllers/interfaces/user/IUserProg
 import { ITaskController } from "../controllers/interfaces/user/ITaskController";
 import { IHealthProgressController } from "../controllers/interfaces/user/IHealthProgressController";
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
+import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupController";
+
 
 const router = express.Router();
 
@@ -66,6 +68,10 @@ const healthProgressController = container.get<IHealthProgressController>(
 const reviewController = container.get<IReviewController>(
   TYPES.IReviewController,
 );
+
+const groupController = container.get<IUserGroupController>(
+  TYPES.IUserGroupController
+)
 
 router.post("/signup", userAuthController.signup);
 router.post("/verify-otp", userAuthController.verifyOtp);
@@ -195,4 +201,5 @@ router.get(
   healthProgressController.getLatestProgress,
 );
 
+router.get("/groups",authMiddleware,groupController.getGroups)
 export default router;
