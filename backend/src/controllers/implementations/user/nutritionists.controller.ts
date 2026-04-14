@@ -61,7 +61,8 @@ export class NutritionistController implements INutritionistController {
   getNutritionistReviews = asyncHandler(async (req: Request, res: Response) => {
     const { nutritionistId } = req.params;
 
-    const { reviews, averageRating } = await this._nutritionistService.getReviewsByNutritionist(nutritionistId);
+    const { reviews, averageRating } =
+      await this._nutritionistService.getReviewsByNutritionist(nutritionistId);
 
     return res.status(StatusCode.OK).json({
       success: true,

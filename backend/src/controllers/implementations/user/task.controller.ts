@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import { ITaskService } from "../../../services/interfaces/user/ITaskService";

@@ -90,8 +90,13 @@ export default function CheckoutPage() {
     try {
       setLoading(true);
       setError(null);
-      const data = await checkoutService.createSession(plan.id, id as string);
-      window.location.href = data.url;
+      const data = await checkoutService.createSession({
+        planId: plan.id,
+        nutritionistId: id as string,
+      });
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } catch {
       setError("Payment initialisation failed. Please try again.");
       setLoading(false);
@@ -102,7 +107,6 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 pb-20 font-sans">
-
       {/* ── STICKY HEADER ── */}
       <div className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -132,16 +136,16 @@ export default function CheckoutPage() {
       {/* ── MAIN GRID ── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-start">
-
           {/* ── LEFT — ORDER SUMMARY ── */}
           <div className="lg:col-span-3 space-y-6">
-
             {/* Order summary card */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {/* Card header */}
               <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-gray-100 flex items-center gap-3">
                 <div className="w-1 h-5 bg-emerald-500 rounded-full flex-shrink-0" />
-                <h2 className="text-base font-extrabold text-gray-900">Order Summary</h2>
+                <h2 className="text-base font-extrabold text-gray-900">
+                  Order Summary
+                </h2>
               </div>
 
               <div className="p-6 space-y-6">
@@ -153,7 +157,10 @@ export default function CheckoutPage() {
                         {plan.title}
                       </h3>
                       <div className="flex items-center gap-1.5 text-gray-500 text-sm font-medium">
-                        <Calendar size={14} className="text-emerald-500 flex-shrink-0" />
+                        <Calendar
+                          size={14}
+                          className="text-emerald-500 flex-shrink-0"
+                        />
                         <span>{plan.durationInDays}-Day Programme Access</span>
                       </div>
                     </div>
@@ -169,12 +176,17 @@ export default function CheckoutPage() {
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {plan.features.map((f, i) => (
-                        <div key={i} className="flex items-start gap-2 text-gray-600">
+                        <div
+                          key={i}
+                          className="flex items-start gap-2 text-gray-600"
+                        >
                           <CheckCircle
                             size={14}
                             className="text-emerald-500 flex-shrink-0 mt-0.5"
                           />
-                          <span className="text-sm font-medium leading-snug">{f}</span>
+                          <span className="text-sm font-medium leading-snug">
+                            {f}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -186,7 +198,11 @@ export default function CheckoutPage() {
                   <div className="flex items-center justify-between text-sm text-gray-500 font-medium">
                     <span>Base Programme Price</span>
                     <span className="flex items-center text-gray-800 font-bold">
-                      <IndianRupee size={14} strokeWidth={2.5} className="flex-shrink-0" />
+                      <IndianRupee
+                        size={14}
+                        strokeWidth={2.5}
+                        className="flex-shrink-0"
+                      />
                       {plan.price.toLocaleString()}
                     </span>
                   </div>
@@ -234,8 +250,9 @@ export default function CheckoutPage() {
                 <div>
                   <h3>Client Satisfaction Promise</h3>
                   <p>
-                    We are committed to helping you achieve real results with expert guidance 
-                    and continuous support throughout your journey.
+                    We are committed to helping you achieve real results with
+                    expert guidance and continuous support throughout your
+                    journey.
                   </p>
                 </div>
               </div>
@@ -245,26 +262,31 @@ export default function CheckoutPage() {
           {/* ── RIGHT — PAYMENT ACTION ── */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 sm:p-7 sticky top-24 space-y-6">
-
               {/* Panel heading */}
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-emerald-50 rounded-lg flex-shrink-0">
                   <CreditCard className="text-emerald-600" size={18} />
                 </div>
-                <h2 className="text-lg font-extrabold text-gray-900">Final Step</h2>
+                <h2 className="text-lg font-extrabold text-gray-900">
+                  Final Step
+                </h2>
               </div>
 
               {/* Stripe trust box */}
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 space-y-1.5">
                 <div className="flex items-center gap-2">
-                  <Lock className="text-emerald-600 flex-shrink-0" size={13} strokeWidth={3} />
+                  <Lock
+                    className="text-emerald-600 flex-shrink-0"
+                    size={13}
+                    strokeWidth={3}
+                  />
                   <span className="font-black text-emerald-900 text-[10px] uppercase tracking-widest">
                     Stripe Secure
                   </span>
                 </div>
                 <p className="text-xs text-emerald-800/70 font-medium leading-relaxed">
-                  You'll be redirected to Stripe to complete your purchase. We never store
-                  your card details.
+                  {`You'll be redirected to Stripe to complete your purchase. We
+                  never store your card details.`}
                 </p>
               </div>
 
@@ -278,11 +300,17 @@ export default function CheckoutPage() {
                 />
                 <span className="text-xs text-gray-500 font-medium leading-relaxed group-hover:text-gray-700">
                   I agree to the{" "}
-                  <a href="#" className="text-emerald-600 underline underline-offset-2 font-semibold">
+                  <a
+                    href="#"
+                    className="text-emerald-600 underline underline-offset-2 font-semibold"
+                  >
                     Terms of Service
                   </a>{" "}
                   &amp;{" "}
-                  <a href="#" className="text-emerald-600 underline underline-offset-2 font-semibold">
+                  <a
+                    href="#"
+                    className="text-emerald-600 underline underline-offset-2 font-semibold"
+                  >
                     Refund Policy
                   </a>
                   .
@@ -292,8 +320,13 @@ export default function CheckoutPage() {
               {/* Inline error */}
               {error && (
                 <div className="bg-red-50 border border-red-100 rounded-xl p-3.5 flex items-start gap-2.5">
-                  <AlertCircle className="text-red-500 flex-shrink-0 mt-0.5" size={14} />
-                  <p className="text-xs text-red-700 font-semibold leading-snug">{error}</p>
+                  <AlertCircle
+                    className="text-red-500 flex-shrink-0 mt-0.5"
+                    size={14}
+                  />
+                  <p className="text-xs text-red-700 font-semibold leading-snug">
+                    {error}
+                  </p>
                 </div>
               )}
 
@@ -313,7 +346,11 @@ export default function CheckoutPage() {
                   <>
                     <span>Pay</span>
                     <span className="flex items-center gap-0.5">
-                      <IndianRupee size={16} strokeWidth={3} className="flex-shrink-0" />
+                      <IndianRupee
+                        size={16}
+                        strokeWidth={3}
+                        className="flex-shrink-0"
+                      />
                       {plan.price.toLocaleString()}
                     </span>
                   </>
@@ -333,7 +370,6 @@ export default function CheckoutPage() {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>

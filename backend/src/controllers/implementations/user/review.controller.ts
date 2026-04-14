@@ -19,9 +19,7 @@ export class ReviewController implements IReviewController {
     const userId = req.user!.userId;
 
     const { nutritionistId, rating, review, planId } = req.body;
-    console.log(req.body);
 
-    // 🚀 Call service
     const data = await this._reviewService.submitReview({
       userId,
       nutritionistId,

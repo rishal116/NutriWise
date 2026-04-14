@@ -1,21 +1,34 @@
 import { Request, Response, NextFunction } from "express";
 import { CustomError } from "../utils/customError";
 import { StatusCode } from "../enums/statusCode.enum";
+import logger from "../utils/logger";
 
 export const errorMiddleware = (
-  err: any,
+  err: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction,
 ) => {
-  console.error("Global Error Middleware:", err);
+  const isCustomError = err instanceof CustomError;
 
-  const status = err instanceof CustomError ? err.statusCode : StatusCode.INTERNAL_SERVER_ERROR;
-  const message = err instanceof CustomError ? err.message : "Something went wrong";
-  
-  res.status(status).json({
+  const status = isCustomError
+    ? err.statusCode
+    : StatusCode.INTERNAL_SERVER_ERROR;
+
+  const message = isCustomError ? err.message : "Something went wrong";
+
+  logger.error("Global Error Middleware", {
+    message,
+    status,
+    error: err,
+  });
+
+  if (err instanceof Error) {
+    console.error(err.stack);
+  }
+
+  return res.status(status).json({
     success: false,
     message,
   });
 };
-

@@ -176,6 +176,10 @@ import { IReviewService } from "../services/interfaces/user/IReviewService";
 import { ReviewService } from "../services/implements/user/review.service";
 import { IReviewRepository } from "../repositories/interfaces/user/IReviewRepository";
 import { ReviewRepository } from "../repositories/implements/user/review.repository";
+import { INutriGroupController } from "../controllers/interfaces/nutritionist/INutriGroupController";
+import { NutriGroupController } from "../controllers/implementations/nutritionist/nutriGroup.controller";
+import { INutriGroupService } from "../services/interfaces/nutritionist/INutriGroupService";
+import { NutriGroupService } from "../services/implements/nutritionist/nutriGroup.service";
 
 
 
@@ -253,6 +257,8 @@ container.bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository).to(Nutr
 container.bind<INutriProgramController>(TYPES.INutriProgramController).to(NutriProgramController)
 container.bind<INutriProgramService>(TYPES.INutriProgramService).to(NutriProgramService)
 container.bind<INutriSubscriptionService>(TYPES.INutriSubscriptionService).to(NutriSubscriptionService)
+container.bind<INutriGroupController>(TYPES.INutriGroupController).to(NutriGroupController)
+container.bind<INutriGroupService>(TYPES.INutriGroupService).to(NutriGroupService)
 
 
 
@@ -267,6 +273,10 @@ container.bind<IStripeWebhookService>(TYPES.IStripeWebhookService).to(StripeWebh
 container.bind<IStripeWebhookController>(TYPES.IStripeWebhookController).to(StripeWebhookController);
 container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
 container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepository);
+
+// community
+
+
 
 
 // chat

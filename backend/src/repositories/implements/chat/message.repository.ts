@@ -12,28 +12,26 @@ export class MessageRepository
   }
 
   async findMessagesByConversation(
-    conversationId: string
+    conversationId: string,
   ): Promise<IMessage[]> {
-
     return this._model
       .find({
-        conversationId: conversationId,
-        isDeleted: false
+        conversationId: new Types.ObjectId(conversationId),
+        status: { $ne: "deleted" },
       })
       .sort({ createdAt: 1 })
-      .lean<IMessage[]>();
-
+      .lean<IMessage[]>()
+      .exec();
   }
 
   async deleteById(id: string | Types.ObjectId): Promise<void> {
-
     await this._model.findByIdAndUpdate(
       id,
       {
-        isDeleted: true
+        status: "deleted",
+        deletedAt: new Date(),
       },
-      { new: true }
+      { new: false },
     );
-
   }
 }

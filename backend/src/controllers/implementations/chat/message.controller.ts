@@ -10,34 +10,34 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 export class MessageController implements IMessageController {
   constructor(
     @inject(TYPES.IMessageService)
-    private _messageService: IMessageService
+    private _messageService: IMessageService,
   ) {}
-  
+
   sendMessage = asyncHandler(async (req: Request, res: Response) => {
-    const { conversationId, text, messageType } = req.body;
+    const { conversationId, text, messageType, context } = req.body;
     const message = await this._messageService.sendMessage({
       conversationId,
       senderId: req.user?.userId as string,
+      context,
       text,
       messageType,
     });
-    res.status(StatusCode.CREATED).json({success:true ,data:message})
+    res.status(StatusCode.CREATED).json({ success: true, data: message });
   });
-  
+
   getMessages = asyncHandler(async (req: Request, res: Response) => {
     const messages = await this._messageService.getMessages(
-      req.params.conversationId
+      req.params.conversationId,
     );
-    res.status(StatusCode.OK).json({success:true, data:messages});
+    res.status(StatusCode.OK).json({ success: true, data: messages });
   });
-  
+
   sendFile = asyncHandler(async (req: Request, res: Response) => {
-    console.log("Helo");
-    
     const message = await this._messageService.sendFile({
       conversationId: req.body.conversationId,
       senderId: req.user?.userId as string,
-      file: req.file
+      context: req.body.context,
+      file: req.file,
     });
     res.status(StatusCode.CREATED).json(message);
   });
@@ -46,7 +46,7 @@ export class MessageController implements IMessageController {
     const { conversationId } = req.params;
     await this._messageService.markAsRead(
       conversationId,
-      req.user?.userId as string
+      req.user?.userId as string,
     );
 
     res.status(StatusCode.OK).json({
@@ -55,12 +55,11 @@ export class MessageController implements IMessageController {
   });
 
   deleteMessage = asyncHandler(async (req: Request, res: Response) => {
-
     const { messageId } = req.params;
 
     await this._messageService.deleteMessage(
       messageId,
-      req.user?.userId as string
+      req.user?.userId as string,
     );
 
     res.status(StatusCode.OK).json({
@@ -68,22 +67,16 @@ export class MessageController implements IMessageController {
     });
   });
 
-  /* =========================
-     EDIT MESSAGE
-  ========================= */
-
   editMessage = asyncHandler(async (req: Request, res: Response) => {
-
     const { messageId } = req.params;
     const { text } = req.body;
 
     const updatedMessage = await this._messageService.editMessage(
       messageId,
       text,
-      req.user?.userId as string
+      req.user?.userId as string,
     );
 
     res.status(StatusCode.OK).json(updatedMessage);
   });
-
 }

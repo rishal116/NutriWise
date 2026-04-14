@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Mic,
   Smile,
   X,
   FileIcon,
@@ -55,7 +54,10 @@ export default function MessageInput({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+      if (
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target as Node)
+      ) {
         setShowEmojis(false);
       }
     };
@@ -73,7 +75,8 @@ export default function MessageInput({
 
   const handleEmojiClick = (emojiData: any) => {
     const cursor = textareaRef.current?.selectionStart ?? text.length;
-    const newText = text.slice(0, cursor) + emojiData.emoji + text.slice(cursor);
+    const newText =
+      text.slice(0, cursor) + emojiData.emoji + text.slice(cursor);
     setText(newText);
     setTimeout(() => {
       textareaRef.current?.focus();
@@ -122,10 +125,21 @@ export default function MessageInput({
       }
 
       let newMessage;
+
+      const context: "user" | "nutritionist" = "user"
+
       if (selectedFile) {
-        newMessage = await userChatService.sendFile(conversationId, selectedFile);
+        newMessage = await userChatService.sendFile(
+          conversationId,
+          selectedFile,
+          context,
+        );
       } else {
-        newMessage = await userChatService.sendMessage(conversationId, text.trim());
+        newMessage = await userChatService.sendMessage(
+          conversationId,
+          text.trim(),
+          context,
+        );
       }
       if (!newMessage) return;
       onMessageSent(newMessage);
@@ -140,15 +154,19 @@ export default function MessageInput({
 
   return (
     <div className="flex flex-col gap-2 p-4 bg-white border-t border-emerald-50">
-      
       {/* EDITING INDICATOR */}
       {editingMessage && (
         <div className="flex items-center justify-between px-4 py-2 bg-emerald-50 rounded-xl border border-emerald-100 animate-in slide-in-from-bottom-2">
           <div className="flex items-center gap-2">
             <div className="w-1 h-4 bg-emerald-500 rounded-full" />
-            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Editing Message</span>
+            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+              Editing Message
+            </span>
           </div>
-          <button onClick={onCancelEdit} className="p-1 hover:bg-emerald-200/50 rounded-lg text-emerald-600">
+          <button
+            onClick={onCancelEdit}
+            className="p-1 hover:bg-emerald-200/50 rounded-lg text-emerald-600"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -184,7 +202,12 @@ export default function MessageInput({
           >
             <Plus className="w-6 h-6" />
           </button>
-          <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            className="hidden"
+          />
         </div>
 
         {/* INPUT AREA */}
@@ -197,16 +220,26 @@ export default function MessageInput({
                     <FileIcon className="w-5 h-5" />
                   </div>
                 ) : (
-                  <img src={filePreview} alt="preview" className="w-12 h-12 rounded-lg object-cover border border-emerald-50" />
+                  <img
+                    src={filePreview}
+                    alt="preview"
+                    className="w-12 h-12 rounded-lg object-cover border border-emerald-50"
+                  />
                 )}
                 <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">{selectedFile?.name}</span>
+                  <span className="text-xs font-bold text-slate-700 truncate max-w-[150px]">
+                    {selectedFile?.name}
+                  </span>
                   <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">
-                    {selectedFile?.type.split("/")[1] || "file"} • {Math.round(selectedFile!.size / 1024)} KB
+                    {selectedFile?.type.split("/")[1] || "file"} •{" "}
+                    {Math.round(selectedFile!.size / 1024)} KB
                   </span>
                 </div>
               </div>
-              <button onClick={resetInput} className="p-2 hover:bg-red-50 text-red-400 hover:text-red-500 rounded-full transition-colors">
+              <button
+                onClick={resetInput}
+                className="p-2 hover:bg-red-50 text-red-400 hover:text-red-500 rounded-full transition-colors"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -233,9 +266,10 @@ export default function MessageInput({
           onClick={handleSend}
           disabled={sending || (!text.trim() && !selectedFile)}
           className={`mb-1 p-3.5 rounded-2xl transition-all active:scale-95 shadow-lg
-            ${text.trim() || selectedFile 
-              ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-emerald-200" 
-              : "bg-slate-100 text-slate-300 shadow-none cursor-not-allowed"
+            ${
+              text.trim() || selectedFile
+                ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-emerald-200"
+                : "bg-slate-100 text-slate-300 shadow-none cursor-not-allowed"
             }`}
         >
           {sending ? (

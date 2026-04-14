@@ -2,7 +2,6 @@ import "./globals.css";
 import { ReactNode } from "react";
 import { ReduxProvider } from "@/redux/provider";
 import { Toaster } from "react-hot-toast";
-import RootWrapper from "./root-wrapper";
 import SocketProvider from "./socket-provider";
 
 export const metadata = {
@@ -19,7 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <ReduxProvider>
           <SocketProvider>
-            <RootWrapper>{children}</RootWrapper>
+            {children}
             </SocketProvider>
             <Toaster position="top-right" reverseOrder={false} />
         </ReduxProvider>

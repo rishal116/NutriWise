@@ -7,6 +7,7 @@ import { AUTH_MESSAGES } from "../constants/index";
 export const authorize = (...allowedRoles: Role[]) =>
   (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
+      
       return next(
         new CustomError(AUTH_MESSAGES.UNAUTHORIZED, StatusCode.UNAUTHORIZED)
       );

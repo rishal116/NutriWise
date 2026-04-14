@@ -10,36 +10,36 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 export class HealthProgressController implements IHealthProgressController {
   constructor(
     @inject(TYPES.IHealthProgressService)
-    private _healthProgressService: IHealthProgressService
+    private _healthProgressService: IHealthProgressService,
   ) {}
-  
-  getHealthProgress = asyncHandler(async (req: Request, res: Response ) => {
+
+  getHealthProgress = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
     const days = Number(req.query.days) || 30;
     const progress = await this._healthProgressService.getHealthProgress(
       userId,
-      days
+      days,
     );
     res.status(StatusCode.OK).json({
       success: true,
       data: progress,
     });
   });
-  
-  getProgressByDate = asyncHandler(async (req: Request, res: Response ) => {
+
+  getProgressByDate = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
     const { date } = req.query;
     const result = await this._healthProgressService.getProgressByDate(
       userId,
-      new Date(date as string)
+      new Date(date as string),
     );
     res.status(StatusCode.OK).json({
       success: true,
       data: result,
     });
   });
-  
-  getLatestProgress = asyncHandler(async (req: Request, res: Response ) => {
+
+  getLatestProgress = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
     const result = await this._healthProgressService.getLatestProgress(userId);
     res.status(StatusCode.OK).json({
@@ -47,5 +47,4 @@ export class HealthProgressController implements IHealthProgressController {
       data: result,
     });
   });
-
 }

@@ -9,30 +9,33 @@ import {
   Trophy,
   FileText,
   CreditCard,
-  Settings,
   MessageSquare,
   Activity,
-  Bell,
-  ChevronRight,
   User,
   LogOut,
-  ChevronUp,
   Menu,
+  ChevronLeft,
+  LucideIcon,
 } from "lucide-react";
 import { adminAuthService } from "@/services/admin/adminAuth.service";
 
 interface NavItem {
   name: string;
-  icon: React.ComponentType<any>;
+  icon: LucideIcon;
   path: string;
-  badge?: string;
 }
+
 interface NavSection {
   title: string;
   items: NavItem[];
 }
 
-const navSections: NavSection[] = [
+interface SidebarProps {
+  collapsed: boolean;
+  setCollapsed: (val: boolean) => void;
+}
+
+const NAV_SECTIONS: NavSection[] = [
   {
     title: "Overview",
     items: [{ name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" }],
@@ -55,17 +58,17 @@ const navSections: NavSection[] = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
   const [showDropup, setShowDropup] = useState(false);
   const dropupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropupRef.current && !dropupRef.current.contains(e.target as Node))
+      if (dropupRef.current && !dropupRef.current.contains(e.target as Node)) {
         setShowDropup(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -74,65 +77,60 @@ export default function Sidebar() {
   const handleLogout = async () => {
     try {
       await adminAuthService.logout();
-    } catch (e) {
-      console.error(e);
-    } finally {
       localStorage.removeItem("adminToken");
       router.push("/admin/login");
+    } catch (e) {
+      console.error("Logout failed:", e);
     }
   };
 
   return (
-  <aside
-  className={`fixed top-0 left-0 h-screen bg-white shadow-xl border-r border-slate-200 flex flex-col z-50 transition-all duration-300
-    ${collapsed ? "w-20" : "w-72"}
-    hidden lg:flex
-    `}>
-      {/* Logo + Toggle */}
-      <div className="p-6 flex items-center justify-between border-b border-slate-200 bg-white">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-            <Activity className="w-6 h-6 text-white" />
+    <aside
+      className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 flex flex-col z-50 transition-all duration-300 ease-in-out
+      ${collapsed ? "w-20" : "w-64"} hidden lg:flex`}
+    >
+      {/* Header */}
+      <div className="h-16 flex items-center px-4 border-b border-slate-50 shrink-0">
+        <div className={`flex items-center gap-3 ${collapsed ? "mx-auto" : "ml-1"}`}>
+          <div className="w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-100 shrink-0">
+            <Activity className="w-5 h-5 text-white" />
           </div>
           {!collapsed && (
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">NutriWise</h2>
-              <p className="text-xs text-slate-500 font-medium">Admin Portal</p>
-            </div>
+            <span className="text-base font-bold text-slate-800 tracking-tight whitespace-nowrap">
+              NutriWise
+            </span>
           )}
         </div>
-
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-2 rounded-lg hover:bg-slate-100 transition"
-        >
-          <Menu className="w-5 h-5 text-slate-700" />
-        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-6 overflow-y-auto">
-        {navSections.map((section, idx) => (
-          <div key={idx}>
+      <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto scrollbar-hide">
+        {NAV_SECTIONS.map((section) => (
+          <div key={section.title} className="space-y-1">
             {!collapsed && (
-              <h3 className="px-4 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <h3 className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 {section.title}
               </h3>
             )}
 
             {section.items.map((item) => {
               const isActive = pathname === item.path;
+              const Icon = item.icon;
               return (
                 <button
                   key={item.name}
                   onClick={() => router.push(item.path)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group relative
-                    ${isActive ? "bg-emerald-500 text-white shadow-md" : "text-slate-600 hover:bg-slate-100"}
+                  title={collapsed ? item.name : ""}
+                  className={`w-full flex items-center rounded-xl transition-all duration-200 group
+                    ${collapsed ? "justify-center h-11" : "px-3 py-2.5 gap-3"}
+                    ${isActive 
+                      ? "bg-emerald-50 text-emerald-700" 
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}
                   `}
                 >
-                  <item.icon className="w-5 h-5 shrink-0" strokeWidth={2.3} />
-                  {!collapsed && <span className="flex-1 text-left">{item.name}</span>}
-                  {isActive && <ChevronRight className="w-4 h-4" />}
+                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-emerald-600" : "group-hover:text-emerald-500"}`} />
+                  {!collapsed && <span className="text-sm font-semibold whitespace-nowrap">{item.name}</span>}
+                  {isActive && !collapsed && <div className="ml-auto w-1 h-4 rounded-full bg-emerald-500" />}
                 </button>
               );
             })}
@@ -140,64 +138,57 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Notifications */}
-      <button
-        onClick={() => router.push("/admin/notifications")}
-        className="m-3 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-700 transition shadow-sm group"
-      >
-        <Bell className="w-5 h-5" />
-        {!collapsed && (
-          <>
-            <span className="flex-1 text-left text-sm font-medium">Notifications</span>
-          </>
-        )}
-      </button>
-
-      {/* Profile Dropup */}
-      <div ref={dropupRef} className="p-4 border-t border-slate-200 bg-white relative">
+      {/* Footer Controls */}
+      <div className="p-3 border-t border-slate-100 space-y-2 shrink-0">
         <button
-          onClick={() => setShowDropup(!showDropup)}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition"
+          onClick={() => setCollapsed(!collapsed)}
+          className={`w-full flex items-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all
+            ${collapsed ? "justify-center h-10" : "px-3 py-2 gap-3"}`}
         >
-          <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-            AD
-          </div>
-          {!collapsed && (
-            <div className="flex-1 text-left">
-              <p className="text-sm font-semibold">Admin</p>
-              <p className="text-xs text-slate-500">admin@gmail.com</p>
-            </div>
-          )}
-          {!collapsed && (
-            <ChevronUp
-              className={`w-4 h-4 transition ${showDropup ? "rotate-180" : ""}`}
-            />
+          {collapsed ? <Menu size={20} /> : (
+            <>
+              <ChevronLeft size={18} />
+              <span className="text-xs font-bold uppercase tracking-wider">Collapse</span>
+            </>
           )}
         </button>
 
-        {showDropup && !collapsed && (
-          <div className="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <button
-              onClick={() => router.push("/admin/profile")}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-sm"
-            >
-              <User className="w-4 h-4" /> View Profile
-            </button>
-            <button
-              onClick={() => router.push("/admin/settings")}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 text-sm"
-            >
-              <Settings className="w-4 h-4" /> Settings
-            </button>
-            <div className="border-t" />
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-slate-50 text-sm"
-            >
-              <LogOut className="w-4 h-4" /> Logout
-            </button>
-          </div>
-        )}
+        <div ref={dropupRef} className="relative">
+          <button
+            onClick={() => setShowDropup(!showDropup)}
+            className={`w-full flex items-center rounded-xl transition-all border border-transparent
+              ${collapsed ? "justify-center h-12 bg-slate-50" : "p-2 gap-3 bg-slate-50 hover:border-slate-200"}`}
+          >
+            <div className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0">
+              AD
+            </div>
+            {!collapsed && (
+              <div className="flex-1 text-left overflow-hidden">
+                <p className="text-xs font-bold text-slate-800 truncate leading-none">Admin</p>
+                <p className="text-[10px] text-slate-500 truncate mt-1">admin@nutriwise.com</p>
+              </div>
+            )}
+          </button>
+
+          {showDropup && (
+            <div className={`absolute bottom-full mb-2 bg-white rounded-xl shadow-2xl border border-slate-200 p-1 w-48 
+              ${collapsed ? "left-full ml-2" : "left-0 w-full"}`}>
+              <button 
+                onClick={() => router.push("/admin/profile")} 
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 rounded-lg text-xs font-medium text-slate-700"
+              >
+                <User size={14} /> Profile
+              </button>
+              <div className="h-px bg-slate-100 my-1" />
+              <button 
+                onClick={handleLogout} 
+                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 rounded-lg text-xs font-medium text-red-600"
+              >
+                <LogOut size={14} /> Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </aside>
   );

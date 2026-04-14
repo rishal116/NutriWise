@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, MessageCircle } from "lucide-react";
-import ConversationList from "@/components/messages/ConversationList";
-import ChatWindow from "@/components/messages/ChatWindow";
+import ConversationList from "@/components/nutritionist/message/ConversationList";
+import ChatWindow from "@/components/nutritionist/message/ChatWindow";
+
 
 export default function MessagesPage() {
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);

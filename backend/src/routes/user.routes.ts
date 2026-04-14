@@ -21,82 +21,178 @@ import { ITaskController } from "../controllers/interfaces/user/ITaskController"
 import { IHealthProgressController } from "../controllers/interfaces/user/IHealthProgressController";
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 
-
-
-
 const router = express.Router();
 
-const profileController = container.get<IUserProfileController>(TYPES.IUserProfileController);
-const userAuthController = container.get<IUserAuthController>(TYPES.IUserAuthController);
-const nutritionistController = container.get<INutritionistController>(TYPES.INutritionistController);
-const checkoutController = container.get<ICheckoutController>(TYPES.ICheckoutController)
-const stripeController = container.get<IStripeWebhookController>(TYPES.IStripeWebhookController)
-const healthDetailsController = container.get<IHealthDetailsController>(TYPES.IHealthDetailsController)
-const userPlanController = container.get<IUserPlanController>(TYPES.IUserPlanController)
-const userAccountController = container.get<IUserAccountController>(TYPES.IUserAccountController)
-const conversationController = container.get<IConversationController>(TYPES.IConversationController)
-const messageController = container.get<IMessageController>(TYPES.IMessageController)
-const userMeetingsController = container.get<IUserMeetingsController>(TYPES.IUserMeetingsController)
-const userProgramController = container.get<IUserProgramController>(TYPES.IUserProgramController)
-const taskController = container.get<ITaskController>(TYPES.ITaskController)
-const healthProgressController = container.get<IHealthProgressController>(TYPES.IHealthProgressController)
-const reviewController = container.get<IReviewController>(TYPES.IReviewController)
+const profileController = container.get<IUserProfileController>(
+  TYPES.IUserProfileController,
+);
+const userAuthController = container.get<IUserAuthController>(
+  TYPES.IUserAuthController,
+);
+const nutritionistController = container.get<INutritionistController>(
+  TYPES.INutritionistController,
+);
+const checkoutController = container.get<ICheckoutController>(
+  TYPES.ICheckoutController,
+);
+const stripeController = container.get<IStripeWebhookController>(
+  TYPES.IStripeWebhookController,
+);
+const healthDetailsController = container.get<IHealthDetailsController>(
+  TYPES.IHealthDetailsController,
+);
+const userPlanController = container.get<IUserPlanController>(
+  TYPES.IUserPlanController,
+);
+const userAccountController = container.get<IUserAccountController>(
+  TYPES.IUserAccountController,
+);
+const conversationController = container.get<IConversationController>(
+  TYPES.IConversationController,
+);
+const messageController = container.get<IMessageController>(
+  TYPES.IMessageController,
+);
+const userMeetingsController = container.get<IUserMeetingsController>(
+  TYPES.IUserMeetingsController,
+);
+const userProgramController = container.get<IUserProgramController>(
+  TYPES.IUserProgramController,
+);
+const taskController = container.get<ITaskController>(TYPES.ITaskController);
+const healthProgressController = container.get<IHealthProgressController>(
+  TYPES.IHealthProgressController,
+);
+const reviewController = container.get<IReviewController>(
+  TYPES.IReviewController,
+);
 
 router.post("/signup", userAuthController.signup);
-router.post("/verify-otp",userAuthController.verifyOtp)
-router.post("/resend-otp",userAuthController.resendOtp)
-router.post("/login",userAuthController.login)
+router.post("/verify-otp", userAuthController.verifyOtp);
+router.post("/resend-otp", userAuthController.resendOtp);
+router.post("/login", userAuthController.login);
 router.post("/google", userAuthController.googleLogin);
-router.post("/logout",userAuthController.logout)
+router.post("/logout", userAuthController.logout);
 router.post("/forgot-password", userAuthController.forgotPassword);
 router.post("/reset-password", userAuthController.resetPassword);
 router.post("/refresh-token", refreshToken);
-router.get("/me",authMiddleware,blockLoggedInUser,userAuthController.getMe);
+router.get("/me", authMiddleware, blockLoggedInUser, userAuthController.getMe);
 router.post("/google-signin", userAuthController.googleSignin);
 
-router.get("/profile", authMiddleware,profileController.getMyProfile);
+router.get("/profile", authMiddleware, profileController.getMyProfile);
 router.put("/profile", authMiddleware, profileController.updateMyProfile);
-router.post("/profile/upload-image",authMiddleware,upload.single("image"),profileController.updateMyProfileImage)
-router.get("/profile/upload-image",authMiddleware,profileController.getMyProfileImage)
+router.post(
+  "/profile/upload-image",
+  authMiddleware,
+  upload.single("image"),
+  profileController.updateMyProfileImage,
+);
+router.get(
+  "/profile/upload-image",
+  authMiddleware,
+  profileController.getMyProfileImage,
+);
 
-router.get("/nutritionists",nutritionistController.getAllNutritionists);
-router.get("/nutritionists/:nutritionistId",nutritionistController.getNutritionistById);
-router.get("/nutritionists/:nutritionistId/plans", nutritionistController.getNutritionistPlans);
-router.get("/nutritionists/:nutritionistId/review", nutritionistController.getNutritionistReviews);
+router.get("/nutritionists", nutritionistController.getAllNutritionists);
+router.get(
+  "/nutritionists/:nutritionistId",
+  nutritionistController.getNutritionistById,
+);
+router.get(
+  "/nutritionists/:nutritionistId/plans",
+  nutritionistController.getNutritionistPlans,
+);
+router.get(
+  "/nutritionists/:nutritionistId/review",
+  nutritionistController.getNutritionistReviews,
+);
 
-router.post("/checkout/session",authMiddleware, authMiddleware,checkoutController.createSession);
-router.post("/stripe/webhook",stripeController.handle);
-router.get("/health-details", authMiddleware, healthDetailsController.getMyDetails);
-router.post("/health-details", authMiddleware,authMiddleware,healthDetailsController.saveDetails);
+router.post(
+  "/checkout/session",
+  authMiddleware,
+  authMiddleware,
+  checkoutController.createSession,
+);
+router.post("/stripe/webhook", stripeController.handle);
+router.get(
+  "/health-details",
+  authMiddleware,
+  healthDetailsController.getMyDetails,
+);
+router.post(
+  "/health-details",
+  authMiddleware,
+  authMiddleware,
+  healthDetailsController.saveDetails,
+);
 
+router.post(
+  "/chat/conversation",
+  authMiddleware,
+  conversationController.createDirectConversation,
+);
+router.get(
+  "/chat/conversations",
+  authMiddleware,
+  conversationController.getUserChats,
+);
+router.get(
+  "/chat/messages/:conversationId",
+  authMiddleware,
+  messageController.getMessages,
+);
+router.post("/chat/message", authMiddleware, messageController.sendMessage);
 
-router.post("/chat/conversation",authMiddleware,conversationController.createDirectConversation)
-router.get("/chat/conversations",authMiddleware,conversationController.getUserChats)
-router.get("/chat/messages/:conversationId",authMiddleware,messageController.getMessages);
-router.post("/chat/message",authMiddleware,messageController.sendMessage);
+router.get("/plans", authMiddleware, userPlanController.getMyPlans);
+router.get("/plans/:planId", authMiddleware, userPlanController.getPlanById);
+router.get(
+  "/programs/:programId/days",
+  authMiddleware,
+  userProgramController.getProgramDays,
+);
+router.get(
+  "/programs/:programId/day/:dayNumber",
+  authMiddleware,
+  userProgramController.getProgramDayByNumber,
+);
 
-router.get("/plans",authMiddleware,userPlanController.getMyPlans)
-router.get("/plans/:planId",authMiddleware,userPlanController.getPlanById);
-router.get("/programs/:programId/days",authMiddleware,userProgramController.getProgramDays);
-router.get("/programs/:programId/day/:dayNumber",authMiddleware,userProgramController.getProgramDayByNumber)
+router.post("/tasks/today", authMiddleware, taskController.updateTodayTasks);
+router.get("/tasks/today", authMiddleware, taskController.getTodayTasks);
 
+router.post(
+  "/change-password",
+  authMiddleware,
+  userAccountController.changePassword,
+);
+router.get("/meetings", authMiddleware, userMeetingsController.getMeetings);
 
-router.post("/tasks/today",authMiddleware,taskController.updateTodayTasks)
-router.get("/tasks/today", authMiddleware,taskController.getTodayTasks);
-
-router.post("/change-password",authMiddleware,userAccountController.changePassword)
-router.get("/meetings",authMiddleware,userMeetingsController.getMeetings)
-
-router.post("/review",authMiddleware,reviewController.submitReview)
-router.get("/review/:nutritionistId", authMiddleware, reviewController.getMyReview);
+router.post("/review", authMiddleware, reviewController.submitReview);
+router.get(
+  "/review/:nutritionistId",
+  authMiddleware,
+  reviewController.getMyReview,
+);
 router.put("/review/:reviewId", authMiddleware, reviewController.updateReview);
-router.delete("/review/:reviewId", authMiddleware,reviewController.deleteReview);
+router.delete(
+  "/review/:reviewId",
+  authMiddleware,
+  reviewController.deleteReview,
+);
 
-router.get("/health-progress",authMiddleware,healthProgressController.getHealthProgress);
-router.get("/health-progress/date",authMiddleware,healthProgressController.getProgressByDate);
-router.get(`/health-progress/latest`,authMiddleware,healthProgressController.getLatestProgress);
-
+router.get(
+  "/health-progress",
+  authMiddleware,
+  healthProgressController.getHealthProgress,
+);
+router.get(
+  "/health-progress/date",
+  authMiddleware,
+  healthProgressController.getProgressByDate,
+);
+router.get(
+  `/health-progress/latest`,
+  authMiddleware,
+  healthProgressController.getLatestProgress,
+);
 
 export default router;
-
-

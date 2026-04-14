@@ -7,28 +7,23 @@ import logger from "../utils/logger";
 
 export const startSubscriptionCron = () => {
   const userPlanRepo = container.get<IUserPlanRepository>(
-    TYPES.IUserPlanRepository
+    TYPES.IUserPlanRepository,
   );
 
   const userProgramRepo = container.get<IUserProgramRepository>(
-    TYPES.IUserProgramRepository
+    TYPES.IUserProgramRepository,
   );
 
-  // ⏰ Run every hour
   cron.schedule("0 * * * *", async () => {
     logger.info("⏳ Subscription Cron Started");
 
     try {
-      /* -------- STEP 1: Activate Plans -------- */
       const activatedPlans = await userPlanRepo.activateUpcomingPlans();
 
-      /* -------- STEP 2: Expire Plans -------- */
       const expiredPlans = await userPlanRepo.expireActivePlans();
 
-      /* -------- STEP 3: Activate Programs -------- */
       const activatedPrograms = await userProgramRepo.activatePrograms();
 
-      /* -------- STEP 4: Complete Programs -------- */
       const completedPrograms = await userProgramRepo.completePrograms();
 
       logger.info("✅ Subscription Cron Completed", {

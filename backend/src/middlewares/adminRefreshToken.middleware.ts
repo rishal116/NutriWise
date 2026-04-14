@@ -1,19 +1,19 @@
 import jwt from "jsonwebtoken";
 import { jwtConfig } from "../configs/jwt";
 import { generateTokens, setAdminAuthCookies } from "../utils/jwt";
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { ROLES } from "../constants";
+import { StatusCode } from "../enums/statusCode.enum";
 
 export const adminRefreshToken = async (
   req: Request,
   res: Response,
-  next: NextFunction
 ) => {
   try {
     const token = req.cookies.adminRefreshToken;
 
     if (!token) {
-      return res.status(401).json({ message: "No admin refresh token found" });
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "No admin refresh token found" });
     }
 
     const decoded = jwt.verify(
@@ -23,7 +23,7 @@ export const adminRefreshToken = async (
     
 
     if (decoded.role !== ROLES.ADMIN) {
-      return res.status(403).json({ message: "Not authorized as admin" });
+      return res.status(StatusCode.FORBIDDEN).json({ message: "Not authorized as admin" });
     }
 
     const { accessToken, refreshToken } = generateTokens(
@@ -32,19 +32,18 @@ export const adminRefreshToken = async (
     );
 
     setAdminAuthCookies(res, refreshToken);
-    console.log(refreshToken);
+    
     
 
-    return res.status(200).json({
+    return res.status(StatusCode.OK).json({
       success: true,
       accessToken,
       role: decoded.role,
     });
-  } catch (error: any) {
-    console.error("Admin refresh token error:", error);
-    if (error.name === "TokenExpiredError") {
-      return res.status(401).json({ message: "Admin refresh token expired" });
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "TokenExpiredError") {
+      return res.status(StatusCode.UNAUTHORIZED).json({ message: "Admin refresh token expired" });
     }
-    return res.status(401).json({ message: "Invalid admin refresh token" });
+    return res.status(StatusCode.UNAUTHORIZED).json({ message: "Invalid admin refresh token" });
   }
 };

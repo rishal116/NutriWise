@@ -1,9 +1,10 @@
-import { Types } from "mongoose";
+import { Types, UpdateQuery } from "mongoose";
 import { BaseRepository } from "../common/base.repository";
 import { IMessageReceiptRepository } from "../../interfaces/chat/IMessageReceiptRepository";
 import {
   MessageReceiptModel,
   IMessageReceipt,
+  ReceiptStatus,
 } from "../../../models/messageReceipt.model";
 
 export class MessageReceiptRepository
@@ -14,14 +15,13 @@ export class MessageReceiptRepository
     super(MessageReceiptModel);
   }
 
-  async findByMessage(
-    messageId: string
-  ): Promise<IMessageReceipt[]> {
+  async findByMessage(messageId: string): Promise<IMessageReceipt[]> {
     return this._model
       .find({
         messageId: new Types.ObjectId(messageId),
       })
-      .lean<IMessageReceipt[]>();
+      .lean<IMessageReceipt[]>()
+      .exec();
   }
 
   async findByUser(userId: string): Promise<IMessageReceipt[]> {
@@ -29,33 +29,40 @@ export class MessageReceiptRepository
       .find({
         userId: new Types.ObjectId(userId),
       })
-      .lean<IMessageReceipt[]>();
+      .lean<IMessageReceipt[]>()
+      .exec();
   }
 
   async updateStatus(
     messageId: string,
     userId: string,
-    status: "sent" | "delivered" | "seen"
+    status: ReceiptStatus,
   ): Promise<void> {
+    const update: UpdateQuery<IMessageReceipt> = {
+      status,
+    };
 
-    const update: any = { status };
-
-    if (status === "delivered") {
+    if (status === ReceiptStatus.DELIVERED) {
       update.deliveredAt = new Date();
     }
 
-    if (status === "seen") {
+    if (status === ReceiptStatus.SEEN) {
       update.seenAt = new Date();
     }
 
-    await this._model.updateOne(
-      {
-        messageId: new Types.ObjectId(messageId),
-        userId: new Types.ObjectId(userId),
-      },
-      {
-        $set: update,
-      }
-    );
+    await this._model
+      .updateOne(
+        {
+          messageId: new Types.ObjectId(messageId),
+          userId: new Types.ObjectId(userId),
+        },
+        {
+          $set: update,
+        },
+        {
+          upsert: true,
+        },
+      )
+      .exec();
   }
 }

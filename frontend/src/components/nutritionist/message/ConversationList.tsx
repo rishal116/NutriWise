@@ -22,7 +22,7 @@ export default function ConversationList({ selectedId, onSelect, isMobile, onClo
     (async () => {
       setLoading(true);
       try {
-        const res = await userChatService.listUsers();
+        const res = await userChatService.listUsers("nutritionist");
         const data = res.data
         setConversations(data.map((u: any) => ({ 
           id: u.id, 

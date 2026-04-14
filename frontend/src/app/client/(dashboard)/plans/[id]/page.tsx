@@ -26,30 +26,33 @@ import {
   Trash2,
 } from "lucide-react";
 
+
 export default function PlanDetailsPage() {
   const { id } = useParams();
-  const router  = useRouter();
+  const router = useRouter();
 
-  const [plan,          setPlan]          = useState<any>(null);
-  const [loading,       setLoading]       = useState(true);
-  const [days,          setDays]          = useState<any[]>([]);
-  const [selectedDay,   setSelectedDay]   = useState<number>(1);
-  const [taskLog,       setTaskLog]       = useState<any>(null);
-  const [loadingDays,   setLoadingDays]   = useState(false);
+  const [plan, setPlan] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [days, setDays] = useState<any[]>([]);
+  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [taskLog, setTaskLog] = useState<any>(null);
+  const [loadingDays, setLoadingDays] = useState(false);
 
   /* review state */
-  const [rating,          setRating]          = useState(0);
-  const [hoverRating,     setHoverRating]     = useState(0);
-  const [reviewText,      setReviewText]      = useState("");
-  const [existingReview,  setExistingReview]  = useState<any>(null);
-  const [submitting,      setSubmitting]      = useState(false);
-  const [reviewError,     setReviewError]     = useState("");
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [existingReview, setExistingReview] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
 
   /* ── fetch plan ── */
   useEffect(() => {
     async function fetchPlan() {
       try {
         const res = await userPlanService.getPlanById(id as string);
+        console.log(res);
+
         setPlan(res.data);
       } catch (err) {
         console.error(err);
@@ -66,9 +69,13 @@ export default function PlanDetailsPage() {
       if (!plan?.program?.id) return;
       setLoadingDays(true);
       try {
-        const data   = await userProgramService.getProgramDays(plan.program.id);
+        console.log(plan.id);
+
+        const data = await userProgramService.getProgramDays(plan.program.id);
+        console.log(data);
+
         const sorted = (data.data ?? []).sort(
-          (a: any, b: any) => a.dayNumber - b.dayNumber
+          (a: any, b: any) => a.dayNumber - b.dayNumber,
         );
         setDays(sorted);
         if (sorted.length > 0) setSelectedDay(sorted[0].dayNumber);
@@ -100,9 +107,11 @@ export default function PlanDetailsPage() {
   }, [plan]);
 
   /* ── helpers ── */
-  const isMealChecked    = (type: string)  => taskLog?.mealsCompleted?.includes(type);
-  const isWorkoutChecked = (wId: string)   => taskLog?.workoutsCompleted?.includes(wId);
-  const isHabitChecked   = (title: string) =>
+  const isMealChecked = (type: string) =>
+    taskLog?.mealsCompleted?.includes(type);
+  const isWorkoutChecked = (wId: string) =>
+    taskLog?.workoutsCompleted?.includes(wId);
+  const isHabitChecked = (title: string) =>
     taskLog?.habitsProgress?.some((h: any) => h.title === title);
 
   /* ── current program day (1-based) ── */
@@ -113,7 +122,10 @@ export default function PlanDetailsPage() {
 
   const handleChatClick = async () => {
     try {
-      await userChatService.createChat(plan.nutritionist.id);
+      await userChatService.createChat(
+      plan.nutritionist.id,
+      "user" 
+    );
       router.push("/client/messages");
     } catch (err) {
       console.error("Chat error:", err);
@@ -122,20 +134,25 @@ export default function PlanDetailsPage() {
 
   /* ── review actions ── */
   const handleSubmitReview = async () => {
-    if (rating === 0) { setReviewError("Please select a rating"); return; }
+    if (rating === 0) {
+      setReviewError("Please select a rating");
+      return;
+    }
     setReviewError("");
     setSubmitting(true);
     try {
       let res;
       if (existingReview) {
         res = await reviewService.updateReview(existingReview.id, {
-          rating, review: reviewText || undefined,
+          rating,
+          review: reviewText || undefined,
         });
       } else {
         res = await reviewService.submitReview({
           nutritionistId: plan.nutritionist.id,
           planId: plan.plan.id,
-          rating, review: reviewText || undefined,
+          rating,
+          review: reviewText || undefined,
         });
       }
       setExistingReview(res.data);
@@ -181,7 +198,10 @@ export default function PlanDetailsPage() {
       <div className="flex items-center justify-center py-24 px-4">
         <div className="text-center space-y-3">
           <p className="text-gray-500 font-semibold text-sm">Plan not found</p>
-          <button onClick={() => router.back()} className="text-sm text-emerald-600 hover:underline font-medium">
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-emerald-600 hover:underline font-medium"
+          >
             Go back
           </button>
         </div>
@@ -189,32 +209,41 @@ export default function PlanDetailsPage() {
     );
   }
 
-  const program    = plan.program;
-  const completion = Math.min(Math.round(program?.progress?.completion ?? 0), 100);
+  const program = plan.program;
+  const completion = Math.min(
+    Math.round(program?.progress?.completion ?? 0),
+    100,
+  );
 
   const statusColor =
-    plan.status === "ACTIVE"    ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-    : plan.status === "EXPIRED" ? "bg-gray-100 text-gray-500 border-gray-200"
-    : "bg-red-100 text-red-600 border-red-200";
+    plan.status === "ACTIVE"
+      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+      : plan.status === "EXPIRED"
+        ? "bg-gray-100 text-gray-500 border-gray-200"
+        : "bg-red-100 text-red-600 border-red-200";
 
   const selectedDayData = days.find((d) => d.dayNumber === selectedDay);
 
   return (
     <div className="font-sans pb-12 space-y-6">
-
       {/* ── BACK + TITLE ── */}
       <div>
         <button
           onClick={() => router.back()}
           className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-emerald-600 transition-colors mb-3 group font-medium"
         >
-          <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform duration-200 flex-shrink-0" />
+          <ArrowLeft
+            size={15}
+            className="group-hover:-translate-x-1 transition-transform duration-200 flex-shrink-0"
+          />
           Back to Plans
         </button>
         <h1 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent leading-tight">
           {plan.plan.title}
         </h1>
-        <p className="text-gray-400 text-sm mt-1 font-medium">Personalised nutrition programme</p>
+        <p className="text-gray-400 text-sm mt-1 font-medium">
+          Personalised nutrition programme
+        </p>
       </div>
 
       {/* ── HERO PROGRESS BANNER ── */}
@@ -224,7 +253,9 @@ export default function PlanDetailsPage() {
           <div className="relative space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-0.5">Your Progress</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-0.5">
+                  Your Progress
+                </p>
                 <p className="text-4xl font-black">{completion}%</p>
               </div>
               <div className="flex flex-col items-end gap-1.5">
@@ -232,16 +263,23 @@ export default function PlanDetailsPage() {
                   <Zap size={12} className="flex-shrink-0" />
                   Day {program.progress.currentDay}
                 </div>
-                <p className="text-[10px] text-white/60 font-medium">{program.progress.daysRemaining} days remaining</p>
+                <p className="text-[10px] text-white/60 font-medium">
+                  {program.progress.daysRemaining} days remaining
+                </p>
               </div>
             </div>
             <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-              <div className="h-full bg-white rounded-full transition-all duration-700" style={{ width: `${completion}%` }} />
+              <div
+                className="h-full bg-white rounded-full transition-all duration-700"
+                style={{ width: `${completion}%` }}
+              />
             </div>
             <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
               <Target size={13} className="flex-shrink-0 text-white/60" />
               Goal:&nbsp;
-              <span className="text-white capitalize font-bold">{program.goal.replace(/_/g, " ")}</span>
+              <span className="text-white capitalize font-bold">
+                {program.goal.replace(/_/g, " ")}
+              </span>
             </div>
           </div>
         </div>
@@ -251,14 +289,36 @@ export default function PlanDetailsPage() {
       {program && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "Current Day", value: program.progress.currentDay,    icon: <Zap       size={15} className="text-emerald-500" />, bg: "bg-emerald-50" },
-            { label: "Days Left",   value: program.progress.daysRemaining, icon: <Clock     size={15} className="text-teal-500"    />, bg: "bg-teal-50"    },
-            { label: "Completion",  value: `${completion}%`,               icon: <TrendingUp size={15} className="text-purple-500" />, bg: "bg-purple-50"  },
+            {
+              label: "Current Day",
+              value: program.progress.currentDay,
+              icon: <Zap size={15} className="text-emerald-500" />,
+              bg: "bg-emerald-50",
+            },
+            {
+              label: "Days Left",
+              value: program.progress.daysRemaining,
+              icon: <Clock size={15} className="text-teal-500" />,
+              bg: "bg-teal-50",
+            },
+            {
+              label: "Completion",
+              value: `${completion}%`,
+              icon: <TrendingUp size={15} className="text-purple-500" />,
+              bg: "bg-purple-50",
+            },
           ].map((s) => (
-            <div key={s.label} className={`${s.bg} rounded-2xl p-4 text-center border border-white shadow-sm`}>
+            <div
+              key={s.label}
+              className={`${s.bg} rounded-2xl p-4 text-center border border-white shadow-sm`}
+            >
               <div className="flex justify-center mb-2">{s.icon}</div>
-              <p className="text-lg font-black text-gray-900 leading-none mb-1">{s.value}</p>
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">{s.label}</p>
+              <p className="text-lg font-black text-gray-900 leading-none mb-1">
+                {s.value}
+              </p>
+              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                {s.label}
+              </p>
             </div>
           ))}
         </div>
@@ -272,36 +332,64 @@ export default function PlanDetailsPage() {
         </div>
         <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="flex items-start gap-3 p-3.5 bg-gray-50 rounded-xl">
-            <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0"><User size={14} className="text-emerald-600" /></div>
+            <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+              <User size={14} className="text-emerald-600" />
+            </div>
             <div className="min-w-0">
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">Nutritionist</p>
-              <p className="text-sm font-bold text-gray-900 truncate">{plan.nutritionist.name}</p>
+              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                Nutritionist
+              </p>
+              <p className="text-sm font-bold text-gray-900 truncate">
+                {plan.nutritionist.name}
+              </p>
             </div>
           </div>
           <div className="flex items-start gap-3 p-3.5 bg-gray-50 rounded-xl">
-            <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0"><CheckCircle2 size={14} className="text-emerald-600" /></div>
+            <div className="bg-emerald-100 p-2 rounded-lg flex-shrink-0">
+              <CheckCircle2 size={14} className="text-emerald-600" />
+            </div>
             <div>
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-1">Status</p>
-              <span className={`inline-flex text-[10px] font-black uppercase tracking-wide px-2.5 py-0.5 rounded-full border ${statusColor}`}>
+              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-1">
+                Status
+              </p>
+              <span
+                className={`inline-flex text-[10px] font-black uppercase tracking-wide px-2.5 py-0.5 rounded-full border ${statusColor}`}
+              >
                 {plan.status}
               </span>
             </div>
           </div>
           <div className="flex items-start gap-3 p-3.5 bg-gray-50 rounded-xl">
-            <div className="bg-teal-100 p-2 rounded-lg flex-shrink-0"><Calendar size={14} className="text-teal-600" /></div>
+            <div className="bg-teal-100 p-2 rounded-lg flex-shrink-0">
+              <Calendar size={14} className="text-teal-600" />
+            </div>
             <div>
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">Start Date</p>
+              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                Start Date
+              </p>
               <p className="text-sm font-bold text-gray-900">
-                {new Date(plan.startDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                {new Date(plan.startDate).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
               </p>
             </div>
           </div>
           <div className="flex items-start gap-3 p-3.5 bg-gray-50 rounded-xl">
-            <div className="bg-teal-100 p-2 rounded-lg flex-shrink-0"><Clock size={14} className="text-teal-600" /></div>
+            <div className="bg-teal-100 p-2 rounded-lg flex-shrink-0">
+              <Clock size={14} className="text-teal-600" />
+            </div>
             <div>
-              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">End Date</p>
+              <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                End Date
+              </p>
               <p className="text-sm font-bold text-gray-900">
-                {new Date(plan.endDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                {new Date(plan.endDate).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
               </p>
             </div>
           </div>
@@ -314,7 +402,9 @@ export default function PlanDetailsPage() {
           <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <div className="w-1 h-4 bg-emerald-500 rounded-full flex-shrink-0" />
-              <h2 className="text-sm font-extrabold text-gray-900">Programme Days</h2>
+              <h2 className="text-sm font-extrabold text-gray-900">
+                Programme Days
+              </h2>
             </div>
             <span className="text-[10px] text-gray-400 font-medium">
               Day {currentDay} of {days.length} unlocked
@@ -327,28 +417,31 @@ export default function PlanDetailsPage() {
             </div>
           ) : days.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-gray-400 text-sm font-medium">No days found for this programme</p>
+              <p className="text-gray-400 text-sm font-medium">
+                No days found for this programme
+              </p>
             </div>
           ) : (
             <div className="p-5 space-y-5">
-
               {/* Day selector pills */}
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
                 {days.map((d) => {
                   const unlocked = isDayUnlocked(d.dayNumber);
-                  const active   = selectedDay === d.dayNumber;
+                  const active = selectedDay === d.dayNumber;
                   return (
                     <button
                       key={d.dayNumber}
                       onClick={() => unlocked && setSelectedDay(d.dayNumber)}
                       disabled={!unlocked}
-                      title={!unlocked ? `Unlocks on Day ${d.dayNumber}` : undefined}
+                      title={
+                        !unlocked ? `Unlocks on Day ${d.dayNumber}` : undefined
+                      }
                       className={`flex-shrink-0 inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all duration-200 ${
                         !unlocked
                           ? "bg-gray-100 text-gray-300 cursor-not-allowed"
                           : active
-                          ? "bg-emerald-600 text-white shadow-sm"
-                          : "bg-gray-100 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"
+                            ? "bg-emerald-600 text-white shadow-sm"
+                            : "bg-gray-100 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600"
                       }`}
                     >
                       {!unlocked && <Lock size={9} className="flex-shrink-0" />}
@@ -363,15 +456,22 @@ export default function PlanDetailsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-extrabold text-gray-900 text-base">Day {selectedDayData.dayNumber}</h3>
+                      <h3 className="font-extrabold text-gray-900 text-base">
+                        Day {selectedDayData.dayNumber}
+                      </h3>
                       <p className="text-xs text-gray-400 font-medium mt-0.5">
                         {selectedDayData.meals?.length ?? 0} meals&nbsp;·&nbsp;
-                        {selectedDayData.workouts?.length ?? 0} workouts&nbsp;·&nbsp;
+                        {selectedDayData.workouts?.length ?? 0}{" "}
+                        workouts&nbsp;·&nbsp;
                         {selectedDayData.habits?.length ?? 0} habits
                       </p>
                     </div>
                     <button
-                      onClick={() => router.push(`/client/program/${plan.program.id}/day/${selectedDayData.dayNumber}`)}
+                      onClick={() =>
+                        router.push(
+                          `/client/program/${plan.program.id}/day/${selectedDayData.dayNumber}`,
+                        )
+                      }
                       className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors flex-shrink-0"
                     >
                       Open Day
@@ -383,12 +483,21 @@ export default function PlanDetailsPage() {
                   {selectedDayData.meals?.length > 0 && (
                     <div className="bg-gray-50 rounded-xl p-4 space-y-2.5">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0"><Utensils size={12} className="text-orange-500" /></div>
-                        <p className="text-[10px] font-extrabold text-gray-600 uppercase tracking-widest">Meals</p>
+                        <div className="bg-orange-100 p-1.5 rounded-lg flex-shrink-0">
+                          <Utensils size={12} className="text-orange-500" />
+                        </div>
+                        <p className="text-[10px] font-extrabold text-gray-600 uppercase tracking-widest">
+                          Meals
+                        </p>
                       </div>
                       {selectedDayData.meals.map((meal: any, i: number) => (
-                        <div key={i} className="flex items-center gap-2 min-w-0">
-                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isMealChecked(meal.type) ? "bg-emerald-500" : "bg-gray-300"}`} />
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 min-w-0"
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isMealChecked(meal.type) ? "bg-emerald-500" : "bg-gray-300"}`}
+                          />
                           <span className="text-sm text-gray-700 font-medium truncate capitalize">
                             {meal.type?.replace(/_/g, " ") ?? meal.name}
                           </span>
@@ -401,13 +510,24 @@ export default function PlanDetailsPage() {
                   {selectedDayData.workouts?.length > 0 && (
                     <div className="bg-gray-50 rounded-xl p-4 space-y-2.5">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="bg-blue-100 p-1.5 rounded-lg flex-shrink-0"><Dumbbell size={12} className="text-blue-500" /></div>
-                        <p className="text-[10px] font-extrabold text-gray-600 uppercase tracking-widest">Workouts</p>
+                        <div className="bg-blue-100 p-1.5 rounded-lg flex-shrink-0">
+                          <Dumbbell size={12} className="text-blue-500" />
+                        </div>
+                        <p className="text-[10px] font-extrabold text-gray-600 uppercase tracking-widest">
+                          Workouts
+                        </p>
                       </div>
                       {selectedDayData.workouts.map((workout: any) => (
-                        <div key={workout.id} className="flex items-center gap-2 min-w-0">
-                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isWorkoutChecked(workout.id) ? "bg-emerald-500" : "bg-gray-300"}`} />
-                          <span className="text-sm text-gray-700 font-medium truncate">{workout.name}</span>
+                        <div
+                          key={workout.id}
+                          className="flex items-center gap-2 min-w-0"
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isWorkoutChecked(workout.id) ? "bg-emerald-500" : "bg-gray-300"}`}
+                          />
+                          <span className="text-sm text-gray-700 font-medium truncate">
+                            {workout.name}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -417,13 +537,24 @@ export default function PlanDetailsPage() {
                   {selectedDayData.habits?.length > 0 && (
                     <div className="bg-gray-50 rounded-xl p-4 space-y-2.5">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0"><Sparkles size={12} className="text-purple-500" /></div>
-                        <p className="text-[10px] font-extrabold text-gray-600 uppercase tracking-widest">Habits</p>
+                        <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0">
+                          <Sparkles size={12} className="text-purple-500" />
+                        </div>
+                        <p className="text-[10px] font-extrabold text-gray-600 uppercase tracking-widest">
+                          Habits
+                        </p>
                       </div>
                       {selectedDayData.habits.map((habit: any, i: number) => (
-                        <div key={i} className="flex items-center gap-2 min-w-0">
-                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isHabitChecked(habit.title) ? "bg-emerald-500" : "bg-gray-300"}`} />
-                          <span className="text-sm text-gray-700 font-medium truncate">{habit.title}</span>
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 min-w-0"
+                        >
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isHabitChecked(habit.title) ? "bg-emerald-500" : "bg-gray-300"}`}
+                          />
+                          <span className="text-sm text-gray-700 font-medium truncate">
+                            {habit.title}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -443,9 +574,12 @@ export default function PlanDetailsPage() {
               <MessageCircle size={17} className="text-emerald-600" />
             </div>
             <div>
-              <h3 className="font-extrabold text-gray-900 text-sm mb-0.5">Need guidance?</h3>
+              <h3 className="font-extrabold text-gray-900 text-sm mb-0.5">
+                Need guidance?
+              </h3>
               <p className="text-gray-400 text-xs leading-relaxed">
-                Chat directly with {plan.nutritionist.name} for personalised advice and progress updates.
+                Chat directly with {plan.nutritionist.name} for personalised
+                advice and progress updates.
               </p>
             </div>
           </div>
@@ -464,7 +598,9 @@ export default function PlanDetailsPage() {
         <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="w-1 h-4 bg-emerald-500 rounded-full flex-shrink-0" />
-            <h2 className="text-sm font-extrabold text-gray-900">Rate Your Experience</h2>
+            <h2 className="text-sm font-extrabold text-gray-900">
+              Rate Your Experience
+            </h2>
           </div>
           {existingReview && (
             <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full">
@@ -495,7 +631,9 @@ export default function PlanDetailsPage() {
                     <Star
                       size={32}
                       className={`transition-colors duration-150 ${
-                        active ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-100"
+                        active
+                          ? "text-yellow-400 fill-yellow-400"
+                          : "text-gray-200 fill-gray-100"
                       }`}
                     />
                   </button>
@@ -511,7 +649,10 @@ export default function PlanDetailsPage() {
                   </span>
                   <div className="w-1 h-1 bg-gray-300 rounded-full" />
                   <button
-                    onClick={() => { setRating(0); setReviewError(""); }}
+                    onClick={() => {
+                      setRating(0);
+                      setReviewError("");
+                    }}
                     className="text-[10px] font-bold text-red-400 hover:text-red-600 transition-colors uppercase tracking-widest"
                   >
                     Clear
@@ -573,7 +714,6 @@ export default function PlanDetailsPage() {
           </div>
         </div>
       </div>
-
     </div>
   );
 }

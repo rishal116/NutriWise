@@ -36,6 +36,7 @@ export const TYPES = {
   IReviewRepository:Symbol.for("IReviewRepository"),
   IReviewController:Symbol.for("IReviewController"),
 
+
   
   
 
@@ -68,11 +69,14 @@ export const TYPES = {
   INutriProgramService:Symbol.for("INutriProgramService"),
   INutriProgramController:Symbol.for("INutriProgramController"),
   INutriSubscriptionService:Symbol.for("INutriSubscriptionService"),
+  INutriGroupService:Symbol.for("INutriCommunityService"),
 
   // meetings
   INutriMeetingsController:Symbol.for("INutriMeetingsController"),
   INutriMeetingsService:Symbol.for("INutriMeetingsService"),
   INutriMeetingsRepository:Symbol.for("INutriMeetingsRepository"),
+
+  INutriGroupController:Symbol.for("INutriCommunityController"),
 
   // common
   IStripeService:Symbol.for("IStripeService"),
@@ -81,6 +85,9 @@ export const TYPES = {
   IStripeWebhookController: Symbol.for("IStripeWebhookController"),
   IWalletRepository:Symbol.for("IWalletRepository"),
   IPaymentRepository:Symbol.for("IPaymentRepository"),
+
+  // community
+
 
   // chat
   IConversationController:Symbol.for("IConversationController"),

@@ -13,17 +13,17 @@ export const reviewService = {
     return res.data;
   },
   getMyReview: async (nutritionistId: string) => {
-  const res = await api.get(`/review/${nutritionistId}`);
-  return res.data;
-},
+    const res = await api.get(`/review/${nutritionistId}`);
+    return res.data;
+  },
 
-updateReview: async (reviewId: string, payload: any) => {
-  const res = await api.put(`/review/${reviewId}`, payload);
-  return res.data;
-},
+  updateReview: async (reviewId: string, payload: any) => {
+    const res = await api.put(`/review/${reviewId}`, payload);
+    return res.data;
+  },
 
-deleteReview: async (reviewId: string) => {
-  const res = await api.delete(`/review/${reviewId}`);
-  return res.data;
-},
+  deleteReview: async (reviewId: string) => {
+    const res = await api.delete(`/review/${reviewId}`);
+    return res.data;
+  },
 };

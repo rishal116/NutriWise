@@ -10,14 +10,14 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 export class NutriMeetingsController implements INutriMeetingsController {
   constructor(
     @inject(TYPES.INutriMeetingsService)
-    private _nutriMeetingsService: INutriMeetingsService
+    private _nutriMeetingsService: INutriMeetingsService,
   ) {}
 
   getMeetings = asyncHandler(async (req: Request, res: Response) => {
     const nutritionistId = req.user?.userId;
 
     const meetings = await this._nutriMeetingsService.getMeetings(
-      nutritionistId!
+      nutritionistId!,
     );
 
     res.status(StatusCode.OK).json({
@@ -46,7 +46,7 @@ export class NutriMeetingsController implements INutriMeetingsController {
 
     const updatedMeeting = await this._nutriMeetingsService.updateMeetingStatus(
       roomId,
-      status
+      status,
     );
 
     res.status(StatusCode.OK).json({

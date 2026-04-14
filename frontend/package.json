@@ -32,6 +32,7 @@
     "react-leaflet": "^5.0.0",
     "react-phone-number-input": "^3.4.14",
     "react-redux": "^9.2.0",
+    "react-router-dom": "^7.14.0",
     "react-select": "^5.10.2",
     "react-snowfall": "^2.4.0",
     "react-toastify": "^11.0.5",

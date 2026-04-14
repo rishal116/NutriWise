@@ -6,6 +6,7 @@ import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 import { userAuthService } from "@/services/user/userAuth.service";
 import { loginSuccess } from "@/redux/slices/authSlice";
@@ -29,17 +30,13 @@ export default function LoginForm() {
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState<string>("");
-  
+
   const token = useSelector((state: RootState) => state.auth.token);
   useEffect(() => {
     if (token) {
       router.replace("/home");
     }
   }, [token, router]);
-  
-  /* =========================
-        LOGIN HANDLERS
-  ========================= */
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -63,20 +60,36 @@ export default function LoginForm() {
 
     try {
       const res = await userAuthService.login(email, password);
-
-      if (res.user.isBlocked) {
+      if (res.user?.isBlocked) {
         const msg = "Your account has been blocked. Please contact support.";
         setServerError(msg);
         toast.error(msg);
         return;
       }
+      if (!res.accessToken) {
+        throw new Error("Access token missing");
+      }
 
       dispatch(loginSuccess(res.accessToken));
-      toast.success(`Welcome back ${res.user.fullName}`);
+      toast.success(`Welcome back ${res.user?.fullName}`);
       router.replace("/home");
+    } catch (error: unknown) {
+      let message = "Something went wrong";
 
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Login failed. Please try again.";
+      if (axios.isAxiosError(error)) {
+        message =
+          (error.response?.data as { message?: string })?.message ||
+          error.message;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "message" in error
+      ) {
+        message = (error as { message: string }).message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+
       setServerError(message);
       toast.error(message);
     } finally {
@@ -84,7 +97,9 @@ export default function LoginForm() {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+  const handleGoogleSuccess = async (
+    credentialResponse: CredentialResponse,
+  ) => {
     if (!credentialResponse.credential) {
       toast.error("Google authentication failed");
       return;
@@ -95,20 +110,32 @@ export default function LoginForm() {
         credential: credentialResponse.credential,
       });
 
-      if (res.user.isBlocked) {
+      if (res.user?.isBlocked) {
         toast.error("Your account has been blocked.");
         return;
       }
 
       dispatch(loginSuccess(res.accessToken));
-      toast.success(`Welcome ${res.user.fullName}`);
+      toast.success(`Welcome ${res.user?.fullName}`);
       router.push("/home");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Google login failed");
+    } catch (error: unknown) {
+      let message = "Something went wrong";
+      if (axios.isAxiosError(error)) {
+        message = error.response?.data?.message || message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      toast.error(message || "Google login failed");
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleLogin();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleLogin();
     }
@@ -121,7 +148,6 @@ export default function LoginForm() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 px-4 py-8 sm:py-12 lg:py-16">
       <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-100">
-        
         {/* HEADER */}
         <div className="text-center mb-6 sm:mb-8 lg:mb-10">
           <div className="inline-flex items-center justify-center mb-4">
@@ -146,29 +172,33 @@ export default function LoginForm() {
 
         {/* FORM */}
         <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
-          
           {/* EMAIL */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600" size={18} />
+              <Mail
+                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600"
+                size={18}
+              />
               <input
                 type="email"
                 placeholder="you@example.com"
                 className={`w-full pl-10 sm:pl-11 pr-4 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${
-                  formErrors.email 
-                    ? "border-red-400 focus:border-red-500 focus:ring-red-100" 
+                  formErrors.email
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
                     : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
                 }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyPress={handleKeyDown}
               />
             </div>
             {formErrors.email && (
-              <p className="text-red-500 text-xs sm:text-sm mt-1">{formErrors.email}</p>
+              <p className="text-red-500 text-xs sm:text-sm mt-1">
+                {formErrors.email}
+              </p>
             )}
           </div>
 
@@ -178,13 +208,16 @@ export default function LoginForm() {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600" size={18} />
+              <Lock
+                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600"
+                size={18}
+              />
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
                 className={`w-full pl-10 sm:pl-11 pr-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${
-                  formErrors.password 
-                    ? "border-red-400 focus:border-red-500 focus:ring-red-100" 
+                  formErrors.password
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
                     : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
                 }`}
                 value={password}
@@ -200,7 +233,9 @@ export default function LoginForm() {
               </button>
             </div>
             {formErrors.password && (
-              <p className="text-red-500 text-xs sm:text-sm mt-1">{formErrors.password}</p>
+              <p className="text-red-500 text-xs sm:text-sm mt-1">
+                {formErrors.password}
+              </p>
             )}
           </div>
 
@@ -241,7 +276,9 @@ export default function LoginForm() {
             <div className="w-full border-t border-gray-200"></div>
           </div>
           <div className="relative flex justify-center text-xs sm:text-sm">
-            <span className="px-4 bg-white text-gray-500">Or continue with</span>
+            <span className="px-4 bg-white text-gray-500">
+              Or continue with
+            </span>
           </div>
         </div>
 
@@ -261,7 +298,7 @@ export default function LoginForm() {
 
         {/* FOOTER LINK */}
         <p className="text-center text-xs sm:text-sm text-gray-600 mt-6 sm:mt-8">
-          Don't have an account?{" "}
+          {`Don't have an account? `}
           <button
             type="button"
             onClick={() => router.push("/signup")}
@@ -270,7 +307,6 @@ export default function LoginForm() {
             Sign up
           </button>
         </p>
-
       </div>
     </div>
   );

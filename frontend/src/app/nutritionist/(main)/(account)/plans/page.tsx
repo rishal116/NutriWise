@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { 
-  Clock, Eye, FileText, Plus, 
-  IndianRupee, AlertCircle, TrendingUp, 
+  Clock, FileText, Plus, 
+  IndianRupee, AlertCircle,  
   ChevronRight, MoreHorizontal, Sparkles, LayoutGrid, Layers 
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { nutritionistPlanService } from "@/services/nutritionist/nutritionistPlan.service";
 
-/* ============================== TYPES ============================== */
 interface Plan {
   _id: string;
-  id?: string; // Support for mapped id
+  id?: string; 
   title: string;
   category: string;
   durationInDays: number;
@@ -22,6 +21,8 @@ interface Plan {
   description: string;
   tags: string[];
 }
+
+type Tab = "all" | "published" | "draft" | "archived";
 
 export default function MyPlansPage() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export default function MyPlansPage() {
           {["all", "published", "draft"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as any)}
+              onClick={() => setActiveTab(tab as Tab)}
               className={`px-6 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${
                 activeTab === tab 
                 ? "bg-white text-emerald-700 shadow-sm border border-emerald-100" 
@@ -120,7 +121,7 @@ export default function MyPlansPage() {
       {filteredPlans.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
           {filteredPlans.map((plan) => (
-            <PlanCard key={plan._id} plan={plan} router={router} />
+            <PlanCard key={plan._id} plan={plan}  />
           ))}
         </div>
       ) : (
@@ -130,8 +131,9 @@ export default function MyPlansPage() {
   );
 }
 
-function PlanCard({ plan, router }: { plan: Plan; router: any }) {
+function PlanCard({ plan }: { plan: Plan; }) {
   const isPublished = plan.status === "published";
+  const router = useRouter()
 
   return (
     <div className="group relative bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col overflow-hidden h-[420px]">
@@ -179,7 +181,7 @@ function PlanCard({ plan, router }: { plan: Plan; router: any }) {
           {plan.features.slice(0, 2).map((feature, i) => (
             <div key={i} className="flex items-start gap-3">
               <div className="mt-1.5 w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
-              <span className="text-sm text-slate-500 font-medium leading-relaxed italic line-clamp-2">"{feature}"</span>
+              <span className="text-sm text-slate-500 font-medium leading-relaxed italic line-clamp-2">`{feature}`</span>
             </div>
           ))}
         </div>

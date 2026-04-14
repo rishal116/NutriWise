@@ -1,4 +1,3 @@
-// src/types/express.d.ts
 import "express";
 import { Role } from "./role";
 

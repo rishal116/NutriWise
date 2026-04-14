@@ -8,45 +8,36 @@ export enum MessageType {
   SYSTEM = "system",
 }
 
+export type MessageStatus = "active" | "edited" | "deleted";
+
 interface IAttachment {
   url: string;
-  fileName: string;
+  fileName?: string;
   size?: number;
   mimeType?: string;
-}
-
-interface IReaction {
-  userId: Types.ObjectId;
-  emoji: string;
 }
 
 export interface IMessage extends Document {
   _id: Types.ObjectId;
 
   conversationId: Types.ObjectId;
-
   senderId: Types.ObjectId;
 
   text?: string;
-
   attachments?: IAttachment[];
 
   messageType: MessageType;
 
   replyTo?: Types.ObjectId;
 
-  reactions?: IReaction[];
+  status: MessageStatus;
 
-  isCoachMessage: boolean;
-
-  isEdited: boolean;
+  senderRole?: "user" | "nutritionist";
 
   editedAt?: Date;
-
-  isDeleted: boolean;
+  deletedAt?: Date;
 
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -69,22 +60,18 @@ const messageSchema = new Schema<IMessage>(
     text: {
       type: String,
       trim: true,
+      maxlength: 5000,
     },
 
     attachments: [
       {
         url: {
           type: String,
+          required: true,
         },
-        fileName: {
-          type: String,
-        },
-        size: {
-          type: Number,
-        },
-        mimeType: {
-          type: String,
-        },
+        fileName: String,
+        size: Number,
+        mimeType: String,
       },
     ],
 
@@ -98,42 +85,26 @@ const messageSchema = new Schema<IMessage>(
     replyTo: {
       type: Schema.Types.ObjectId,
       ref: "Message",
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "edited", "deleted"],
+      default: "active",
       index: true,
     },
 
-    reactions: [
-      {
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        emoji: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
-
-    isCoachMessage: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-
-    isEdited: {
-      type: Boolean,
-      default: false,
+    senderRole: {
+      type: String,
+      enum: ["user", "nutritionist"],
     },
 
     editedAt: {
       type: Date,
     },
 
-    isDeleted: {
-      type: Boolean,
-      default: false,
-      index: true,
+    deletedAt: {
+      type: Date,
     },
   },
   {
@@ -141,9 +112,18 @@ const messageSchema = new Schema<IMessage>(
   }
 );
 
+messageSchema.pre("validate", function (next) {
+  if (!this.text && (!this.attachments || this.attachments.length === 0)) {
+    return next(new Error("Message must contain text or attachment"));
+  }
+  next();
+});
+
 messageSchema.index(
   { conversationId: 1, createdAt: -1 },
-  { partialFilterExpression: { isDeleted: false } }
+  {
+    partialFilterExpression: { status: { $ne: "deleted" } },
+  }
 );
 
 messageSchema.index({
@@ -151,6 +131,8 @@ messageSchema.index({
   senderId: 1,
 });
 
-
+messageSchema.index({
+  replyTo: 1,
+});
 
 export const MessageModel = model<IMessage>("Message", messageSchema);

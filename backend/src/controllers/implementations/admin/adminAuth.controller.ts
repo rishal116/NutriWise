@@ -13,9 +13,9 @@ import logger from "../../../utils/logger";
 export class AdminAuthController implements IAdminAuthController {
   constructor(
     @inject(TYPES.IAdminAuthService)
-    private _adminAuthService: IAdminAuthService
+    private _adminAuthService: IAdminAuthService,
   ) {}
-  
+
   login = asyncHandler(async (req: Request, res: Response) => {
     const loginPayload = req.body;
     const loginResult = await this._adminAuthService.login(loginPayload);
@@ -29,7 +29,7 @@ export class AdminAuthController implements IAdminAuthController {
       },
     });
   });
-  
+
   logout = asyncHandler(async (_req: Request, res: Response) => {
     clearAdminAuthCookies(res);
     logger.info("Admin logout successful");
@@ -38,5 +38,4 @@ export class AdminAuthController implements IAdminAuthController {
       message: ADMIN_AUTH_MESSAGES.LOGOUT_SUCCESS,
     });
   });
-
 }

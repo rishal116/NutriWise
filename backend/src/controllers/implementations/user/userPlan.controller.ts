@@ -11,7 +11,7 @@ import { USER_MESSAGES } from "../../../constants";
 export class UserPlanController implements IUserPlanController {
   constructor(
     @inject(TYPES.IUserPlanService)
-    private _userPlanService: IUserPlanService
+    private _userPlanService: IUserPlanService,
   ) {}
 
   getMyPlans = asyncHandler(async (req: Request, res: Response) => {
@@ -23,7 +23,7 @@ export class UserPlanController implements IUserPlanController {
       data: plans,
     });
   });
-  
+
   getPlanById = asyncHandler(async (req: Request, res: Response) => {
     const { planId } = req.params;
     const { userId } = req.user!;
@@ -34,5 +34,4 @@ export class UserPlanController implements IUserPlanController {
       data: plan,
     });
   });
-
 }

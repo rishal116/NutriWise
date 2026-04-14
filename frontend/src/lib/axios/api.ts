@@ -16,12 +16,12 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
-      const token = store.getState().auth.token     
+      const token = store.getState().auth.token;
       if (token) config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // RESPONSE INTERCEPTOR
@@ -30,23 +30,21 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Auth endpoints should NOT trigger refresh
-    const authEndpoints = ["/login","/signup","/google"];
+    const authEndpoints = ["/login", "/signup", "/google"];
 
     if (authEndpoints.some((url) => originalRequest.url?.includes(url))) {
       return Promise.reject(error);
     }
 
-    // stop infinite loop
     if (originalRequest._retry) {
-      return Promise.reject(error);
+      return Promise.reject(error.response?.data || error);
     }
 
-    // don't refresh on refresh endpoint itself
     if (originalRequest.url?.includes("/refresh-token")) {
-      return Promise.reject(error);
+      return Promise.reject(error.response?.data || error);
     }
 
+    // ✅ 401 TOKEN REFRESH
     if (error.response?.status === 401) {
       originalRequest._retry = true;
 
@@ -63,16 +61,43 @@ api.interceptors.response.use(
       } catch (err) {
         store.dispatch(logout());
         window.location.href = "/";
-        return Promise.reject(err);
+
+        if (axios.isAxiosError(err)) {
+          return Promise.reject(err.response?.data || { message: err.message });
+        }
+
+        return Promise.reject({ message: "Something went wrong" });
       }
     }
 
+    // ✅ 403 LOGOUT
     if (error.response?.status === 403) {
       store.dispatch(logout());
-      await userAuthService.logout()
+      await userAuthService.logout();
       window.location.href = "/";
+      return Promise.reject(error.response?.data);
     }
 
-    return Promise.reject(error);
-  }
+    // ✅ 🔥 HANDLE 404 + 500 + OTHERS
+    if (error.response) {
+      const message = error.response.data?.message || "Something went wrong";
+
+      return Promise.reject({
+        status: error.response.status,
+        message,
+      });
+    }
+
+    // ✅ NETWORK ERROR
+    if (error.request) {
+      return Promise.reject({
+        message: "Network error. Please check your connection.",
+      });
+    }
+
+    // ✅ FALLBACK
+    return Promise.reject({
+      message: error.message,
+    });
+  },
 );

@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { Request, Response } from "express";
 import { injectable, inject } from "inversify";
 import { IUserProgramService } from "../../../services/interfaces/user/IUserProgramService";
 import { IUserProgramController } from "../../interfaces/user/IUserProgramController";
@@ -15,7 +15,7 @@ export class UserProgramController implements IUserProgramController {
 
   getProgramDays = asyncHandler(async (req: Request, res: Response) => {
     const { programId } = req.params;
-    const userId = req.user?.userId!;
+    const userId = req.user!.userId;
 
     const days = await this._userProgramService.getProgramDays(
       programId,

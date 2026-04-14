@@ -62,10 +62,14 @@ export class UserProgramService implements IUserProgramService {
     logger.debug("Fetching all days for programId: %s", programId);
 
     await this.getProgramDetails(programId, userId);
+    console.log(programId);
+    
 
     const days = await this._programDayRepository.findByUserProgram(
       new Types.ObjectId(programId),
     );
+    console.log(days);
+    
 
     logger.info("Found %d days for programId: %s", days.length, programId);
     return ProgramDayMapper.toResponseDTOList(days);
