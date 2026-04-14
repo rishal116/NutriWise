@@ -15,19 +15,17 @@ export class NutritionistPlanRepository
   create(payload: Partial<IPlan>) {
     return this._model.create(payload);
   }
-
-updateById(id: string, payload: Partial<IPlan>) {
-  return this._model
-    .findByIdAndUpdate(new Types.ObjectId(id), payload, { new: true, runValidators: true })
+  
+  updateById(id: string, payload: Partial<IPlan>) {
+    return this._model.findByIdAndUpdate(new Types.ObjectId(id), payload, { new: true, runValidators: true })
     .lean<IPlan>() as any;
-}
-
+  }
   findById(id: string) {
     return this._model.findById(id).lean<IPlan | null>();
   }
 
   findMany(filter: Partial<IPlan>) {
-    return this._model.find(filter).lean<IPlan[]>();
+    return this._model.find(filter).lean<IPlan[]>().sort({createdAt:-1});
   }
 
   findByNutritionistId(nutritionistId: string) {

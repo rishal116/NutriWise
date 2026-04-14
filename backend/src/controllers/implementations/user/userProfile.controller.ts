@@ -11,9 +11,9 @@ import { USER_MESSAGES, COMMON_MESSAGES } from "../../../constants";
 export class UserProfileController implements IUserProfileController {
   constructor(
     @inject(TYPES.IUserProfileService)
-    private _userProfileService: IUserProfileService
+    private _userProfileService: IUserProfileService,
   ) {}
-  
+
   getMyProfile = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
     const user = await this._userProfileService.getMyProfile(userId);
@@ -29,7 +29,7 @@ export class UserProfileController implements IUserProfileController {
     const profileData = req.body;
     const updatedUser = await this._userProfileService.updateMyProfile(
       userId,
-      profileData
+      profileData,
     );
     return res.status(StatusCode.OK).json({
       success: true,
@@ -52,7 +52,7 @@ export class UserProfileController implements IUserProfileController {
     const { userId } = req.user!;
     const updatedProfile = await this._userProfileService.updateMyProfileImage(
       userId,
-      req.file!
+      req.file!,
     );
     return res.status(StatusCode.OK).json({
       success: true,
@@ -60,5 +60,4 @@ export class UserProfileController implements IUserProfileController {
       data: updatedProfile,
     });
   });
-  
 }

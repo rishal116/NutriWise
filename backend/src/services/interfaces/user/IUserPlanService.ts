@@ -1,15 +1,8 @@
-import { UserPlanResponseDTO } from "../../../dtos/user/userPlan.dto";
-import { NutritionistSubscriberDTO } from "../../../dtos/nutritionist/nutritionistSubscription.dto";
+import { UserPlanListDTO } from "../../../dtos/user/userPlanList.dto";
+import { UserPlanDetailDTO } from "../../../dtos/user/userPlanDetail.dto";
 
 export interface IUserPlanService {
-  getMyPlans(userId: string): Promise<UserPlanResponseDTO[]>;
+  getMyPlans(userId: string): Promise<UserPlanListDTO[]>;
 
-  getSubscribers(
-    nutritionistId: string
-  ): Promise<NutritionistSubscriberDTO[]>;
-
-  getPlanById(
-    planId: string,
-    userId: string
-  ): Promise<UserPlanResponseDTO>;
+  getPlanById(planId: string, userId: string): Promise<UserPlanDetailDTO>;
 }

@@ -9,30 +9,42 @@ const { combine, timestamp, printf, errors, colorize } = format;
 const logDir = path.join(process.cwd(), "logs");
 fs.mkdirSync(logDir, { recursive: true });
 
-const LOG_RETENTION =
-  process.env.NODE_ENV === "production" ? "14d" : "3d";
-
 const isProduction = process.env.NODE_ENV === "production";
 
-const devFormat = combine(
-  colorize(),
+const LOG_RETENTION = isProduction ? "14d" : "3d";
+
+/* -----------------------
+   Pretty log format
+----------------------- */
+
+const readableFormat = combine(
   timestamp(),
   errors({ stack: true }),
   printf(({ timestamp, level, message, stack, ...meta }) => {
     const metaString =
-    Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
+      Object.keys(meta).length > 0
+        ? ` ${JSON.stringify(meta)}`
+        : "";
+
     return `${timestamp} [${level}]: ${stack || message}${metaString}`;
   })
 );
 
-const prodFormat = combine(
-  timestamp(),
-  errors({ stack: true }),
-  format.metadata({ fillExcept: ["message", "level", "timestamp"] }),
-  format.json()
+/* -----------------------
+   Console format
+----------------------- */
+
+const consoleFormat = combine(
+  colorize(),
+  readableFormat
 );
 
+/* -----------------------
+   File transports
+----------------------- */
+
 const transportList: Transport[] = [
+
   new DailyRotateFile({
     filename: path.join(logDir, "error-%DATE%.log"),
     datePattern: "YYYY-MM-DD",
@@ -40,28 +52,41 @@ const transportList: Transport[] = [
     maxSize: "10m",
     maxFiles: LOG_RETENTION,
     zippedArchive: true,
+    auditFile: path.join(logDir, "error-audit.json"),
+    format: readableFormat
   }),
 
   new DailyRotateFile({
     filename: path.join(logDir, "app-%DATE%.log"),
     datePattern: "YYYY-MM-DD",
+    level: "info",
     maxSize: "20m",
     maxFiles: LOG_RETENTION,
     zippedArchive: true,
-  }),
+    auditFile: path.join(logDir, "app-audit.json"),
+    format: readableFormat
+  })
+
 ];
+
+/* -----------------------
+   Console only in dev
+----------------------- */
 
 if (!isProduction) {
   transportList.unshift(
     new transports.Console({
-      format: devFormat,
+      format: consoleFormat
     })
   );
 }
 
+/* -----------------------
+   Logger
+----------------------- */
+
 const logger = createLogger({
   level: isProduction ? "info" : "debug",
-  format: isProduction ? prodFormat : devFormat,
   transports: transportList,
 
   exceptionHandlers: [
@@ -69,7 +94,9 @@ const logger = createLogger({
       filename: path.join(logDir, "exceptions-%DATE%.log"),
       datePattern: "YYYY-MM-DD",
       maxFiles: LOG_RETENTION,
-    }),
+      auditFile: path.join(logDir, "exceptions-audit.json"),
+      format: readableFormat
+    })
   ],
 
   rejectionHandlers: [
@@ -77,9 +104,11 @@ const logger = createLogger({
       filename: path.join(logDir, "rejections-%DATE%.log"),
       datePattern: "YYYY-MM-DD",
       maxFiles: LOG_RETENTION,
-    }),
-  ],
-});
+      auditFile: path.join(logDir, "rejections-audit.json"),
+      format: readableFormat
+    })
+  ]
 
+});
 
 export default logger;

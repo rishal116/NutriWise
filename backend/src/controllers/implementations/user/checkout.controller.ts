@@ -5,18 +5,18 @@ import { ICheckoutController } from "../../interfaces/user/ICheckoutController";
 import { ICheckoutService } from "../../../services/interfaces/user/ICheckoutService";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { AUTH_MESSAGES, PAYMENT_MESSAGES } from "../../../constants";
+import { PAYMENT_MESSAGES } from "../../../constants";
 
 @injectable()
 export class CheckoutController implements ICheckoutController {
   constructor(
     @inject(TYPES.ICheckoutService)
-    private _checkoutService: ICheckoutService
+    private _checkoutService: ICheckoutService,
   ) {}
 
   createSession = asyncHandler(async (req: Request, res: Response) => {
     const { planId, nutritionistId } = req.body;
-    const {userId}= req.user!
+    const { userId } = req.user!;
     const checkoutUrl = await this._checkoutService.createSession({
       planId,
       nutritionistId,
@@ -28,5 +28,4 @@ export class CheckoutController implements ICheckoutController {
       url: checkoutUrl,
     });
   });
-
 }

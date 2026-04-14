@@ -10,33 +10,73 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 export class MessageController implements IMessageController {
   constructor(
     @inject(TYPES.IMessageService)
-    private _messageService: IMessageService
+    private _messageService: IMessageService,
   ) {}
-  
-  sendMessage = asyncHandler(async (req: Request, res: Response ) => {
-    const { conversationId, text, fileUrl, messageType } = req.body;
-    
-    if (!conversationId) {
-        return res.status(StatusCode.BAD_REQUEST).json({
-            message: "conversationId is required"
-        });
-    }
+
+  sendMessage = asyncHandler(async (req: Request, res: Response) => {
+    const { conversationId, text, messageType, context } = req.body;
     const message = await this._messageService.sendMessage({
-        conversationId,
-        senderId: req.user?.userId as string,
-        text,
-        fileUrl,
-        messageType,
+      conversationId,
+      senderId: req.user?.userId as string,
+      context,
+      text,
+      messageType,
     });
-    res.status(StatusCode.CREATED).json(message);
-    });
+    res.status(StatusCode.CREATED).json({ success: true, data: message });
+  });
 
-
-  getMessages = asyncHandler(async (req: Request, res: Response ) => {  
+  getMessages = asyncHandler(async (req: Request, res: Response) => {
     const messages = await this._messageService.getMessages(
       req.params.conversationId,
-    ); 
-    res.json(messages);
+    );
+    res.status(StatusCode.OK).json({ success: true, data: messages });
   });
-  
+
+  sendFile = asyncHandler(async (req: Request, res: Response) => {
+    const message = await this._messageService.sendFile({
+      conversationId: req.body.conversationId,
+      senderId: req.user?.userId as string,
+      context: req.body.context,
+      file: req.file,
+    });
+    res.status(StatusCode.CREATED).json(message);
+  });
+
+  markAsRead = asyncHandler(async (req: Request, res: Response) => {
+    const { conversationId } = req.params;
+    await this._messageService.markAsRead(
+      conversationId,
+      req.user?.userId as string,
+    );
+
+    res.status(StatusCode.OK).json({
+      message: "Messages marked as read",
+    });
+  });
+
+  deleteMessage = asyncHandler(async (req: Request, res: Response) => {
+    const { messageId } = req.params;
+
+    await this._messageService.deleteMessage(
+      messageId,
+      req.user?.userId as string,
+    );
+
+    res.status(StatusCode.OK).json({
+      message: "Message deleted",
+    });
+  });
+
+  editMessage = asyncHandler(async (req: Request, res: Response) => {
+    const { messageId } = req.params;
+    const { text } = req.body;
+
+    const updatedMessage = await this._messageService.editMessage(
+      messageId,
+      text,
+      req.user?.userId as string,
+    );
+
+    res.status(StatusCode.OK).json(updatedMessage);
+  });
 }

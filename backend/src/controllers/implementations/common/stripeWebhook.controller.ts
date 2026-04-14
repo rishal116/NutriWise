@@ -1,17 +1,15 @@
 import { Request, Response } from "express";
-import Stripe from "stripe";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import { IStripeWebhookService } from "../../../services/interfaces/common/IStripeWebhookService";
 import { IStripeWebhookController } from "../../interfaces/common/IStripeWebhookController";
 import { asyncHandler } from "../../../utils/asyncHandler";
 
-
 @injectable()
 export class StripeWebhookController implements IStripeWebhookController {
   constructor(
     @inject(TYPES.IStripeWebhookService)
-    private _webhookService: IStripeWebhookService
+    private _webhookService: IStripeWebhookService,
   ) {}
 
   handle = asyncHandler(async (req: Request, res: Response) => {

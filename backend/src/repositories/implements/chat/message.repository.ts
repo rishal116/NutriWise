@@ -1,6 +1,7 @@
 import { BaseRepository } from "../common/base.repository";
 import { IMessageRepository } from "../../interfaces/chat/IMessageRepository";
 import { MessageModel, IMessage } from "../../../models/message.model";
+import { Types } from "mongoose";
 
 export class MessageRepository
   extends BaseRepository<IMessage>
@@ -13,10 +14,24 @@ export class MessageRepository
   async findMessagesByConversation(
     conversationId: string,
   ): Promise<IMessage[]> {
-
     return this._model
-      .find({ conversationId: conversationId })
+      .find({
+        conversationId: new Types.ObjectId(conversationId),
+        status: { $ne: "deleted" },
+      })
       .sort({ createdAt: 1 })
-      .lean<IMessage[]>();
+      .lean<IMessage[]>()
+      .exec();
+  }
+
+  async deleteById(id: string | Types.ObjectId): Promise<void> {
+    await this._model.findByIdAndUpdate(
+      id,
+      {
+        status: "deleted",
+        deletedAt: new Date(),
+      },
+      { new: false },
+    );
   }
 }

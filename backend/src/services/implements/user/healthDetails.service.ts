@@ -11,16 +11,20 @@ import { HealthDetailsValidator } from "../../../validations/user/healthDetails.
 import logger from "../../../utils/logger";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { IHealthProgressRepository } from "../../../repositories/interfaces/user/IHealthProgressRepository";
 
 @injectable()
 export class HealthDetailsService implements IHealthDetailsService {
   constructor(
     @inject(TYPES.IHealthDetailsRepository)
-    private _healthDetailsRepository: IHealthDetailsRepository
+    private _healthDetailsRepository: IHealthDetailsRepository,
+
+    @inject(TYPES.IHealthProgressRepository)
+    private _healthProgressRepository: IHealthProgressRepository,
   ) {}
 
   async getHealthDetails(
-    userId: string
+    userId: string,
   ): Promise<HealthDetailsResponseDTO | null> {
     logger.info("Fetching health details", { userId });
 
@@ -48,14 +52,14 @@ export class HealthDetailsService implements IHealthDetailsService {
 
       throw new CustomError(
         "Failed to fetch health details",
-        StatusCode.INTERNAL_SERVER_ERROR
+        StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   async saveHealthDetails(
     userId: string,
-    payload: HealthDetailsRequestDTO
+    payload: HealthDetailsRequestDTO,
   ): Promise<HealthDetailsResponseDTO> {
     logger.info("Saving health details", { userId });
 
@@ -64,22 +68,34 @@ export class HealthDetailsService implements IHealthDetailsService {
 
       const bmi = HealthDetailsValidator.calculateBMI(
         payload.heightCm,
-        payload.weightKg
+        payload.weightKg,
       );
 
       const persistenceData = HealthDetailsMapper.toEntity(
         userId,
         payload,
-        bmi
+        bmi,
       );
 
       const savedHealthDetails =
         await this._healthDetailsRepository.upsertByUserId(
           userId,
-          persistenceData
+          persistenceData,
         );
 
-      logger.info("Health details saved successfully", { userId });
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      await this._healthProgressRepository.upsertDailyProgress({
+        userId,
+        date: today,
+        weightKg: payload.weightKg,
+        bmi,
+        dailyWaterIntakeLiters: payload.dailyWaterIntakeLiters,
+        sleepDurationHours: payload.sleepDurationHours,
+      });
+
+      logger.info("Health details + progress saved successfully", { userId });
 
       return HealthDetailsMapper.toResponse(savedHealthDetails);
     } catch (error) {
@@ -93,7 +109,7 @@ export class HealthDetailsService implements IHealthDetailsService {
 
       throw new CustomError(
         "Failed to save health details",
-        StatusCode.INTERNAL_SERVER_ERROR
+        StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
   }

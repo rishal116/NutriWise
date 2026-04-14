@@ -7,30 +7,42 @@ import { userAuthService } from "@/services/user/userAuth.service";
 import { loginSuccess } from "@/redux/slices/authSlice";
 import toast, { Toaster } from "react-hot-toast";
 import { Mail, Shield, Clock, RotateCw, CheckCircle2 } from "lucide-react";
-import { restoreSignupEmail, clearSignupEmail } from "@/redux/slices/signupSlice";
+import {
+  restoreSignupEmail,
+  clearSignupEmail,
+} from "@/redux/slices/signupSlice";
+import axios from "axios";
 
 export default function OtpForm() {
   const email = useSelector((state: RootState) => state.signup.email);
   const dispatch = useDispatch();
   const router = useRouter();
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const [otp, setOtp] = useState(Array(6).fill(""));
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
+  const token = useSelector((state: RootState) => state.auth.token);
+
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    router.replace("/home");
-  }
-}, [router]);
+    if (token) {
+      router.replace("/home");
+    }
+  }, [token, router]);
 
   useEffect(() => {
     if (isVerifying) return;
+
     const storedEmail = localStorage.getItem("signupEmail");
+
     if (!email && storedEmail) {
       dispatch(restoreSignupEmail(storedEmail));
+      return;
+    }
+
+    if (!email && !storedEmail) {
+      router.replace("/signup");
     }
   }, [email, isVerifying, dispatch, router]);
 
@@ -43,7 +55,11 @@ export default function OtpForm() {
       setCanResend(true);
       return;
     }
-    const interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+
     return () => clearInterval(interval);
   }, [timer]);
 
@@ -87,6 +103,7 @@ export default function OtpForm() {
   };
 
   const handleVerify = async () => {
+    if (isVerifying) return;
     if (!email) {
       toast.error("Invalid session. Please sign up again.");
       router.replace(`/signup`);
@@ -101,18 +118,24 @@ export default function OtpForm() {
         localStorage.removeItem("signupEmail");
         toast.success(res.message || "OTP verified successfully!");
         if (res.accessToken) {
-          dispatch(loginSuccess(res.user));
-          localStorage.setItem("token", res.accessToken);
+          dispatch(loginSuccess(res.accessToken));
         }
         setTimeout(() => {
-          if (res.role === "nutritionist") router.replace("/nutritionist/details");
+          if (res.user?.role === "nutritionist")
+            router.replace("/nutritionist/details");
           else router.replace("/home");
         }, 1000);
       } else {
         toast.error(res.message || "Verification failed. Please try again.");
       }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Invalid OTP or OTP expired.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(
+          error.response?.data?.message || "Invalid OTP or OTP expired.",
+        );
+      } else {
+        toast.error("Something went wrong");
+      }
     } finally {
       setIsVerifying(false);
     }
@@ -131,13 +154,19 @@ export default function OtpForm() {
       setCanResend(false);
       setOtp(Array(6).fill(""));
       inputRefs.current[0]?.focus();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to resend OTP.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || "Failed to resend OTP.");
+      } else {
+        toast.error("Something went wrong");
+      }
     }
   };
 
   const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (seconds % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
@@ -149,15 +178,21 @@ export default function OtpForm() {
       <Toaster />
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-emerald-50 to-cyan-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 border border-teal-100">
-
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-200">
               <span className="text-2xl">🍃</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Verify Your Email</h1>
-            <p className="text-gray-500 text-sm">We've sent a 6-digit code to</p>
-            <p className="text-teal-600 font-semibold text-sm mt-1">{email}</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              Verify Your Email
+            </h1>
+            <p className="text-gray-500 text-sm">
+              We&apos;ve sent a 6-digit code to
+            </p>
+            <p className="text-teal-600 font-semibold text-sm mt-1 flex items-center justify-center gap-1">
+              <Mail className="w-4 h-4" />
+              {email}
+            </p>
           </div>
 
           {/* OTP Inputs */}
@@ -165,7 +200,10 @@ export default function OtpForm() {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest text-center mb-4">
               Enter Verification Code
             </p>
-            <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+            <div
+              className="flex justify-center gap-2 sm:gap-3"
+              onPaste={handlePaste}
+            >
               {otp.map((digit, i) => (
                 <input
                   key={i}
@@ -175,7 +213,9 @@ export default function OtpForm() {
                   value={digit}
                   onChange={(e) => handleChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, i)}
-                  ref={(el) => { inputRefs.current[i] = el; }}
+                  ref={(el) => {
+                    inputRefs.current[i] = el;
+                  }}
                   className={`w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold border-2 rounded-xl transition-all ${
                     digit
                       ? "border-teal-500 bg-teal-50 text-teal-700"
@@ -191,16 +231,24 @@ export default function OtpForm() {
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <div className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-teal-400" />
-                <span>{timer > 0 ? `Code expires in ${formatTime(timer)}` : "Code expired"}</span>
+                <span>
+                  {timer > 0
+                    ? `Code expires in ${formatTime(timer)}`
+                    : "Code expired"}
+                </span>
               </div>
-              <span className={`font-semibold tabular-nums ${timer > 20 ? "text-teal-600" : "text-red-500"}`}>
+              <span
+                className={`font-semibold tabular-nums ${timer > 20 ? "text-teal-600" : "text-red-500"}`}
+              >
                 {timer}s
               </span>
             </div>
             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className={`h-full rounded-full transition-all duration-1000 ease-linear ${
-                  timer > 20 ? "bg-gradient-to-r from-teal-400 to-emerald-500" : "bg-red-400"
+                  timer > 20
+                    ? "bg-gradient-to-r from-teal-400 to-emerald-500"
+                    : "bg-red-400"
                 }`}
                 style={{ width: `${(timer / 60) * 100}%` }}
               />
@@ -229,7 +277,9 @@ export default function OtpForm() {
 
           {/* Resend Section */}
           <div className="mt-5 text-center">
-            <p className="text-sm text-gray-500 mb-2">Didn't receive the code?</p>
+            <p className="text-sm text-gray-500 mb-2">
+              {"Didn't receive the code?"}
+            </p>
             <button
               onClick={handleResend}
               disabled={!canResend}
@@ -239,7 +289,9 @@ export default function OtpForm() {
                   : "text-gray-300 cursor-not-allowed"
               }`}
             >
-              <RotateCw className={`w-4 h-4 ${canResend ? "text-teal-500" : "text-gray-300"}`} />
+              <RotateCw
+                className={`w-4 h-4 ${canResend ? "text-teal-500" : "text-gray-300"}`}
+              />
               Resend Code
             </button>
           </div>
@@ -248,10 +300,10 @@ export default function OtpForm() {
           <div className="mt-6 flex items-start gap-2.5 bg-teal-50 border border-teal-100 rounded-xl p-3.5">
             <Shield className="w-4 h-4 text-teal-500 mt-0.5 shrink-0" />
             <p className="text-xs text-teal-700 leading-relaxed">
-              For your security, this code will expire in 1 minute. Never share this code with anyone.
+              For your security, this code will expire in 1 minute. Never share
+              this code with anyone.
             </p>
           </div>
-
         </div>
       </div>
     </>

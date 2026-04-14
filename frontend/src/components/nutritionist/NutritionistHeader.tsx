@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import {  Settings, Home,LayoutDashboard, Bell, User,LogOut, CheckCircle2 } from "lucide-react";
+import {
+  LayoutDashboard,
+  Bell,
+  User,
+  LogOut,
+  CheckCircle2,
+} from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { nutritionistAuthService } from "@/services/nutritionist/nutritionistAuth.service";
 
@@ -12,7 +18,6 @@ interface Notification {
   time: string;
   unread: boolean;
 }
-
 
 export default function NutritionistHeader() {
   const [name, setName] = useState<string>("");
@@ -50,20 +55,21 @@ export default function NutritionistHeader() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node))
+        setNotifOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node))
+        setMenuOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const unreadCount = notifications.filter((n) => n.unread).length;
 
   return (
     <header className="h-16 sm:h-20 bg-white/80 backdrop-blur-md border-b border-emerald-50 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-full">
-          
           {/* --- LEFT: Logo & Brand --- */}
           <div
             className="flex items-center gap-2 cursor-pointer group"
@@ -79,14 +85,15 @@ export default function NutritionistHeader() {
 
           {/* --- RIGHT: Tools & Profile --- */}
           <div className="flex items-center gap-1 sm:gap-4">
-
             {/* Home Icon */}
             <button
-             type="button"
-  aria-label="Remove feature"
+              type="button"
+              aria-label="Remove feature"
               onClick={() => router.push("/nutritionist/dashboard")}
               className={`p-2 sm:p-2.5 rounded-xl transition-all duration-200 ${
-                pathname === "/home" ? "bg-emerald-50 text-emerald-600 shadow-inner" : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+                pathname === "/home"
+                  ? "bg-emerald-50 text-emerald-600 shadow-inner"
+                  : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
               }`}
             >
               <LayoutDashboard className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -97,7 +104,9 @@ export default function NutritionistHeader() {
               <button
                 onClick={() => setNotifOpen(!notifOpen)}
                 className={`relative p-2 sm:p-2.5 rounded-xl transition-all duration-200 ${
-                  notifOpen ? "bg-emerald-50 text-emerald-600" : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
+                  notifOpen
+                    ? "bg-emerald-50 text-emerald-600"
+                    : "text-gray-400 hover:bg-emerald-50 hover:text-emerald-600"
                 }`}
               >
                 <Bell className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -109,23 +118,39 @@ export default function NutritionistHeader() {
               {notifOpen && (
                 <div className="absolute right-[-40px] sm:right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 bg-white shadow-2xl shadow-emerald-900/10 border border-emerald-50 rounded-[2rem] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-6 py-5 bg-emerald-50/40 border-b border-emerald-50 flex justify-between items-center">
-                    <h3 className="font-bold text-emerald-900">Notifications</h3>
-                    <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">{unreadCount} New</span>
+                    <h3 className="font-bold text-emerald-900">
+                      Notifications
+                    </h3>
+                    <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter">
+                      {unreadCount} New
+                    </span>
                   </div>
                   <div className="max-h-[60vh] overflow-y-auto">
                     {notifications.length === 0 ? (
                       <div className="p-12 text-center">
-                        <CheckCircle2 className="mx-auto text-emerald-100 mb-3" size={40} />
-                        <p className="text-sm font-medium text-gray-400">All caught up!</p>
+                        <CheckCircle2
+                          className="mx-auto text-emerald-100 mb-3"
+                          size={40}
+                        />
+                        <p className="text-sm font-medium text-gray-400">
+                          All caught up!
+                        </p>
                       </div>
                     ) : (
-                      notifications.map(notif => (
-                        <div key={notif.id} className="group p-5 border-b border-gray-50 hover:bg-emerald-50/30 transition-colors flex gap-4 cursor-pointer">
-                           <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                           <div>
-                            <p className="text-sm text-gray-700 font-medium group-hover:text-emerald-900">{notif.text}</p>
-                            <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-tight">{notif.time}</p>
-                           </div>
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          className="group p-5 border-b border-gray-50 hover:bg-emerald-50/30 transition-colors flex gap-4 cursor-pointer"
+                        >
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                          <div>
+                            <p className="text-sm text-gray-700 font-medium group-hover:text-emerald-900">
+                              {notif.text}
+                            </p>
+                            <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-tight">
+                              {notif.time}
+                            </p>
+                          </div>
                         </div>
                       ))
                     )}
@@ -144,7 +169,9 @@ export default function NutritionistHeader() {
                   <p className="text-xs font-black text-gray-900 truncate w-24 uppercase tracking-tighter">
                     {name ? `Dr. ${name}` : "Nutritionist"}
                   </p>
-                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Expert</p>
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                    Expert
+                  </p>
                 </div>
                 <div className="relative w-9 h-9 sm:w-11 sm:h-11">
                   <Image
@@ -161,26 +188,26 @@ export default function NutritionistHeader() {
               {menuOpen && (
                 <div className="absolute right-0 mt-3 w-64 bg-white shadow-2xl shadow-emerald-900/20 border border-emerald-50 rounded-[1.5rem] overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="p-5 border-b border-emerald-50 bg-emerald-50/20">
-                    <p className="font-black text-sm text-gray-900 uppercase tracking-tighter leading-none">{name}</p>
-                    <p className="text-[11px] text-emerald-600 font-bold mt-1 truncate">{email}</p>
+                    <p className="font-black text-sm text-gray-900 uppercase tracking-tighter leading-none">
+                      {name}
+                    </p>
+                    <p className="text-[11px] text-emerald-600 font-bold mt-1 truncate">
+                      {email}
+                    </p>
                   </div>
                   <div className="p-2">
-                    <button 
-                       onClick={() => { router.push("/nutritionist/profile"); setMenuOpen(false); }}
-                       className="w-full text-left px-4 py-3 hover:bg-emerald-50 rounded-xl flex items-center gap-3 text-sm font-bold text-gray-700 transition-colors"
+                    <button
+                      onClick={() => {
+                        router.push("/nutritionist/profile");
+                        setMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-emerald-50 rounded-xl flex items-center gap-3 text-sm font-bold text-gray-700 transition-colors"
                     >
                       <User className="h-4 w-4 text-emerald-600" /> My Profile
                     </button>
-                    <button 
-                       onClick={() => { router.push("/nutritionist/settings"); setMenuOpen(false); }}
-                       className="w-full text-left px-4 py-3 hover:bg-emerald-50 rounded-xl flex items-center gap-3 text-sm font-bold text-gray-700 transition-colors"
-                    >
-                      <Settings className="h-4 w-4 text-emerald-600" /> Settings
-                    </button>
+                    
                     <div className="my-1 border-t border-emerald-50" />
-                    <button 
-                       className="w-full text-left px-4 py-3 hover:bg-rose-50 rounded-xl flex items-center gap-3 text-sm font-bold text-rose-600 transition-colors"
-                    >
+                    <button className="w-full text-left px-4 py-3 hover:bg-rose-50 rounded-xl flex items-center gap-3 text-sm font-bold text-rose-600 transition-colors">
                       <LogOut className="h-4 w-4" /> Log out
                     </button>
                   </div>

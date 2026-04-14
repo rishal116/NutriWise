@@ -100,7 +100,6 @@ export interface ProgramDayResponseDTO {
   updatedAt: Date;
 }
 
-
 export interface CreateProgramDayDTO {
   userProgramId: string;
   dayNumber: number;

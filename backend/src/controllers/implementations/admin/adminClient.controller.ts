@@ -4,7 +4,6 @@ import { IAdminClientService } from "../../../services/interfaces/admin/IAdminCl
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
-import logger from "../../../utils/logger";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { ADMIN_CLIENT_MESSAGES } from "../../../constants";
 
@@ -12,9 +11,9 @@ import { ADMIN_CLIENT_MESSAGES } from "../../../constants";
 export class AdminClientController implements IAdminClientController {
   constructor(
     @inject(TYPES.IAdminClientService)
-    private _adminClientService: IAdminClientService
+    private _adminClientService: IAdminClientService,
   ) {}
-  
+
   getAllUsers = asyncHandler(async (req: Request, res: Response) => {
     const pageNumber = Number(req.query.page) || 1;
     const pageLimit = Number(req.query.limit) || 10;
@@ -22,7 +21,7 @@ export class AdminClientController implements IAdminClientController {
     const usersResult = await this._adminClientService.getAllUsers(
       pageNumber,
       pageLimit,
-      searchKeyword
+      searchKeyword,
     );
     return res.status(StatusCode.OK).json({
       success: true,
@@ -30,7 +29,7 @@ export class AdminClientController implements IAdminClientController {
       data: usersResult,
     });
   });
-  
+
   blockUser = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     await this._adminClientService.blockUser(userId);
@@ -39,7 +38,7 @@ export class AdminClientController implements IAdminClientController {
       message: ADMIN_CLIENT_MESSAGES.ACCOUNT_BLOCK_SUCCESS,
     });
   });
-  
+
   unblockUser = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     await this._adminClientService.unblockUser(userId);
@@ -48,5 +47,4 @@ export class AdminClientController implements IAdminClientController {
       message: ADMIN_CLIENT_MESSAGES.ACCOUNT_UNBLOCK_SUCCESS,
     });
   });
-  
 }

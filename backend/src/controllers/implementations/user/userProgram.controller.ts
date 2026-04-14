@@ -10,49 +10,30 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 export class UserProgramController implements IUserProgramController {
   constructor(
     @inject(TYPES.IUserProgramService)
-    private _userProgramService: IUserProgramService
+    private _userProgramService: IUserProgramService,
   ) {}
-
-  getPrograms = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user?.userId!;
-    const programs = await this._userProgramService.getPrograms(userId);
-    res.status(StatusCode.OK).json({success: true,data: programs});
-  });
-
-  getProgramDetails = asyncHandler(async (req: Request, res: Response) => {
-    const { programId } = req.params;
-    const userId = req.user?.userId!;
-
-    const program = await this._userProgramService.getProgramDetails(
-      programId,
-      userId
-    );
-
-    res.status(StatusCode.OK).json({success: true,data: program});
-  });
 
   getProgramDays = asyncHandler(async (req: Request, res: Response) => {
     const { programId } = req.params;
-    const userId = req.user?.userId!;
+    const userId = req.user!.userId;
 
     const days = await this._userProgramService.getProgramDays(
       programId,
-      userId
+      userId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data:days});
+    res.status(StatusCode.OK).json({ success: true, data: days });
   });
 
-  getProgramDayDetails = asyncHandler(async (req: Request, res: Response) => {
-    const { dayId } = req.params;
-    const userId = req.user?.userId!;
+  getProgramDayByNumber = asyncHandler(async (req: Request, res: Response) => {
+    const { dayNumber } = req.params;
+    const { programId } = req.params;
 
-    const day = await this._userProgramService.getProgramDayDetails(
-      dayId,
-      userId
+    const day = await this._userProgramService.getProgramDayByNumber(
+      Number(dayNumber),
+      programId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data: day});
+    res.status(StatusCode.OK).json({ success: true, data: day });
   });
-
 }

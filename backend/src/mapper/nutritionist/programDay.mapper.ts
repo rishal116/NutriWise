@@ -9,6 +9,7 @@ export class ProgramDayMapper {
       dayNumber: day.dayNumber,
 
       meals: day.meals?.map((m) => ({
+        _id:m._id,
         mealType: m.mealType,
         title: m.title,
         description: m.description,
@@ -16,12 +17,14 @@ export class ProgramDayMapper {
       })),
 
       workouts: day.workouts?.map((w) => ({
+        _id:w._id,
         title: w.title,
         duration: w.duration,
         instructions: w.instructions,
       })),
 
       habits: day.habits?.map((h) => ({
+        _id:h._id,
         title: h.title,
         targetValue: h.targetValue,
         unit: h.unit,

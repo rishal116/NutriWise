@@ -18,6 +18,8 @@ import {
   NUTRITIONIST_SPECIALIZATIONS,
 } from "../../../constants/nutritionist/nutritionistDetails.constants";
 import { userAuthService } from "@/services/user/userAuth.service";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 interface Experience {
   role: string;
@@ -45,6 +47,7 @@ const [certUrls, setCertUrls] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const router = useRouter();
+  const token = useSelector((state: RootState) => state.auth.token);
   
 useEffect(() => {
   const initialize = async () => {
@@ -202,7 +205,7 @@ certFiles.forEach((file, index) => {
     if (!validateAll()) { setLoading(false); return; }
 
     try {
-      const token = localStorage.getItem("token");
+      
       if (!token) return setMessage("❌ User not found");
 
       const formData = new FormData();
@@ -219,10 +222,12 @@ certFiles.forEach((file, index) => {
       if (cvFile) formData.append("cv", cvFile);
       certFiles.forEach(file => formData.append("certifications", file));
 
-      await nutritionistAuthService.submitDetails(formData);
+      await nutritionistAuthService.submitDetails(formData,token);
       setMessage("✔ Profile submitted successfully!");
       router.push("/home");
     } catch (error) {
+      console.log(error);
+      
       setMessage("❌ Something went wrong");
     } finally {
       setLoading(false);

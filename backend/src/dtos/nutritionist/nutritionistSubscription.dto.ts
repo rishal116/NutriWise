@@ -1,7 +1,7 @@
-export interface NutritionistSubscriberDTO {
+export interface NutritionistSubscriptionDTO {
   id: string;
 
-  user: {
+  user : {
     id: string;
     name: string;
     email: string;
@@ -14,7 +14,7 @@ export interface NutritionistSubscriberDTO {
     durationInDays: number;
   };
 
-  status: "ACTIVE" | "EXPIRED" | "CANCELLED";
+  status: "ACTIVE" | "EXPIRED" | "CANCELLED" | "PENDING";
   startDate: Date;
   endDate: Date;
 }

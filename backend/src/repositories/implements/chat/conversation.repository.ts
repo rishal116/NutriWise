@@ -1,8 +1,11 @@
 import { BaseRepository } from "../common/base.repository";
 import { IConversationRepository } from "../../interfaces/chat/IConversationRepository";
-import { ConversationModel, IConversation } from "../../../models/conversation.model";
+import {
+  ConversationModel,
+  IConversation,
+} from "../../../models/conversation.model";
 import { Types } from "mongoose";
-
+import { ConversationMemberModel } from "../../../models/conversationMember.model";
 
 export class ConversationRepository
   extends BaseRepository<IConversation>
@@ -12,22 +15,52 @@ export class ConversationRepository
     super(ConversationModel);
   }
 
-  async findByDirectKey(
-    key: string
-  ): Promise<IConversation | null> {
+  async findByDirectKey(key: string): Promise<IConversation | null> {
     return this._model
-      .findOne({ directKey: key })
-      .lean<IConversation | null>();
+      .findOne({
+        directKey: key,
+        isDeleted: false,
+      })
+      .lean<IConversation | null>()
+      .exec();
   }
 
-  async findUserConversations(
-    userId: string
-  ): Promise<IConversation[]> {
-    
+  async findUserConversations(userId: string): Promise<IConversation[]> {
+    const memberships = await ConversationMemberModel.find({
+      userId: new Types.ObjectId(userId),
+    })
+      .select("conversationId")
+      .lean()
+      .exec();
+
+    const conversationIds = memberships.map((m) => m.conversationId);
+
+    if (conversationIds.length === 0) return [];
+
     return this._model
-      .find({ participants: new Types.ObjectId(userId) })
+      .find({
+        _id: { $in: conversationIds },
+        isDeleted: false,
+      })
       .sort({ lastMessageAt: -1 })
-      .lean<IConversation[]>();
+      .lean<IConversation[]>()
+      .exec();
   }
 
+  async findByIdsPaginated(
+    ids: string[],
+    limit: number,
+    skip: number,
+  ): Promise<IConversation[]> {
+    return this._model
+      .find({
+        _id: { $in: ids.map((id) => new Types.ObjectId(id)) },
+        isDeleted: false,
+      })
+      .sort({ lastMessageAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean<IConversation[]>()
+      .exec();
+  }
 }

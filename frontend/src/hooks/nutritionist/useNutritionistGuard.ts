@@ -11,6 +11,8 @@ export const useNutritionistGuard = () => {
     const checkAccess = async () => {
       try {
         const { user } = await userAuthService.getMe();
+        console.log(user);
+        
 
         if (user.role !== "nutritionist") {
           router.replace("/unauthorized");

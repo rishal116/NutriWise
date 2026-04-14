@@ -1,14 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useWebRTC } from "@/hooks/common/useWebRTC";
-import { useParams } from "next/navigation";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Play, Smile, Heart, ThumbsUp } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import {
+  Mic,
+  MicOff,
+  Video,
+  VideoOff,
+  PhoneOff,
+  Play,
+  Smile,
+} from "lucide-react";
+import { nutritionistMeetService } from "@/services/nutritionist/nutritionistMeet.service";
 
 const VideoCallPage = () => {
   const params = useParams();
-  const roomId = (params.id || params.roomId) as string;
+  const router = useRouter();
+  const roomId = params?.roomId as string;
+
   const [showReactions, setShowReactions] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const reactions = useMemo(() => ["💖", "👍", "👏", "😂", "🔥"], []);
 
   const {
     localVideoRef,
@@ -22,102 +35,122 @@ const VideoCallPage = () => {
     isJoined,
     hasRemoteStream,
   } = useWebRTC(roomId);
-  console.log("local video: ",localVideoRef);
 
-  console.log("remote video: ",remoteVideoRef);
-  
+  const handleJoin = async () => {
+    setJoining(true);
 
-  // Reaction Handler (Requires socket implementation in hook)
-  const sendReaction = (emoji: string) => {
-    console.log("Sending reaction:", emoji);
-    // socketRef.current.emit("reaction", { roomId, emoji });
-    setShowReactions(false);
+  try {
+   await nutritionistMeetService.updateMeetingStatus(roomId, "ongoing");
+
+
+
+    await startCall();
+  } catch (err) {
+    console.error(err);
+  }
+
+  setJoining(false);
   };
 
+  const handleLeave =  async () => {
+
+  endCall();
+  router.back();
+  };
+
+  if (!roomId) return null;
+
   return (
-    <div className="w-full h-screen bg-neutral-950 flex flex-col items-center justify-center overflow-hidden font-sans">
+    <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden font-sans selection:bg-emerald-500/30">
       
-      {/* Video Grid Container */}
-      <div className={`relative w-full h-full p-4 gap-4 flex flex-col md:flex-row items-center justify-center transition-all duration-500 ${hasRemoteStream ? "bg-black" : "bg-neutral-900"}`}>
+      {/* MINIMAL TOP INFO */}
+      <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900/60 backdrop-blur-md border border-white/5 rounded-xl">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-[11px] font-mono text-emerald-50/70 tracking-wider uppercase">{roomId}</span>
+        </div>
+      </div>
+
+      {/* VIDEO LAYOUT */}
+      <div className="relative w-full h-full p-4 flex flex-col md:flex-row items-center justify-center gap-4">
         
-        {/* Local Video Card */}
-        <div className={`relative overflow-hidden rounded-2xl border border-white/10 shadow-2xl transition-all duration-500 ease-in-out ${
-          hasRemoteStream 
-            ? "w-full md:w-1/2 h-1/2 md:h-[80%]" // Split view
-            : "w-full md:w-[80%] h-[80%] max-w-5xl" // Full screen (solo)
+        {/* LOCAL FEED */}
+        <div className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-900 transition-all duration-500 shadow-2xl ${
+            hasRemoteStream ? "w-full md:w-1/2 h-1/2 md:h-[70%]" : "w-full max-w-5xl h-[80%]"
         }`}>
           <video
             ref={localVideoRef}
             autoPlay
             muted
             playsInline
-            className={`w-full h-full object-cover mirror ${!isVideoOn ? 'hidden' : 'block'}`}
+            className={`w-full h-full object-cover scale-x-[-1] ${!isVideoOn ? "opacity-0" : "opacity-100"}`}
           />
           {!isVideoOn && (
-            <div className="w-full h-full flex items-center justify-center bg-neutral-800 text-neutral-400">
-              <div className="text-center">
-                <div className="w-20 h-20 bg-neutral-700 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <VideoOff size={32} />
-                </div>
-                <p>Your camera is off</p>
-              </div>
+            <div className="absolute inset-0 flex items-center justify-center bg-neutral-800">
+              <VideoOff size={32} className="text-neutral-600" />
             </div>
           )}
-          <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg text-sm text-white">
-            You { !isAudioOn && "• Muted" }
+          <div className="absolute bottom-4 left-4 text-[10px] font-bold text-white/50 uppercase tracking-widest bg-black/20 px-2 py-1 rounded">
+            You
           </div>
         </div>
 
-        {/* Remote Video Card */}
-        {hasRemoteStream && (
-          <div className="relative w-full md:w-1/2 h-1/2 md:h-[80%] overflow-hidden rounded-2xl border border-white/10 shadow-2xl bg-neutral-800">
-            <video
-  ref={remoteVideoRef}
-  autoPlay
-  playsInline
-  className={`w-full h-full object-cover ${
-    hasRemoteStream ? "block" : "hidden"
-  }`}
-/>
-            <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg text-sm text-white">
-              Remote Participant
-            </div>
+        {/* REMOTE FEED */}
+        <div className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-950 transition-all duration-500 ${
+            hasRemoteStream ? "w-full md:w-1/2 h-1/2 md:h-[70%]" : "hidden"
+        }`}>
+          <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+          <div className="absolute bottom-4 left-4 text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded">
+            Partner
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Control Bar */}
-      <div className="absolute bottom-8 flex items-center gap-3 px-6 py-4 bg-neutral-900/90 backdrop-blur-2xl border border-white/10 rounded-full shadow-2xl z-50">
+      {/* SLIM CONTROL BAR */}
+      <div className="absolute bottom-8 flex items-center gap-2 px-3 py-2 bg-neutral-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl z-50">
         {!isJoined ? (
-          <button onClick={startCall} className="flex items-center gap-2 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition-all font-semibold">
-            <Play size={20} fill="currentColor" /> Ready to Join?
+          <button
+            onClick={handleJoin}
+            disabled={joining}
+            className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all text-sm font-bold disabled:opacity-50"
+          >
+            {joining ? "..." : <Play size={16} fill="currentColor" />}
+            {joining ? "Joining" : "Join"}
           </button>
         ) : (
           <>
-            <button onClick={toggleAudio} className={`p-3.5 rounded-full transition-all ${isAudioOn ? "bg-neutral-800 hover:bg-neutral-700" : "bg-red-500"}`}>
-              {isAudioOn ? <Mic size={22} /> : <MicOff size={22} />}
+            <button
+              onClick={toggleAudio}
+              className={`p-2.5 rounded-xl transition-colors ${
+                isAudioOn ? "text-neutral-400 hover:bg-neutral-800 hover:text-white" : "bg-red-500/20 text-red-500"
+              }`}
+            >
+              {isAudioOn ? <Mic size={20} /> : <MicOff size={20} />}
             </button>
 
-            <button onClick={toggleVideo} className={`p-3.5 rounded-full transition-all ${isVideoOn ? "bg-neutral-800 hover:bg-neutral-700" : "bg-red-500"}`}>
-              {isVideoOn ? <Video size={22} /> : <VideoOff size={22} />}
+            <button
+              onClick={toggleVideo}
+              className={`p-2.5 rounded-xl transition-colors ${
+                isVideoOn ? "text-neutral-400 hover:bg-neutral-800 hover:text-white" : "bg-red-500/20 text-red-500"
+              }`}
+            >
+              {isVideoOn ? <Video size={20} /> : <VideoOff size={20} />}
             </button>
 
-            {/* Reactions Menu */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowReactions(!showReactions)}
-                className="p-3.5 bg-neutral-800 hover:bg-neutral-700 rounded-full transition-all text-yellow-400"
+                className={`p-2.5 rounded-xl transition-colors ${showReactions ? "bg-emerald-600/20 text-emerald-400" : "text-neutral-400 hover:bg-neutral-800"}`}
               >
-                <Smile size={22} />
+                <Smile size={20} />
               </button>
-              
               {showReactions && (
-                <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2 bg-neutral-800 p-2 rounded-2xl border border-white/10 animate-in fade-in slide-in-from-bottom-4">
-                  {['💖', '👍', '👏', '😂', '🔥'].map(emoji => (
-                    <button 
+                <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-1 bg-neutral-900 border border-white/10 p-1.5 rounded-xl shadow-2xl">
+                  {reactions.map((emoji) => (
+                    <button
                       key={emoji}
-                      onClick={() => sendReaction(emoji)}
-                      className="hover:scale-125 transition-transform text-2xl p-1"
+                      onClick={() => { console.log(emoji); setShowReactions(false); }}
+                      className="p-1.5 hover:bg-white/5 rounded-lg text-lg transition-transform hover:scale-125"
                     >
                       {emoji}
                     </button>
@@ -126,19 +159,16 @@ const VideoCallPage = () => {
               )}
             </div>
 
-            <div className="w-[1px] h-6 bg-neutral-700 mx-1" />
+            <div className="w-[1px] h-5 bg-white/10 mx-1" />
 
-            <button onClick={endCall} className="p-3.5 bg-red-600 hover:bg-red-500 text-white rounded-full transition-all rotate-[135deg]">
-              <PhoneOff size={22} />
+            <button
+              onClick={handleLeave}
+              className="p-2.5 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all"
+            >
+              <PhoneOff size={20} />
             </button>
           </>
         )}
-      </div>
-
-      {/* Info Overlay */}
-      <div className="absolute top-6 left-6 text-neutral-400 text-sm font-medium flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-        Meeting ID: <span className="text-white select-all">{roomId}</span>
       </div>
     </div>
   );

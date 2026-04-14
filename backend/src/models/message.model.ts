@@ -5,37 +5,38 @@ export enum MessageType {
   IMAGE = "image",
   FILE = "file",
   VIDEO = "video",
+  SYSTEM = "system",
 }
 
-export enum DeliveryStatus {
-  SENT = "sent",
-  DELIVERED = "delivered",
-  SEEN = "seen",
+export type MessageStatus = "active" | "edited" | "deleted";
+
+interface IAttachment {
+  url: string;
+  fileName?: string;
+  size?: number;
+  mimeType?: string;
 }
 
 export interface IMessage extends Document {
   _id: Types.ObjectId;
+
   conversationId: Types.ObjectId;
   senderId: Types.ObjectId;
+
   text?: string;
-  fileUrl?: string;
+  attachments?: IAttachment[];
+
   messageType: MessageType;
+
   replyTo?: Types.ObjectId;
-  isEdited: boolean;
+
+  status: MessageStatus;
+
+  senderRole?: "user" | "nutritionist";
+
   editedAt?: Date;
-  deliveryStatus: DeliveryStatus;
-  reactions?: {
-    userId: Types.ObjectId;
-    emoji: string;
-  }[];
-  mediaMeta?: {
-    size?: number;
-    duration?: number;
-    width?: number;
-    height?: number;
-  };
-  isCoachMessage: boolean;
-  isDeleted: boolean;
+  deletedAt?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,8 +57,23 @@ const messageSchema = new Schema<IMessage>(
       index: true,
     },
 
-    text: String,
-    fileUrl: String,
+    text: {
+      type: String,
+      trim: true,
+      maxlength: 5000,
+    },
+
+    attachments: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        fileName: String,
+        size: Number,
+        mimeType: String,
+      },
+    ],
 
     messageType: {
       type: String,
@@ -69,82 +85,54 @@ const messageSchema = new Schema<IMessage>(
     replyTo: {
       type: Schema.Types.ObjectId,
       ref: "Message",
-      index: true,
     },
 
-    deliveryStatus: {
+    status: {
       type: String,
-      enum: Object.values(DeliveryStatus),
-      default: DeliveryStatus.SENT,
+      enum: ["active", "edited", "deleted"],
+      default: "active",
       index: true,
     },
 
-    reactions: [
-      {
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        emoji: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
-
-    mediaMeta: {
-      size: Number,
-      duration: Number,
-      width: Number,
-      height: Number,
+    senderRole: {
+      type: String,
+      enum: ["user", "nutritionist"],
     },
 
-    isCoachMessage: {
-      type: Boolean,
-      default: false,
-      index: true,
+    editedAt: {
+      type: Date,
     },
 
-    isEdited: {
-      type: Boolean,
-      default: false,
-    },
-
-    editedAt: Date,
-
-    isDeleted: {
-      type: Boolean,
-      default: false,
-      index: true,
+    deletedAt: {
+      type: Date,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-
 messageSchema.pre("validate", function (next) {
-  if (this.isDeleted) return next();
-
-  const hasText = !!this.text?.trim();
-  const hasFile = !!this.fileUrl?.trim();
-
-  if (this.messageType === MessageType.TEXT && !hasText) {
-    return next(new Error("Text message must contain text"));
+  if (!this.text && (!this.attachments || this.attachments.length === 0)) {
+    return next(new Error("Message must contain text or attachment"));
   }
-
-  if (this.messageType !== MessageType.TEXT && !hasFile) {
-    return next(new Error("Media message must contain fileUrl"));
-  }
-
   next();
 });
 
 messageSchema.index(
   { conversationId: 1, createdAt: -1 },
-  { partialFilterExpression: { isDeleted: false } }
+  {
+    partialFilterExpression: { status: { $ne: "deleted" } },
+  }
 );
 
-messageSchema.index({ replyTo: 1, createdAt: 1 });
+messageSchema.index({
+  conversationId: 1,
+  senderId: 1,
+});
+
+messageSchema.index({
+  replyTo: 1,
+});
 
 export const MessageModel = model<IMessage>("Message", messageSchema);

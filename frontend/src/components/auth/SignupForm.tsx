@@ -11,6 +11,9 @@ import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
 import { useEffect } from "react";
+import { RootState } from "@/redux/store";
+import { useSelector } from "react-redux";
+import Link from "next/link";
 
 
 type Role = "client" | "nutritionist";
@@ -36,12 +39,13 @@ export default function SignupForm() {
     role: "client",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.replace("/home");
-    }
-  }, [router]);
+const token = useSelector((state: RootState) => state.auth.token);
+
+useEffect(() => {
+  if (token) {
+    router.replace("/home");
+  }
+}, [token, router]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -93,7 +97,12 @@ export default function SignupForm() {
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
-      const decoded: any = jwtDecode(credentialResponse.credential!);
+      if (!credentialResponse?.credential) {
+  toast.error("Google authentication failed");
+  return;
+}
+
+const decoded: any = jwtDecode(credentialResponse.credential);
       const selectedRole = formData.role;
       if (!selectedRole) {
         toast.error("Please select whether you're a client or a nutritionist before continuing.");
@@ -109,9 +118,8 @@ export default function SignupForm() {
       const response = await userAuthService.googleSignup(payload);
       if (response.success) {
         const { user, accessToken } = response;
-        localStorage.setItem("token", accessToken);
-        sessionStorage.setItem("tempUser", JSON.stringify({ email: user.email, role: user.role }));
-        dispatch(loginSuccess());
+        dispatch(loginSuccess(accessToken));
+        sessionStorage.setItem("tempUser",JSON.stringify({ email: user.email, role: user.role }));
         if (user.isBlocked) {
           toast.error("Your account has been blocked. Please contact support.");
           return;
@@ -391,12 +399,12 @@ export default function SignupForm() {
         {/* Footer */}
         <p className="text-center text-xs sm:text-sm text-gray-600 mt-5 sm:mt-6">
           Already have an account?{" "}
-          <a
-            href="/login"
-            className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
-          >
-            Sign In
-          </a>
+        <Link
+  href="/login"
+  className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+>
+  Sign In
+</Link>
         </p>
       </div>
     </div>

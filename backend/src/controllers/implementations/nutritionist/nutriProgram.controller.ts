@@ -10,84 +10,85 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 export class NutriProgramController implements INutriProgramController {
   constructor(
     @inject(TYPES.INutriProgramService)
-    private _nutriProgramService: INutriProgramService
+    private _nutriProgramService: INutriProgramService,
   ) {}
 
   getPrograms = asyncHandler(async (req: Request, res: Response) => {
-    const nutritionistId = req.user?.userId!;
-    const programs = await this._nutriProgramService.getPrograms(nutritionistId);
-    res.status(StatusCode.OK).json({success: true,data: programs});
+    const nutritionistId = req.user!.userId;
+    const programs =
+      await this._nutriProgramService.getPrograms(nutritionistId);
+    res.status(StatusCode.OK).json({ success: true, data: programs });
   });
 
   getProgramDetails = asyncHandler(async (req: Request, res: Response) => {
     const { programId } = req.params;
-    const nutritionistId = req.user?.userId!;
+    const nutritionistId = req.user!.userId;
 
     const program = await this._nutriProgramService.getProgramDetails(
       programId,
-      nutritionistId
+      nutritionistId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data: program});
+    res.status(StatusCode.OK).json({ success: true, data: program });
   });
 
   getProgramDays = asyncHandler(async (req: Request, res: Response) => {
     const { programId } = req.params;
-    const nutritionistId = req.user?.userId!;
+    const nutritionistId = req.user!.userId;
 
     const days = await this._nutriProgramService.getProgramDays(
       programId,
-      nutritionistId
+      nutritionistId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data:days});
+    res.status(StatusCode.OK).json({ success: true, data: days });
   });
 
   getProgramDayDetails = asyncHandler(async (req: Request, res: Response) => {
     const { dayId } = req.params;
-    const nutritionistId = req.user?.userId!;
+    const nutritionistId = req.user!.userId;
 
     const day = await this._nutriProgramService.getProgramDayDetails(
       dayId,
-      nutritionistId
+      nutritionistId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data: day});
+    res.status(StatusCode.OK).json({ success: true, data: day });
   });
 
   createProgramDay = asyncHandler(async (req: Request, res: Response) => {
     const { programId } = req.params;
-    const nutritionistId = req.user?.userId!;
+    const nutritionistId = req.user!.userId;
 
     const day = await this._nutriProgramService.createProgramDay(
       {
         ...req.body,
         userProgramId: programId,
       },
-      nutritionistId
+      nutritionistId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data: day});
+    res.status(StatusCode.OK).json({ success: true, data: day });
   });
 
   updateProgramDay = asyncHandler(async (req: Request, res: Response) => {
     const { dayId } = req.params;
-    const nutritionistId = req.user?.userId!;
+    const nutritionistId = req.user!.userId;
 
     const updated = await this._nutriProgramService.updateProgramDay(
       dayId,
       req.body,
-      nutritionistId
+      nutritionistId,
     );
 
-    res.status(StatusCode.OK).json({success: true,data: updated});
+    res.status(StatusCode.OK).json({ success: true, data: updated });
   });
 
   deleteProgramDay = asyncHandler(async (req: Request, res: Response) => {
     const { dayId } = req.params;
-    const nutritionistId = req.user?.userId!;
+    const nutritionistId = req.user!.userId;
 
     await this._nutriProgramService.deleteProgramDay(dayId, nutritionistId);
-    res.status(StatusCode.NO_CONTENT).send()
+    res.status(StatusCode.NO_CONTENT).send();
   });
 }

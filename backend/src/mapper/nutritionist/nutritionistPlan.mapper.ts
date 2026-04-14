@@ -1,4 +1,3 @@
-import { INutritionistProfile } from "../../models/nutritionistProfile.model";
 import { PlanDTO } from "../../dtos/nutritionist/nutritionsitPlan.dto";
 import { IPlan } from "../../models/nutritionistPlan.model";
 
@@ -14,6 +13,8 @@ export function toPlanDTO(plan: IPlan): PlanDTO {
     price: plan.price,
     description: plan.description,
     features: plan.features || [],
+    tags: plan.tags || [],
+    thumbnailUrl: plan.thumbnailUrl || "",
     status: plan.status,
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt,

@@ -2,7 +2,18 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, ChevronRight, Home, Users, Menu, X, Award, Heart, Star, TrendingUp } from "lucide-react";
+import {
+  Search,
+  ChevronRight,
+  Home,
+  Users,
+  Menu,
+  X,
+  Award,
+  Heart,
+  Star,
+  TrendingUp,
+} from "lucide-react";
 import Sidebar from "@/components/ui/nutritionists/SideBar";
 import NutritionistCard from "@/components/ui/nutritionists/NutritionistCard";
 import { nutritionistListService } from "@/services/user/nutritionistList.service";
@@ -25,7 +36,7 @@ export default function NutritionistsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState(search);
 
   const [page, setPage] = useState(1);
-  const limit = 4; // Exactly 4 cards per page
+  const limit = 4; 
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
@@ -89,12 +100,11 @@ export default function NutritionistsPage() {
     { icon: Users, number: "50+", label: "Expert Nutritionists" },
     { icon: Award, number: "10K+", label: "People Coached" },
     { icon: Star, number: "4.9", label: "Average Rating" },
-    { icon: Heart, number: "95%", label: "Success Rate" }
+    { icon: Heart, number: "95%", label: "Success Rate" },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
-      
       {/* HERO BANNER SECTION */}
       <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-16 sm:py-20 lg:py-24">
         {/* Background Decorations */}
@@ -108,7 +118,9 @@ export default function NutritionistsPage() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
               <TrendingUp className="w-4 h-4 text-emerald-600" />
-              <span className="text-sm font-semibold text-emerald-700">Expert Guidance</span>
+              <span className="text-sm font-semibold text-emerald-700">
+                Expert Guidance
+              </span>
             </div>
 
             {/* Title */}
@@ -121,14 +133,18 @@ export default function NutritionistsPage() {
 
             {/* Description */}
             <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-8">
-              Connect with certified nutritionists who specialize in your health goals. Get personalized plans, expert guidance, and achieve lasting results.
+              Connect with certified nutritionists who specialize in your health
+              goals. Get personalized plans, expert guidance, and achieve
+              lasting results.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button 
+              <button
                 onClick={() => {
-                  document.getElementById('nutritionists-section')?.scrollIntoView({ behavior: 'smooth' });
+                  document
+                    .getElementById("nutritionists-section")
+                    ?.scrollIntoView({ behavior: "smooth" });
                 }}
                 className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold rounded-full transition-all transform hover:scale-105 shadow-xl hover:shadow-2xl"
               >
@@ -150,9 +166,7 @@ export default function NutritionistsPage() {
                 <div className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">
                   {stat.number}
                 </div>
-                <div className="text-sm text-gray-600">
-                  {stat.label}
-                </div>
+                <div className="text-sm text-gray-600">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -161,7 +175,6 @@ export default function NutritionistsPage() {
 
       {/* NUTRITIONISTS SECTION */}
       <div id="nutritionists-section" className="flex">
-        
         {/* Sidebar - Desktop */}
         <div className="hidden lg:block border-r border-slate-200 bg-white shadow-sm">
           <Sidebar
@@ -173,13 +186,15 @@ export default function NutritionistsPage() {
         {/* Sidebar - Mobile Overlay */}
         {sidebarOpen && (
           <>
-            <div 
+            <div
               className="fixed inset-0 bg-black/50 z-40 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             />
             <div className="fixed inset-y-0 left-0 w-80 z-50 lg:hidden animate-slide-in">
               <Sidebar
-                selected={filters.specializations ? [filters.specializations] : []}
+                selected={
+                  filters.specializations ? [filters.specializations] : []
+                }
                 onSelect={handleSelectSpecialization}
               />
             </div>
@@ -187,7 +202,6 @@ export default function NutritionistsPage() {
         )}
 
         <main className="flex-1 px-4 sm:px-6 lg:px-8 xl:px-14 py-6 sm:py-8 lg:py-10 overflow-y-auto">
-
           {/* Mobile Filter Button */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -196,7 +210,9 @@ export default function NutritionistsPage() {
             <Menu size={20} />
             <span>Filters</span>
             {filters.specializations && (
-              <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs">1</span>
+              <span className="ml-1 px-2 py-0.5 bg-white/20 rounded-full text-xs">
+                1
+              </span>
             )}
           </button>
 
@@ -207,7 +223,9 @@ export default function NutritionistsPage() {
                 {breadcrumbs.map((label, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <span
-                      onClick={() => label === "Homepage" && router.push("/home")}
+                      onClick={() =>
+                        label === "Homepage" && router.push("/home")
+                      }
                       className={`${
                         label === "Homepage"
                           ? "hover:text-emerald-600 cursor-pointer flex items-center gap-1"
@@ -266,13 +284,14 @@ export default function NutritionistsPage() {
               <span className="text-sm text-slate-600">Active filter:</span>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-full text-sm font-medium text-emerald-700">
                 {filters.specializations}
-                <button onClick={() => handleSelectSpecialization("")}
-  className="hover:text-emerald-900 transition-colors"
-  aria-label="Clear specialization filter" // This solves the error
-  title="Clear filter"
->
-  <X size={14} />
-</button>
+                <button
+                  onClick={() => handleSelectSpecialization("")}
+                  className="hover:text-emerald-900 transition-colors"
+                  aria-label="Clear specialization filter" // This solves the error
+                  title="Clear filter"
+                >
+                  <X size={14} />
+                </button>
               </div>
             </div>
           )}
@@ -325,7 +344,9 @@ export default function NutritionistsPage() {
                   key={i}
                   onClick={() => {
                     setPage(i + 1);
-                    document.getElementById('nutritionists-section')?.scrollIntoView({ behavior: 'smooth' });
+                    document
+                      .getElementById("nutritionists-section")
+                      ?.scrollIntoView({ behavior: "smooth" });
                   }}
                   className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl font-semibold transition-all border shadow-sm text-sm sm:text-base ${
                     page === i + 1

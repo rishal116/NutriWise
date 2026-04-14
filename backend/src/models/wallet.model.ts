@@ -6,7 +6,8 @@ export interface IWallet {
   _id: Types.ObjectId;
   ownerId: Types.ObjectId;
   ownerType: WalletOwnerType;
-  balance: number; 
+  balance: number;
+  escrowBalance: number;
   currency: string;
   isActive: boolean;
   createdAt: Date;
@@ -29,6 +30,11 @@ const walletSchema = new Schema<IWallet>(
     },
 
     balance: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    escrowBalance: {
       type: Number,
       default: 0,
       min: 0,

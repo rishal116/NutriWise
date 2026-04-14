@@ -9,15 +9,17 @@ const initialState: SignupState = {
 };
 
 const signupSlice = createSlice({
-  name: "signup",
+  name: "signupFlow",
   initialState,
   reducers: {
     setSignupEmail: (state, action: PayloadAction<string>) => {
       state.email = action.payload;
     },
-    restoreSignupEmail: (state, action: PayloadAction<string | null>) => {
+
+    restoreSignupEmail: (state, action: PayloadAction<string>) => {
       state.email = action.payload;
     },
+
     clearSignupEmail: (state) => {
       state.email = null;
     },

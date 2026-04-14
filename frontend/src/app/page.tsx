@@ -1,26 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 import NutriWiseLanding from "./(public)/landing";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function Page() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const token = useSelector((state: RootState) => state.auth.token);
+  const loading = useSelector((state: RootState) => state.auth.loading);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
     if (token) {
       router.replace("/home");
-    } else {
-      setChecking(false);
     }
-  }, [router]);
+  }, [token, router]);
 
-  if (checking) return null;
+  if (loading) return null;
 
   return (
     <>

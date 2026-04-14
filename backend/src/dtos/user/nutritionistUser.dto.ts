@@ -98,29 +98,17 @@ export class NutritionistUserDTO implements NutritionistUserDto {
 }
 
 
-export class NutritionistPlanDTO {
+export interface NutritionistPlanDTO {
   id: string;
+  nutritionistId: string;
   title: string;
-  description: string;
+  category: string;
   durationInDays: number;
-  category:string;
   price: number;
+  description: string;
   features: string[];
-  status: string;
+  tags: string[];
+  status: "draft" | "published" | "archived";
   createdAt: Date;
   updatedAt: Date;
-
-  constructor(plan: IPlan) {
-    this.id = plan._id.toString();
-    this.title = plan.title;
-    this.description = plan.description;
-    this.durationInDays = plan.durationInDays;
-    this.price = plan.price;
-    this.price = plan.price;
-    this.category = plan.category;
-    this.features = plan.features;
-    this.status = plan.status;
-    this.createdAt = plan.createdAt;
-    this.updatedAt = plan.updatedAt;
-  }
 }

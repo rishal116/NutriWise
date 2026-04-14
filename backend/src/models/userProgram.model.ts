@@ -8,6 +8,7 @@ export const PROGRAM_STATUS = [
   "ACTIVE",
   "PAUSED",
   "COMPLETED",
+  "UPCOMING",
   "CANCELLED",
 ] as const;
 
@@ -100,10 +101,10 @@ const UserProgramSchema = new Schema<IUserProgram>(
     },
 
     goal: {
-      type: String,
-      required: true,
-      index: true,
-    },
+  type: String,
+  enum: PROGRAM_GOALS,
+  required: true
+},
 
     focusAreas: {
       type:[{ type: String }],
@@ -145,7 +146,7 @@ const UserProgramSchema = new Schema<IUserProgram>(
     status: {
       type: String,
       enum: PROGRAM_STATUS,
-      default: "ACTIVE",
+      default: "UPCOMING",
       index: true,
     },
 
@@ -178,7 +179,13 @@ const UserProgramSchema = new Schema<IUserProgram>(
   { timestamps: true }
 );
 
-
+UserProgramSchema.index(
+  { userId: 1, nutritionistId: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: "ACTIVE" },
+  }
+);
 
 UserProgramSchema.index({ userId: 1, status: 1 });
 UserProgramSchema.index({ nutritionistId: 1, status: 1 });
