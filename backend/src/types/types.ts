@@ -35,6 +35,8 @@ export const TYPES = {
   IReviewService:Symbol.for("IReviewService"),
   IReviewRepository:Symbol.for("IReviewRepository"),
   IReviewController:Symbol.for("IReviewController"),
+  IUserGroupController:Symbol.for("IUserGroupController"),
+  IUserGroupService:Symbol.for("IUserGroupService"),
 
 
   
