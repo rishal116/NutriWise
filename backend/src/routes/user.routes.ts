@@ -81,7 +81,7 @@ router.post("/google", userAuthController.googleLogin);
 router.post("/logout", userAuthController.logout);
 router.post("/forgot-password", userAuthController.forgotPassword);
 router.post("/reset-password", userAuthController.resetPassword);
-router.post("/refresh-token", refreshToken);
+router.get("/refresh-token", refreshToken);
 router.get("/me", authMiddleware, blockLoggedInUser, userAuthController.getMe);
 router.post("/google-signin", userAuthController.googleSignin);
 
@@ -202,4 +202,5 @@ router.get(
 );
 
 router.get("/groups",authMiddleware,groupController.getGroups)
+router.post("/groups/:id/join", authMiddleware, groupController.joinGroup);
 export default router;

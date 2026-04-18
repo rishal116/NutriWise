@@ -2,7 +2,8 @@ import "./globals.css";
 import { ReactNode } from "react";
 import { ReduxProvider } from "@/redux/provider";
 import { Toaster } from "react-hot-toast";
-import SocketProvider from "./socket-provider";
+import SocketProvider from "@/providers/SocketProvider";
+import AuthProvider from "@/providers/AuthProvider";
 
 export const metadata = {
   title: "NutriWise",
@@ -17,10 +18,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <ReduxProvider>
-          <SocketProvider>
-            {children}
-            </SocketProvider>
+          <AuthProvider>
+            <SocketProvider>{children}</SocketProvider>
             <Toaster position="top-right" reverseOrder={false} />
+          </AuthProvider>
         </ReduxProvider>
       </body>
     </html>

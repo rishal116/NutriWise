@@ -46,7 +46,6 @@ export default function MessagesPage() {
           <ConversationList
             selectedId={selectedConversation}
             onSelect={setSelectedConversation}
-            isMobile={isMobile}
             onBack={handleBack}
           />
         </div>

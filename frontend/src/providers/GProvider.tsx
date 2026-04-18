@@ -3,11 +3,11 @@
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ReactNode } from "react";
 
-interface GProvidersProps {
+interface GProviderProps {
   children: ReactNode;
 }
 
-export default function GProviders({ children }: GProvidersProps) {
+export default function GProvider({ children }: GProviderProps) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   if (!clientId) {

@@ -10,7 +10,7 @@ export class MessageMapper {
       conversationId: message.conversationId.toString(),
       senderId: message.senderId.toString(),
       content: message.text ?? "",
-      isEdited:message.isEdited,
+      isEdited:message.status === "edited",
       attachments: message.attachments?.map((a) => ({
         url: a.url,
         fileName: a.fileName

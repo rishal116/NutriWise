@@ -9,9 +9,9 @@ export const userChatService = {
     return res.data;
   },
 
-  listUsers: async (context: "user" | "nutritionist") => {
+  listUsers: async (context: "user" | "nutritionist",cursor?: string, limit = 20) => {
     const res = await api.get("/chat/conversations", {
-      params: { context },
+      params: { context, cursor, limit }
     });
     return res.data;
   },

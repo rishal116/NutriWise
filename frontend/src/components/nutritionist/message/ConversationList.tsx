@@ -1,149 +1,165 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, X, MessageSquare, Sparkles } from "lucide-react";
-import { userChatService } from "@/services/user/userChat.service";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { ChevronLeft } from "lucide-react";
+import Image from "next/image";
 
-interface Conversation { id: string; name: string }
-interface Props {
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  isMobile?: boolean;
-  onCloseMobile?: () => void;
+type ChatType = "direct" | "group";
+type FilterType = "all" | "direct" | "group";
+
+interface Conversation {
+  id: string;
+  chatType: ChatType;
+  name: string;
+  profile?: string;
+  lastMessage: string;
+  lastMessageAt: number;
+  memberCount?: number;
 }
 
-export default function ConversationList({ selectedId, onSelect, isMobile, onCloseMobile }: Props) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
+interface Props {
+  conversations: Conversation[];
+  loading: boolean;
+  selectedId: string | null;
+  onSelect: (conversation: Conversation) => void;
+  onBack: () => void;
+  onLoadMore?: () => void;
+}
+
+export default function ConversationList({
+  conversations,
+  loading,
+  selectedId,
+  onSelect,
+  onBack,
+  onLoadMore,
+}: Props) {
   const [search, setSearch] = useState("");
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  // ---------------- Infinite Scroll ----------------
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await userChatService.listUsers("nutritionist");
-        const data = res.data
-        setConversations(data.map((u: any) => ({ 
-          id: u.id, 
-          name: u.otherUserName || "Unknown" 
-        })));
-      } catch (err) { 
-        console.error(err); 
-      } finally { 
-        setLoading(false); 
+    const el = listRef.current;
+    if (!el || !onLoadMore) return;
+
+    const handleScroll = () => {
+      const nearBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 100;
+
+      if (nearBottom && !loading) {
+        onLoadMore();
       }
-    })();
-  }, []);
+    };
 
-  const filtered = conversations.filter(c => 
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+    el.addEventListener("scroll", handleScroll);
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [onLoadMore, loading]);
 
+  // ---------------- Filter ----------------
+  const filtered = useMemo(() => {
+    return conversations.filter((c) => {
+      const matchSearch = c.name
+        .toLowerCase()
+        .includes(search.toLowerCase().trim());
+      const matchType = activeFilter === "all" || c.chatType === activeFilter;
+      return matchSearch && matchType;
+    });
+  }, [conversations, search, activeFilter]);
+
+  const formatTime = (t: number) => {
+    if (!t) return "";
+    return new Date(t).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // ---------------- UI ----------------
   return (
-    <div className="flex flex-col h-full bg-white relative">
-      {/* Header Section */}
-      <div className="px-6 pt-8 pb-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Messages</h1>
-            <div className="flex items-center gap-1.5 mt-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Client Comms</span>
-            </div>
-          </div>
-          {isMobile && onCloseMobile && (
-            <button onClick={onCloseMobile} className="p-2 bg-slate-50 rounded-xl text-slate-400">
-              <X size={18} />
-            </button>
-          )}
-        </div>
-
-        {/* Search - Styled to match your Dashboard */}
-        <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
-          <input
-            type="text"
-            placeholder="Search conversations..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl text-sm font-bold focus:bg-white focus:border-emerald-100 focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all placeholder:text-slate-300 text-slate-700"
-          />
-        </div>
+    <div className="flex flex-col h-full p-3">
+      {/* Header */}
+      <div className="px-2 py-4 flex items-center gap-3">
+        {/* Hide back button on desktop if needed, or keep for app-navigation */}
+        <button
+          onClick={onBack}
+          className="p-2 hover:bg-emerald-50 rounded-full text-emerald-700 transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <h1 className="text-xl font-bold text-emerald-950">Messages</h1>
       </div>
 
-      {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto px-3 pb-6 custom-scrollbar">
-        {loading ? (
-          <div className="space-y-3 px-3">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-20 w-full bg-slate-50 animate-pulse rounded-[1.5rem]" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-20 px-6">
-            <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <MessageSquare size={24} className="text-slate-200" />
-            </div>
-            <p className="text-xs font-black text-slate-300 uppercase tracking-widest">No chats found</p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <AnimatePresence mode="popLayout">
-              {filtered.map((conv, idx) => (
-                <motion.button
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  key={conv.id}
-                  onClick={() => onSelect(conv.id)}
-                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-[1.5rem] transition-all duration-300 relative group ${
-                    selectedId === conv.id 
-                      ? "bg-emerald-50/60 shadow-sm shadow-emerald-900/5" 
-                      : "hover:bg-slate-50"
-                  }`}
-                >
-                  {/* Active Indicator Line */}
-                  {selectedId === conv.id && (
-                    <motion.div 
-                      layoutId="active-pill"
-                      className="absolute left-0 w-1 h-8 bg-emerald-500 rounded-r-full"
-                    />
-                  )}
-
-                  {/* Avatar with Expert Styling */}
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm flex-shrink-0 transition-all duration-500 ${
-                    selectedId === conv.id 
-                      ? "bg-emerald-600 text-white rotate-6 shadow-lg shadow-emerald-200" 
-                      : "bg-slate-900 text-slate-100 group-hover:bg-emerald-600 group-hover:rotate-6 shadow-md shadow-slate-200"
-                  }`}>
-                    {conv.name.charAt(0)}
-                  </div>
-
-                  <div className="flex-1 text-left overflow-hidden">
-                    <div className="flex justify-between items-center mb-0.5">
-                      <p className={`text-sm font-black tracking-tight truncate ${selectedId === conv.id ? "text-emerald-900" : "text-slate-900"}`}>
-                        {conv.name}
-                      </p>
-                      <span className="text-[9px] font-black text-slate-300 uppercase">Now</span>
-                    </div>
-                    <p className={`text-[11px] font-bold truncate ${selectedId === conv.id ? "text-emerald-600/70" : "text-slate-400"}`}>
-                      {selectedId === conv.id ? "Active Consultation" : "Review latest progress..."}
-                    </p>
-                  </div>
-                </motion.button>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
+      {/* Search Input */}
+      <div className="px-2 pb-3">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search..."
+          className="w-full px-4 py-2.5 bg-white/60 backdrop-blur-sm border border-emerald-100/50 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20"
+        />
       </div>
 
-      {/* Subtle branding at bottom of list */}
-      <div className="p-6 border-t border-slate-50 flex items-center gap-2">
-         <div className="w-6 h-6 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <Sparkles size={12} className="text-emerald-600" />
-         </div>
-         <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">NutriWise Cloud</span>
+      {/* Filter Tabs */}
+      <div className="px-2 pb-4 flex gap-2">
+        {(["all", "direct", "group"] as FilterType[]).map((f) => (
+          <button
+            key={f}
+            onClick={() => setActiveFilter(f)}
+            className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              activeFilter === f
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+                : "bg-white/40 text-emerald-800 hover:bg-white/70 border border-white/50"
+            }`}
+          >
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      {/* List */}
+      <div
+        ref={listRef}
+        className="flex-1 overflow-y-auto space-y-1 custom-scrollbar"
+      >
+        {filtered.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => onSelect(c)}
+            className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 border ${
+              selectedId === c.id
+                ? "bg-white/90 border-emerald-200 shadow-sm ring-1 ring-emerald-100"
+                : "hover:bg-emerald-50/50 border-transparent hover:border-emerald-100/50"
+            }`}
+          >
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-tr from-emerald-100 to-teal-50 flex items-center justify-center font-bold text-emerald-700 shadow-inner">
+              {c.profile ? (
+                <Image
+                  src={c.profile}
+                  alt={c.name}
+                  width={48}
+                  height={48}
+                  className="object-cover"
+                />
+              ) : (
+                c.name[0]
+              )}
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <div className="flex justify-between items-baseline">
+                <p className="font-semibold text-gray-800 truncate">{c.name}</p>
+                <span className="text-[10px] text-emerald-900/40">
+                  {formatTime(c.lastMessageAt)}
+                </span>
+              </div>
+              <p className="text-xs text-emerald-900/60 truncate">
+                {c.lastMessage}
+              </p>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );

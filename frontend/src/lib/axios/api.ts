@@ -49,7 +49,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const res = await api.post("/refresh-token");
+        const res = await api.get("/refresh-token");
 
         const newToken = res.data?.accessToken;
         if (!newToken) throw new Error("No access token");

@@ -32,19 +32,15 @@ export default function GroupsPage({ preview = false }: { preview?: boolean }) {
       else setLoadingMore(true);
 
       const currentSkip = reset ? 0 : skipRef.current;
+      const res = await userGroupService.getGroups({ limit: LIMIT, skip: currentSkip });
 
-      const res = await userGroupService.getGroups({
-        limit: LIMIT,
-        skip: currentSkip,
-      });
-
-      const newGroups: Group[] = res.groups || [];
+      const newGroups: Group[] = (res.groups || []).map((g) => ({
+        ...g,
+        joinStatus: g.joinStatus ?? "none",
+      }));
 
       setGroups((prev) => (reset ? newGroups : [...prev, ...newGroups]));
-
-      if (reset) skipRef.current = LIMIT;
-      else skipRef.current += LIMIT;
-
+      skipRef.current = reset ? LIMIT : skipRef.current + LIMIT;
       setHasMore(newGroups.length === LIMIT);
     } finally {
       setLoading(false);
@@ -52,187 +48,75 @@ export default function GroupsPage({ preview = false }: { preview?: boolean }) {
     }
   };
 
-  useEffect(() => {
-    fetchGroups(true);
-  }, []);
+  useEffect(() => { fetchGroups(true); }, []);
 
   const handleJoin = async (group: Group) => {
-    try {
-      setProcessingId(group.id);
-
-      const res = await userGroupService.joinGroup(group.id);
-
-      setGroups((prev) =>
-        prev.map((g) => {
-          if (g.id !== group.id) return g;
-
-          if (res.status === "joined") {
-            return {
-              ...g,
-              isJoined: true,
-              joinStatus: "joined",
-              memberCount: g.memberCount + 1,
-            };
-          }
-
-          if (res.status === "requested") {
-            return {
-              ...g,
-              joinStatus: "requested",
-            };
-          }
-
-          return g;
-        })
-      );
-    } finally {
-      setProcessingId(null);
-    }
+    setProcessingId(group.id);
+    const res = await userGroupService.joinGroup(group.id);
+    setGroups((prev) =>
+      prev.map((g) => (g.id !== group.id ? g : { 
+        ...g, 
+        joinStatus: res.status, 
+        isJoined: res.status === "joined",
+        memberCount: res.status === "joined" && g.joinStatus !== "joined" ? g.memberCount + 1 : g.memberCount 
+      }))
+    );
+    setProcessingId(null);
   };
 
   const loadMore = useCallback(() => {
-    if (!loadingMore && hasMore) {
-      fetchGroups(false);
-    }
+    if (!loadingMore && hasMore) fetchGroups(false);
   }, [loadingMore, hasMore]);
 
   useEffect(() => {
-    if (!loaderRef.current || preview) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) loadMore();
-    });
-
+    if (preview || !loaderRef.current) return;
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) loadMore(); });
     observer.observe(loaderRef.current);
-
     return () => observer.disconnect();
   }, [loadMore, preview]);
 
+  if (loading) return <div className="p-10 text-center text-gray-500">Loading communities...</div>;
+
   const items = preview ? groups.slice(0, 2) : groups;
 
-  if (loading) {
-    return (
-      <div className="p-10 text-center text-gray-500 animate-pulse">
-        Loading amazing communities...
-      </div>
-    );
-  }
-
   return (
-    <section className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-8">
-      {/* HEADER */}
-      <div className="max-w-5xl mx-auto mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Discover Groups</h2>
-            <p className="text-gray-500 mt-1">
-              Join communities that match your interests
-            </p>
-          </div>
-
-          <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
-            <span className="px-3 py-1 rounded-full bg-green-50 text-green-600 border border-green-200">
-              Live
-            </span>
-            <span>Active communities</span>
-          </div>
-        </div>
+    <section className="bg-white min-h-screen py-10 px-4 md:px-8">
+      <div className="max-w-5xl mx-auto mb-10">
+        <h2 className="text-2xl font-bold text-gray-900">Discover Groups</h2>
+        <p className="text-gray-600 mt-1">Connect with communities that align with your interests.</p>
       </div>
 
-      {/* GRID */}
-      <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {items.map((g) => {
-          const isPrivate = g.visibility === "private";
-
-          return (
-            <div
-              key={g.id}
-              className="group relative p-5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-            >
-              {/* glow effect */}
-              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-green-50 to-blue-50 transition" />
-
-              <div className="relative">
-                {/* TITLE */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-900 group-hover:text-green-700 transition">
-                      {g.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                      {g.description || "No description available"}
-                    </p>
-                  </div>
-
-                  {g.isJoined && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-200">
-                      Joined
-                    </span>
-                  )}
-                </div>
-
-                {/* BADGES */}
-                <div className="mt-3 flex gap-2">
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full border font-medium ${
-                      isPrivate
-                        ? "bg-red-50 text-red-600 border-red-200"
-                        : "bg-blue-50 text-blue-600 border-blue-200"
-                    }`}
-                  >
-                    {isPrivate ? "Private" : "Public"}
-                  </span>
-
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-600 border">
-                    👥 {g.memberCount}
-                  </span>
-                </div>
-
-                {/* FOOTER */}
-                <div className="flex justify-between items-center mt-5">
-                  {g.isJoined ? (
-                    <button className="text-sm px-4 py-1 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-100 transition">
-                      Leave
-                    </button>
-                  ) : isPrivate && g.joinStatus === "requested" ? (
-                    <button
-                      disabled
-                      className="text-sm px-4 py-1 rounded-full border text-yellow-700 bg-yellow-50"
-                    >
-                      Requested
-                    </button>
-                  ) : (
-                    <button
-                      disabled={processingId === g.id}
-                      onClick={() => handleJoin(g)}
-                      className="text-sm px-4 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:opacity-90 transition disabled:opacity-50 shadow-sm"
-                    >
-                      {isPrivate ? "Request Join" : "Join"}
-                    </button>
-                  )}
-                </div>
+      <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {items.map((g) => (
+          <div key={g.id} className="flex flex-col p-6 rounded-xl border border-gray-200 bg-white hover:border-emerald-500 transition-colors shadow-sm">
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <h3 className="font-semibold text-gray-900">{g.title}</h3>
+                {g.isJoined && <span className="text-[10px] uppercase font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Joined</span>}
               </div>
+              <p className="text-sm text-gray-500 mt-2 line-clamp-2">{g.description || "No description provided."}</p>
             </div>
-          );
-        })}
+
+            <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+              <div className="flex gap-2">
+                <span className="text-[11px] font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded">{g.visibility === "private" ? "🔒 Private" : "🌐 Public"}</span>
+                <span className="text-[11px] font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded">👥 {g.memberCount}</span>
+              </div>
+              <button
+                disabled={processingId === g.id || g.joinStatus === "requested"}
+                onClick={() => handleJoin(g)}
+                className={`text-sm px-4 py-1.5 rounded-lg font-medium transition ${
+                  g.joinStatus === "joined" ? "text-emerald-700 bg-emerald-50" : "text-white bg-emerald-700 hover:bg-emerald-800"
+                } ${g.joinStatus === "requested" ? "opacity-50 cursor-not-allowed" : ""}`}
+              >
+                {g.joinStatus === "joined" ? "Leave" : g.joinStatus === "requested" ? "Requested" : "Join"}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* LOADER */}
-      {!preview && hasMore && (
-        <div ref={loaderRef} className="py-12 text-center text-gray-400">
-          {loadingMore ? (
-            <span className="animate-pulse">Loading more groups...</span>
-          ) : (
-            "Scroll to explore more"
-          )}
-        </div>
-      )}
-
-      {!hasMore && !preview && (
-        <p className="text-center text-gray-400 mt-10">
-          🎉 You’ve reached the end
-        </p>
-      )}
+      {!preview && hasMore && <div ref={loaderRef} className="py-10 text-center text-gray-400 text-sm">Loading more...</div>}
     </section>
   );
 }

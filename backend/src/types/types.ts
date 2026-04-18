@@ -100,6 +100,7 @@ export const TYPES = {
   IMessageRepository:Symbol.for("IMessageRepository"),
   IConversationMemberRepository:Symbol.for("IConversationMemberRepository"),
   IMessageReceiptRepository:Symbol.for("IMessageReceiptRepository"),
+  IJoinRequestRepository:Symbol.for("IJoinRequestRepository"),
 
   // socket
   ISocketService:Symbol.for("ISocketService"),

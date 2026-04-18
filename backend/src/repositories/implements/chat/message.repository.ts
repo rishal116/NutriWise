@@ -2,6 +2,7 @@ import { BaseRepository } from "../common/base.repository";
 import { IMessageRepository } from "../../interfaces/chat/IMessageRepository";
 import { MessageModel, IMessage } from "../../../models/message.model";
 import { Types } from "mongoose";
+import { FilterQuery } from "mongoose";
 
 export class MessageRepository
   extends BaseRepository<IMessage>
@@ -33,5 +34,27 @@ export class MessageRepository
       },
       { new: false },
     );
+  }
+
+  async findMessagesByConversationPaginated(
+    conversationId: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<IMessage[]> {
+    const query: FilterQuery<IMessage> = {
+      conversationId: new Types.ObjectId(conversationId),
+      status: { $ne: "deleted" },
+    };
+
+    if (cursor) {
+      query.createdAt = { $lt: new Date(cursor) };
+    }
+
+    return this._model
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean<IMessage[]>()
+      .exec();
   }
 }

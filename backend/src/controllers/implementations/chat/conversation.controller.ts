@@ -32,14 +32,20 @@ export class ConversationController implements IConversationController {
       context: "user" | "nutritionist";
     };
 
-    const conversations = await this._conversationService.getUserConversations(
+    const cursor = req.query.cursor as string | undefined;
+
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
+
+    const result = await this._conversationService.getUserConversations(
       req.user?.userId as string,
       context,
+      cursor,
+      limit,
     );
 
     res.status(StatusCode.OK).json({
       success: true,
-      data: conversations,
+      ...result,
     });
   });
 }

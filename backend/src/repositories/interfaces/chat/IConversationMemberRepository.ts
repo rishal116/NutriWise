@@ -60,4 +60,6 @@ export interface IConversationMemberRepository extends IBaseRepository<IConversa
     userId: string,
     roleContext: "user" | "nutritionist",
   ): Promise<void>;
+
+  getMemberCounts(conversationIds: string[]): Promise<Record<string, number>>;
 }

@@ -10,20 +10,17 @@ import { INutriGroupService } from "../../../services/interfaces/nutritionist/IN
 export class NutriGroupController implements INutriGroupController {
   constructor(
     @inject(TYPES.INutriGroupService)
-    private _groupService: INutriGroupService,
+    private readonly _groupService: INutriGroupService,
   ) {}
 
   createGroup = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
-
     const { title, description, isPublic } = req.body;
-
     const group = await this._groupService.createGroup(userId, {
       title,
       description,
       isPublic,
     });
-
     return res.status(StatusCode.CREATED).json({
       success: true,
       message: "Group created successfully",
@@ -33,20 +30,55 @@ export class NutriGroupController implements INutriGroupController {
 
   getMyGroups = asyncHandler(async (req: Request, res: Response) => {
     const { userId, role } = req.user!;
-
-    const { limit = 10, skip = 0 } = req.query;
-
+    const limit = Math.min(Number(req.query.limit) || 10, 50);
+    const skip = Number(req.query.skip) || 0;
     const groups = await this._groupService.getMyGroups(
       userId,
       role,
-      Number(limit),
-      Number(skip),
+      limit,
+      skip,
     );
-
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Groups fetched successfully",
       data: groups,
     });
   });
+
+  getGroup = asyncHandler(async (req: Request, res: Response) => {
+    const { groupId } = req.params;
+    const data = await this._groupService.getGroupDetails(groupId);
+    return res.status(StatusCode.OK).json({
+      success: true,
+      data,
+    });
+  });
+
+  getJoinRequests = asyncHandler(async (req: Request, res: Response) => {
+    const { groupId } = req.params;
+    const data = await this._groupService.getJoinRequests(groupId);
+    return res.status(StatusCode.OK).json({
+      success: true,
+      data,
+    });
+  });
+
+  acceptRequest = asyncHandler(async (req: Request, res: Response) => {
+    const { groupId, userId } = req.params;
+    await this._groupService.acceptRequest(groupId, userId);
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: "User accepted successfully",
+    });
+  });
+
+  rejectRequest = asyncHandler(async (req: Request, res: Response) => {
+    const { groupId, userId } = req.params;
+    await this._groupService.rejectRequest(groupId, userId);
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: "User rejected successfully",
+    });
+  });
+  
 }

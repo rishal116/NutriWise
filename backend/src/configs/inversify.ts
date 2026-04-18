@@ -184,6 +184,8 @@ import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupC
 import { UserGroupController } from "../controllers/implementations/user/userGroup.controller";
 import { IUserGroupService } from "../services/interfaces/user/IUserGroupService";
 import { UserGroupService } from "../services/implements/user/userGroup.service";
+import { IJoinRequestRepository } from "../repositories/interfaces/chat/IJoinRequestRepository";
+import { JoinRequestRepository } from "../repositories/implements/chat/joinRequest.repository";
 
 
 
@@ -294,6 +296,7 @@ container.bind<IConversationRepository>(TYPES.IConversationRepository).to(Conver
 container.bind<IMessageRepository>(TYPES.IMessageRepository).to(MessageRepository)
 container.bind<IConversationMemberRepository>(TYPES.IConversationMemberRepository).to(ConversationMemberRepository)
 container.bind<IMessageReceiptRepository>(TYPES.IMessageReceiptRepository).to(MessageReceiptRepository)
+container.bind<IJoinRequestRepository>(TYPES.IJoinRequestRepository).to(JoinRequestRepository)
 
 
 // video

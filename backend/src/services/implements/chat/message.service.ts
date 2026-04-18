@@ -17,6 +17,7 @@ import { ReceiptStatus } from "../../../models/messageReceipt.model";
 import { MessageType } from "../../../models/message.model";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
 import { RoleContext } from "../../../models/conversationMember.model";
+import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
 
 @injectable()
 export class MessageService implements IMessageService {
@@ -35,6 +36,9 @@ export class MessageService implements IMessageService {
 
     @inject(TYPES.IMessageReceiptRepository)
     private _messagereceiptrepo: IMessageReceiptRepository,
+
+    @inject(TYPES.IUserRepository)
+    private _userRepository: IUserRepository,
   ) {}
 
   async sendMessage(dto: SendMessageDTO): Promise<MessageResponseDTO> {
@@ -90,6 +94,8 @@ export class MessageService implements IMessageService {
         dto.conversationId,
       );
     for (const m of members) {
+      if (m.userId.toString() === dto.senderId) continue;
+
       await this._messagereceiptrepo.create({
         conversationId: new Types.ObjectId(dto.conversationId),
         messageId: createdMessage._id,
@@ -101,10 +107,16 @@ export class MessageService implements IMessageService {
     process.nextTick(() => {
       this._socketService.emitNewMessage(dto.conversationId, responseDTO);
     });
-    await this._conversationMemberRepository.incrementUnread(
-      dto.conversationId,
-      dto.senderId,
-      dto.context,
+
+    await Promise.all(
+      members
+        .filter((m) => m.userId.toString() !== dto.senderId)
+        .map((m) =>
+          this._conversationMemberRepository.incrementUnreadForGroup(
+            dto.conversationId,
+            m.userId.toString(),
+          ),
+        ),
     );
     logger.info("Message sent successfully", {
       messageId: responseDTO.id,
@@ -114,15 +126,30 @@ export class MessageService implements IMessageService {
     return responseDTO;
   }
 
-  async getMessages(conversationId: string): Promise<MessageResponseDTO[]> {
-    logger.info("Fetching messages", { conversationId });
+  async getMessages(conversationId: string, limit = 20, cursor?: string) {
     const messages =
-      await this._messageRepository.findMessagesByConversation(conversationId);
-    logger.debug("Messages fetched", {
-      conversationId,
-      count: messages.length,
+      await this._messageRepository.findMessagesByConversationPaginated(
+        conversationId,
+        limit,
+        cursor,
+      );
+
+    const senderIds = [...new Set(messages.map((m) => m.senderId.toString()))];
+
+    const users = await this._userRepository.findByIds(senderIds);
+
+    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
+
+    return messages.map((msg) => {
+      const user = userMap.get(msg.senderId.toString());
+
+      return {
+        ...MessageMapper.toResponseDTO(msg),
+
+        senderFullName: user?.fullName ?? "Unknown",
+        senderProfileImage: user?.profileImage ?? null,
+      };
     });
-    return messages.map(MessageMapper.toResponseDTO);
   }
 
   async sendFile(dto: {

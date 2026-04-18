@@ -12,6 +12,7 @@ import { INutriMeetingsController } from "../controllers/interfaces/nutritionist
 import { INutriProgramController } from "../controllers/interfaces/nutritionist/INutriProgramController";
 import { INutriGroupController } from "../controllers/interfaces/nutritionist/INutriGroupController";
 
+
 const router = Router();
 const nutritionistAuthController = container.get<INutritionistAuthController>(
   TYPES.INutritionistAuthController,
@@ -31,7 +32,7 @@ const nutriProgramController = container.get<INutriProgramController>(
   TYPES.INutriProgramController,
 );
 
-const nurtiGroupController = container.get<INutriGroupController>(
+const nutriGroupController = container.get<INutriGroupController>(
   TYPES.INutriGroupController,
 );
 
@@ -165,9 +166,22 @@ router.post(
   "/groups",
   authMiddleware,
   authorize(ROLES.NUTRITIONIST),
-  nurtiGroupController.createGroup,
+  nutriGroupController.createGroup,
 );
 
-router.get("/my-groups", authMiddleware, nurtiGroupController.getMyGroups);
+router.get("/my-groups", authMiddleware, nutriGroupController.getMyGroups);
+
+router.get("/groups/:groupId", nutriGroupController.getGroup);
+router.get("/groups/:groupId/requests", nutriGroupController.getJoinRequests);
+
+router.patch(
+  "/groups/:groupId/requests/:userId/accept",
+  nutriGroupController.acceptRequest,
+);
+
+router.patch(
+  "/groups/:groupId/requests/:userId/reject",
+  nutriGroupController.rejectRequest,
+);
 
 export default router;

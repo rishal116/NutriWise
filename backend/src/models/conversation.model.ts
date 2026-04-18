@@ -14,10 +14,9 @@ export interface IConversation extends Document {
   admins?: Types.ObjectId[];
   description?: string;
   visibility?: "public" | "private";
-  joinRequests: {
-    userId: Types.ObjectId;
-    requestedAt: Date;
-  }[];
+
+  memberCount: number;
+
 
   lastMessageId?: Types.ObjectId;
   lastMessageAt?: Date;
@@ -85,19 +84,11 @@ const conversationSchema = new Schema<IConversation>(
       },
     },
 
-    joinRequests: [
-      {
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        requestedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
+    memberCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
     lastMessageId: {
       type: Schema.Types.ObjectId,
@@ -144,11 +135,6 @@ conversationSchema.index(
   },
 );
 
-conversationSchema.index(
-  { _id: 1, "joinRequests.userId": 1 },
-  { unique: true, sparse: true },
-);
-
 conversationSchema.index({ visibility: 1, chatType: 1 });
 conversationSchema.index({ lastMessageAt: -1 });
 conversationSchema.index({ isDeleted: 1, lastMessageAt: -1 });
@@ -158,7 +144,6 @@ conversationSchema.pre("validate", function (next) {
     this.title = undefined;
     this.description = undefined;
     this.visibility = undefined;
-    this.joinRequests = [];
   }
 
   if (this.chatType === "group") {

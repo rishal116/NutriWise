@@ -40,6 +40,13 @@ export class ConversationService implements IConversationService {
       context: dto.context,
     });
 
+    if (
+      !Types.ObjectId.isValid(dto.currentUserId) ||
+      !Types.ObjectId.isValid(dto.otherUserId)
+    ) {
+      throw new Error("Invalid user IDs");
+    }
+
     if (dto.currentUserId === dto.otherUserId) {
       throw new Error("Cannot create chat with yourself");
     }
@@ -65,7 +72,7 @@ export class ConversationService implements IConversationService {
       });
 
       console.log(currentContext);
-      
+
       await this._conversationMemberRepo.createMany([
         {
           conversationId: conversation._id,
@@ -130,52 +137,125 @@ export class ConversationService implements IConversationService {
   async getUserConversations(
     userId: string,
     context: "user" | "nutritionist",
-  ): Promise<ConversationResponseDTO[]> {
+    cursor: string | undefined,
+    limit: number,
+  ): Promise<{
+    data: ConversationResponseDTO[];
+    nextCursor: string | null;
+    hasMore: boolean;
+  }> {
     logger.debug("Fetching user conversations", { userId });
+
     const members = await this._conversationMemberRepo.findByUser(
       userId,
       context,
     );
+
     const conversationIds = members.map((m) => m.conversationId.toString());
+
+    if (conversationIds.length === 0) {
+      return {
+        data: [],
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+
     const conversations =
-      await this._conversationRepo.findByIds(conversationIds);
+      await this._conversationRepo.findUserConversationsPaginated(
+        conversationIds,
+        limit,
+        cursor,
+      );
+
+    const hasMore = conversations.length > limit;
+
+    const paginated = hasMore ? conversations.slice(0, limit) : conversations;
+
+    const nextCursor =
+      hasMore && paginated.length > 0
+        ? (paginated[paginated.length - 1].lastMessageAt?.toISOString() ?? null)
+        : null;
+
+    if (paginated.length === 0) {
+      return {
+        data: [],
+        nextCursor: null,
+        hasMore: false,
+      };
+    }
+
     const conversationMembers =
-      await this._conversationMemberRepo.findByConversationIds(conversationIds);
+      await this._conversationMemberRepo.findByConversationIds(
+        paginated.map((c) => c._id.toString()),
+      );
+
+    const memberMap = new Map<string, typeof conversationMembers>();
+
+    for (const m of conversationMembers) {
+      const key = m.conversationId.toString();
+
+      if (!memberMap.has(key)) {
+        memberMap.set(key, []);
+      }
+
+      memberMap.get(key)!.push(m);
+    }
+
     const otherMemberIds = conversationMembers
       .filter((m) => m.userId.toString() !== userId)
       .map((m) => m.userId.toString());
+
     const users = await this._userRepo.findByIds(otherMemberIds);
+
     const userMap = new Map(users.map((u) => [u._id.toString(), u]));
-    const lastMessageIds = conversations
+
+    const lastMessageIds = paginated
       .map((c) => c.lastMessageId?.toString())
-      .filter((id): id is string => Boolean(id));
+      .filter(Boolean) as string[];
+
     const messages = await this._messageRepo.findByIds(lastMessageIds);
+
     const messageMap = new Map(messages.map((m) => [m._id.toString(), m]));
-    const result = conversations.map((conversation) => {
+
+    const data = paginated.map((conversation) => {
+      const membersOfConversation =
+        memberMap.get(conversation._id.toString()) ?? [];
+
       let otherUser = null;
+
       if (conversation.chatType === "direct") {
-        const member = conversationMembers.find(
-          (m) =>
-            m.conversationId.toString() === conversation._id.toString() &&
-            m.userId.toString() !== userId,
+        const otherMember = membersOfConversation.find(
+          (m) => m.userId.toString() !== userId,
         );
-        otherUser = member ? userMap.get(member.userId.toString()) : null;
+
+        if (otherMember) {
+          otherUser = userMap.get(otherMember.userId.toString()) ?? null;
+        }
       }
+
       const lastMsg = conversation.lastMessageId
         ? messageMap.get(conversation.lastMessageId.toString())
         : null;
+
       const lastMessageText =
-        lastMsg?.text ||
+        lastMsg?.text ??
         (lastMsg?.messageType === "file"
-          ? `📎 ${lastMsg.attachments?.[0]?.fileName || "Attachment"}`
+          ? `📎 ${lastMsg.attachments?.[0]?.fileName ?? "Attachment"}`
           : null);
+
       return ConversationMapper.toResponseDTO(
         conversation,
         otherUser,
         lastMessageText,
+        membersOfConversation.length,
       );
     });
-    logger.info("User conversations loaded", { userId, count: result.length });
-    return result;
+
+    return {
+      data,
+      nextCursor,
+      hasMore,
+    };
   }
 }

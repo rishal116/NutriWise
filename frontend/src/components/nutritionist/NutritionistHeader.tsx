@@ -2,13 +2,7 @@
 
 import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
-import {
-  LayoutDashboard,
-  Bell,
-  User,
-  LogOut,
-  CheckCircle2,
-} from "lucide-react";
+import { LayoutDashboard, Bell, User, CheckCircle2 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { nutritionistAuthService } from "@/services/nutritionist/nutritionistAuth.service";
 
@@ -26,7 +20,6 @@ export default function NutritionistHeader() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -46,8 +39,6 @@ export default function NutritionistHeader() {
         setNotifications(notifRes.data || notifRes || []);
       } catch (err) {
         console.error("Header data error:", err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchHeaderData();
@@ -204,11 +195,6 @@ export default function NutritionistHeader() {
                       className="w-full text-left px-4 py-3 hover:bg-emerald-50 rounded-xl flex items-center gap-3 text-sm font-bold text-gray-700 transition-colors"
                     >
                       <User className="h-4 w-4 text-emerald-600" /> My Profile
-                    </button>
-                    
-                    <div className="my-1 border-t border-emerald-50" />
-                    <button className="w-full text-left px-4 py-3 hover:bg-rose-50 rounded-xl flex items-center gap-3 text-sm font-bold text-rose-600 transition-colors">
-                      <LogOut className="h-4 w-4" /> Log out
                     </button>
                   </div>
                 </div>

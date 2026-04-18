@@ -66,3 +66,15 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+/* Add to globals.css */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(16, 185, 129, 0.2); /* Emerald-500/20 */
+  border-radius: 20px;
+}

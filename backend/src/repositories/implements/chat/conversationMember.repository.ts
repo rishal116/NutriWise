@@ -197,4 +197,30 @@ export class ConversationMemberRepository
       )
       .exec();
   }
+
+  async getMemberCounts(conversationIds: string[]) {
+    const result = await ConversationMemberModel.aggregate([
+      {
+        $match: {
+          conversationId: {
+            $in: conversationIds.map((id) => new Types.ObjectId(id)),
+          },
+          status: "active",
+        },
+      },
+      {
+        $group: {
+          _id: "$conversationId",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const map: Record<string, number> = {};
+    result.forEach((r) => {
+      map[r._id.toString()] = r.count;
+    });
+
+    return map;
+  }
 }

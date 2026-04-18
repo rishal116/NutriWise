@@ -1,10 +1,10 @@
 import { ReactNode } from "react";
-import GProviders from "../providers";
+import GProvider from "@/providers/GProvider";
 
 interface AuthLayoutProps {
   children: ReactNode;
 }
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
-  return <GProviders>{children}</GProviders>;
+  return <GProvider>{children}</GProvider>;
 }

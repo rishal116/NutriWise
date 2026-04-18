@@ -4,8 +4,11 @@ import { SendFileDTO } from "../../../dtos/chat/sendFile.dto";
 
 export interface IMessageService {
   sendMessage(dto: SendMessageDTO): Promise<MessageResponseDTO>;
-
-  getMessages(conversationId: string): Promise<MessageResponseDTO[]>;
+  getMessages(
+    conversationId: string,
+    limit: number,
+    cursor?: string,
+  ): Promise<MessageResponseDTO[]>;
 
   sendFile(dto: SendFileDTO): Promise<MessageResponseDTO>;
 

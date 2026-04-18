@@ -26,10 +26,23 @@ export class MessageController implements IMessageController {
   });
 
   getMessages = asyncHandler(async (req: Request, res: Response) => {
+    const { conversationId } = req.params;
+
+    const { cursor, limit = 20 } = req.query as {
+      cursor?: string;
+      limit?: string;
+    };
+
     const messages = await this._messageService.getMessages(
-      req.params.conversationId,
+      conversationId,
+      Number(limit),
+      cursor,
     );
-    res.status(StatusCode.OK).json({ success: true, data: messages });
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: messages,
+    });
   });
 
   sendFile = asyncHandler(async (req: Request, res: Response) => {

@@ -12,8 +12,11 @@ export const userGroupService = {
 
     return res.data;
   },
-  joinGroup: async (groupId: string) => {
-  const res = await api.post(`/groups/${groupId}/join`);
-  return res.data;
-},
+  
+  joinGroup: async (
+    groupId: string,
+  ): Promise<{ status: "joined" | "requested" }> => {
+    const res = await api.post(`/groups/${groupId}/join`);
+    return res.data;
+  },
 };

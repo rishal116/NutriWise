@@ -6,5 +6,10 @@ export interface IConversationService {
     dto: CreateDirectConversationDTO,
   ): Promise<ConversationResponseDTO>;
 
-  getUserConversations(userId: string,context: "user" | "nutritionist"): Promise<ConversationResponseDTO[]>;
+  getUserConversations(userId: string,context: "user" | "nutritionist",cursor: string | undefined,limit: number,
+  ): Promise<{
+    data: ConversationResponseDTO[];
+    nextCursor: string | null;
+    hasMore: boolean;
+  }>;
 }
