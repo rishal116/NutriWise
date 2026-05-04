@@ -21,7 +21,7 @@ import { ITaskController } from "../controllers/interfaces/user/ITaskController"
 import { IHealthProgressController } from "../controllers/interfaces/user/IHealthProgressController";
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupController";
-
+import { IUserSessionController } from "../controllers/interfaces/user/IUserSessionController";
 
 const router = express.Router();
 
@@ -70,8 +70,11 @@ const reviewController = container.get<IReviewController>(
 );
 
 const groupController = container.get<IUserGroupController>(
-  TYPES.IUserGroupController
-)
+  TYPES.IUserGroupController,
+);
+const sessionController = container.get<IUserSessionController>(
+  TYPES.IUserSessionController,
+);
 
 router.post("/signup", userAuthController.signup);
 router.post("/verify-otp", userAuthController.verifyOtp);
@@ -201,6 +204,12 @@ router.get(
   healthProgressController.getLatestProgress,
 );
 
-router.get("/groups",authMiddleware,groupController.getGroups)
+router.get("/groups", authMiddleware, groupController.getGroups);
 router.post("/groups/:id/join", authMiddleware, groupController.joinGroup);
+
+router.get("/sessions", authMiddleware, sessionController.getSessions);
+
+router.post("/sessions/join", authMiddleware, sessionController.joinSession);
+
+router.post("/sessions/leave", authMiddleware, sessionController.leaveSession);
 export default router;

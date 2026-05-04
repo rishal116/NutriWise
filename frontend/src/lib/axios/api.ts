@@ -37,11 +37,11 @@ api.interceptors.response.use(
     }
 
     if (originalRequest._retry) {
-      return Promise.reject(error.response?.data || error);
+      return Promise.reject(error);
     }
 
     if (originalRequest.url?.includes("/refresh-token")) {
-      return Promise.reject(error.response?.data || error);
+      return Promise.reject(error);
     }
 
     // ✅ 401 TOKEN REFRESH
@@ -63,10 +63,10 @@ api.interceptors.response.use(
         window.location.href = "/";
 
         if (axios.isAxiosError(err)) {
-          return Promise.reject(err.response?.data || { message: err.message });
+          return Promise.reject(error);
         }
 
-        return Promise.reject({ message: "Something went wrong" });
+        return Promise.reject(error);
       }
     }
 
@@ -75,29 +75,20 @@ api.interceptors.response.use(
       store.dispatch(logout());
       await userAuthService.logout();
       window.location.href = "/";
-      return Promise.reject(error.response?.data);
+      return Promise.reject(error);
     }
 
     // ✅ 🔥 HANDLE 404 + 500 + OTHERS
     if (error.response) {
-      const message = error.response.data?.message || "Something went wrong";
-
-      return Promise.reject({
-        status: error.response.status,
-        message,
-      });
+      return Promise.reject(error);
     }
 
     // ✅ NETWORK ERROR
     if (error.request) {
-      return Promise.reject({
-        message: "Network error. Please check your connection.",
-      });
+      return Promise.reject(error);
     }
 
     // ✅ FALLBACK
-    return Promise.reject({
-      message: error.message,
-    });
+    return Promise.reject(error);
   },
 );

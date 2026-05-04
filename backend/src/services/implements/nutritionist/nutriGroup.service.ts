@@ -100,7 +100,7 @@ export class NutriGroupService implements INutriGroupService {
 
     const groupIds = memberships.map((m) => m.conversationId.toString());
 
-    const groups = await this._conversationRepo.findByIdsPaginated(
+    const groups = await this._conversationRepo.findUserConversations(
       groupIds,
       safeLimit,
       skip,

@@ -11,7 +11,7 @@ import { ROLES } from "../constants/index";
 import { INutriMeetingsController } from "../controllers/interfaces/nutritionist/INutriMeetingsController";
 import { INutriProgramController } from "../controllers/interfaces/nutritionist/INutriProgramController";
 import { INutriGroupController } from "../controllers/interfaces/nutritionist/INutriGroupController";
-
+import { INutriSessionController } from "../controllers/interfaces/nutritionist/INutriSessionController";
 
 const router = Router();
 const nutritionistAuthController = container.get<INutritionistAuthController>(
@@ -36,6 +36,9 @@ const nutriGroupController = container.get<INutriGroupController>(
   TYPES.INutriGroupController,
 );
 
+const nutriSessionController = container.get<INutriSessionController>(
+  TYPES.INutriSessionController,
+);
 router.get(
   "/details/me",
   authMiddleware,
@@ -184,4 +187,45 @@ router.patch(
   nutriGroupController.rejectRequest,
 );
 
+router.post(
+  "/sessions",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriSessionController.createSession,
+);
+
+router.get(
+  "/sessions",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriSessionController.getMySessions,
+);
+
+router.get(
+  "/sessions/:sessionId",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriSessionController.getSessionDetails,
+);
+
+router.patch(
+  "/sessions/:sessionId/start",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriSessionController.startSession,
+);
+
+router.patch(
+  "/sessions/:sessionId/end",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriSessionController.endSession,
+);
+
+router.patch(
+  "/sessions/:sessionId/cancel",
+  authMiddleware,
+  authorize(ROLES.NUTRITIONIST),
+  nutriSessionController.cancelSession,
+);
 export default router;

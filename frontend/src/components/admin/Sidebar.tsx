@@ -10,14 +10,15 @@ import {
   FileText,
   CreditCard,
   MessageSquare,
-  Activity,
   User,
   LogOut,
-  Menu,
   ChevronLeft,
+  ChevronRight,
+  X,
   LucideIcon,
 } from "lucide-react";
 import { adminAuthService } from "@/services/admin/adminAuth.service";
+import ANutriWiseLogo from "@/components/layout/ANutriwiselogo";
 
 interface NavItem {
   name: string;
@@ -33,12 +34,16 @@ interface NavSection {
 interface SidebarProps {
   collapsed: boolean;
   setCollapsed: (val: boolean) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (val: boolean) => void;
 }
 
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "Overview",
-    items: [{ name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" }],
+    items: [
+      { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+    ],
   },
   {
     title: "Management",
@@ -58,7 +63,15 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
+function SidebarContent({
+  collapsed,
+  setCollapsed,
+  onNavClick,
+}: {
+  collapsed: boolean;
+  setCollapsed: (val: boolean) => void;
+  onNavClick?: () => void;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [showDropup, setShowDropup] = useState(false);
@@ -74,6 +87,11 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  const navigate = (path: string) => {
+    router.push(path);
+    onNavClick?.();
+  };
+
   const handleLogout = async () => {
     try {
       await adminAuthService.logout();
@@ -85,111 +103,230 @@ export default function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   };
 
   return (
-    <aside
-      className={`fixed top-0 left-0 h-screen bg-white border-r border-slate-200 flex flex-col z-50 transition-all duration-300 ease-in-out
-      ${collapsed ? "w-20" : "w-64"} hidden lg:flex`}
-    >
-      {/* Header */}
-      <div className="h-16 flex items-center px-4 border-b border-slate-50 shrink-0">
-        <div className={`flex items-center gap-3 ${collapsed ? "mx-auto" : "ml-1"}`}>
-          <div className="w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-100 shrink-0">
-            <Activity className="w-5 h-5 text-white" />
+    <div className="flex flex-col h-full">
+      {/* ── Header ── */}
+      <div
+        className={`h-16 flex items-center border-b border-slate-100/80 shrink-0 transition-all duration-300 ${
+          collapsed ? "justify-center px-4" : "px-5"
+        }`}
+      >
+        {collapsed ? (
+          /* Collapsed: show just the badge from the logo */
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-105"
+            style={{
+              background: "linear-gradient(135deg, #0d9488, #065f46)",
+              boxShadow: "0 4px 14px rgba(13,148,136,0.4)",
+            }}
+            onClick={() => navigate("/admin/dashboard")}
+            role="button"
+            aria-label="Go to dashboard"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path
+                d="M12 2C7 2 3 6.5 3 10c0 5 4 9 9 9s9-4 9-9c0-3.5-4-8-9-8z"
+                fill="rgba(255,255,255,0.15)"
+              />
+              <path
+                d="M12 2c0 0-1 5 2 9s7 5 7 5"
+                stroke="white"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+              <path
+                d="M12 2C12 2 9 7 8 11s1 8 1 8"
+                stroke="rgba(255,255,255,0.55)"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+            </svg>
           </div>
-          {!collapsed && (
-            <span className="text-base font-bold text-slate-800 tracking-tight whitespace-nowrap">
-              NutriWise
-            </span>
-          )}
-        </div>
+        ) : (
+          <ANutriWiseLogo />
+        )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto scrollbar-hide">
+      {/* ── Navigation ── */}
+      <nav className="flex-1 px-3 py-5 space-y-6 overflow-y-auto scrollbar-hide">
         {NAV_SECTIONS.map((section) => (
-          <div key={section.title} className="space-y-1">
+          <div key={section.title}>
             {!collapsed && (
-              <h3 className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              <p className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                 {section.title}
-              </h3>
+              </p>
+            )}
+            {collapsed && (
+              <div className="mx-3 mb-2 h-px bg-slate-100" />
             )}
 
-            {section.items.map((item) => {
-              const isActive = pathname === item.path;
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.name}
-                  onClick={() => router.push(item.path)}
-                  title={collapsed ? item.name : ""}
-                  className={`w-full flex items-center rounded-xl transition-all duration-200 group
-                    ${collapsed ? "justify-center h-11" : "px-3 py-2.5 gap-3"}
-                    ${isActive 
-                      ? "bg-emerald-50 text-emerald-700" 
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}
-                  `}
-                >
-                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-emerald-600" : "group-hover:text-emerald-500"}`} />
-                  {!collapsed && <span className="text-sm font-semibold whitespace-nowrap">{item.name}</span>}
-                  {isActive && !collapsed && <div className="ml-auto w-1 h-4 rounded-full bg-emerald-500" />}
-                </button>
-              );
-            })}
+            <div className="space-y-0.5">
+              {section.items.map((item) => {
+                const isActive = pathname === item.path;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => navigate(item.path)}
+                    title={collapsed ? item.name : undefined}
+                    className={`w-full flex items-center rounded-xl transition-all duration-200 group
+                      ${collapsed ? "justify-center h-11 w-11 mx-auto" : "px-3 py-2.5 gap-3"}
+                      ${
+                        isActive
+                          ? "bg-gradient-to-r from-teal-50 to-emerald-50 text-teal-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                      }`}
+                  >
+                    <Icon
+                      className={`shrink-0 transition-colors ${collapsed ? "w-[18px] h-[18px]" : "w-[17px] h-[17px]"} ${
+                        isActive
+                          ? "text-teal-600"
+                          : "group-hover:text-teal-500"
+                      }`}
+                      strokeWidth={isActive ? 2.2 : 1.8}
+                    />
+                    {!collapsed && (
+                      <>
+                        <span className="text-[13px] font-semibold whitespace-nowrap flex-1 text-left">
+                          {item.name}
+                        </span>
+                        {isActive && (
+                          <span className="w-1 h-4 rounded-full bg-gradient-to-b from-teal-400 to-emerald-500" />
+                        )}
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         ))}
       </nav>
 
-      {/* Footer Controls */}
+      {/* ── Footer ── */}
       <div className="p-3 border-t border-slate-100 space-y-2 shrink-0">
+        {/* Collapse toggle — desktop only */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={`w-full flex items-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all
-            ${collapsed ? "justify-center h-10" : "px-3 py-2 gap-3"}`}
+          className={`hidden lg:flex w-full items-center text-slate-400 hover:text-teal-600 hover:bg-teal-50/60 rounded-xl transition-all duration-200
+            ${collapsed ? "justify-center h-10" : "px-3 py-2 gap-2.5"}`}
         >
-          {collapsed ? <Menu size={20} /> : (
+          {collapsed ? (
+            <ChevronRight size={17} strokeWidth={2} />
+          ) : (
             <>
-              <ChevronLeft size={18} />
-              <span className="text-xs font-bold uppercase tracking-wider">Collapse</span>
+              <ChevronLeft size={17} strokeWidth={2} />
+              <span className="text-[11px] font-bold uppercase tracking-wider">Collapse</span>
             </>
           )}
         </button>
 
+        {/* User dropup */}
         <div ref={dropupRef} className="relative">
           <button
             onClick={() => setShowDropup(!showDropup)}
-            className={`w-full flex items-center rounded-xl transition-all border border-transparent
-              ${collapsed ? "justify-center h-12 bg-slate-50" : "p-2 gap-3 bg-slate-50 hover:border-slate-200"}`}
+            className={`w-full flex items-center rounded-xl transition-all duration-200 border
+              ${
+                collapsed
+                  ? "justify-center h-12 border-transparent hover:border-slate-200 hover:bg-slate-50"
+                  : "p-2.5 gap-3 bg-slate-50/80 border-slate-100 hover:border-teal-200 hover:bg-teal-50/30"
+              }`}
           >
-            <div className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0">
+            <div
+              className="w-8 h-8 text-white rounded-xl flex items-center justify-center font-bold text-[11px] shrink-0 shadow-sm"
+              style={{ background: "linear-gradient(135deg, #0d9488, #065f46)" }}
+            >
               AD
             </div>
             {!collapsed && (
               <div className="flex-1 text-left overflow-hidden">
-                <p className="text-xs font-bold text-slate-800 truncate leading-none">Admin</p>
-                <p className="text-[10px] text-slate-500 truncate mt-1">admin@nutriwise.com</p>
+                <p className="text-[12px] font-bold text-slate-800 truncate leading-none">
+                  Super Admin
+                </p>
+                <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                  admin@nutriwise.com
+                </p>
               </div>
             )}
           </button>
 
           {showDropup && (
-            <div className={`absolute bottom-full mb-2 bg-white rounded-xl shadow-2xl border border-slate-200 p-1 w-48 
-              ${collapsed ? "left-full ml-2" : "left-0 w-full"}`}>
-              <button 
-                onClick={() => router.push("/admin/profile")} 
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-50 rounded-lg text-xs font-medium text-slate-700"
+            <div
+              className={`absolute bottom-full mb-2 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.1)] border border-slate-100 p-1.5 z-50
+                ${collapsed ? "left-full ml-2 w-44" : "left-0 w-full"}`}
+            >
+              <button
+                onClick={() => { navigate("/admin/profile"); setShowDropup(false); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-slate-50 rounded-xl text-[12px] font-semibold text-slate-700 transition-colors"
               >
-                <User size={14} /> Profile
+                <User size={14} strokeWidth={1.8} />
+                Profile
               </button>
-              <div className="h-px bg-slate-100 my-1" />
-              <button 
-                onClick={handleLogout} 
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-50 rounded-lg text-xs font-medium text-red-600"
+              <div className="h-px bg-slate-100 my-1 mx-2" />
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-red-50 rounded-xl text-[12px] font-semibold text-red-500 transition-colors"
               >
-                <LogOut size={14} /> Logout
+                <LogOut size={14} strokeWidth={1.8} />
+                Logout
               </button>
             </div>
           )}
         </div>
       </div>
-    </aside>
+    </div>
+  );
+}
+
+export default function Sidebar({
+  collapsed,
+  setCollapsed,
+  mobileOpen,
+  setMobileOpen,
+}: SidebarProps) {
+  return (
+    <>
+      {/* ── Desktop sidebar ── */}
+      <aside
+        className={`fixed top-0 left-0 h-screen bg-white/90 backdrop-blur-xl border-r border-slate-100 flex-col z-50 transition-all duration-300 ease-in-out hidden lg:flex
+          ${collapsed ? "w-20" : "w-64"}`}
+        style={{ boxShadow: "2px 0 20px rgba(13,148,136,0.04)" }}
+      >
+        <SidebarContent
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
+        />
+      </aside>
+
+      {/* ── Mobile: backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden
+        />
+      )}
+
+      {/* ── Mobile: drawer ── */}
+      <aside
+        className={`fixed top-0 left-0 h-screen w-72 bg-white flex-col z-50 transition-transform duration-300 ease-in-out lg:hidden flex
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
+        style={{ boxShadow: "4px 0 30px rgba(0,0,0,0.12)" }}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors z-10"
+          aria-label="Close menu"
+        >
+          <X size={18} />
+        </button>
+
+        <SidebarContent
+          collapsed={false}
+          setCollapsed={setCollapsed}
+          onNavClick={() => setMobileOpen(false)}
+        />
+      </aside>
+    </>
   );
 }
