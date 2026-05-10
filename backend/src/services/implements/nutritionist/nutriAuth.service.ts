@@ -5,20 +5,23 @@ import { INutritionistProfileRepository } from "../../../repositories/interfaces
 import { TYPES } from "../../../types/types";
 import { Request } from "express";
 import { Types } from "mongoose";
+
 import { NotificationDto } from "../../../dtos/common/notification.dto";
 import {
   uploadToCloudinary,
   uploadMultipleToCloudinary,
 } from "../../../utils/cloudinaryUploads";
+
 import {
   NutritionistDetailsUpdateDto,
   NutritionistRejectionDTO,
+  NutritionistDetailsDTO,
+  NutritionistNameDTO,
 } from "../../../dtos/nutritionist/nutritionistAuth.dto";
+
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
-import { NutritionistNameDTO } from "../../../dtos/nutritionist/nutritionistAuth.dto";
 import { NutritionistMapper } from "../../../mapper/nutritionist/nutritionistAuth.mapper";
 import { CustomError } from "../../../utils/customError";
-import { NutritionistDetailsDTO } from "../../../dtos/nutritionist/nutritionistAuth.dto";
 
 interface NutritionistFiles {
   cv?: Express.Multer.File[];
@@ -29,134 +32,219 @@ interface NutritionistFiles {
 export class NutritionistAuthService implements INutritionistAuthService {
   constructor(
     @inject(TYPES.IUserRepository)
-    private _nutritionistAuthRepository: IUserRepository,
+    private _userRepository: IUserRepository,
+
     @inject(TYPES.INotificationRepository)
     private _notificationRepository: INotificationRepository,
+
     @inject(TYPES.INutritionistProfileRepository)
     private _nutritionistProfileRepository: INutritionistProfileRepository,
   ) {}
 
+  // ─────────────────────────────────────────────
+  // Get Nutritionist Details
+  // ─────────────────────────────────────────────
   async getMyDetails(userId: string): Promise<NutritionistDetailsDTO> {
-    const nutritionist =
+    const profile =
       await this._nutritionistProfileRepository.findByUserId(userId);
-    if (!nutritionist) {
+
+    if (!profile) {
       throw new CustomError("Nutritionist profile not found");
     }
-    const dto: NutritionistDetailsDTO = {
-      qualifications: nutritionist.qualifications,
-      specializations: nutritionist.specializations,
-      experiences: nutritionist.experiences,
-      languages: nutritionist.languages,
-      bio: nutritionist.bio,
-      cvUrl: nutritionist.cv,
-      certificationUrls: nutritionist.certifications,
-    };
 
-    return dto;
+    return {
+      qualifications: profile.qualifications,
+      specializations: profile.specializations,
+      experiences: profile.experiences,
+      languages: profile.languages,
+      bio: profile.bio,
+      cvUrl: profile.cv,
+      certificationUrls: profile.certifications,
+    };
   }
 
+  // ─────────────────────────────────────────────
+  // Submit / Reapply Nutritionist Profile
+  // ─────────────────────────────────────────────
   async submitDetails(
     req: Request,
     userId: string,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+  }> {
     const { bio } = req.body;
-    const qualification = req.body["qualification[]"] || req.body.qualification;
-    const specialization =
-      req.body["specialization[]"] || req.body.specialization;
-    const normalizedQualification = Array.isArray(qualification)
-      ? qualification
-      : [qualification];
-    const normalizedSpecialization = Array.isArray(specialization)
-      ? specialization
-      : [specialization];
-    const languagesField = req.body["languages[]"] || req.body.languages;
-    const normalizedLanguages = Array.isArray(languagesField)
-      ? languagesField
-      : [languagesField];
-    const experiencesField = req.body["experience"] || req.body.experience;
-    const experiences = Array.isArray(experiencesField)
-      ? experiencesField.map((exp: any) => ({
-          role: exp.role || "",
-          organization: exp.organization || "",
-          years: Math.max(0, Number(exp.years) || 0),
-        }))
-      : [];
-    experiences.forEach((exp, i) => {
-      if (exp.years <= 0)
-        throw new Error(
-          `Experience years for entry ${i + 1} must be greater than 0`,
+
+    // Qualifications
+    const qualificationRaw =
+      req.body["qualification[]"] ?? req.body.qualification;
+
+    const normalizedQualification: string[] = Array.isArray(qualificationRaw)
+      ? qualificationRaw.map(String)
+      : qualificationRaw
+        ? [String(qualificationRaw)]
+        : [];
+
+    // Specializations
+    const specializationRaw =
+      req.body["specialization[]"] ?? req.body.specialization;
+
+    const normalizedSpecialization: string[] = Array.isArray(specializationRaw)
+      ? specializationRaw.map(String)
+      : specializationRaw
+        ? [String(specializationRaw)]
+        : [];
+
+    // Languages
+    const languagesRaw = req.body["languages[]"] ?? req.body.languages;
+
+    const normalizedLanguages: string[] = Array.isArray(languagesRaw)
+      ? languagesRaw.map(String)
+      : languagesRaw
+        ? [String(languagesRaw)]
+        : [];
+
+    // Experiences
+    interface RawExperience {
+      role?: string;
+      organization?: string;
+      years?: string | number;
+    }
+
+    const experiencesRaw = req.body.experience as
+      | RawExperience[]
+      | RawExperience
+      | undefined;
+
+    const normalizedExperiencesArray: RawExperience[] = Array.isArray(
+      experiencesRaw,
+    )
+      ? experiencesRaw
+      : experiencesRaw
+        ? [experiencesRaw]
+        : [];
+
+    const experiences = normalizedExperiencesArray.map((exp) => ({
+      role: exp.role?.trim() || "",
+      organization: exp.organization?.trim() || "",
+      years: Math.max(0, Number(exp.years) || 0),
+    }));
+
+    experiences.forEach((exp, index) => {
+      if (exp.years <= 0) {
+        throw new CustomError(
+          `Experience ${index + 1} years must be greater than 0`,
         );
+      }
     });
+
     const totalExperienceYears = experiences.reduce(
       (sum, exp) => sum + exp.years,
       0,
     );
-    const files = req.files as unknown as NutritionistFiles;
+
+    // Files
+    const files = req.files as NutritionistFiles;
+
     let cvUrl: string | undefined;
-    if (files?.cv?.length)
-      cvUrl = await uploadToCloudinary(files.cv[0], "nutritionist/cv");
     let certUrls: string[] = [];
-    if (files?.certifications?.length)
+
+    if (files?.cv?.length) {
+      cvUrl = await uploadToCloudinary(files.cv[0], "nutritionist/cv");
+    }
+
+    if (files?.certifications?.length) {
       certUrls = await uploadMultipleToCloudinary(
         files.certifications,
         "nutritionist/certifications",
       );
+    }
+
+    // Payload
     const payload: NutritionistDetailsUpdateDto = {
       qualifications: normalizedQualification,
       specializations: normalizedSpecialization,
-      bio,
+      bio: String(bio || ""),
       languages: normalizedLanguages,
       experiences,
       totalExperienceYears,
       cv: cvUrl,
       certifications: certUrls,
     };
-    const userObjectId = new Types.ObjectId(userId);
-    const existingDetails =
+
+    // Existing profile check
+    const existingProfile =
       await this._nutritionistProfileRepository.findByUserId(userId);
-    if (existingDetails) {
-      await this._nutritionistProfileRepository.updateByUserId(userId, payload);
+
+    if (existingProfile) {
+      await this._nutritionistProfileRepository.updateByUserId(userId, {
+        ...payload,
+        verificationStatus: "pending",
+        rejectionReason: "",
+      });
     } else {
       await this._nutritionistProfileRepository.create({
-        userId: userObjectId,
+        userId: new Types.ObjectId(userId),
         ...payload,
+        verificationStatus: "pending",
+        rejectionReason: "",
+        profileCompleted: true,
       });
     }
-    await this._nutritionistAuthRepository.updateById(userId, {
-      nutritionistStatus: "pending",
-      rejectionReason: "",
-    });
-    const nutritionist =
-      await this._nutritionistAuthRepository.findById(userId);
-    if (!nutritionist) throw new CustomError("Nutritionist not found");
+
+    // Notify admin
+    const user = await this._userRepository.findById(userId);
+
+    if (!user) {
+      throw new CustomError("User not found");
+    }
+
     const notification: NotificationDto = {
       title: "New Nutritionist Profile Submitted",
-      message: `Nutritionist ${nutritionist.fullName} has submitted their profile. Please review and approve.`,
+      message: `Nutritionist ${user.fullName} has submitted their profile for review.`,
       type: "info",
-      senderId: nutritionist._id!.toString(),
+      senderId: user._id!.toString(),
       recipientType: "admin",
       receiverId: process.env.ADMIN_ID!,
     };
+
     await this._notificationRepository.createNotification(notification);
-    return { success: true, message: "Details saved successfully" };
+
+    return {
+      success: true,
+      message: "Nutritionist profile submitted successfully",
+    };
   }
 
+  // ─────────────────────────────────────────────
+  // Rejection Reason
+  // ─────────────────────────────────────────────
   async getRejectionReason(userId: string): Promise<NutritionistRejectionDTO> {
-    const user = await this._nutritionistAuthRepository.findById(userId);
+    const user = await this._userRepository.findById(userId);
+
     if (!user) {
-      throw new Error("Nutritionist not found");
+      throw new CustomError("User not found");
     }
-    return new NutritionistRejectionDTO(user);
+
+    const profile =
+      await this._nutritionistProfileRepository.findByUserId(userId);
+
+    return new NutritionistRejectionDTO(user, profile || undefined);
   }
 
+  // ─────────────────────────────────────────────
+  // Public Nutritionist Name
+  // ─────────────────────────────────────────────
   async getName(userId: string): Promise<NutritionistNameDTO> {
-    const user = await this._nutritionistAuthRepository.findById(userId);
+    const user = await this._userRepository.findById(userId);
+
     if (!user) {
-      throw new CustomError("Nutritionist not found");
+      throw new CustomError("User not found");
     }
 
-    const nutritionistProfile =
+    const profile =
       await this._nutritionistProfileRepository.findByUserId(userId);
-    return NutritionistMapper.toNameDTO(user, nutritionistProfile ?? undefined);
+
+    return NutritionistMapper.toNameDTO(user, profile || undefined);
   }
 }

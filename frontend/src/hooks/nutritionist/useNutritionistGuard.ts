@@ -8,35 +8,53 @@ export const useNutritionistGuard = () => {
   const router = useRouter();
 
   useEffect(() => {
+    let mounted = true;
+
     const checkAccess = async () => {
       try {
-        const { user } = await userAuthService.getMe();
-        console.log(user);
-        
+        const res = await userAuthService.getMe();
 
-        if (user.role !== "nutritionist") {
+        if (!mounted) return;
+
+        if (!res.success || !res.user) {
+          router.replace("/login");
+          return;
+        }
+
+        const user = res.user;
+
+        if (!user.roles?.includes("nutritionist")) {
           router.replace("/unauthorized");
           return;
         }
 
         switch (user.nutritionistStatus) {
           case "approved":
-            return; // allow page
+            return;
+
           case "pending":
-          case "not_submitted":
-            router.replace("/nutritionist/details");
-            break;
+            router.replace("/nutritionist/pending");
+            return;
+
           case "rejected":
             router.replace("/nutritionist/reapply");
-            break;
+            return;
+
           default:
             router.replace("/nutritionist/details");
+            return;
         }
       } catch {
-        router.replace("/login");
+        if (mounted) {
+          router.replace("/login");
+        }
       }
     };
 
     checkAccess();
+
+    return () => {
+      mounted = false;
+    };
   }, [router]);
 };

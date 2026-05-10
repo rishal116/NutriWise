@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { Server as HTTPServer } from "http";
-import jwt from "jsonwebtoken";
+import jwt, { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
 
 import { jwtConfig } from "../../configs/jwt";
 import { ROLES, Role } from "../../types/role";
@@ -11,7 +11,8 @@ let io: Server;
 
 interface JwtPayload {
   userId: string;
-  role: Role;
+  activeRole: Role;
+  roles?: Role[];
 }
 
 export const initializeSocket = (server: HTTPServer) => {
@@ -22,7 +23,6 @@ export const initializeSocket = (server: HTTPServer) => {
     },
   });
 
-  // 🔐 Socket Authentication Middleware
   io.use((socket: Socket, next) => {
     try {
       const token = socket.handshake.auth?.token;
@@ -36,23 +36,27 @@ export const initializeSocket = (server: HTTPServer) => {
         jwtConfig.accessToken.secret
       ) as JwtPayload;
 
-      if (!ROLES.includes(decoded.role)) {
+      if (!ROLES.includes(decoded.activeRole)) {
         return next(new Error("INVALID_ROLE"));
       }
 
-      // Attach verified user to socket
       socket.data.user = {
         userId: decoded.userId,
-        role: decoded.role,
+        role: decoded.activeRole,
+        roles: decoded.roles || [decoded.activeRole],
       };
 
       next();
-    } catch (error: any) {
-      if (error.name === "TokenExpiredError") {
+    } catch (error: unknown) {
+      if (error instanceof TokenExpiredError) {
         return next(new Error("ACCESS_TOKEN_EXPIRED"));
       }
 
-      return next(new Error("INVALID_TOKEN"));
+      if (error instanceof JsonWebTokenError) {
+        return next(new Error("INVALID_TOKEN"));
+      }
+
+      return next(new Error("SOCKET_AUTH_FAILED"));
     }
   });
 

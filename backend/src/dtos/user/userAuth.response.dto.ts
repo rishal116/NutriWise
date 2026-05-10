@@ -1,53 +1,83 @@
+// ==========================================
+// Shared Types
+// ==========================================
 export type UserRole = "client" | "nutritionist" | "admin";
 
+export type NutritionistStatus = "none" | "pending" | "approved" | "rejected";
+
+// ==========================================
+// Safe User DTO
+// ==========================================
 export interface SafeUserDto {
   id: string;
-  fullName: string;
   email: string;
-  role: UserRole;
+  fullName: string;
+  roles: UserRole[];
+  activeRole: UserRole;
+  profileImageUrl?: string;
   isBlocked: boolean;
+  nutritionistStatus?: NutritionistStatus;
 }
 
-export interface SignupResponseDto {
+// ==========================================
+// Generic Message Response
+// ==========================================
+export interface MessageResponseDto {
+  success: boolean;
   message: string;
 }
 
-export interface VerifyOtpResponseDto {
+// ==========================================
+// Auth Success Response
+// ==========================================
+export interface AuthSuccessResponse {
+  success: true;
   message: string;
   accessToken: string;
   refreshToken: string;
-  role: UserRole;
-}
-
-export interface LoginResponseDto {
   user: SafeUserDto;
-  accessToken: string;
-  refreshToken: string;
 }
 
+// ==========================================
+// Auth Error Response
+// ==========================================
+export interface AuthErrorResponse {
+  success: false;
+  message: string;
+  statusCode?: number;
+}
+
+// ==========================================
+// Union Auth Response
+// ==========================================
+export type AuthResponse = AuthSuccessResponse | AuthErrorResponse;
+
+// ==========================================
+// Signup Response
+// (Use alias instead of empty interface)
+// ==========================================
+export type SignupResponseDto = MessageResponseDto;
+
+// ==========================================
+// Google Signup Request
+// ==========================================
 export interface GoogleLoginRequestDto {
   credential: string;
-  role: Exclude<UserRole, "admin">;
 }
 
-export interface GoogleLoginResponseDto {
-  user: SafeUserDto;
-  accessToken: string;
-  refreshToken: string;
-}
-
-export interface GoogleSigninRequestDto {
-  credential: string;
-}
-
+// ==========================================
+// Get Current User Response
+// ==========================================
 export interface GetMeResponseDto {
-  id: string;
-  fullName: string;
-  email: string;
-  role: UserRole;
-  nutritionistStatus: "pending" | "approved" | "rejected" | "none";
+  success: boolean;
+  user: SafeUserDto;
 }
 
-export interface MessageResponseDto {
+// ==========================================
+// Switch Role Response
+// ==========================================
+export interface SwitchRoleResponseDto {
+  success: boolean;
   message: string;
+  activeRole: UserRole;
 }

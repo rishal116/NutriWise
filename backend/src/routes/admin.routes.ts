@@ -8,9 +8,9 @@ import { IAdminChallengeController } from "../controllers/interfaces/admin/IAdmi
 import { container } from "../configs/inversify";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
-import { adminRefreshToken } from "../middlewares/adminRefreshToken.middleware";
 import { ROLES } from "../constants";
 import { upload } from "../middlewares/multer.middleware";
+import { refreshToken } from "../middlewares/refreshToken.middleware";
 
 const adminAuthController = container.get<IAdminAuthController>(
   TYPES.IAdminAuthController,
@@ -31,7 +31,7 @@ const adminChallengeController = container.get<IAdminChallengeController>(
 const router = Router();
 
 router.post("/login", adminAuthController.login);
-router.post("/refresh-token", adminRefreshToken);
+router.post("/refresh-token", refreshToken);
 router.post("/logout", adminAuthController.logout);
 
 router.use(authMiddleware);
@@ -41,7 +41,12 @@ router.get("/users", adminClientController.getAllUsers);
 router.patch("/users/:userId/block", adminClientController.blockUser);
 router.patch("/users/:userId/unblock", adminClientController.unblockUser);
 
+
 router.get("/nutritionists", adminNutritionistController.getAllNutritionists);
+router.get(
+  "/nutritionists/applications",
+  adminNutritionistController.getNutritionistApplications,
+);
 router.get(
   "/nutritionists/:userId",
   adminNutritionistController.getNutritionistProfile,

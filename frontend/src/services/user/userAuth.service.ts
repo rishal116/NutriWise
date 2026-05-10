@@ -1,15 +1,17 @@
 import { api } from "@/lib/axios/api";
 import { UserSignupType } from "@/validation/userAuth.validation";
 import { API_ROUTES } from "@/routes/user.routes";
-import { AuthSuccessResponse, GoogleAuthPayload } from "@/types/auth.types";
+import { AuthResponse, GoogleAuthPayload } from "@/types/auth.types";
+
+
 
 export const userAuthService = {
-  register: async (payload: UserSignupType): Promise<AuthSuccessResponse> => {
+  register: async (payload: UserSignupType): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.SIGNUP, payload);
     return res.data;
   },
 
-  verifyOtp: async (email: string, otp: string): Promise<AuthSuccessResponse> => {
+  verifyOtp: async (email: string, otp: string): Promise<AuthResponse> => {
     const res = await api.post(
       API_ROUTES.AUTH.VERIFY_OTP,
       { email, otp },
@@ -18,12 +20,12 @@ export const userAuthService = {
     return res.data;
   },
 
-  resendOtp: async (email: string): Promise<AuthSuccessResponse> => {
+  resendOtp: async (email: string): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.RESEND_OTP, { email });
     return res.data;
   },
 
-  login: async (email: string, password: string): Promise<AuthSuccessResponse> => {
+  login: async (email: string, password: string): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.LOGIN, {
       email,
       password,
@@ -33,21 +35,20 @@ export const userAuthService = {
 
   logout: async (): Promise<void> => {
     await api.post(API_ROUTES.AUTH.LOGOUT, {}, { withCredentials: true });
-
     window.location.href = "/";
   },
 
-  googleSignup: async (payload: GoogleAuthPayload): Promise<AuthSuccessResponse> => {
+  googleSignup: async (payload: GoogleAuthPayload): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.GOOGLE_SIGNUP, payload);
     return res.data;
   },
 
-  googleSignin: async (payload: GoogleAuthPayload): Promise<AuthSuccessResponse> => {
+  googleSignin: async (payload: GoogleAuthPayload): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.GOOGLE_SIGNIN, payload);
     return res.data;
   },
 
-  forgotPassword: async (email: string): Promise<AuthSuccessResponse> => {
+  forgotPassword: async (email: string): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.FORGOT_PASSWORD, { email });
     return res.data;
   },
@@ -55,7 +56,7 @@ export const userAuthService = {
   resetPassword: async (
     token: string,
     password: string,
-  ): Promise<AuthSuccessResponse> => {
+  ): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.RESET_PASSWORD, {
       token,
       password,
@@ -63,8 +64,21 @@ export const userAuthService = {
     return res.data;
   },
 
-  getMe: async (): Promise<AuthSuccessResponse> => {
+  getMe: async (): Promise<AuthResponse> => {
     const res = await api.get(API_ROUTES.AUTH.ME);
     return res.data;
   },
+
+
+  switchRole: async (
+  activeRole: "client" | "nutritionist" | "admin",
+): Promise<AuthResponse> => {
+  const res = await api.patch(
+    API_ROUTES.AUTH.SWITCH_ROLE,
+    { activeRole },
+    { withCredentials: true },
+  );
+  return res.data;
+},
+
 };

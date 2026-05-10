@@ -12,6 +12,11 @@ export interface IAdminNutritionistService {
     limit: number,
     search?: string
   ): Promise<PaginatedResponseDto<NutritionistStatusDTO>>;
+  getNutritionistApplications(
+  page: number,
+  limit: number,
+  search?: string
+): Promise<PaginatedResponseDto<NutritionistStatusDTO>>;
 
   getNutritionistById(userId: string): Promise<INutritionistProfile | null>;
 

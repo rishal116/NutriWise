@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
-import { IAdminAuthService } from "../../interfaces/admin/IAdminAuthService";
-import { IAdminAuthRepository } from "../../../repositories/interfaces/admin/IAdminAuthRepository";
+import { inject, injectable } from "inversify";
+import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
 import { generateTokens } from "../../../utils/jwt";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
@@ -8,74 +8,66 @@ import {
   AdminLoginDto,
   AdminLoginResponseDto,
 } from "../../../dtos/admin/adminAuth.dto";
-import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import logger from "../../../utils/logger";
-
+import { mapUserToSafeUserDto } from "../../../mapper/user/userAuth.mapper";
 
 @injectable()
-export class AdminAuthService implements IAdminAuthService {
+export class AdminAuthService {
   constructor(
-    @inject(TYPES.IAdminAuthRepository)
-    private _adminAuthRepository: IAdminAuthRepository,
+    @inject(TYPES.IUserRepository)
+    private _userRepository: IUserRepository,
   ) {}
 
   async login(dto: AdminLoginDto): Promise<AdminLoginResponseDto> {
     const { email, password } = dto;
 
-    logger.info("Admin login attempt", {
-      email,
-      action: "LOGIN_ATTEMPT",
-    });
+    logger.info("Admin login attempt", { email });
 
-    const admin = await this._adminAuthRepository.findByEmail(email);
+    // 1. FIND USER
+    const user = await this._userRepository.findByEmail(email);
 
-    if (!admin) {
-      logger.warn("Admin login failed", {
-        email,
-        action: "LOGIN_FAILED",
-        reason: "ADMIN_NOT_FOUND",
-      });
-
+    if (!user) {
       throw new CustomError(
         "Invalid email or password",
         StatusCode.UNAUTHORIZED,
       );
     }
 
-    const isValid = await bcrypt.compare(password, admin.password);
+    // 2. ROLE CHECK (IMPORTANT)
+    if (!user.roles.includes("admin")) {
+      throw new CustomError(
+        "Access denied",
+        StatusCode.FORBIDDEN,
+      );
+    }
+
+    // 3. PASSWORD CHECK
+    const isValid = await bcrypt.compare(password, user.password!);
 
     if (!isValid) {
-      logger.warn("Admin login failed", {
-        adminId: admin._id.toString(),
-        email,
-        action: "LOGIN_FAILED",
-        reason: "INVALID_PASSWORD",
-      });
-
       throw new CustomError(
         "Invalid email or password",
         StatusCode.UNAUTHORIZED,
       );
     }
 
+    // 4. TOKEN GENERATION
     const { accessToken, refreshToken } = generateTokens(
-      admin._id.toString(),
+      user._id.toString(),
       "admin",
+      user.roles,
     );
 
     logger.info("Admin login successful", {
-      adminId: admin._id.toString(),
-      email,
-      action: "LOGIN_SUCCESS",
+      userId: user._id.toString(),
     });
 
+    // 5. SAFE USER MAPPING
+    const safeUser = mapUserToSafeUserDto(user);
+
     return new AdminLoginResponseDto(
-      {
-        _id: admin._id.toString(),
-        email: admin.email,
-        role: admin.role,
-      },
+      safeUser,
       accessToken,
       refreshToken,
     );

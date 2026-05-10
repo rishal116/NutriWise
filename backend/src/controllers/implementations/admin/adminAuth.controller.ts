@@ -18,15 +18,16 @@ export class AdminAuthController implements IAdminAuthController {
 
   login = asyncHandler(async (req: Request, res: Response) => {
     const loginPayload = req.body;
+
     const loginResult = await this._adminAuthService.login(loginPayload);
+
     setAdminAuthCookies(res, loginResult.refreshToken);
+
     return res.status(StatusCode.OK).json({
       success: true,
       message: ADMIN_AUTH_MESSAGES.LOGIN_SUCCESS,
-      data: {
-        admin: loginResult.admin,
-        accessToken: loginResult.accessToken,
-      },
+      accessToken: loginResult.accessToken,
+      user: loginResult.user,
     });
   });
 

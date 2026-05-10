@@ -1,72 +1,132 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 export type UserRole = "client" | "nutritionist" | "admin";
+export type AuthProvider = "local" | "google";
 
-export type Gender = "male" | "female" | "other";
-
-export interface IUser extends Document {
+export interface IUser {
   _id: Types.ObjectId;
+
   fullName: string;
   email: string;
   password?: string;
-  googleId?: string;
-  profileImage?: string;
-  phone?: string;
-  birthdate?: Date;
-  gender?: Gender;
-  role: UserRole;
-  nutritionistStatus?: "pending" | "approved" | "rejected" | "none";
-  rejectionReason?: string;
+  googleProviderId?: string;
+
+  profileImageUrl?: string;
+  phoneNumber?: string;
+
+  authProvider: AuthProvider;
+  isEmailVerified: boolean;
+
+  roles: UserRole[];
+  activeRole: UserRole;
+  permissions?: string[];
+
   isBlocked: boolean;
+  isDeleted: boolean;
+  deletedAt?: Date;
+
+  lastLoginAt?: Date;
+  lastActiveAt?: Date;
+
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
 
-const userSchema = new Schema<IUser>({
-  fullName: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 3,
-    maxlength: 50,
+export type IUserDocument = IUser & Document;
+
+const userSchema = new Schema<IUserDocument>(
+  {
+    fullName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 3,
+      maxlength: 50,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/\S+@\S+\.\S+/, "Invalid email format"],
+      index: true,
+    },
+    phoneNumber: {
+      type: String,
+      trim: true,
+      match: [/^\d{10}$/, "Phone number must be 10 digits"],
+    },
+    password: {
+      type: String,
+    },
+    googleProviderId: {
+      type: String,
+      index: true,
+    },
+    profileImageUrl: {
+      type: String,
+      default: "",
+    },
+    
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+      required: true,
+    },
+
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    roles: {
+      type: [String],
+      enum: ["client", "nutritionist", "admin"],
+      default: ["client"],
+    },
+    activeRole: {
+      type: String,
+      enum: ["client", "nutritionist", "admin"],
+      default: "client",
+    },
+    permissions: {
+      type: [String],
+      default: [],
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+    },
+    lastLoginAt: {
+      type: Date,
+    },
+    lastActiveAt: {
+      type: Date,
+    },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/\S+@\S+\.\S+/, "Invalid email format"],
-    index: true
+  {
+    timestamps: true,
   },
-  phone: {
-    type: String,
-    trim: true,
-    match: [/^\d{10}$/, "Phone number must be 10 digits"],
-  },
-  password: { type: String },
-  googleId: { type: String, index: true },
-  profileImage: { type: String, default: "" },
-  birthdate: { type: Date },
-  gender: { type: String, enum: ["male", "female", "other"] },
-  role: {
-    type: String,
-    enum: ["client", "nutritionist", "admin"],
-    default: "client",
-  },
-  nutritionistStatus: {
-    type: String,
-    enum: ["pending", "approved", "rejected", "none"],
-    default: "none",
-    index: true,
-  },
-  rejectionReason: { type: String, trim: true, default: "" },
-  isBlocked: { type: Boolean, default: false },
-  resetPasswordToken: { type: String },
-  resetPasswordExpires: { type: Date },
-},
-{ timestamps: true });
+);
 
 export const UserModel = model<IUser>("User", userSchema);

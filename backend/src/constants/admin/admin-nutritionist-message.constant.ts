@@ -1,7 +1,10 @@
 export const ADMIN_NUTRITIONIST_MESSAGES = {
   FETCH_ALL_SUCCESS: "Nutritionists fetched successfully",
+  FETCH_APPLICATIONS_SUCCESS: "Nutritionist applications fetched successfully",
+
   DETAILS_FETCH_SUCCESS: "Nutritionist details fetched successfully",
   PROFILE_FETCH_SUCCESS: "Nutritionist profile fetched successfully",
+
   APPROVED: "Nutritionist approved successfully",
   REJECTED: "Nutritionist rejected successfully",
   LEVEL_UPDATED: "Nutritionist level updated successfully",

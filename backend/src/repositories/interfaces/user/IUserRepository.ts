@@ -7,7 +7,13 @@ export interface IUserRepository extends IBaseRepository<IUser> {
   updatePasswordById(userId: string, hashedPassword: string): Promise<void>;
   updatePasswordByEmail(email: string, hashedPassword: string): Promise<void>;
   findByGoogleId(googleId: string): Promise<IUser | null>;
+  updateGoogleProviderId(
+    email: string,
+    googleProviderId: string,
+  ): Promise<void>;
   setResetToken(email: string, token: string, expires: Date): Promise<void>;
   findByResetToken(token: string): Promise<IUser | null>;
-  getProfileImageById(userId: string): Promise<Pick<IUser, "profileImage"> | null>;
+  getProfileImageById(
+    userId: string,
+  ): Promise<{ profileImageUrl: string } | null>
 }

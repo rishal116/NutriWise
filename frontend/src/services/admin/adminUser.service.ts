@@ -11,7 +11,7 @@ const buildParams = (page: number, limit: number, search?: string) => {
 
 export const adminUserService = {
   getAllUsers: async (page = 1, limit = 10, search?: string) => {
-    const response = await adminApi.get(AdminRoutes.GET_ALL_USERS, {
+    const response = await adminApi.get(AdminRoutes.USERS, {
       params: buildParams(page, limit, search),
     });
 

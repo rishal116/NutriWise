@@ -1,11 +1,11 @@
-import { Gender } from "../../models/user.model";
+import { Gender } from "../../models/clientProfile.model";
 
 export interface UserProfile {
-  fullName?: string;
-  email?: string;
-  phone?: string;
-  gender?:Gender;
-  birthdate?:Date;
+  fullName: string | null;
+  email: string | null;
+  phone: string | null;
+  gender: Gender | null;
+  birthdate: string | null; 
 }
 
 export interface UpdateUserProfileDto {

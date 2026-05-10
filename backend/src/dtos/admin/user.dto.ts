@@ -5,47 +5,52 @@ export type WithRequiredId<T> = T & {
   _id: Types.ObjectId;
 };
 
-
-export interface IUserDTOInput{
+export interface IUserDTOInput {
   _id: Types.ObjectId;
   fullName?: string;
   email?: string;
-  role?: UserRole;
+  roles?: UserRole[];
+  activeRole?: UserRole;
   isBlocked?: boolean;
   nutritionistStatus?: "approved" | "pending" | "rejected" | "none";
   rejectionReason?: string;
 }
 
-
 export class UserDTO {
   id: string;
   fullName: string;
   email: string;
-  role: UserRole;
+  roles: UserRole[];
+  activeRole: UserRole;
   isBlocked: boolean;
+
   constructor(user: IUserDTOInput) {
     this.id = user._id.toString();
     this.fullName = user.fullName ?? "";
     this.email = user.email ?? "";
-    this.role = user.role ?? "client";
+    this.roles = user.roles ?? ["client"];
+    this.activeRole =
+      user.activeRole && user.roles?.includes(user.activeRole)
+        ? user.activeRole
+        : (this.roles[0] ?? "client");
     this.isBlocked = user.isBlocked ?? false;
   }
 }
 
-
 export class NutritionistStatusDTO extends UserDTO {
   nutritionistStatus: "approved" | "pending" | "rejected" | "none";
   rejectionReason?: string;
+
   constructor(user: IUserDTOInput) {
     super(user);
     this.nutritionistStatus = user.nutritionistStatus ?? "none";
-    this.rejectionReason = user.rejectionReason;
+    this.rejectionReason = user.rejectionReason ?? "";
   }
 }
 
 
-
 import { IExperience } from "../../models/nutritionistProfile.model";
+
 export interface INutritionistProfileDTOInput {
   profileImage?: string;
   qualifications?: string[];
@@ -59,7 +64,7 @@ export interface INutritionistProfileDTOInput {
   cv?: string;
   certifications?: string[];
   availabilityStatus?: "available" | "unavailable" | "busy";
-  nutritionistStatus:"BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
+  coachLevel?: "BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
 }
 
 export class NutritionistProfileDTO {
@@ -75,7 +80,8 @@ export class NutritionistProfileDTO {
   cv?: string;
   certifications?: string[];
   availabilityStatus: "available" | "unavailable" | "busy";
-  nutritionistStatus:"BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
+  level: "BEGINNER" | "VERIFIED" | "EXPERT" | "TOP_COACH";
+
   constructor(profile: INutritionistProfileDTOInput) {
     this.profileImage = profile.profileImage ?? "";
     this.qualifications = profile.qualifications ?? [];
@@ -89,15 +95,15 @@ export class NutritionistProfileDTO {
     this.cv = profile.cv ?? "";
     this.certifications = profile.certifications ?? [];
     this.availabilityStatus = profile.availabilityStatus ?? "available";
-    this.nutritionistStatus = profile.nutritionistStatus
+    this.level = profile.coachLevel ?? "BEGINNER";
   }
 }
-
 
 export class AdminNutritionistProfileDTO {
   user: NutritionistStatusDTO;
   profile: NutritionistProfileDTO;
-  constructor(user: IUserDTOInput,profile: INutritionistProfileDTOInput) {
+
+  constructor(user: IUserDTOInput, profile: INutritionistProfileDTOInput) {
     this.user = new NutritionistStatusDTO(user);
     this.profile = new NutritionistProfileDTO(profile);
   }

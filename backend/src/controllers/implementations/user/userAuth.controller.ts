@@ -21,13 +21,12 @@ export class UserAuthController implements IUserAuthController {
   ) {}
 
   signup = asyncHandler(async (req: Request, res: Response) => {
-    const { fullName, email, password, confirmPassword, role } = req.body;
+    const { fullName, email, password, confirmPassword } = req.body;
     const response = await this._userAuthService.signup(req, {
       fullName,
       email,
       password,
       confirmPassword,
-      role,
     });
     return res.status(StatusCode.OK).json({
       success: true,
@@ -37,13 +36,19 @@ export class UserAuthController implements IUserAuthController {
 
   verifyOtp = asyncHandler(async (req: Request, res: Response) => {
     const { email, otp } = req.body;
-    const response = await this._userAuthService.verifyOtp(req, { email, otp });
+
+    const response = await this._userAuthService.verifyOtp(req, {
+      email,
+      otp,
+    });
+
     setAuthCookies(res, response.refreshToken);
+
     return res.status(StatusCode.CREATED).json({
-      success: true,
-      message: USER_MESSAGES.OTP_VERIFIED,
+      success: response.success,
+      message: response.message,
+      user: response.user,
       accessToken: response.accessToken,
-      role: response.role,
     });
   });
 
@@ -58,25 +63,34 @@ export class UserAuthController implements IUserAuthController {
 
   login = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
-    const response = await this._userAuthService.login({ email, password });
+
+    const response = await this._userAuthService.login({
+      email,
+      password,
+    });
+
     setAuthCookies(res, response.refreshToken);
+
     return res.status(StatusCode.OK).json({
-      success: true,
+      success: response.success,
+      message: response.message,
       user: response.user,
       accessToken: response.accessToken,
     });
   });
+  
+  googleAuth = asyncHandler(async (req: Request, res: Response) => {
+    const { credential } = req.body;
 
-  googleLogin = asyncHandler(async (req: Request, res: Response) => {
-    const { credential, role } = req.body;
-    const response = await this._userAuthService.googleLogin({
+    const response = await this._userAuthService.googleAuth({
       credential,
-      role,
     });
+
     setAuthCookies(res, response.refreshToken);
-    return res.status(StatusCode.CREATED).json({
-      success: true,
-      message: AUTH_MESSAGES.LOGIN_SUCCESS,
+
+    return res.status(StatusCode.OK).json({
+      success: response.success,
+      message: response.message,
       user: response.user,
       accessToken: response.accessToken,
     });
@@ -101,21 +115,10 @@ export class UserAuthController implements IUserAuthController {
   });
 
   getMe = asyncHandler(async (req: Request, res: Response) => {
-    const user = await this._userAuthService.getMe(req.user!.userId);
+    const response = await this._userAuthService.getMe(req.user!.userId);
     return res.status(StatusCode.OK).json({
-      success: true,
-      user,
-    });
-  });
-
-  googleSignin = asyncHandler(async (req: Request, res: Response) => {
-    const { credential } = req.body;
-    const response = await this._userAuthService.googleSignin({ credential });
-    setAuthCookies(res, response.refreshToken);
-    return res.status(StatusCode.OK).json({
-      success: true,
-      user: response.user,
-      accessToken: response.accessToken,
+      ...response,
+      message: AUTH_MESSAGES.USER_FETCHED_SUCCESS,
     });
   });
 
@@ -127,4 +130,23 @@ export class UserAuthController implements IUserAuthController {
       message: AUTH_MESSAGES.LOGOUT_SUCCESS,
     });
   });
+
+  switchRole = asyncHandler(async (req: Request, res: Response) => {
+  const { activeRole } = req.body;
+
+  const response = await this._userAuthService.switchRole(
+    req.user!.userId,
+    activeRole,
+  );
+
+
+  setAuthCookies(res, response.refreshToken);
+
+  return res.status(StatusCode.OK).json({
+    success: response.success,
+    message: response.message,
+    user: response.user,
+    accessToken: response.accessToken,
+  });
+});
 }

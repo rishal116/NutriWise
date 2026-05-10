@@ -10,10 +10,22 @@ export const API_ROUTES = {
     FORGOT_PASSWORD: "/forgot-password",
     RESET_PASSWORD: "/reset-password",
     ME: "/me",
+    SWITCH_ROLE: "/switch-role", //
+    REFRESH_TOKEN: "/refresh-token",
   },
+
+  CLIENT_PROFILE: {
+    CREATE: "/client-profile",
+    GET_ME: "/client-profile/me",
+    UPDATE: "/client-profile/me",
+    COMPLETE: "/client-profile/me/completion",
+    DELETE: "/client-profile/me",
+  },
+
   CHECKOUT: {
     CREATE_SESSION: "/checkout/session",
   },
+
   HEALTH: {
     GET: "/health-details",
     SAVE: "/health-details",

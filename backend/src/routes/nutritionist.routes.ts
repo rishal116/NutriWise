@@ -58,6 +58,9 @@ router.get(
   authMiddleware,
   nutritionistAuthController.getRejectionReason,
 );
+
+
+
 router.get("/getName", authMiddleware, nutritionistAuthController.getName);
 
 router.post("/plans", authMiddleware, nutritionistPlanController.createPlan);

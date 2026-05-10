@@ -16,8 +16,11 @@ export const AUTH_MESSAGES = {
   INVALID_TOKEN: "Invalid token",
   AUTH_FAILED: "Authentication failed",
   INVALID_ROLE: "Invalid role in token",
+
   LOGIN_SUCCESS: "Login successful",
   LOGOUT_SUCCESS: "Logout successful",
+
+  USER_FETCHED_SUCCESS: "User fetched successfully",
 } as const;
 
 export const PAYMENT_MESSAGES = {

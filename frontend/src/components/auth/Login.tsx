@@ -60,6 +60,13 @@ export default function LoginForm() {
 
     try {
       const res = await userAuthService.login(email, password);
+
+      if (!res.success) {
+        setServerError(res.message);
+        toast.error(res.message);
+        return;
+      }
+
       if (res.user?.isBlocked) {
         const msg = "Your account has been blocked. Please contact support.";
         setServerError(msg);
@@ -109,6 +116,12 @@ export default function LoginForm() {
       const res = await userAuthService.googleSignin({
         credential: credentialResponse.credential,
       });
+
+      if (!res.success) {
+        setServerError(res.message);
+        toast.error(res.message);
+        return;
+      }
 
       if (res.user?.isBlocked) {
         toast.error("Your account has been blocked.");

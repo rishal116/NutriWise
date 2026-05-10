@@ -32,6 +32,25 @@ export class AdminNutritionistController implements IAdminNutritionistController
     });
   });
 
+  getNutritionistApplications = asyncHandler(async (req: Request, res: Response) => {
+  const pageNumber = Number(req.query.page) || 1;
+  const pageLimit = Number(req.query.limit) || 10;
+  const searchKeyword = req.query.search as string | undefined;
+
+  const applicationResult =
+    await this._adminNutritionistService.getNutritionistApplications(
+      pageNumber,
+      pageLimit,
+      searchKeyword,
+    );
+
+  return res.status(StatusCode.OK).json({
+    success: true,
+    message: ADMIN_NUTRITIONIST_MESSAGES.FETCH_APPLICATIONS_SUCCESS,
+    data: applicationResult,
+  });
+});
+
   getNutritionistDetails = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     const nutritionist =

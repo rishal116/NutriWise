@@ -13,9 +13,10 @@ export const TYPES = {
   IUserProfileController: Symbol.for("IUserProfileController"),
   IUserProfileService: Symbol.for("IUserProfileService"),
   ICheckoutService: Symbol.for("ICheckoutService"),
-  IHealthDetailsService: Symbol.for("IHealthDetailsService"),
-  IHealthDetailsRepository: Symbol.for("IHealthDetailsRepository"),
-  IHealthDetailsController: Symbol.for("IHealthDetailsController"),
+ 
+  IClientProfileService: Symbol.for("IClientProfileService"),
+  IClientProfileRepository: Symbol.for("IClientProfileRepository"),
+  IClientProfileController: Symbol.for("IClientProfileController"),
   IUserPlanRepository: Symbol.for("IUserPlanRepository"),
   IUserPlanService: Symbol.for("IUserPlanService"),
   IUserPlanController: Symbol.for("IUserPlanController"),
@@ -51,7 +52,6 @@ export const TYPES = {
   IAdminNutritionistRepository: Symbol.for("IAdminNutritionistRepository"),
   IAdminClientController: Symbol.for("IAdminClientController"),
   IAdminClientService: Symbol.for("IAdminClientService"),
-  IAdminClientRepository: Symbol.for("IAdminClientRepository"),
   IAdminNotificationController: Symbol.for("IAdminNotificationController"),
   INotificationRepository: Symbol.for("INotificationRepository"),
   INotificationService: Symbol.for("INotificationService"),
@@ -59,6 +59,9 @@ export const TYPES = {
   IAdminPlanController: Symbol.for("IAdminPlanController"),
   IAdminChallengeService: Symbol.for("IAdminChallengeService"),
   IAdminChallengeController: Symbol.for("IAdminChallengeController"),
+  IAdminUserRepository:Symbol.for("IAdminUserRepository"),
+
+
 
   //Nutritionist
   INutritionistAuthController: Symbol.for("INutritionistAuthController"),

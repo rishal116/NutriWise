@@ -1,35 +1,19 @@
-// Request DTOs (input)
-export interface AdminLoginDto {
-  email: string;
-  password: string;
-}
-export interface AdminForgotPasswordDto {
-  email: string;
+import { IsEmail, IsString, MinLength } from "class-validator";
+import { SafeUserDto } from "../user/userAuth.response.dto";
+
+export class AdminLoginDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(6)
+  password!: string;
 }
 
-//Response DTO (input)
-interface AdminAuthEntity {
-  _id: string;
-  email: string;
-  role: string;
-}
 export class AdminLoginResponseDto {
-  admin: {
-    id: string;
-    email: string;
-    role: string;
-  };
-  accessToken: string;
-  refreshToken: string;
-  
-  constructor(admin: AdminAuthEntity,accessToken: string,refreshToken: string) {
-    this.admin = {
-      id: admin._id,
-      email: admin.email,
-      role: admin.role,
-    };
-    this.accessToken = accessToken;
-    this.refreshToken = refreshToken;
-  }
+  constructor(
+    public user: SafeUserDto,
+    public accessToken: string,
+    public refreshToken: string,
+  ) {}
 }
-

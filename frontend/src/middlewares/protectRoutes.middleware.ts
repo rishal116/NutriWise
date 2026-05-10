@@ -3,6 +3,12 @@ import jwt from "jsonwebtoken";
 
 type Role = "client" | "nutritionist" | "admin";
 
+interface DecodedToken {
+  userId: string;
+  activeRole: Role;
+  roles?: Role[];
+}
+
 const publicRoutes = [
   "/",
   "/login",
@@ -13,45 +19,85 @@ const publicRoutes = [
   "/admin/login",
 ];
 
+// Routes accessible for users applying to become nutritionists
+const nutritionistPublicRoutes = [
+  "/nutritionist/details",
+  "/nutritionist/reapply",
+  "/nutritionist/pending",
+];
+
 export const protectRoutes = (req: NextRequest) => {
   const path = req.nextUrl.pathname;
+
+  // Public routes
   if (publicRoutes.includes(path)) {
     return null;
   }
-  
+
   let tokenCookieName = "refreshToken";
   let loginRedirect = "/login";
+
+  // Admin routes
   if (path.startsWith("/admin")) {
     tokenCookieName = "adminRefreshToken";
     loginRedirect = "/admin/login";
   }
-  
+
   const token = req.cookies.get(tokenCookieName)?.value;
+
+  // No token
   if (!token) {
     return NextResponse.redirect(new URL(loginRedirect, req.url));
   }
 
   try {
-    const decoded = jwt.decode(token) as { userId: string; role: Role } | null;
-    if (!decoded?.role) {
+   const decoded = jwt.decode(token) as DecodedToken;
+
+    // Invalid token payload
+    if (!decoded?.activeRole) {
       return NextResponse.redirect(new URL(loginRedirect, req.url));
     }
-    const { role } = decoded;
-    if (path.startsWith("/admin") && role !== "admin") {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
-    }
-    
-    if (path.startsWith("/nutritionist") && !["nutritionist", "admin"].includes(role)) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
+
+    const { activeRole, roles = [activeRole] } = decoded;
+
+
+    // ─────────────────────────────
+    // Admin Protection
+    // ─────────────────────────────
+    if (path.startsWith("/admin") && activeRole !== "admin") {
+      return NextResponse.redirect(
+        new URL("/unauthorized", req.url)
+      );
     }
 
-    if (path.startsWith("/") && !["client", "nutritionist", "admin"].includes(role)) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    // ─────────────────────────────
+    // Nutritionist application routes
+    // ─────────────────────────────
+    const isNutritionistPublicRoute =
+      nutritionistPublicRoutes.some((route) =>
+        path.startsWith(route)
+      );
+
+    // ─────────────────────────────
+    // Nutritionist dashboard protection
+    // ─────────────────────────────
+    if (
+      path.startsWith("/nutritionist") &&
+      !isNutritionistPublicRoute &&
+      !roles.includes("nutritionist") &&
+      activeRole !== "admin"
+    ) {
+      console.log("jrjjr");
+      
+      return NextResponse.redirect(
+        new URL("/unauthorized", req.url)
+      );
     }
 
     return null;
-  } catch (err) {
-    console.log("JWT decode failed:", err);
-    return NextResponse.redirect(new URL(loginRedirect, req.url));
+  } catch {
+    return NextResponse.redirect(
+      new URL(loginRedirect, req.url)
+    );
   }
 };

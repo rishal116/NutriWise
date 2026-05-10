@@ -37,12 +37,12 @@ import { IUserProfileService } from "../services/interfaces/user/IUserProfileSer
 import { UserProfileService } from "../services/implements/user/userProfile.service";
 
 // Health Details
-import { IHealthDetailsController } from "../controllers/interfaces/user/IHealthDetailsController";
-import { HealthDetailsController } from "../controllers/implementations/user/healthDetails.controller";
-import { IHealthDetailsService } from "../services/interfaces/user/IHealthDetailsService";
-import { HealthDetailsService } from "../services/implements/user/healthDetails.service";
-import { IHealthDetailsRepository } from "../repositories/interfaces/user/IHealthDetailsRepository";
-import { HealthDetailsRepository } from "../repositories/implements/user/healthDetails.repository";
+import { IClientProfileController } from "../controllers/interfaces/user/IClientProfileController";
+import { ClientProfileController } from "../controllers/implementations/user/clientProfile.controller";
+import { IClientProfileService } from "../services/interfaces/user/IClientProfileService";
+import { ClientProfileService } from "../services/implements/user/clientProfile.service";
+import { IClientProfileRepository } from "../repositories/interfaces/user/IClientProfileRepository";
+import { ClientProfileRepository } from "../repositories/implements/user/clientProfile.repository";
 
 // User Plans
 import { IUserPlanController } from "../controllers/interfaces/user/IUserPlanController";
@@ -260,8 +260,8 @@ import { IAdminClientController } from "../controllers/interfaces/admin/IAdminCl
 import { AdminClientController } from "../controllers/implementations/admin/adminClient.controller";
 import { IAdminClientService } from "../services/interfaces/admin/IAdminClientService";
 import { AdminClientService } from "../services/implements/admin/adminClient.service";
-import { IAdminClientRepository } from "../repositories/interfaces/admin/IAdminClientRepository";
-import { AdminClientRepository } from "../repositories/implements/admin/adminClient.repository";
+import { IAdminUserRepository } from "../repositories/interfaces/admin/IAdminUserRepository";
+import { AdminUserRepository } from "../repositories/implements/admin/adminUser.repository";
 
 // Nutritionist
 import { IAdminNutritionistController } from "../controllers/interfaces/admin/IAdminNutritionistController";
@@ -329,14 +329,14 @@ container
 
 // Health Details
 container
-  .bind<IHealthDetailsController>(TYPES.IHealthDetailsController)
-  .to(HealthDetailsController);
+  .bind<IClientProfileController>(TYPES.IClientProfileController)
+  .to(ClientProfileController);
 container
-  .bind<IHealthDetailsRepository>(TYPES.IHealthDetailsRepository)
-  .to(HealthDetailsRepository);
+  .bind<IClientProfileRepository>(TYPES.IClientProfileRepository)
+  .to(ClientProfileRepository);
 container
-  .bind<IHealthDetailsService>(TYPES.IHealthDetailsService)
-  .to(HealthDetailsService);
+  .bind<IClientProfileService>(TYPES.IClientProfileService)
+  .to(ClientProfileService);
 
 // User Plans
 container
@@ -508,8 +508,8 @@ container
   .bind<IAdminClientService>(TYPES.IAdminClientService)
   .to(AdminClientService);
 container
-  .bind<IAdminClientRepository>(TYPES.IAdminClientRepository)
-  .to(AdminClientRepository);
+  .bind<IAdminUserRepository>(TYPES.IAdminUserRepository)
+  .to(AdminUserRepository);
 
 // Nutritionist
 container

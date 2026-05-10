@@ -4,21 +4,25 @@ import {
   FitnessLevel,
   DietType,
   GoalType,
+  TimelineType,
   ACTIVITY_LEVELS,
   FITNESS_LEVELS,
   DIET_TYPES,
   GOALS,
   TIMELINES,
-  TimelineType
 } from "../types/health.types";
-  
-export interface IHealthDetails extends Document {
+
+export type Gender = "male" | "female" | "other";
+
+export interface IClientProfile extends Document {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
 
+  dateOfBirth?: Date;
+  gender?: Gender;
+
   heightCm: number;
   weightKg: number;
-  bmi?: number;
 
   activityLevel: ActivityLevel;
   fitnessLevel: FitnessLevel;
@@ -39,14 +43,18 @@ export interface IHealthDetails extends Document {
   goal: GoalType;
   targetWeightKg?: number;
   preferredTimeline: TimelineType;
-  
+  customTimelineWeeks?: number;
+
   focusAreas?: string[];
+
+  profileCompleted: boolean;
+  profileCompletionPercentage?: number;
 
   createdAt: Date;
   updatedAt: Date;
 }
 
-const healthDetailsSchema = new Schema<IHealthDetails>(
+const clientProfileSchema = new Schema<IClientProfile>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -55,9 +63,21 @@ const healthDetailsSchema = new Schema<IHealthDetails>(
       unique: true,
       index: true,
     },
-    heightCm: { type: Number, required: true },
-    weightKg: { type: Number, required: true },
-    bmi: { type: Number },
+    dateOfBirth: {
+      type: Date,
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+    },
+    heightCm: {
+      type: Number,
+      required: true,
+    },
+    weightKg: {
+      type: Number,
+      required: true,
+    },
     activityLevel: {
       type: String,
       enum: ACTIVITY_LEVELS,
@@ -78,24 +98,58 @@ const healthDetailsSchema = new Schema<IHealthDetails>(
     dietaryRestrictions: [{ type: String }],
     medicalConditions: [{ type: String }],
     injuries: [{ type: String }],
-    dailyWaterIntakeLiters: { type: Number, required: true },
-    sleepDurationHours: { type: Number, required: true },
-    dailyStepGoal: { type: Number },
-    workoutDaysPerWeek: { type: Number },
-    workoutTimePerSession: { type: Number },
+    dailyWaterIntakeLiters: {
+      type: Number,
+      required: true,
+    },
+    sleepDurationHours: {
+      type: Number,
+      required: true,
+    },
+    dailyStepGoal: {
+      type: Number,
+    },
+    workoutDaysPerWeek: {
+      type: Number,
+    },
+    workoutTimePerSession: {
+      type: Number,
+    },
     goal: {
       type: String,
       enum: GOALS,
       required: true,
     },
-    targetWeightKg: { type: Number },
-    preferredTimeline: { type: String,enum: TIMELINES, required: true },
+    targetWeightKg: {
+      type: Number,
+    },
+    preferredTimeline: {
+      type: String,
+      enum: TIMELINES,
+      required: true,
+    },
+    customTimelineWeeks: {
+      type: Number,
+      min: 1,
+    },
     focusAreas: [{ type: String }],
+    profileCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    profileCompletionPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  },
 );
 
-export const HealthDetailsModel = model<IHealthDetails>(
-  "HealthDetails",
-  healthDetailsSchema
+export const ClientProfileModel = model<IClientProfile>(
+  "ClientProfile",
+  clientProfileSchema,
 );

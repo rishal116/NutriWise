@@ -1,5 +1,5 @@
-import "express";
-import { Role } from "./role";
+// types/express/index.d.ts
+import { Role } from "../src/types/role";
 
 declare global {
   namespace Express {
@@ -7,7 +7,10 @@ declare global {
       user?: {
         userId: string;
         role: Role;
+        roles?: Role[];
       };
     }
   }
 }
+
+export {};

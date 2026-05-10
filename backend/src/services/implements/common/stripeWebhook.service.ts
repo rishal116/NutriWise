@@ -10,7 +10,7 @@ import { IWalletRepository } from "../../../repositories/interfaces/common/IWall
 import { IPaymentRepository } from "../../../repositories/interfaces/common/IPaymentRepository";
 import { calculateCommission } from "../../../helper/paymentCalculator";
 import { IUserProgramRepository } from "../../../repositories/interfaces/user/IUserProgramRepository";
-import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
+import { IClientProfileRepository } from "../../../repositories/interfaces/user/IClientProfileRepository";
 import logger from "../../../utils/logger";
 
 @injectable()
@@ -31,8 +31,8 @@ export class StripeWebhookService implements IStripeWebhookService {
     @inject(TYPES.IUserProgramRepository)
     private _userProgram: IUserProgramRepository,
 
-    @inject(TYPES.IHealthDetailsRepository)
-    private _healthDetails: IHealthDetailsRepository,
+    @inject(TYPES.IClientProfileRepository)
+    private _healthDetails: IClientProfileRepository,
   ) {}
 
   async process(payload: Buffer, signature: string) {

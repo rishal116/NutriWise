@@ -1,16 +1,13 @@
-import NutritionistDetailsPage from '@/components/auth/nutrtionistForm/NutritionistForm'
-import React from 'react'
+import React from "react";
+
+import NutritionistDetailsPage from "@/components/auth/nutrtionistForm/NutritionistForm";
 
 export const metadata = {
-  title: "NutriWise - Nutritionist Detail Form",
+  title: "Apply as Nutritionist | NutriWise",
+  description:
+    "Submit your nutritionist application and join NutriWise as a professional nutrition coach.",
 };
 
-function page() {
-  return (
-    <div>
-      <NutritionistDetailsPage/>
-    </div>
-  )
+export default function Page() {
+  return <NutritionistDetailsPage />;
 }
-
-export default page

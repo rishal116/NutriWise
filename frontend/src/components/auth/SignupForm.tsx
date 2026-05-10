@@ -5,24 +5,27 @@ import { useDispatch } from "react-redux";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
-import { Eye, EyeOff, User, Mail, Lock, XCircle, Users, Stethoscope, UserPlus, Loader2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  User,
+  Mail,
+  Lock,
+  XCircle,
+  UserPlus,
+  Loader2,
+} from "lucide-react";
 import { loginSuccess } from "@/redux/slices/authSlice";
 import { UserSignupSchema } from "@/validation/userAuth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
-import { useEffect } from "react";
-import { RootState } from "@/redux/store";
-import { useSelector } from "react-redux";
 import Link from "next/link";
 
-
-type Role = "client" | "nutritionist";
 interface FormData {
   fullName: string;
   email: string;
   password: string;
   confirmPassword: string;
-  role: Role;
 }
 
 export default function SignupForm() {
@@ -36,27 +39,17 @@ export default function SignupForm() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "client",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-const token = useSelector((state: RootState) => state.auth.token);
 
-useEffect(() => {
-  if (token) {
-    router.replace("/home");
-  }
-}, [token, router]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validateForm = () => {
-    const result = UserSignupSchema.safeParse(formData);
+    const result = UserSignupSchema.safeParse({ ...formData });
     if (!result.success) {
       const newErrors: Record<string, string> = {};
       result.error.issues.forEach((err) => {
@@ -73,82 +66,83 @@ useEffect(() => {
     try {
       setLoading(true);
       const { email } = formData;
-      const data = await userAuthService.register(formData);
+      const data = await userAuthService.register({
+        ...formData,
+      });
       if (data.success) {
         dispatch(setSignupEmail(email));
         localStorage.setItem("signupEmail", email);
         router.push("/verify-otp");
       } else {
-        toast.error("Signup failed", {
+        toast.error("Signup failed. Please try again.", {
           icon: <XCircle color="white" size={20} />,
         });
       }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Something went wrong");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : ((error as { response?: { data?: { message?: string } } })?.response
+              ?.data?.message ?? "Something went wrong");
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
-  
-  const handleGoogleError = (error?: any) => {
-    console.error("Google Login Failed:", error);
+
+  const handleGoogleError = () => {
     toast.error("Google login failed. Please try again.");
   };
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: {
+    credential?: string;
+  }) => {
     try {
       if (!credentialResponse?.credential) {
-  toast.error("Google authentication failed");
-  return;
-}
-
-const decoded: any = jwtDecode(credentialResponse.credential);
-      const selectedRole = formData.role;
-      if (!selectedRole) {
-        toast.error("Please select whether you're a client or a nutritionist before continuing.");
+        toast.error("Google authentication failed. No credentials received.");
         return;
       }
+
+      const decoded = jwtDecode<{
+        name: string;
+        email: string;
+        sub: string;
+      }>(credentialResponse.credential);
+
       const payload = {
         fullName: decoded.name,
         email: decoded.email,
         googleId: decoded.sub,
-        role: selectedRole,
         credential: credentialResponse.credential,
       };
+
       const response = await userAuthService.googleSignup(payload);
+
       if (response.success) {
         const { user, accessToken } = response;
-        dispatch(loginSuccess(accessToken));
-        sessionStorage.setItem("tempUser",JSON.stringify({ email: user.email, role: user.role }));
+
         if (user.isBlocked) {
           toast.error("Your account has been blocked. Please contact support.");
           return;
         }
-        if (user.role === "nutritionist") {
-          switch (user.nutritionistStatus) {
-            case "pending":
-              toast("Your application is pending. Please complete your details.");
-              router.push("/home");
-              break;
-            case "none":
-              toast.error("Your application was rejected. You can reapply in your profile.");
-              router.push("/nutritionist/details");
-              break;
-            case "approved":
-            default:
-              router.push("/home");
-              break;
-          }
-        } else if (user.role === "client") {
-          router.push("/home");
-        }
+
+        dispatch(loginSuccess(accessToken));
+        sessionStorage.setItem(
+          "tempUser",
+          JSON.stringify({ email: user.email }),
+        );
         toast.success(`Welcome ${user.fullName || "User"}!`);
+        router.push("/home");
       } else {
-        toast.error(response.message || "Signup failed");
+        toast.error(
+          response.message || "Google signup failed. Please try again.",
+        );
       }
-    } catch (error: any) {
-      console.error("Google login error:", error);
-      toast.error(error?.response?.data?.message || "Google login failed");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response
+          ?.data?.message ?? "Google login failed. Please try again.";
+      toast.error(message);
     }
   };
 
@@ -170,104 +164,29 @@ const decoded: any = jwtDecode(credentialResponse.credential);
           </p>
         </div>
 
-        {/* Role Selection */}
-        <div className="mb-5 sm:mb-6">
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
-            I am a
-          </label>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {[
-              {
-                name: "client",
-                icon: Users,
-                label: "Client",
-                subtext: "Seeking nutrition guidance",
-              },
-              {
-                name: "nutritionist",
-                icon: Stethoscope,
-                label: "Nutritionist",
-                subtext: "Provide expert advice",
-              },
-            ].map((option) => {
-              const isActive = formData.role === option.name;
-              const Icon = option.icon;
-              return (
-                <button
-                  key={option.name}
-                  type="button"
-                  onClick={() =>
-                    handleInputChange({
-                      target: { name: "role", value: option.name },
-                    } as any)
-                  }
-                  className={`relative flex flex-col items-center justify-center p-3 sm:p-4 lg:p-5 rounded-xl border-2 transition-all duration-200 ${
-                    isActive
-                      ? "border-emerald-500 bg-emerald-50 shadow-md"
-                      : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm"
-                  }`}
-                >
-                  <div
-                    className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center mb-2 transition-colors ${
-                      isActive ? "bg-emerald-500" : "bg-gray-100"
-                    }`}
-                  >
-                    <Icon
-                      className={`w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 ${
-                        isActive ? "text-white" : "text-gray-500"
-                      }`}
-                    />
-                  </div>
-                  <span
-                    className={`font-semibold text-xs sm:text-sm lg:text-base ${
-                      isActive ? "text-emerald-700" : "text-gray-700"
-                    }`}
-                  >
-                    {option.label}
-                  </span>
-                  <span className="text-xs text-gray-500 mt-1 text-center hidden sm:block">
-                    {option.subtext}
-                  </span>
-                  {isActive && (
-                    <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Input Fields */}
         <div className="space-y-4 sm:space-y-5">
-          {[
-            {
-              name: "fullName",
-              type: "text",
-              placeholder: "Enter your full name",
-              icon: <User className="text-emerald-600" size={18} />,
-            },
-            {
-              name: "email",
-              type: "email",
-              placeholder: "you@example.com",
-              icon: <Mail className="text-emerald-600" size={18} />,
-            },
-          ].map((field) => (
+          {(
+            [
+              {
+                name: "fullName",
+                type: "text",
+                placeholder: "Enter your full name",
+                label: "Full Name",
+                icon: <User className="text-emerald-600" size={18} />,
+              },
+              {
+                name: "email",
+                type: "email",
+                placeholder: "you@example.com",
+                label: "Email",
+                icon: <Mail className="text-emerald-600" size={18} />,
+              },
+            ] as const
+          ).map((field) => (
             <div key={field.name}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2 capitalize">
-                {field.name.replace(/([A-Z])/g, " $1")}
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                {field.label}
               </label>
               <div className="relative">
                 <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2">
@@ -276,11 +195,13 @@ const decoded: any = jwtDecode(credentialResponse.credential);
                 <input
                   type={field.type}
                   name={field.name}
-                  value={(formData as any)[field.name]}
+                  value={formData[field.name]}
                   onChange={handleInputChange}
                   placeholder={field.placeholder}
                   className={`w-full pl-10 sm:pl-11 pr-4 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border ${
-                    errors[field.name] ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
+                    errors[field.name]
+                      ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                      : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
                   } focus:bg-white focus:ring-2 outline-none transition-all text-sm sm:text-base`}
                 />
               </div>
@@ -296,18 +217,20 @@ const decoded: any = jwtDecode(credentialResponse.credential);
           {/* Password Fields */}
           {[
             {
-              name: "password",
+              name: "password" as const,
               value: formData.password,
               show: showPassword,
               setShow: setShowPassword,
               label: "Password",
+              placeholder: "Create a strong password",
             },
             {
-              name: "confirmPassword",
+              name: "confirmPassword" as const,
               value: formData.confirmPassword,
               show: showConfirmPassword,
               setShow: setShowConfirmPassword,
               label: "Confirm Password",
+              placeholder: "Re-enter your password",
             },
           ].map((item) => (
             <div key={item.name}>
@@ -315,19 +238,20 @@ const decoded: any = jwtDecode(credentialResponse.credential);
                 {item.label}
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600" size={18} />
+                <Lock
+                  className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600"
+                  size={18}
+                />
                 <input
                   type={item.show ? "text" : "password"}
                   name={item.name}
                   value={item.value}
                   onChange={handleInputChange}
-                  placeholder={
-                    item.name === "password"
-                      ? "Create a strong password"
-                      : "Confirm your password"
-                  }
+                  placeholder={item.placeholder}
                   className={`w-full pl-10 sm:pl-11 pr-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border ${
-                    errors[item.name] ? "border-red-400 focus:border-red-500 focus:ring-red-100" : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
+                    errors[item.name]
+                      ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                      : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
                   } focus:bg-white focus:ring-2 outline-none transition-all text-sm sm:text-base`}
                 />
                 <button
@@ -378,33 +302,28 @@ const decoded: any = jwtDecode(credentialResponse.credential);
             </span>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-center space-y-3">
           <div className="w-full max-w-sm">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={handleGoogleError}
-              useOneTap
               theme="outline"
               size="large"
               width="100%"
             />
           </div>
-
-          <p className="text-xs text-gray-500 mt-1">
-            (You're signing up as a <strong className="text-emerald-600">{formData.role}</strong>)
-          </p>
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs sm:text-sm text-gray-600 mt-5 sm:mt-6">
           Already have an account?{" "}
-        <Link
-  href="/login"
-  className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
->
-  Sign In
-</Link>
+          <Link
+            href="/login"
+            className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+          >
+            Sign In
+          </Link>
         </p>
       </div>
     </div>

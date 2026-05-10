@@ -1,61 +1,84 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 import { Response } from "express";
 import { jwtConfig } from "../configs/jwt";
+import { UserRole } from "../models/user.model";
 
-export const generateTokens = (userId: string, role: string) => {
-  const payload = { userId, role };
-  
+export const generateTokens = (
+  userId: string,
+  activeRole: UserRole,
+  roles: UserRole[]
+) => {
+  const payload = {
+    userId,
+    activeRole,
+    roles,
+  };
+
   const accessToken = jwt.sign(
     payload,
     jwtConfig.accessToken.secret,
-    { expiresIn: jwtConfig.accessToken.expiresIn } as SignOptions
+    {
+      expiresIn: jwtConfig.accessToken.expiresIn,
+    } as SignOptions
   );
-  
+
   const refreshToken = jwt.sign(
     payload,
     jwtConfig.refreshToken.secret,
-    { expiresIn: jwtConfig.refreshToken.expiresIn } as SignOptions
+    {
+      expiresIn: jwtConfig.refreshToken.expiresIn,
+    } as SignOptions
   );
 
   return { accessToken, refreshToken };
 };
 
-
-export const setAuthCookies = (res: Response, refreshToken: string) => {
+// ─────────────────────────────
+// USER COOKIES
+// ─────────────────────────────
+export const setAuthCookies = (
+  res: Response,
+  refreshToken: string
+): void => {
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
+    sameSite:
+      process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
-
-
-
-export const clearAuthCookies = (res: Response) => {
+export const clearAuthCookies = (res: Response): void => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite:
+      process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 };
 
-
-export const setAdminAuthCookies = (res: Response, refreshToken: string) => {
+// ─────────────────────────────
+// ADMIN COOKIES
+// ─────────────────────────────
+export const setAdminAuthCookies = (
+  res: Response,
+  refreshToken: string
+): void => {
   res.cookie("adminRefreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
+    sameSite:
+      process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
-export const clearAdminAuthCookies = (res: Response) => {
-  console.log("hello");
+export const clearAdminAuthCookies = (res: Response): void => {
   res.clearCookie("adminRefreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite:
+      process.env.NODE_ENV === "production" ? "none" : "lax",
   });
 };

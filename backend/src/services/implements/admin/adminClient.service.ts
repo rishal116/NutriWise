@@ -1,5 +1,5 @@
 import { injectable, inject } from "inversify";
-import { IAdminClientRepository } from "../../../repositories/interfaces/admin/IAdminClientRepository";
+import { IAdminUserRepository } from "../../../repositories/interfaces/admin/IAdminUserRepository";
 import { IAdminClientService } from "../../interfaces/admin/IAdminClientService";
 import { TYPES } from "../../../types/types";
 import { UserDTO } from "../../../dtos/admin/user.dto";
@@ -10,8 +10,8 @@ import { UserMapper } from "../../../mapper/admin/user.mapper";
 @injectable()
 export class AdminClientService implements IAdminClientService {
   constructor(
-    @inject(TYPES.IAdminClientRepository)
-    private _adminClientRepository: IAdminClientRepository,
+    @inject(TYPES.IAdminUserRepository)
+    private _adminUserRepository: IAdminUserRepository,
   ) {}
 
   async getAllUsers(
@@ -27,7 +27,7 @@ export class AdminClientService implements IAdminClientService {
 
     const skip = (page - 1) * limit;
 
-    const { users, total } = await this._adminClientRepository.getAllUsers(
+    const { users, total } = await this._adminUserRepository.getAllUsers(
       skip,
       limit,
       search,
@@ -48,7 +48,7 @@ export class AdminClientService implements IAdminClientService {
     logger.warn("Blocking user initiated", { userId });
 
     try {
-      await this._adminClientRepository.blockUser(userId);
+      await this._adminUserRepository.blockUser(userId);
 
       logger.warn("User blocked successfully", { userId });
     } catch (error) {
@@ -65,7 +65,7 @@ export class AdminClientService implements IAdminClientService {
     logger.warn("Unblocking user initiated", { userId });
 
     try {
-      await this._adminClientRepository.unblockUser(userId);
+      await this._adminUserRepository.unblockUser(userId);
 
       logger.info("User unblocked successfully", { userId });
     } catch (error) {

@@ -1,8 +1,12 @@
 import OtpForm from "@/components/auth/VerifyOtp";
-export const metadata = {
-  title: "NutriWise - OTP Verification",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "OTP Verification | NutriWise",
+  description:
+    "Verify your email address securely to complete your NutriWise account registration.",
 };
 
-export default function SignupPage() {
-  return <OtpForm/>;
+export default function VerifyOtpPage() {
+  return <OtpForm />;
 }

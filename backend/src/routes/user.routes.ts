@@ -8,7 +8,7 @@ import { refreshToken } from "../middlewares/refreshToken.middleware";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { ICheckoutController } from "../controllers/interfaces/user/ICheckoutController";
 import { IStripeWebhookController } from "../controllers/interfaces/common/IStripeWebhookController";
-import { IHealthDetailsController } from "../controllers/interfaces/user/IHealthDetailsController";
+import { IClientProfileController } from "../controllers/interfaces/user/IClientProfileController";
 import { IUserPlanController } from "../controllers/interfaces/user/IUserPlanController";
 import { upload } from "../middlewares/multer.middleware";
 import { IConversationController } from "../controllers/interfaces/chat/IConversationController";
@@ -40,8 +40,8 @@ const checkoutController = container.get<ICheckoutController>(
 const stripeController = container.get<IStripeWebhookController>(
   TYPES.IStripeWebhookController,
 );
-const healthDetailsController = container.get<IHealthDetailsController>(
-  TYPES.IHealthDetailsController,
+const clientProfileController = container.get<IClientProfileController>(
+  TYPES.IClientProfileController,
 );
 const userPlanController = container.get<IUserPlanController>(
   TYPES.IUserPlanController,
@@ -80,13 +80,18 @@ router.post("/signup", userAuthController.signup);
 router.post("/verify-otp", userAuthController.verifyOtp);
 router.post("/resend-otp", userAuthController.resendOtp);
 router.post("/login", userAuthController.login);
-router.post("/google", userAuthController.googleLogin);
+router.post("/google", userAuthController.googleAuth);
 router.post("/logout", userAuthController.logout);
 router.post("/forgot-password", userAuthController.forgotPassword);
 router.post("/reset-password", userAuthController.resetPassword);
 router.get("/refresh-token", refreshToken);
 router.get("/me", authMiddleware, blockLoggedInUser, userAuthController.getMe);
-router.post("/google-signin", userAuthController.googleSignin);
+router.patch(
+  "/switch-role",
+  authMiddleware,
+  blockLoggedInUser,
+  userAuthController.switchRole,
+);
 
 router.get("/profile", authMiddleware, profileController.getMyProfile);
 router.put("/profile", authMiddleware, profileController.updateMyProfile);
@@ -123,17 +128,6 @@ router.post(
   checkoutController.createSession,
 );
 router.post("/stripe/webhook", stripeController.handle);
-router.get(
-  "/health-details",
-  authMiddleware,
-  healthDetailsController.getMyDetails,
-);
-router.post(
-  "/health-details",
-  authMiddleware,
-  authMiddleware,
-  healthDetailsController.saveDetails,
-);
 
 router.post(
   "/chat/conversation",
@@ -150,6 +144,7 @@ router.get(
   authMiddleware,
   messageController.getMessages,
 );
+
 router.post("/chat/message", authMiddleware, messageController.sendMessage);
 
 router.get("/plans", authMiddleware, userPlanController.getMyPlans);
@@ -212,4 +207,35 @@ router.get("/sessions", authMiddleware, sessionController.getSessions);
 router.post("/sessions/join", authMiddleware, sessionController.joinSession);
 
 router.post("/sessions/leave", authMiddleware, sessionController.leaveSession);
+
+router.get(
+  "/client-profile/me",
+  authMiddleware,
+  clientProfileController.getMyProfile,
+);
+
+router.post(
+  "/client-profile",
+  authMiddleware,
+  clientProfileController.createProfile,
+);
+
+router.put(
+  "/client-profile/me",
+  authMiddleware,
+  clientProfileController.updateProfile,
+);
+
+router.patch(
+  "/client-profile/me/completion",
+  authMiddleware,
+  clientProfileController.updateProfileCompletion,
+);
+
+router.delete(
+  "/client-profile/me",
+  authMiddleware,
+  clientProfileController.deleteProfile,
+);
+
 export default router;
