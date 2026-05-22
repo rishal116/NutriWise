@@ -1,7 +1,8 @@
 import { IConversation } from "../../../models/conversation.model";
 import {
-  GroupDto,
+
   GroupDetailsDto,
+  GroupListResponseDto
 } from "../../../dtos/nutritionist/group.dto";
 import { JoinRequestDto } from "../../../dtos/nutritionist/joinRequest.dto";
 
@@ -17,10 +18,13 @@ export interface INutriGroupService {
 
   getMyGroups(
     userId: string,
-    role: string,
+    role: "user" | "nutritionist",
     limit: number,
-    skip: number,
-  ): Promise<GroupDto[]>;
+    cursor?: {
+      lastMessageAt: string;
+      id: string;
+    },
+  ): Promise<GroupListResponseDto>
 
   getGroupDetails(groupId: string): Promise<GroupDetailsDto>;
 

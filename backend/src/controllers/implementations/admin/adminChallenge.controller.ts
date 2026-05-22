@@ -5,56 +5,111 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IAdminChallengeController } from "../../interfaces/admin/IAdminChallengeController";
+import {
+  toChallengeDifficulty,
+  toChallengeStatus,
+  toChallengeType,
+  toChallengeCategory,
+  toChallengeVisibility
+} from "../../../utils/challengeFilters";
 
 @injectable()
 export class AdminChallengeController implements IAdminChallengeController {
   constructor(
     @inject(TYPES.IAdminChallengeService)
     private _adminChallengeService: IAdminChallengeService,
-  ) {}
+  ) { }
 
-  createChallenge = asyncHandler(
-    async (req: Request, res: Response): Promise<void> => {
-      const adminId = req.user!.userId;
+  createChallenge = asyncHandler(async (req: Request, res: Response) => {
+    const adminId = req.user!.userId;
+    const files = (req.files || {}) as {
+      coverImage?: Express.Multer.File[];
+      bannerImage?: Express.Multer.File[];
+      introVideo?: Express.Multer.File[];
+      mediaFiles?: Express.Multer.File[];
+    };
+    const challenge = await this._adminChallengeService.createChallenge(
+      req.body,
+      files,
+      adminId,
+    );
+    res.status(StatusCode.CREATED).json({
+      success: true,
+      message: "Challenge created successfully",
+      data: challenge,
+    });
+  });
 
-      const files = (req.files || {}) as {
-        coverImage?: Express.Multer.File[];
-        bannerImage?: Express.Multer.File[];
-        introVideo?: Express.Multer.File[];
-        mediaFiles?: Express.Multer.File[];
+  getChallenges = asyncHandler(
+    async (req: Request, res: Response) => {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 10;
+
+      const filters = {
+        search: req.query.search as string,
+
+        status: toChallengeStatus(
+          req.query.status,
+        ),
+
+        type: toChallengeType(
+          req.query.type,
+        ),
+
+        difficulty:
+          toChallengeDifficulty(
+            req.query.difficulty,
+          ),
+
+        category: toChallengeCategory(
+          req.query.category,
+        ),
+
+        visibility:
+          toChallengeVisibility(
+            req.query.visibility,
+          ),
+
+        isPremium:
+          req.query.isPremium !== undefined
+            ? req.query.isPremium === "true"
+            : undefined,
+
+        sortBy:
+          (req.query.sortBy as
+            | "latest"
+            | "oldest"
+            | "title") || "latest",
       };
 
-      const challenge = await this._adminChallengeService.createChallenge(
-        req.body,
-        files,
-        adminId,
-      );
+      const { data, total } =
+        await this._adminChallengeService.getChallenges(
+          page,
+          limit,
+          filters,
+        );
 
-      res.status(StatusCode.CREATED).json({
+      res.status(StatusCode.OK).json({
         success: true,
-        message: "Challenge created successfully",
-        data: challenge,
+        data,
+        total,
+        page,
+        totalPages: Math.ceil(
+          total / limit,
+        ),
+        hasMore:
+          page * limit < total,
+        nextPage:
+          page * limit < total
+            ? page + 1
+            : null,
       });
     },
   );
 
-  getChallenges = asyncHandler(async (req: Request, res: Response) => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-
-    const result = await this._adminChallengeService.getChallenges(page, limit);
-
-    res.status(StatusCode.OK).json({
-      success: true,
-      ...result,
-    });
-  });
-
   getChallengeById = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-
     const challenge = await this._adminChallengeService.getChallengeById(id);
-
     res.status(StatusCode.OK).json({
       success: true,
       data: challenge,
@@ -63,12 +118,10 @@ export class AdminChallengeController implements IAdminChallengeController {
 
   updateChallenge = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-
     const updated = await this._adminChallengeService.updateChallenge(
       id,
       req.body,
     );
-
     res.status(StatusCode.OK).json({
       success: true,
       message: "Challenge updated successfully",
@@ -78,9 +131,7 @@ export class AdminChallengeController implements IAdminChallengeController {
 
   deleteChallenge = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-
     await this._adminChallengeService.deleteChallenge(id);
-
     res.status(StatusCode.OK).json({
       success: true,
       message: "Challenge deleted successfully",
@@ -89,13 +140,12 @@ export class AdminChallengeController implements IAdminChallengeController {
 
   publishChallenge = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-
     const published = await this._adminChallengeService.publishChallenge(id);
-
     res.status(StatusCode.OK).json({
       success: true,
       message: "Challenge published successfully",
       data: published,
     });
   });
+
 }

@@ -2,9 +2,9 @@ import { StatusCode } from "../enums/statusCode.enum";
 import logger from "./logger";
 
 export class CustomError extends Error {
-  public statusCode: StatusCode;
-  public isOperational: boolean;
-  public originalError?: unknown;
+  public readonly statusCode: StatusCode;
+  public readonly isOperational: boolean;
+  public readonly originalError?: unknown;
 
   constructor(
     message: string,
@@ -28,7 +28,10 @@ export function handleRepositoryError(error: unknown, message: string): never {
     throw error;
   }
 
-  logger.error("Repository error", { error });
+  logger.error("Repository error", {
+    message,
+    error,
+  });
 
   throw new CustomError(message, StatusCode.INTERNAL_SERVER_ERROR, error);
 }

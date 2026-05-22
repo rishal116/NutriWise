@@ -40,7 +40,6 @@ export class ClientProfileController implements IClientProfileController {
   createProfile = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
 
-
     const payload: CreateClientProfileDTO = req.body;
 
     const data = await this._clientProfileService.createProfile(

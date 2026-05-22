@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios/api";
-import { Group } from "@/dtos/nutritionist/group.dto";
+import { Group, GroupPagination } from "@/dtos/nutritionist/group.dto";
 
 export const groupService = {
   createGroup: async (data: {
@@ -11,12 +11,26 @@ export const groupService = {
     return res.data.data;
   },
 
-  getMyGroups: async (params: { limit: number; skip: number }) => {
+  getMyGroups: async (params: {
+    limit: number;
+    cursor?: {
+      lastMessageAt: string;
+      id: string;
+    };
+  }) => {
     const res = await api.get("/nutritionist/my-groups", {
-      params,
+      params: {
+        limit: params.limit,
+        lastMessageAt: params.cursor?.lastMessageAt,
+        cursorId: params.cursor?.id,
+      },
     });
 
-    return res.data.data as Group[];
+    return res.data as {
+      success: boolean;
+      data: Group[];
+      pagination: GroupPagination;
+    };
   },
 
   getGroup: async (groupId: string) => {

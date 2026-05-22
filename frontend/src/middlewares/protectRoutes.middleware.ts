@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { jwtDecode } from "jwt-decode";
 
 type Role = "client" | "nutritionist" | "admin";
 
@@ -17,6 +17,10 @@ const publicRoutes = [
   "/forgot-password",
   "/reset-password",
   "/admin/login",
+  "/about",
+  "/contact",
+  "/privacy",
+  "/terms",
 ];
 
 // Routes accessible for users applying to become nutritionists
@@ -34,12 +38,11 @@ export const protectRoutes = (req: NextRequest) => {
     return null;
   }
 
-  let tokenCookieName = "refreshToken";
+  const tokenCookieName = "refreshToken";
   let loginRedirect = "/login";
 
   // Admin routes
   if (path.startsWith("/admin")) {
-    tokenCookieName = "adminRefreshToken";
     loginRedirect = "/admin/login";
   }
 
@@ -51,7 +54,7 @@ export const protectRoutes = (req: NextRequest) => {
   }
 
   try {
-   const decoded = jwt.decode(token) as DecodedToken;
+    const decoded = jwtDecode(token) as DecodedToken;
 
     // Invalid token payload
     if (!decoded?.activeRole) {
@@ -59,7 +62,6 @@ export const protectRoutes = (req: NextRequest) => {
     }
 
     const { activeRole, roles = [activeRole] } = decoded;
-
 
     // ─────────────────────────────
     // Admin Protection
@@ -87,17 +89,16 @@ export const protectRoutes = (req: NextRequest) => {
       !roles.includes("nutritionist") &&
       activeRole !== "admin"
     ) {
-      console.log("jrjjr");
-      
       return NextResponse.redirect(
         new URL("/unauthorized", req.url)
       );
     }
 
     return null;
-  } catch {
+  } catch (error) {
+    console.error("Middleware error:", error);
     return NextResponse.redirect(
       new URL(loginRedirect, req.url)
     );
   }
-};
+};

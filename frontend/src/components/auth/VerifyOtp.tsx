@@ -8,7 +8,10 @@ import { userAuthService } from "@/services/user/userAuth.service";
 import { loginSuccess } from "@/redux/slices/authSlice";
 import toast, { Toaster } from "react-hot-toast";
 import { Mail, Shield, Clock, RotateCw, CheckCircle2 } from "lucide-react";
-import { restoreSignupEmail, clearSignupEmail } from "@/redux/slices/signupSlice";
+import {
+  restoreSignupEmail,
+  clearSignupEmail,
+} from "@/redux/slices/signupSlice";
 import axios from "axios";
 
 // ─── Loading Overlay ──────────────────────────────────────────────────────────
@@ -26,7 +29,9 @@ function LoadingOverlay({ message }: { message: string }) {
           <div className="absolute inset-0 rounded-full border-4 border-teal-100" />
           <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-teal-500 animate-spin" />
           <div className="absolute inset-3 rounded-full bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center">
-            <span className="text-xl" aria-hidden>🍃</span>
+            <span className="text-xl" aria-hidden>
+              🍃
+            </span>
           </div>
         </div>
 
@@ -41,7 +46,9 @@ function LoadingOverlay({ message }: { message: string }) {
             <div
               key={i}
               className="w-2 h-2 rounded-full bg-teal-400"
-              style={{ animation: `otp-bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+              style={{
+                animation: `otp-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
+              }}
             />
           ))}
         </div>
@@ -60,15 +67,15 @@ function LoadingOverlay({ message }: { message: string }) {
 // ─── OTP Form ─────────────────────────────────────────────────────────────────
 
 export default function OtpForm() {
-  const email    = useSelector((state: RootState) => state.signup.email);
-  const token    = useSelector((state: RootState) => state.auth.token);
+  const email = useSelector((state: RootState) => state.signup.email);
+  const token = useSelector((state: RootState) => state.auth.token);
   const dispatch = useDispatch();
-  const router   = useRouter();
+  const router = useRouter();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [otp, setOtp]             = useState<string[]>(Array(6).fill(""));
-  const [timer, setTimer]         = useState(60);
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -117,7 +124,7 @@ export default function OtpForm() {
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
 
-    const newOtp  = [...otp];
+    const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
@@ -171,7 +178,7 @@ export default function OtpForm() {
     try {
       setIsVerifying(true);
       const otpString = otp.join("");
-      const res       = await userAuthService.verifyOtp(email, otpString);
+      const res = await userAuthService.verifyOtp(email, otpString);
 
       if (res.success) {
         dispatch(clearSignupEmail());
@@ -188,7 +195,9 @@ export default function OtpForm() {
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Invalid OTP or OTP expired.");
+        toast.error(
+          error.response?.data?.message || "Invalid OTP or OTP expired.",
+        );
       } else {
         toast.error("Something went wrong");
       }
@@ -229,13 +238,15 @@ export default function OtpForm() {
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
   const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
     const s = (seconds % 60).toString().padStart(2, "0");
     return `${m}:${s}`;
   };
 
   const isOtpComplete = otp.every((d) => d !== "");
-  const isBusy        = isVerifying || isResending;
+  const isBusy = isVerifying || isResending;
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -249,14 +260,19 @@ export default function OtpForm() {
 
       <div className="min-h-screen bg-gradient-to-br from-teal-50 via-emerald-50 to-cyan-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 border border-teal-100">
-
           {/* Header */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-200">
-              <span className="text-2xl" aria-hidden>🍃</span>
+              <span className="text-2xl" aria-hidden>
+                🍃
+              </span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Verify Your Email</h1>
-            <p className="text-gray-500 text-sm">We&apos;ve sent a 6-digit code to</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-1">
+              Verify Your Email
+            </h1>
+            <p className="text-gray-500 text-sm">
+              We&apos;ve sent a 6-digit code to
+            </p>
             <p className="text-teal-600 font-semibold text-sm mt-1 flex items-center justify-center gap-1">
               <Mail className="w-4 h-4" aria-hidden />
               {email}
@@ -268,7 +284,10 @@ export default function OtpForm() {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest text-center mb-4">
               Enter Verification Code
             </p>
-            <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+            <div
+              className="flex justify-center gap-2 sm:gap-3"
+              onPaste={handlePaste}
+            >
               {otp.map((digit, i) => (
                 <input
                   key={i}
@@ -279,7 +298,9 @@ export default function OtpForm() {
                   disabled={isBusy}
                   onChange={(e) => handleChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, i)}
-                  ref={(el) => { inputRefs.current[i] = el; }}
+                  ref={(el) => {
+                    inputRefs.current[i] = el;
+                  }}
                   className={[
                     "w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold border-2 rounded-xl transition-all",
                     "focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-500",
@@ -298,9 +319,15 @@ export default function OtpForm() {
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <div className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-teal-400" aria-hidden />
-                <span>{timer > 0 ? `Code expires in ${formatTime(timer)}` : "Code expired"}</span>
+                <span>
+                  {timer > 0
+                    ? `Code expires in ${formatTime(timer)}`
+                    : "Code expired"}
+                </span>
               </div>
-              <span className={`font-semibold tabular-nums ${timer > 20 ? "text-teal-600" : "text-red-500"}`}>
+              <span
+                className={`font-semibold tabular-nums ${timer > 20 ? "text-teal-600" : "text-red-500"}`}
+              >
                 {timer}s
               </span>
             </div>
@@ -336,7 +363,9 @@ export default function OtpForm() {
 
           {/* Resend Section */}
           <div className="mt-5 text-center">
-            <p className="text-sm text-gray-500 mb-2">{"Didn't receive the code?"}</p>
+            <p className="text-sm text-gray-500 mb-2">
+              {"Didn't receive the code?"}
+            </p>
             <button
               type="button"
               onClick={handleResend}
@@ -362,9 +391,13 @@ export default function OtpForm() {
 
           {/* Security Notice */}
           <div className="mt-6 flex items-start gap-2.5 bg-teal-50 border border-teal-100 rounded-xl p-3.5">
-            <Shield className="w-4 h-4 text-teal-500 mt-0.5 shrink-0" aria-hidden />
+            <Shield
+              className="w-4 h-4 text-teal-500 mt-0.5 shrink-0"
+              aria-hidden
+            />
             <p className="text-xs text-teal-700 leading-relaxed">
-              For your security, this code will expire in 1 minute. Never share this code with anyone.
+              For your security, this code will expire in 1 minute. Never share
+              this code with anyone.
             </p>
           </div>
         </div>

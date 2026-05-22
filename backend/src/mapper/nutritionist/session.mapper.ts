@@ -8,8 +8,8 @@ export class SessionMapper {
       title: session.title,
       description: session.description,
       type: session.type,
-      roomId:session.roomId,
-      price: session.price || 0,
+      roomId: session.roomId,
+      price: session.price ?? 0,
       scheduledAt: session.scheduledAt,
       durationInMinutes: session.durationInMinutes,
       status: session.status,
@@ -18,7 +18,11 @@ export class SessionMapper {
     };
   }
 
-  static toResponseList(sessions: ISession[]): SessionResponseDTO[] {
-    return sessions.map(this.toResponse);
+  static toResponseList(
+    sessions: ISession[],
+  ): SessionResponseDTO[] {
+    return sessions.map((session) =>
+      this.toResponse(session),
+    );
   }
 }

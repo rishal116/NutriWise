@@ -2,7 +2,7 @@ import {
   CreateChallengeDTO,
   ChallengeUploadFiles,
   IChallengeMedia,
-} from "../../dtos/challenge/createChallenge.dto";
+} from "../../dtos/challenge/challenge.dto";
 
 import {
   uploadToCloudinary,

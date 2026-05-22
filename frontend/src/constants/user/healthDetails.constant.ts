@@ -21,5 +21,16 @@ export interface HealthDetailsPayload {
   preferredTimeline: TimelineType;
 
   targetWeightKg?: number;
+  customTimelineWeeks?: number;
+
   focusAreas?: string[];
+
+  allergies?: string[];
+  dietaryRestrictions?: string[];
+  medicalConditions?: string[];
+  injuries?: string[];
+
+  dailyStepGoal?: number;
+  workoutDaysPerWeek?: number;
+  workoutTimePerSession?: number;
 }

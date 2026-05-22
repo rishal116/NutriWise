@@ -16,22 +16,38 @@ import {
   Ruler,
   Weight,
 } from "lucide-react";
-import { HealthDetailsPayload } from "@/constants/user/healthDetails.constant";
+import { toast } from "sonner";
+import { toFormState } from "@/mapper/user/formstate.mapper";
+
 
 /* ── TYPES ── */
 interface HealthDetails {
   heightCm: number;
   weightKg: number;
-  bmi: number;
-  activityLevel: string;
-  fitnessLevel: string;
-  dietType: string;
+
+  activityLevel: ActivityLevel;
+  fitnessLevel: FitnessLevel;
+  dietType: DietType;
+
   dailyWaterIntakeLiters: number;
   sleepDurationHours: number;
-  goal: string;
-  targetWeightKg: number;
-  preferredTimeline: string;
-  focusAreas: string[];
+
+  goal: GoalType;
+  preferredTimeline: TimelineType;
+
+  targetWeightKg?: number;
+  customTimelineWeeks?: number;
+
+  focusAreas?: string[];
+
+  allergies?: string[];
+  dietaryRestrictions?: string[];
+  medicalConditions?: string[];
+  injuries?: string[];
+
+  dailyStepGoal?: number;
+  workoutDaysPerWeek?: number;
+  workoutTimePerSession?: number;
 }
 
 /* ── HELPERS ── */
@@ -77,7 +93,10 @@ export default function HealthDetailsPage() {
     healthDetailsService
       .getHealthDetails()
       .then((res) => setData(res.data))
-      .catch((err) => console.error("Fetch Error:", err))
+      .catch((err) => {
+        console.error("Fetch Error:", err);
+        toast.error("Failed to load health data");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -100,17 +119,18 @@ export default function HealthDetailsPage() {
   }
 
   /* ── form (no data or editing) ── */
-  if (!data || editing) {
-    return (
-      <HealthDetailsForm
-        initialData={(data as HealthDetailsPayload) || null}
-        onSuccess={() => {
-          setEditing(false);
-          fetchDetails();
-        }}
-      />
-    );
-  }
+ if (!data || editing) {
+  return (
+    <HealthDetailsForm
+      initialData={data ? toFormState(data) : undefined}
+      onSuccess={() => {
+        setEditing(false);
+        fetchDetails();
+        toast.success("Health details updated successfully!");
+      }}
+    />
+  );
+}
 
   const bmiColor = getBMIColor(data.bmi);
   const bmiPct = Math.min(Math.max(((data.bmi - 10) / 30) * 100, 0), 100);
@@ -131,7 +151,10 @@ export default function HealthDetailsPage() {
             </p>
           </div>
           <button
-            onClick={() => setEditing(true)}
+            onClick={() => {
+              setEditing(true);
+              toast("Editing mode enabled");
+            }}
             className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-600 rounded-xl text-sm font-bold hover:bg-emerald-50 transition-colors shadow-sm"
           >
             <Pencil size={14} className="flex-shrink-0" />

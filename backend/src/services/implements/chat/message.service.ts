@@ -147,7 +147,7 @@ export class MessageService implements IMessageService {
         ...MessageMapper.toResponseDTO(msg),
 
         senderFullName: user?.fullName ?? "Unknown",
-        senderProfileImage: user?.profileImage ?? null,
+        senderProfileImage: user?.profileImageUrl ?? null,
       };
     });
   }

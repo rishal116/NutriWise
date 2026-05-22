@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios/api";
-import { UserSignupType } from "@/validation/userAuth.validation";
+import { UserSignupType } from "@/validations/userAuth.validation";
 import { API_ROUTES } from "@/routes/user.routes";
 import { AuthResponse, GoogleAuthPayload } from "@/types/auth.types";
 
@@ -43,10 +43,7 @@ export const userAuthService = {
     return res.data;
   },
 
-  googleSignin: async (payload: GoogleAuthPayload): Promise<AuthResponse> => {
-    const res = await api.post(API_ROUTES.AUTH.GOOGLE_SIGNIN, payload);
-    return res.data;
-  },
+
 
   forgotPassword: async (email: string): Promise<AuthResponse> => {
     const res = await api.post(API_ROUTES.AUTH.FORGOT_PASSWORD, { email });

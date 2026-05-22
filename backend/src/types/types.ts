@@ -1,3 +1,4 @@
+
 export const TYPES = {
   //User
   IUserAuthController: Symbol.for("IUserAuthController"),
@@ -13,7 +14,9 @@ export const TYPES = {
   IUserProfileController: Symbol.for("IUserProfileController"),
   IUserProfileService: Symbol.for("IUserProfileService"),
   ICheckoutService: Symbol.for("ICheckoutService"),
- 
+  IUserChallengeController: Symbol.for("IUserChallengeController"),
+  IUserChallengeService: Symbol.for("IUserChallengeService"),
+
   IClientProfileService: Symbol.for("IClientProfileService"),
   IClientProfileRepository: Symbol.for("IClientProfileRepository"),
   IClientProfileController: Symbol.for("IClientProfileController"),
@@ -59,9 +62,9 @@ export const TYPES = {
   IAdminPlanController: Symbol.for("IAdminPlanController"),
   IAdminChallengeService: Symbol.for("IAdminChallengeService"),
   IAdminChallengeController: Symbol.for("IAdminChallengeController"),
-  IAdminUserRepository:Symbol.for("IAdminUserRepository"),
-
-
+  IAdminUserRepository: Symbol.for("IAdminUserRepository"),
+  IAdminTaskController: Symbol.for("IAdminTaskController"),
+  IAdminTaskService: Symbol.for("IAdminTaskService"),
 
   //Nutritionist
   INutritionistAuthController: Symbol.for("INutritionistAuthController"),
@@ -124,4 +127,15 @@ export const TYPES = {
   ITaskRepository: Symbol.for("ITaskRepository"),
   IUserChallengeRepository: Symbol.for("IUserChallengeRepository"),
   IUserTaskProgressRepository: Symbol.for("IUserTaskProgressRepository"),
+
+
+  // post
+  IPostController:Symbol.for("IPostController"),
+  IPostService:Symbol.for("IPostService"),
+  IPostRepository:Symbol.for("IPostRepository"),
+
+  // comment
+  ICommentController: Symbol.for("ICommentController"),
+  ICommentService: Symbol.for("ICommentService"),
+  ICommentRepository: Symbol.for("ICommentRepository")
 };

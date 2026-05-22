@@ -15,23 +15,11 @@ import { adminUserService } from "@/services/admin/adminUser.service";
 import { toast } from "react-hot-toast";
 import { useDebounce } from "@/hooks/admin/debounce.hooks";
 import UserSearchBar from "./UserSearchBar";
+import type { UserDTO, PaginatedResponse } from "@/app/admin/users/page";
 
-interface UserDTO {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  isBlocked: boolean;
-}
-
-interface PaginatedResponse<T> {
-  data: T[];
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// Avatar
+// ─────────────────────────────────────────────────────────────────────────────
 function AvatarInitials({ name }: { name: string }) {
   const initials = name
     .split(" ")
@@ -58,56 +46,103 @@ function AvatarInitials({ name }: { name: string }) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ActiveRoleBadge — teal highlighted badge with a live dot
+// ─────────────────────────────────────────────────────────────────────────────
+function ActiveRoleBadge({ role }: { role: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-teal-50 text-teal-700 border border-teal-100">
+      <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
+      {role}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AllRolesBadges — every role as a pill; active one highlighted in teal
+// ─────────────────────────────────────────────────────────────────────────────
+function AllRolesBadges({
+  roles,
+  activeRole,
+}: {
+  roles: string[];
+  activeRole: string;
+}) {
+  if (!roles || roles.length === 0) {
+    return <span className="text-[11px] text-slate-400">—</span>;
+  }
+
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      {roles.map((r) =>
+        r === activeRole ? (
+          <span
+            key={r}
+            className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-teal-100 text-teal-700 border border-teal-200"
+          >
+            {r}
+          </span>
+        ) : (
+          <span
+            key={r}
+            className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500"
+          >
+            {r}
+          </span>
+        )
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main component
+// ─────────────────────────────────────────────────────────────────────────────
 export default function UserTable({
   initialData,
 }: {
   initialData: PaginatedResponse<UserDTO>;
 }) {
   const router = useRouter();
-  const [users, setUsers] = useState<UserDTO[]>(initialData.data);
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebounce(search, 500);
-  const [page, setPage] = useState(initialData.page);
-  const [totalPages, setTotalPages] = useState(initialData.totalPages);
+
+  const [users, setUsers]               = useState<UserDTO[]>(initialData.data);
+  const [total, setTotal]               = useState<number>(initialData.total);
+  const [totalPages, setTotalPages]     = useState<number>(initialData.totalPages);
+  const [search, setSearch]             = useState("");
+  const debouncedSearch                 = useDebounce(search, 500);
+  const [page, setPage]                 = useState(initialData.page);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
-  const [confirmUser, setConfirmUser] = useState<UserDTO | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [confirmUser, setConfirmUser]   = useState<UserDTO | null>(null);
+  const dropdownRef                     = useRef<HTMLDivElement>(null);
 
   const perPage = initialData.limit;
 
+  // ── Fetch ──────────────────────────────────────────────────────────────────
   const fetchUsers = useCallback(async () => {
     try {
       const res = await adminUserService.getAllUsers(page, perPage, debouncedSearch);
       setUsers(res.data.data);
+      setTotal(res.data.total);
       setTotalPages(res.data.totalPages);
     } catch {
       toast.error("Failed to load users");
     }
   }, [page, perPage, debouncedSearch]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedSearch]);
-
-  // ✅ mousedown + ref check — avoids the React synthetic event race condition
+  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        dropdownRef.current.contains(e.target as Node)
-      ) {
-        return;
-      }
+      if (dropdownRef.current?.contains(e.target as Node)) return;
       setActiveUserId(null);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // ── Block / unblock ────────────────────────────────────────────────────────
   const toggleBlock = async (user: UserDTO) => {
     try {
       if (user.isBlocked) {
@@ -116,9 +151,7 @@ export default function UserTable({
         await adminUserService.blockUser(user.id);
       }
       setUsers((prev) =>
-        prev.map((u) =>
-          u.id === user.id ? { ...u, isBlocked: !u.isBlocked } : u
-        )
+        prev.map((u) => (u.id === user.id ? { ...u, isBlocked: !u.isBlocked } : u))
       );
       toast.success(user.isBlocked ? "User unblocked" : "User blocked");
     } catch {
@@ -127,19 +160,20 @@ export default function UserTable({
   };
 
   const startItem = (page - 1) * perPage + 1;
-  const endItem = Math.min(page * perPage, initialData.total);
+  const endItem   = Math.min(page * perPage, total);
 
+  // ──────────────────────────────────────────────────────────────────────────
   return (
     <div>
-      {/* ── Search bar ── */}
+      {/* Search bar + count */}
       <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <UserSearchBar value={search} onChange={setSearch} />
         <p className="text-[11px] text-slate-400 font-medium shrink-0">
-          Showing {startItem}–{endItem} of {initialData.total} users
+          Showing {startItem}–{endItem} of {total} users
         </p>
       </div>
 
-      {/* ── Table ── */}
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead>
@@ -147,8 +181,13 @@ export default function UserTable({
               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 User
               </th>
+              {/* sm+ only */}
               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden sm:table-cell">
-                Role
+                Active Role
+              </th>
+              {/* md+ only — hides on tablet so table doesn't crowd */}
+              <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden md:table-cell">
+                Roles
               </th>
               <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">
                 Status
@@ -162,7 +201,8 @@ export default function UserTable({
           <tbody className="divide-y divide-slate-50">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={4}>
+                {/* ✅ 5 columns now */}
+                <td colSpan={5}>
                   <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-400">
                     <Users size={32} strokeWidth={1.2} className="text-slate-300" />
                     <p className="text-sm font-medium">No users found</p>
@@ -178,7 +218,7 @@ export default function UserTable({
                   key={u.id}
                   className="hover:bg-slate-50/60 transition-colors duration-150 group"
                 >
-                  {/* User details */}
+                  {/* User */}
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-3">
                       <AvatarInitials name={u.fullName} />
@@ -186,18 +226,19 @@ export default function UserTable({
                         <p className="text-[13px] font-bold text-slate-800 truncate">
                           {u.fullName}
                         </p>
-                        <p className="text-[11px] text-slate-400 truncate">
-                          {u.email}
-                        </p>
+                        <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
                       </div>
                     </div>
                   </td>
 
-                  {/* Role */}
+                  {/* ✅ Active Role — teal badge with live dot, uses u.activeRole */}
                   <td className="px-5 py-3.5 hidden sm:table-cell">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
-                      {u.role}
-                    </span>
+                    <ActiveRoleBadge role={u.activeRole} />
+                  </td>
+
+                  {/* ✅ All Roles — every role pill, active one highlighted, uses u.roles */}
+                  <td className="px-5 py-3.5 hidden md:table-cell">
+                    <AllRolesBadges roles={u.roles} activeRole={u.activeRole} />
                   </td>
 
                   {/* Status */}
@@ -220,7 +261,6 @@ export default function UserTable({
 
                   {/* Actions */}
                   <td className="px-5 py-3.5 text-right relative">
-                    {/* ✅ ref attached to wrapper that contains both trigger + dropdown */}
                     <div
                       ref={activeUserId === u.id ? dropdownRef : null}
                       className="inline-block relative"
@@ -276,13 +316,12 @@ export default function UserTable({
         </table>
       </div>
 
-      {/* ── Pagination ── */}
+      {/* Pagination */}
       <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between gap-4">
         <p className="text-[11px] text-slate-400 font-medium">
           Page <span className="text-slate-700 font-bold">{page}</span> of{" "}
           <span className="text-slate-700 font-bold">{totalPages}</span>
         </p>
-
         <div className="flex items-center gap-1.5">
           <button
             disabled={page === 1}
@@ -303,7 +342,7 @@ export default function UserTable({
         </div>
       </div>
 
-      {/* ── Confirm modal ── */}
+      {/* Confirm modal */}
       {confirmUser && (
         <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4"

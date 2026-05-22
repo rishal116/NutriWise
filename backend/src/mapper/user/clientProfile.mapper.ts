@@ -17,12 +17,6 @@ export class ClientProfileMapper {
     return {
       userId: new Types.ObjectId(userId),
 
-      dateOfBirth: payload.dateOfBirth
-        ? new Date(payload.dateOfBirth)
-        : undefined,
-
-      gender: payload.gender,
-
       heightCm: payload.heightCm,
       weightKg: payload.weightKg,
 
@@ -49,8 +43,6 @@ export class ClientProfileMapper {
       customTimelineWeeks: payload.customTimelineWeeks,
 
       focusAreas: payload.focusAreas || [],
-
-      profileCompleted: payload.profileCompleted,
       profileCompletionPercentage,
     };
   }
@@ -61,14 +53,6 @@ export class ClientProfileMapper {
     profileCompletionPercentage?: number,
   ): Partial<IClientProfile> {
     return {
-      ...(payload.dateOfBirth && {
-        dateOfBirth: new Date(payload.dateOfBirth),
-      }),
-
-      ...(payload.gender && {
-        gender: payload.gender,
-      }),
-
       ...(payload.heightCm && {
         heightCm: payload.heightCm,
       }),
@@ -145,10 +129,6 @@ export class ClientProfileMapper {
         focusAreas: payload.focusAreas,
       }),
 
-      ...(payload.profileCompleted !== undefined && {
-        profileCompleted: payload.profileCompleted,
-      }),
-
       ...(profileCompletionPercentage !== undefined && {
         profileCompletionPercentage,
       }),
@@ -163,11 +143,6 @@ export class ClientProfileMapper {
     return {
       _id: profile._id.toString(),
       userId: profile.userId.toString(),
-
-      dateOfBirth: profile.dateOfBirth
-        ? profile.dateOfBirth.toISOString()
-        : undefined,
-      gender: profile.gender,
 
       heightCm: profile.heightCm,
       weightKg: profile.weightKg,
@@ -198,7 +173,6 @@ export class ClientProfileMapper {
 
       profileCompleted: profile.profileCompleted,
       profileCompletionPercentage: profile.profileCompletionPercentage,
-      
 
       createdAt: profile.createdAt.toISOString(),
       updatedAt: profile.updatedAt.toISOString(),

@@ -51,8 +51,9 @@ export default function ViewPlanPage() {
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast.error("Failed to load plan details.");
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -258,7 +259,7 @@ function NotFoundState() {
         <Info size={40} className="text-red-500" />
       </div>
       <h2 className="text-2xl font-bold text-slate-800">Plan not found</h2>
-      <p className="text-slate-500 mb-6">It seems the plan you're looking for doesn't exist.</p>
+      <p className="text-slate-500 mb-6">{"It seems the plan you're looking for doesn't exist."}</p>
     </div>
   );
 }

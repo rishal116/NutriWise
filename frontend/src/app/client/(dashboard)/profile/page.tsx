@@ -14,11 +14,12 @@ import {
   X,
 } from "lucide-react";
 import ProfileImageUploader from "@/components/common/image";
-import Toast from "@/components/common/Toast";
+import { toast } from "sonner";
 import { userAccountService } from "@/services/user/userProfile.service";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
+import Image from "next/image";
 
 /* ── TYPES ── */
 interface UserProfile {
@@ -31,43 +32,39 @@ interface UserProfile {
   profileImage?: string;
 }
 
-interface ToastState {
-  message: string;
-  type: "success" | "error";
-}
-
 /* ── PAGE ── */
 export default function AccountPage() {
-  const [user,             setUser]             = useState<UserProfile | null>(null);
-  const [form,             setForm]             = useState<UserProfile | null>(null);
-  const [loading,          setLoading]          = useState(true);
-  const [saving,           setSaving]           = useState(false);
-  const [editingForm,      setEditingForm]      = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [form, setForm] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editingForm, setEditingForm] = useState(false);
   const [showImageCropper, setShowImageCropper] = useState(false);
-  const [toast,            setToast]            = useState<ToastState | null>(null);
 
   /* ── fetch ── */
   useEffect(() => {
     async function fetchProfile() {
       try {
         const profileRes = await userAccountService.getProfile();
-        const imageRes   = await userAccountService.getProfileImage();
+        const imageRes = await userAccountService.getProfileImage();
 
         const profile: UserProfile = {
-          _id:          profileRes.user._id,
-          fullName:     profileRes.user.fullName   || "",
-          email:        profileRes.user.email       || "",
-          phone:        profileRes.user.phone       || "",
-          gender:       profileRes.user.gender      || "",
-          birthdate:    profileRes.user.birthdate   || "",
+          _id: profileRes.user._id,
+          fullName: profileRes.user.fullName || "",
+          email: profileRes.user.email || "",
+          phone: profileRes.user.phone || "",
+          gender: profileRes.user.gender || "",
+          birthdate: profileRes.user.birthdate || "",
           profileImage: imageRes.data?.profileImage || "",
         };
 
         setUser(profile);
         setForm(profile);
+        toast.success("Profile updated successfully!");
       } catch (err) {
         console.error(err);
-        setToast({ message: "Failed to load profile", type: "error" });
+        toast.error("Failed to load profile");
+        toast.error("Failed to update profile.");
       } finally {
         setLoading(false);
       }
@@ -76,7 +73,7 @@ export default function AccountPage() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     if (!form) return;
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -97,9 +94,10 @@ export default function AccountPage() {
       await userAccountService.updateProfile(form);
       setUser(form);
       setEditingForm(false);
-      setToast({ message: "Profile updated successfully!", type: "success" });
+      toast.success("Profile updated successfully!");
     } catch {
-      setToast({ message: "Failed to update profile.", type: "error" });
+      toast.error("Failed to load profile");
+      toast.error("Failed to update profile.");
     } finally {
       setSaving(false);
     }
@@ -126,7 +124,6 @@ export default function AccountPage() {
 
   return (
     <div className="font-sans pb-12 space-y-6">
-
       {/* ── PAGE HEADER ── */}
       <div className="relative bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl px-7 py-9 text-white overflow-hidden">
         <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-14 -mt-14 blur-3xl pointer-events-none" />
@@ -142,19 +139,21 @@ export default function AccountPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
         {/* ── LEFT — PROFILE CARD ── */}
         <div className="lg:col-span-4 space-y-4">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-
             {/* Avatar */}
             <div className="relative w-fit mx-auto mb-5">
               <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-full blur-sm opacity-25" />
-              <img
-                src={user.profileImage || "/images/images.jpg"}
-                className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                alt={user.fullName}
-              />
+              <div className="relative w-28 h-28 sm:w-32 sm:h-32">
+                <Image
+                  src={user.profileImage || "/images/images.jpg"}
+                  alt={user.fullName}
+                  fill
+                  className="rounded-full object-cover border-4 border-white shadow-lg"
+                  sizes="128px"
+                />
+              </div>
               <button
                 onClick={() => setShowImageCropper(true)}
                 className="absolute bottom-1 right-1 w-9 h-9 bg-emerald-600 hover:bg-emerald-700 rounded-full flex items-center justify-center text-white shadow-md transition-colors"
@@ -182,8 +181,12 @@ export default function AccountPage() {
                   <Mail size={13} className="text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Email</p>
-                  <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                    Email
+                  </p>
+                  <p className="text-sm font-semibold text-gray-800 truncate">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 
@@ -193,8 +196,12 @@ export default function AccountPage() {
                     <Phone size={13} className="text-teal-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Phone</p>
-                    <p className="text-sm font-semibold text-gray-800">{user.phone}</p>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                      Phone
+                    </p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {user.phone}
+                    </p>
                   </div>
                 </div>
               )}
@@ -205,8 +212,12 @@ export default function AccountPage() {
                     <Calendar size={13} className="text-purple-500" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Age</p>
-                    <p className="text-sm font-semibold text-gray-800">{calculateAge(user.birthdate)}</p>
+                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                      Age
+                    </p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {calculateAge(user.birthdate)}
+                    </p>
                   </div>
                 </div>
               )}
@@ -236,12 +247,13 @@ export default function AccountPage() {
         {/* ── RIGHT — FORM ── */}
         <div className="lg:col-span-8">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-
             {/* Card header */}
             <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-1 h-5 bg-emerald-500 rounded-full flex-shrink-0" />
-                <h3 className="text-sm font-extrabold text-gray-900">Personal Information</h3>
+                <h3 className="text-sm font-extrabold text-gray-900">
+                  Personal Information
+                </h3>
               </div>
               {editingForm && (
                 <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full">
@@ -252,7 +264,6 @@ export default function AccountPage() {
 
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                 <FieldInput
                   label="Full Name"
                   name="fullName"
@@ -320,7 +331,10 @@ export default function AccountPage() {
                   >
                     {saving ? (
                       <>
-                        <Loader2 size={15} className="animate-spin flex-shrink-0" />
+                        <Loader2
+                          size={15}
+                          className="animate-spin flex-shrink-0"
+                        />
                         Saving…
                       </>
                     ) : (
@@ -342,19 +356,23 @@ export default function AccountPage() {
         <ProfileImageUploader
           onClose={() => setShowImageCropper(false)}
           onUploadSuccess={(newUrl: string) => {
-            setUser((prev) => (prev ? { ...prev, profileImage: newUrl } : null));
-            setToast({ message: "Image updated successfully!", type: "success" });
+            setUser((prev) =>
+              prev ? { ...prev, profileImage: newUrl } : null,
+            );
           }}
         />
       )}
-
-      {/* Toast */}
-      {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
 }
 
 /* ── FIELD INPUT ── */
+interface FieldInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  icon?: React.ReactNode;
+  error?: boolean;
+}
+
 function FieldInput({
   label,
   icon,
@@ -362,7 +380,7 @@ function FieldInput({
   disabled,
   required,
   ...rest
-}: any) {
+}: FieldInputProps) {
   return (
     <div className="space-y-1.5">
       <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wide">
@@ -391,7 +409,6 @@ function FieldInput({
     </div>
   );
 }
-
 /* ── GENDER SELECT ── */
 function GenderSelect({
   value,

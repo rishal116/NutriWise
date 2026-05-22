@@ -197,6 +197,8 @@ router.post(
   nutriSessionController.createSession,
 );
 
+
+
 router.get(
   "/sessions",
   authMiddleware,

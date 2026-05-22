@@ -10,7 +10,7 @@ import axios from "axios";
 
 import { userAuthService } from "@/services/user/userAuth.service";
 import { loginSuccess } from "@/redux/slices/authSlice";
-import { UserLoginSchema } from "@/validation/userAuth.validation";
+import { UserLoginSchema } from "@/validations/userAuth.validation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 
@@ -31,12 +31,25 @@ export default function LoginForm() {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [serverError, setServerError] = useState<string>("");
 
-  const token = useSelector((state: RootState) => state.auth.token);
+  const { token, user } = useSelector((state: RootState) => state.auth);
   useEffect(() => {
-    if (token) {
-      router.replace("/home");
+    if (token && user) {
+      switch (user.activeRole) {
+        case "nutritionist":
+          router.replace("/nutritionist/dashboard");
+          break;
+
+        case "admin":
+          router.replace("/admin/dashboard");
+          break;
+
+        case "client":
+        default:
+          router.replace("/home");
+          break;
+      }
     }
-  }, [token, router]);
+  }, [token, user, router]);
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -61,6 +74,8 @@ export default function LoginForm() {
     try {
       const res = await userAuthService.login(email, password);
 
+
+
       if (!res.success) {
         setServerError(res.message);
         toast.error(res.message);
@@ -77,9 +92,27 @@ export default function LoginForm() {
         throw new Error("Access token missing");
       }
 
-      dispatch(loginSuccess(res.accessToken));
-      toast.success(`Welcome back ${res.user?.fullName}`);
-      router.replace("/home");
+      dispatch(
+        loginSuccess({
+          token: res.accessToken,
+          user: res.user!,
+        }),
+      );
+      toast.success(`Welcome back ${res.user.fullName}`);
+      switch (res.user.activeRole) {
+        case "nutritionist":
+          router.replace("/nutritionist/dashboard");
+          break;
+
+        case "admin":
+          router.replace("/admin/dashboard");
+          break;
+
+        case "client":
+        default:
+          router.replace("/home");
+          break;
+      }
     } catch (error: unknown) {
       let message = "Something went wrong";
 
@@ -113,9 +146,11 @@ export default function LoginForm() {
     }
 
     try {
-      const res = await userAuthService.googleSignin({
+      const res = await userAuthService.googleSignup({
         credential: credentialResponse.credential,
       });
+
+      console.log(res);
 
       if (!res.success) {
         setServerError(res.message);
@@ -128,9 +163,28 @@ export default function LoginForm() {
         return;
       }
 
-      dispatch(loginSuccess(res.accessToken));
-      toast.success(`Welcome ${res.user?.fullName}`);
-      router.push("/home");
+      dispatch(
+        loginSuccess({
+          token: res.accessToken,
+          user: res.user!,
+        }),
+      );
+      toast.success(`Welcome back ${res.user.fullName}`);
+
+      switch (res.user.activeRole) {
+        case "nutritionist":
+          router.replace("/nutritionist/dashboard");
+          break;
+
+        case "admin":
+          router.replace("/admin/dashboard");
+          break;
+
+        case "client":
+        default:
+          router.replace("/home");
+          break;
+      }
     } catch (error: unknown) {
       let message = "Something went wrong";
       if (axios.isAxiosError(error)) {
@@ -198,11 +252,10 @@ export default function LoginForm() {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className={`w-full pl-10 sm:pl-11 pr-4 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${
-                  formErrors.email
-                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                    : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
-                }`}
+                className={`w-full pl-10 sm:pl-11 pr-4 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${formErrors.email
+                  ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                  : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
+                  }`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={handleKeyDown}
@@ -228,11 +281,10 @@ export default function LoginForm() {
               <input
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password"
-                className={`w-full pl-10 sm:pl-11 pr-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${
-                  formErrors.password
-                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                    : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
-                }`}
+                className={`w-full pl-10 sm:pl-11 pr-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${formErrors.password
+                  ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                  : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
+                  }`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={handleKeyPress}

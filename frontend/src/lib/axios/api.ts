@@ -111,18 +111,12 @@ api.interceptors.response.use(
     // 403 → Invalid/Expired Refresh Token
     // ─────────────────────────────
     if (error.response?.status === 403) {
-      store.dispatch(logout());
-
-      try {
-        await userAuthService.logout();
-      } catch {
-        // Ignore logout failure
-      }
-
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
-
+      // Don't automatically redirect to login on 403.
+      // 403 means Forbidden (role mismatch or blocked), not necessarily unauthenticated.
+      // The calling component or service should handle the error (e.g. show a toast).
+      
+      // We still clear the state if it's a critical auth failure, 
+      // but we should be careful. For now, just reject the promise.
       return Promise.reject(error);
     }
 

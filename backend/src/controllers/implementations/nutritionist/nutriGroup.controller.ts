@@ -11,7 +11,7 @@ export class NutriGroupController implements INutriGroupController {
   constructor(
     @inject(TYPES.INutriGroupService)
     private readonly _groupService: INutriGroupService,
-  ) {}
+  ) { }
 
   createGroup = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
@@ -28,22 +28,58 @@ export class NutriGroupController implements INutriGroupController {
     });
   });
 
-  getMyGroups = asyncHandler(async (req: Request, res: Response) => {
-    const { userId, role } = req.user!;
-    const limit = Math.min(Number(req.query.limit) || 10, 50);
-    const skip = Number(req.query.skip) || 0;
-    const groups = await this._groupService.getMyGroups(
-      userId,
-      role,
-      limit,
-      skip,
-    );
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Groups fetched successfully",
-      data: groups,
-    });
-  });
+  getMyGroups = asyncHandler(
+    async (req: Request, res: Response) => {
+      const { userId, role } = req.user!;
+
+      const limit = Math.min(
+        Math.max(
+          Number(req.query.limit) || 10,
+          1,
+        ),
+        50,
+      );
+
+      const lastMessageAt =
+        req.query.lastMessageAt as
+        | string
+        | undefined;
+
+      const cursorId =
+        req.query.cursorId as
+        | string
+        | undefined;
+
+      const cursor =
+        lastMessageAt && cursorId
+          ? {
+            lastMessageAt,
+            id: cursorId,
+          }
+          : undefined;
+
+      const result =
+        await this._groupService.getMyGroups(
+          userId,
+          role as
+          | "user"
+          | "nutritionist",
+          limit,
+          cursor,
+        );
+
+      return res
+        .status(StatusCode.OK)
+        .json({
+          success: true,
+          message:
+            "Groups fetched successfully",
+          data: result.groups,
+          pagination:
+            result.pagination,
+        });
+    },
+  );
 
   getGroup = asyncHandler(async (req: Request, res: Response) => {
     const { groupId } = req.params;
@@ -80,5 +116,5 @@ export class NutriGroupController implements INutriGroupController {
       message: "User rejected successfully",
     });
   });
-  
+
 }

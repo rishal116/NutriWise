@@ -1,3 +1,13 @@
+export interface GroupPaginationCursorDto {
+  lastMessageAt: string;
+  id: string;
+}
+
+export interface GroupPaginationDto {
+  hasMore: boolean;
+  nextCursor: GroupPaginationCursorDto | null;
+}
+
 export interface GroupDto {
   id: string;
   title?: string;
@@ -5,6 +15,11 @@ export interface GroupDto {
   visibility?: "public" | "private";
   memberCount: number;
   lastMessageAt?: Date;
+}
+
+export interface GroupListResponseDto {
+  groups: GroupDto[];
+  pagination: GroupPaginationDto;
 }
 
 export interface MemberDto {
@@ -20,5 +35,5 @@ export interface GroupDetailsDto {
   description?: string;
   memberCount: number;
   members: MemberDto[];
-  visibility: "public" | "private"; 
+  visibility: "public" | "private";
 }

@@ -4,6 +4,7 @@ import {
   SessionParticipantModel,
   ISessionParticipant,
   SessionAccessStatus,
+  PaymentStatus,
 } from "../../../models/sessionParticipant.model";
 
 export class SessionParticipantRepository
@@ -12,6 +13,11 @@ export class SessionParticipantRepository
 {
   constructor() {
     super(SessionParticipantModel);
+  }
+  async findByUserId(userId: string): Promise<ISessionParticipant[]> {
+    return this._model.find({
+      userId,
+    });
   }
 
   async getParticipantsBySessionIds(
@@ -30,22 +36,86 @@ export class SessionParticipantRepository
     userId: string,
     sessionId: string,
   ): Promise<ISessionParticipant | null> {
-    return this._model.findOne({ userId, sessionId });
+    return this._model.findOne({
+      userId,
+      sessionId,
+    });
+  }
+
+  async updatePaymentStatus(
+    userId: string,
+    sessionId: string,
+    paymentStatus: PaymentStatus,
+    status?: SessionAccessStatus,
+  ): Promise<ISessionParticipant | null> {
+    return this._model.findOneAndUpdate(
+      { userId, sessionId },
+      {
+        paymentStatus,
+        ...(status && { status }),
+      },
+      { new: true },
+    );
   }
 
   async createParticipant(
-    data: Pick<ISessionParticipant, "userId" | "sessionId" | "status">,
+    data: Pick<
+      ISessionParticipant,
+      "userId" | "sessionId" | "joinStatus" | "paymentStatus"
+    >,
   ): Promise<ISessionParticipant> {
     return this._model.create(data);
   }
 
-  async countApproved(sessionId: string): Promise<number> {
+  async countApprovedParticipants(sessionId: string): Promise<number> {
     return this._model.countDocuments({
       sessionId,
-      status: SessionAccessStatus.APPROVED,
+      joinStatus: SessionAccessStatus.APPROVED,
     });
   }
-  async deleteByUserAndSession(userId: string, sessionId: string) {
-    return this._model.findOneAndDelete({ userId, sessionId });
+
+  async deleteByUserAndSession(
+    userId: string,
+    sessionId: string,
+  ): Promise<ISessionParticipant | null> {
+    return this._model.findOneAndDelete({
+      userId,
+      sessionId,
+    });
+  }
+
+  async approveParticipant(
+    userId: string,
+    sessionId: string,
+  ): Promise<ISessionParticipant | null> {
+    return this._model.findOneAndUpdate(
+      { userId, sessionId },
+      {
+        status: SessionAccessStatus.APPROVED,
+      },
+      { new: true },
+    );
+  }
+
+  async markPresent(
+    userId: string,
+    sessionId: string,
+  ): Promise<ISessionParticipant | null> {
+    return this._model.findOneAndUpdate(
+      { userId, sessionId },
+      {
+        isPresent: true,
+        joinedAt: new Date(),
+      },
+      { new: true },
+    );
+  }
+
+  async findByPaymentIntent(
+    paymentIntentId: string,
+  ): Promise<ISessionParticipant | null> {
+    return this._model.findOne({
+      paymentIntentId,
+    });
   }
 }

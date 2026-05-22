@@ -10,14 +10,29 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function Page() {
   const router = useRouter();
-  const token = useSelector((state: RootState) => state.auth.token);
-  const loading = useSelector((state: RootState) => state.auth.loading);
+
+  const { token, user, loading } = useSelector(
+    (state: RootState) => state.auth,
+  );
 
   useEffect(() => {
-    if (token) {
-      router.replace("/home");
+    if (token && user) {
+      switch (user.activeRole) {
+        case "nutritionist":
+          router.replace("/nutritionist/dashboard");
+          break;
+
+        case "admin":
+          router.replace("/admin");
+          break;
+
+        case "client":
+        default:
+          router.replace("/home");
+          break;
+      }
     }
-  }, [token, router]);
+  }, [token, user, router]);
 
   if (loading) return null;
 

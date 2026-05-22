@@ -1,4 +1,4 @@
-import { CreateChallengeDTO } from "../../dtos/challenge/createChallenge.dto";
+import { CreateChallengeDTO } from "../../dtos/challenge/challenge.dto";
 import { CustomError } from "../../utils/customError";
 import { StatusCode } from "../../enums/statusCode.enum";
 

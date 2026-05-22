@@ -14,37 +14,56 @@ export const nutriSessionService = {
     return res.data;
   },
 
-  getMySessions: async (
+  getMySessions: async ({
     page = 1,
     limit = 10,
-  ): Promise<PaginatedSessionResponse> => {
-    const res = await api.get(
-      `/nutritionist/sessions?page=${page}&limit=${limit}`,
-    );
+    status,
+    type,
+    search,
+    sortBy = "scheduledAt",
+    sortOrder = "desc",
+  }: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    type?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  }): Promise<PaginatedSessionResponse> => {
+    const params = new URLSearchParams();
+
+    params.set("page", String(page));
+    params.set("limit", String(limit));
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortOrder);
+
+    if (status) params.set("status", status);
+    if (type) params.set("type", type);
+    if (search) params.set("search", search);
+
+    const res = await api.get(`/nutritionist/sessions?${params.toString()}`);
+
     return res.data;
   },
 
-  // 🔍 Get Single Session (for Manage page)
   getSessionDetails: async (
     sessionId: string,
-  ): Promise<{ success: boolean; data: Session }> => {
+  ): Promise<{ success: boolean; message: string; data: Session }> => {
     const res = await api.get(`/nutritionist/sessions/${sessionId}`);
     return res.data;
   },
 
-  // ▶️ Start Session
   startSession: async (sessionId: string): Promise<ActionResponse> => {
     const res = await api.patch(`/nutritionist/sessions/${sessionId}/start`);
     return res.data;
   },
 
-  // ⏹ End Session
   endSession: async (sessionId: string): Promise<ActionResponse> => {
     const res = await api.patch(`/nutritionist/sessions/${sessionId}/end`);
     return res.data;
   },
 
-  // ❌ Cancel Session
   cancelSession: async (sessionId: string): Promise<ActionResponse> => {
     const res = await api.patch(`/nutritionist/sessions/${sessionId}/cancel`);
     return res.data;

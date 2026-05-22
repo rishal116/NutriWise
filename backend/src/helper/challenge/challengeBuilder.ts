@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { CreateChallengeDTO } from "../../dtos/challenge/createChallenge.dto";
+import { CreateChallengeDTO } from "../../dtos/challenge/challenge.dto";
 import { IChallenge } from "../../models/challenge.model";
 
 export const buildChallengeData = (
@@ -19,16 +19,6 @@ export const buildChallengeData = (
     equipmentNeeded: Array.isArray(dto.equipmentNeeded)
       ? dto.equipmentNeeded
       : [],
-
-    rewards:
-      dto.rewards && typeof dto.rewards === "object"
-        ? dto.rewards
-        : {
-            xpPoints: 0,
-            certificate: false,
-            premiumUnlock: false,
-          },
-
     media: Array.isArray(dto.media) ? dto.media : [],
 
     isPremium: Boolean(dto.isPremium),

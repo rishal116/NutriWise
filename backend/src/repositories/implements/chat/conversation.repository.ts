@@ -1,5 +1,8 @@
 import { BaseRepository } from "../common/base.repository";
-import { IConversationRepository } from "../../interfaces/chat/IConversationRepository";
+import {
+  IConversationRepository,
+  ConversationCursor,
+} from "../../interfaces/chat/IConversationRepository";
 import {
   ConversationModel,
   IConversation,
@@ -13,13 +16,14 @@ type GroupCursorQuery = {
 
 export class ConversationRepository
   extends BaseRepository<IConversation>
-  implements IConversationRepository
-{
+  implements IConversationRepository {
   constructor() {
     super(ConversationModel);
   }
 
-  async findByDirectKey(key: string): Promise<IConversation | null> {
+  async findByDirectKey(
+    key: string,
+  ): Promise<IConversation | null> {
     return this._model
       .findOne({
         directKey: key,
@@ -32,38 +36,72 @@ export class ConversationRepository
   async findUserConversations(
     userId: string,
     limit: number,
-    cursor?: string,
+    cursor?: ConversationCursor,
   ): Promise<IConversation[]> {
+    const safeLimit = Math.min(Math.max(limit, 1), 50);
+
     const memberships = await ConversationMemberModel.find({
       userId: new Types.ObjectId(userId),
+      status: "active",
     })
       .select({ conversationId: 1 })
       .lean<{ conversationId: Types.ObjectId }[]>()
       .exec();
 
     const conversationIds = memberships.map(
-      (m) => new Types.ObjectId(m.conversationId),
+      (membership) => membership.conversationId,
     );
 
-    if (conversationIds.length === 0) return [];
+    if (!conversationIds.length) return [];
 
-    const query: {
-      _id: { $in: Types.ObjectId[] };
+    type ConversationQuery = {
+      _id: {
+        $in: Types.ObjectId[];
+      };
       isDeleted: false;
-      lastMessageAt?: { $lt: Date };
-    } = {
+      $or?: (
+        | {
+          lastMessageAt: {
+            $lt: Date;
+          };
+        }
+        | {
+          lastMessageAt: Date;
+          _id: {
+            $lt: Types.ObjectId;
+          };
+        }
+      )[];
+    };
+
+    const query: ConversationQuery = {
       _id: { $in: conversationIds },
       isDeleted: false,
     };
 
     if (cursor) {
-      query.lastMessageAt = { $lt: new Date(cursor) };
+      query.$or = [
+        {
+          lastMessageAt: {
+            $lt: new Date(cursor.lastMessageAt),
+          },
+        },
+        {
+          lastMessageAt: new Date(cursor.lastMessageAt),
+          _id: {
+            $lt: new Types.ObjectId(cursor.id),
+          },
+        },
+      ];
     }
 
     return this._model
       .find(query)
-      .sort({ lastMessageAt: -1, _id: -1 })
-      .limit(limit + 1)
+      .sort({
+        lastMessageAt: -1,
+        _id: -1,
+      })
+      .limit(safeLimit + 1)
       .lean<IConversation[]>()
       .exec();
   }
@@ -71,32 +109,72 @@ export class ConversationRepository
   async findUserConversationsPaginated(
     conversationIds: string[],
     limit: number,
-    cursor?: string,
+    cursor?: ConversationCursor,
   ): Promise<IConversation[]> {
-    const query: {
-      _id: { $in: Types.ObjectId[] };
-      isDeleted: false;
-      lastMessageAt?: { $lt: Date };
-    } = {
+    const safeLimit = Math.min(Math.max(limit, 1), 50);
+
+    type PaginatedConversationQuery = {
       _id: {
-        $in: conversationIds.map((id) => new Types.ObjectId(id)),
+        $in: Types.ObjectId[];
+      };
+      isDeleted: false;
+      $or?: (
+        | {
+          lastMessageAt: {
+            $lt: Date;
+          };
+        }
+        | {
+          lastMessageAt: Date;
+          _id: {
+            $lt: Types.ObjectId;
+          };
+        }
+      )[];
+    };
+
+    const query: PaginatedConversationQuery = {
+      _id: {
+        $in: conversationIds.map(
+          (id) => new Types.ObjectId(id),
+        ),
       },
       isDeleted: false,
     };
 
     if (cursor) {
-      query.lastMessageAt = { $lt: new Date(cursor) };
+      query.$or = [
+        {
+          lastMessageAt: {
+            $lt: new Date(cursor.lastMessageAt),
+          },
+        },
+        {
+          lastMessageAt: new Date(cursor.lastMessageAt),
+          _id: {
+            $lt: new Types.ObjectId(cursor.id),
+          },
+        },
+      ];
     }
 
     return this._model
       .find(query)
-      .sort({ lastMessageAt: -1 })
-      .limit(limit + 1)
+      .sort({
+        lastMessageAt: -1,
+        _id: -1,
+      })
+      .limit(safeLimit + 1)
       .lean<IConversation[]>()
       .exec();
   }
 
-  async findGroups(limit: number, cursor?: string): Promise<IConversation[]> {
+  async findGroups(
+    limit: number,
+    cursor?: string,
+  ): Promise<IConversation[]> {
+    const safeLimit = Math.min(Math.max(limit, 1), 50);
+
     const query: {
       chatType: "group";
       isDeleted: false;
@@ -106,13 +184,18 @@ export class ConversationRepository
     };
 
     if (cursor) {
-      query.createdAt = { $lt: new Date(cursor) };
+      query.createdAt = {
+        $lt: new Date(cursor),
+      };
     }
 
     return this._model
       .find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit + 1)
+      .sort({
+        createdAt: -1,
+        _id: -1,
+      })
+      .limit(safeLimit + 1)
       .lean<IConversation[]>()
       .exec();
   }
@@ -124,31 +207,19 @@ export class ConversationRepository
     });
   }
 
-  async addJoinRequest(
+  async incrementMemberCount(
     groupId: string,
-    request: { userId: string; requestedAt: Date },
-  ) {
-    return this._model.updateOne(
+    value: number,
+  ): Promise<void> {
+    await this._model.updateOne(
       {
         _id: new Types.ObjectId(groupId),
-        chatType: "group",
-        isDeleted: false,
       },
       {
-        $addToSet: {
-          joinRequests: {
-            userId: new Types.ObjectId(request.userId),
-            requestedAt: request.requestedAt,
-          },
+        $inc: {
+          memberCount: value,
         },
       },
-    );
-  }
-
-  async incrementMemberCount(groupId: string, value: number): Promise<void> {
-    await this._model.updateOne(
-      { _id: new Types.ObjectId(groupId) },
-      { $inc: { memberCount: value } },
     );
   }
 }

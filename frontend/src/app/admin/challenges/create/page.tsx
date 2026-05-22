@@ -4,28 +4,46 @@ import React, { useState } from "react";
 import { adminChallengeService } from "@/services/admin/adminChallenge.service";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { createChallengeSchema } from "@/validation/challenge.validation";
-import { CreateChallengeDTO, IChallengeMedia } from "@/dtos/admin/createChallenge.dto";
+import { createChallengeSchema } from "@/validations/challenge.validation";
+import {
+  CreateChallengeDTO,
+  ChallengeType,
+  ChallengeDifficulty,
+  ChallengeCategory,
+  ChallengeVisibility,
+} from "@/types/challenge";
 import { Section } from "./components/Section";
 import { FieldError } from "./components/FieldError";
 import { Chip } from "./components/Chip";
 import { Pill } from "./components/Pill";
 import { StepDot } from "./components/StepDot";
 import { MediaGallerySection } from "./components/MediaGallerySection";
-import { ExtractErrorMessage } from "./components/ExtractErrorMessage";
 import { SingleMediaUploader } from "./components/SingleMediaUploader";
 import {
-  FileText, Tag, CreditCard, Trophy, Rocket,
-  ChevronRight, ChevronLeft, CheckCircle2, Sparkles,
+  FileText,
+  Tag,
+  CreditCard,
+  Rocket,
+  ChevronRight,
+  ChevronLeft,
+  CheckCircle2,
+  Sparkles,
+  Flame,
+  Globe,
+  Lock,
+  Layers,
 } from "lucide-react";
+import Image from "next/image";
+import { getErrorMessage } from "@/utils/errorHandler";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-type Difficulty = CreateChallengeDTO["difficulty"];
-type ChallengeType = CreateChallengeDTO["type"];
-type Category = NonNullable<CreateChallengeDTO["category"]>;
-type Visibility = NonNullable<CreateChallengeDTO["visibility"]>;
+// ── Types ──────────────────────────────────────────────────────────────────────
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+interface ZodLikeError {
+  errors?: Array<{ message: string }>;
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+
 const DEFAULT_STATE: CreateChallengeDTO = {
   title: "",
   shortDescription: "",
@@ -41,45 +59,73 @@ const DEFAULT_STATE: CreateChallengeDTO = {
   bannerImage: "",
   introVideo: "",
   media: [],
-  rewards: { xpPoints: 0, certificate: false, premiumUnlock: false },
   isFeatured: false,
   isTrending: false,
   isRecommended: false,
   visibility: "public",
   benefits: [],
   equipmentNeeded: [],
+  estimatedCaloriesBurn: 0,
   seoTitle: "",
   seoDescription: "",
 };
 
 const STEPS = [
-  { id: 1, label: "Basics",   icon: FileText,    sub: "Title, description and format"      },
-  { id: 2, label: "Category", icon: Tag,         sub: "Category, tags and media assets"    },
-  { id: 3, label: "Pricing",  icon: CreditCard,  sub: "Pricing and access control"         },
-  { id: 4, label: "Rewards",  icon: Trophy,      sub: "XP, rewards and benefits"           },
-  { id: 5, label: "Publish",  icon: Rocket,      sub: "Visibility, SEO and publish"        },
-];
+  { id: 1, label: "Basics", icon: FileText, sub: "Title, description & type" },
+  { id: 2, label: "Media", icon: Tag, sub: "Visuals & categorization" },
+  { id: 3, label: "Access", icon: CreditCard, sub: "Pricing & visibility" },
+  { id: 4, label: "Review", icon: Rocket, sub: "Summary & SEO" },
+] as const;
 
-const DIFFICULTY_CONFIG: Record<Difficulty, { dot: string; text: string; bg: string }> = {
-  easy:   { dot: "bg-emerald-400", text: "text-emerald-700", bg: "bg-emerald-50 border-emerald-200" },
-  medium: { dot: "bg-amber-400",   text: "text-amber-700",   bg: "bg-amber-50 border-amber-200"     },
-  hard:   { dot: "bg-red-400",     text: "text-red-700",     bg: "bg-red-50 border-red-200"         },
+const DIFFICULTY_CONFIG: Record<
+  ChallengeDifficulty,
+  { dot: string; text: string; bg: string }
+> = {
+  easy: {
+    dot: "bg-emerald-400",
+    text: "text-emerald-700",
+    bg: "bg-emerald-50 border-emerald-200",
+  },
+  medium: {
+    dot: "bg-amber-400",
+    text: "text-amber-700",
+    bg: "bg-amber-50 border-amber-200",
+  },
+  hard: {
+    dot: "bg-red-400",
+    text: "text-red-700",
+    bg: "bg-red-50 border-red-200",
+  },
 };
 
-// ─── Shared class strings ─────────────────────────────────────────────────────
-const inputCls =
+const DURATION_OPTIONS = [7, 14, 21, 30, 45, 60, 90] as const;
+
+// ── Shared class strings ───────────────────────────────────────────────────────
+
+const INPUT_CLS =
   "w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-[13px] text-slate-800 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]";
 
-const inputErrCls =
+const INPUT_ERR_CLS =
   "border-red-300 focus:border-red-400 focus:ring-red-100 bg-red-50/30";
 
-const selectCls =
+const SELECT_CLS =
   "w-full rounded-xl bg-white border border-slate-200 px-4 py-3 text-[13px] text-slate-700 outline-none transition-all duration-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-400/20 cursor-pointer shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]";
 
-const labelCls =
+const LABEL_CLS =
   "block text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 mb-1.5";
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function extractErrorMessage(err: unknown): string {
+  return getErrorMessage(err);
+}
+
+function splitByComma(value: string): string[] {
+  return value.split(",").map((s) => s.trim());
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────────
+
 export default function CreateChallengePage() {
   const [form, setForm] = useState<CreateChallengeDTO>(DEFAULT_STATE);
   const [step, setStep] = useState(1);
@@ -87,7 +133,8 @@ export default function CreateChallengePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const router = useRouter();
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
+  // ── Field updater ──────────────────────────────────────────────────────────
+
   const update = <K extends keyof CreateChallengeDTO>(
     key: K,
     value: CreateChallengeDTO[K],
@@ -102,26 +149,21 @@ export default function CreateChallengePage() {
   ) => {
     try {
       createChallengeSchema
-        .pick({ [field]: true } as Record<string, true>)
+        .pick({ [field]: true } as Record<typeof field, true>)
         .parse({ [field]: value });
       setErrors((prev) => ({ ...prev, [field]: "" }));
-    } catch (error: unknown) {
-      let message = "Invalid field";
-      if (error instanceof Error) {
-        const zodError = error as { errors?: Array<{ message: string }> };
-        message = zodError.errors?.[0]?.message ?? message;
-      }
+    } catch (err: unknown) {
+      const zodErr = err as ZodLikeError;
+      const message = zodErr.errors?.[0]?.message ?? "Invalid field";
       setErrors((prev) => ({ ...prev, [field]: message }));
     }
   };
 
+  // ── Navigation ─────────────────────────────────────────────────────────────
+
   const validateCurrentStep = (): boolean => {
     if (step === 1 && (!form.title || form.title.length < 5)) {
       toast.error("Title must be at least 5 characters");
-      return false;
-    }
-    if (step === 2 && form.category === "custom" && !form.customCategory?.trim()) {
-      toast.error("Custom category name is required");
       return false;
     }
     return true;
@@ -131,219 +173,207 @@ export default function CreateChallengePage() {
     if (validateCurrentStep()) setStep((s) => Math.min(STEPS.length, s + 1));
   };
 
+  const handleBack = () => setStep((s) => Math.max(1, s - 1));
+
   // ── Submit ─────────────────────────────────────────────────────────────────
+
   const handleSubmit = async (): Promise<void> => {
     setLoading(true);
     try {
-      // 1. Validate structured payload (no files)
-      const payload: CreateChallengeDTO = {
-        title: form.title,
-        shortDescription: form.shortDescription || undefined,
-        description: form.description || undefined,
-        duration: form.duration,
-        difficulty: form.difficulty,
-        type: form.type,
-        category: form.category || "custom",
-        customCategory: form.category === "custom" ? form.customCategory || undefined : undefined,
-        tags: form.tags?.length ? form.tags : [],
-        isPremium: form.isPremium ?? false,
-        rewards: form.rewards,
-        isFeatured: form.isFeatured ?? false,
-        isTrending: form.isTrending ?? false,
-        isRecommended: form.isRecommended ?? false,
-        visibility: form.visibility ?? "public",
-        benefits: form.benefits?.length ? form.benefits : [],
-        equipmentNeeded: form.equipmentNeeded?.length ? form.equipmentNeeded : [],
-        seoTitle: form.seoTitle || undefined,
-        seoDescription: form.seoDescription || undefined,
-        coverImage: undefined,
-        bannerImage: undefined,
-        introVideo: undefined,
-        media: [],
+      // Strip File objects for schema validation
+      const payload = {
+        ...form,
+        coverImageFile: undefined,
+        bannerImageFile: undefined,
+        introVideoFile: undefined,
+        media: form.media?.map(({ file: _file, thumbnailFile: _thumbnailFile, ...rest }) => rest),
       };
 
       const result = createChallengeSchema.safeParse(payload);
       if (!result.success) {
         const fieldErrors: Record<string, string> = {};
-        result.error.issues.forEach((err) => {
-          const field = err.path[0];
-          if (typeof field === "string") fieldErrors[field] = err.message;
+        result.error.issues.forEach((issue) => {
+          const field = issue.path[0];
+          if (typeof field === "string") fieldErrors[field] = issue.message;
         });
         setErrors(fieldErrors);
-        toast.error("Validation failed", { description: "Please fix the highlighted fields." });
+        toast.error("Validation failed", {
+          description: "Please fix the highlighted fields.",
+        });
         return;
       }
 
-      // 2. Build FormData
+      // Build FormData
       const fd = new FormData();
-      fd.append("title",            form.title);
-      fd.append("shortDescription", form.shortDescription || "");
-      fd.append("description",      form.description || "");
-      fd.append("duration",         String(form.duration));
-      fd.append("difficulty",       form.difficulty);
-      fd.append("type",             form.type);
-      fd.append("category",         form.category || "custom");
-      fd.append("customCategory",   form.customCategory || "");
-      fd.append("tags",             JSON.stringify(form.tags || []));
-      fd.append("isPremium",        String(form.isPremium ?? false));
-      fd.append("rewards",          JSON.stringify(form.rewards || {}));
-      fd.append("isFeatured",       String(form.isFeatured ?? false));
-      fd.append("isTrending",       String(form.isTrending ?? false));
-      fd.append("isRecommended",    String(form.isRecommended ?? false));
-      fd.append("visibility",       form.visibility || "public");
-      fd.append("benefits",         JSON.stringify(form.benefits || []));
-      fd.append("equipmentNeeded",  JSON.stringify(form.equipmentNeeded || []));
-      fd.append("seoTitle",         form.seoTitle || "");
-      fd.append("seoDescription",   form.seoDescription || "");
+      (Object.entries(form) as [string, unknown][]).forEach(([key, value]) => {
+        if (value === undefined || value === null) return;
+        if (key.endsWith("File") || key === "media") return;
 
-      // 3. File fields
-      if (form.coverImageFile instanceof File)  fd.append("coverImage", form.coverImageFile);
-      if (form.bannerImageFile instanceof File)  fd.append("bannerImage", form.bannerImageFile);
-      if (form.introVideoFile instanceof File)   fd.append("introVideo", form.introVideoFile);
-
-      // 4. Gallery
-      type MediaMeta = { type: IChallengeMedia["type"]; title: string; description: string; duration?: number; thumbnailUrl?: string };
-      const mediaMeta: MediaMeta[] = [];
-      form.media?.forEach((item) => {
-        if (item.file instanceof File) {
-          fd.append("mediaFiles", item.file);
-          mediaMeta.push({ type: item.type, title: item.title || "", description: item.description || "", duration: item.duration, thumbnailUrl: item.thumbnailUrl });
+        if (Array.isArray(value)) {
+          fd.append(key, JSON.stringify(value));
+        } else if (typeof value === "object") {
+          fd.append(key, JSON.stringify(value));
+        } else {
+          fd.append(key, String(value));
         }
       });
-      if (mediaMeta.length > 0) fd.append("mediaMetadata", JSON.stringify(mediaMeta));
 
-      // 5. Call API
+      // File fields
+      if (form.coverImageFile) fd.append("coverImage", form.coverImageFile);
+      if (form.bannerImageFile) fd.append("bannerImage", form.bannerImageFile);
+      if (form.introVideoFile) fd.append("introVideo", form.introVideoFile);
+
+      // Gallery
+      const mediaMeta: object[] = [];
+      form.media?.forEach((item) => {
+        if (item.file) {
+          fd.append("mediaFiles", item.file);
+          const { file: _file, thumbnailFile: _thumbnailFile, ...rest } = item;
+          mediaMeta.push(rest);
+        }
+      });
+      if (mediaMeta.length > 0) {
+        fd.append("mediaMetadata", JSON.stringify(mediaMeta));
+      }
+
       await adminChallengeService.createChallenge(fd);
-      toast.success("Challenge published!", { description: `"${form.title}" has been created.` });
+      toast.success("Challenge published!", {
+        description: `"${form.title}" has been created.`,
+      });
       router.push("/admin/challenges");
     } catch (err: unknown) {
-      toast.error("Failed to publish", { description: ExtractErrorMessage(err) });
+      toast.error("Failed to publish", {
+        description: extractErrorMessage(err),
+      });
     } finally {
       setLoading(false);
     }
   };
 
   // ── Derived ────────────────────────────────────────────────────────────────
-  const progress   = ((step - 1) / (STEPS.length - 1)) * 100;
-  const currentDiff = DIFFICULTY_CONFIG[form.difficulty] ?? DIFFICULTY_CONFIG.easy;
+
+  const progress = ((step - 1) / (STEPS.length - 1)) * 100;
+  const currentDiff = DIFFICULTY_CONFIG[form.difficulty];
+  const currentStep = STEPS.find((s) => s.id === step)!;
+  const StepIcon = currentStep.icon;
 
   // ── Render ─────────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-screen bg-[#f7f8fc] px-4 py-8">
-      <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-500">
 
-        {/* ── Header ── */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+  return (
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-teal-50/50 via-slate-50 to-white px-4 py-10 md:py-16">
+      <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              <Sparkles className="text-teal-500" size={28} />
               Create Challenge
             </h1>
-            <p className="text-[13px] text-slate-400 mt-0.5 font-medium">
-              Build a new health challenge for the NutriWise community
+            <p className="text-sm text-slate-500 font-medium max-w-md">
+              Design a transformative health journey for your community.
             </p>
           </div>
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 shadow-sm">
-            <span className="text-[11px] font-bold text-slate-400">Step</span>
-            <span className="text-[11px] font-extrabold text-teal-600">{step}</span>
-            <span className="text-[11px] text-slate-300">/</span>
-            <span className="text-[11px] font-bold text-slate-400">{STEPS.length}</span>
+          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl px-4 py-2 shadow-sm">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Phase</span>
+            <span className="text-lg font-black text-teal-600 leading-none">{step}</span>
+            <span className="text-lg text-slate-300 leading-none">/</span>
+            <span className="text-sm font-bold text-slate-400 leading-none">{STEPS.length}</span>
           </div>
         </div>
 
-        {/* ── Step rail ── */}
-        <div className="flex items-center">
+        {/* Step rail */}
+        <div className="flex items-center justify-between px-2 overflow-x-auto pb-4 scrollbar-hide">
           {STEPS.map((s, i) => {
             const isActive = step === s.id;
-            const isDone   = step > s.id;
+            const isDone = step > s.id;
             return (
-              <div key={s.id} className="flex items-center flex-1 last:flex-none">
+              <React.Fragment key={s.id}>
                 <button
                   type="button"
-                  onClick={() => setStep(s.id)}
-                  className="flex flex-col items-center gap-1.5 group min-w-[48px]"
+                  onClick={() => { if (s.id <= step) setStep(s.id); }}
+                  className="flex flex-col items-center gap-2 group min-w-[70px] transition-all"
                 >
                   <StepDot num={s.id} active={isActive} done={isDone} />
-                  <span className={`text-[10px] font-bold tracking-wide whitespace-nowrap transition-colors ${
+                  <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${
                     isActive ? "text-teal-600" : isDone ? "text-emerald-500" : "text-slate-400"
                   }`}>
                     {s.label}
                   </span>
                 </button>
                 {i < STEPS.length - 1 && (
-                  <div className="flex-1 mx-1 mb-5">
-                    <div className={`h-0.5 rounded-full transition-all duration-500 ${isDone ? "bg-emerald-300" : "bg-slate-200"}`} />
+                  <div className="flex-1 min-w-[30px] mx-2 mb-6">
+                    <div className={`h-1 rounded-full transition-all duration-700 ${
+                      isDone
+                        ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]"
+                        : "bg-slate-200"
+                    }`} />
                   </div>
                 )}
-              </div>
+              </React.Fragment>
             );
           })}
         </div>
 
-        {/* ── Card ── */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-[0_4px_24px_rgba(0,0,0,0.06)] overflow-hidden">
+        {/* Main card */}
+        <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] overflow-hidden">
 
           {/* Progress bar */}
-          <div className="h-1 bg-slate-100">
+          <div className="h-1.5 bg-slate-100">
             <div
-              className="h-full bg-gradient-to-r from-teal-400 via-teal-500 to-emerald-500 transition-all duration-700 ease-out"
+              className="h-full bg-gradient-to-r from-teal-400 via-teal-500 to-emerald-500 transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(20,184,166,0.4)]"
               style={{ width: `${progress}%` }}
             />
           </div>
 
-          {/* Step header strip */}
-          <div className="px-6 pt-5 pb-4 flex items-center gap-3 border-b border-slate-100">
-            {(() => {
-              const current = STEPS.find((s) => s.id === step)!;
-              const Icon = current.icon;
-              return (
-                <>
-                  <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600">
-                    <Icon size={17} strokeWidth={1.75} />
-                  </div>
-                  <div>
-                    <p className="text-[15px] font-extrabold text-slate-800 tracking-tight">
-                      {current.label}
-                    </p>
-                    <p className="text-[11px] text-slate-400 font-medium">{current.sub}</p>
-                  </div>
-                </>
-              );
-            })()}
+          {/* Step header */}
+          <div className="px-8 pt-8 pb-6 flex items-center gap-5 bg-gradient-to-b from-white to-transparent">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-sm shadow-teal-100/50">
+              <StepIcon size={22} strokeWidth={2} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-slate-800 tracking-tight">
+                {currentStep.label}
+              </h2>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                {currentStep.sub}
+              </p>
+            </div>
           </div>
 
-          {/* ── Step content ── */}
-          <div className="p-6 md:p-7 min-h-[380px] space-y-7">
+          {/* Step content */}
+          <div className="px-8 pb-10 min-h-[420px] space-y-8 animate-in fade-in duration-500">
 
-            {/* ─── STEP 1 — Basics ─── */}
+            {/* ── STEP 1 — Basics ── */}
             {step === 1 && (
               <>
-                <Section title="Core information" subtitle="What participants will see first">
-                  <div className="space-y-4">
+                <Section title="The Hook" subtitle="Name and describe your transformation program">
+                  <div className="space-y-6">
                     <div>
-                      <label className={labelCls}>Title *</label>
+                      <label className={LABEL_CLS}>Challenge Title *</label>
                       <input
-                        className={`${inputCls} ${errors.title ? inputErrCls : ""}`}
-                        placeholder="e.g. 30-Day Hydration Reset"
+                        className={`${INPUT_CLS} text-[15px] font-bold py-4 ${errors.title ? INPUT_ERR_CLS : ""}`}
+                        placeholder="e.g. 30-Day Hydration Mastery"
                         value={form.title}
                         onChange={(e) => update("title", e.target.value)}
                       />
                       <FieldError msg={errors.title} />
                     </div>
                     <div>
-                      <label className={labelCls}>Short description</label>
+                      <label className={LABEL_CLS}>Short Description</label>
                       <input
-                        className={inputCls}
-                        placeholder="One-liner that hooks participants"
+                        className={INPUT_CLS}
+                        placeholder="A powerful one-liner that summarizes the goal"
                         value={form.shortDescription ?? ""}
                         onChange={(e) => update("shortDescription", e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>Full description</label>
+                      <label className={LABEL_CLS}>Detailed Journey</label>
                       <textarea
                         rows={4}
-                        className={`${inputCls} resize-none leading-relaxed`}
-                        placeholder="Explain the challenge goals, structure, and benefits…"
+                        className={`${INPUT_CLS} resize-none leading-relaxed min-h-[120px]`}
+                        placeholder="Deep dive into what participants will achieve day by day…"
                         value={form.description ?? ""}
                         onChange={(e) => update("description", e.target.value)}
                       />
@@ -351,332 +381,293 @@ export default function CreateChallengePage() {
                   </div>
                 </Section>
 
-                <Section title="Format" subtitle="Duration, difficulty and challenge type">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Section title="Dynamics" subtitle="Define the pace and intensity">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div>
-                      <label className={labelCls}>Duration</label>
+                      <label className={LABEL_CLS}>Duration</label>
                       <select
-                        className={selectCls}
+                        className={SELECT_CLS}
                         value={form.duration}
                         onChange={(e) => update("duration", Number(e.target.value))}
                       >
-                        <option value={7}>7 Days</option>
-                        <option value={14}>14 Days</option>
-                        <option value={30}>30 Days</option>
+                        {DURATION_OPTIONS.map((d) => (
+                          <option key={d} value={d}>{d} Days</option>
+                        ))}
                       </select>
                     </div>
+
                     <div>
-                      <label className={labelCls}>Difficulty</label>
+                      <label className={LABEL_CLS}>Difficulty</label>
                       <div className="relative">
                         <select
-                          className={`${selectCls} pl-8`}
+                          className={`${SELECT_CLS} pl-10`}
                           value={form.difficulty}
-                          onChange={(e) => update("difficulty", e.target.value as Difficulty)}
+                          onChange={(e) => update("difficulty", e.target.value as ChallengeDifficulty)}
                         >
-                          <option value="easy">Easy</option>
-                          <option value="medium">Medium</option>
-                          <option value="hard">Hard</option>
+                          <option value="easy">Beginner</option>
+                          <option value="medium">Intermediate</option>
+                          <option value="hard">Advanced</option>
                         </select>
-                        <span className={`absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${currentDiff.dot}`} />
+                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full shadow-sm ${currentDiff.dot}`} />
                       </div>
                     </div>
+
                     <div>
-                      <label className={labelCls}>Type</label>
+                      <label className={LABEL_CLS}>Main Focus</label>
                       <select
-                        className={selectCls}
+                        className={SELECT_CLS}
                         value={form.type}
                         onChange={(e) => update("type", e.target.value as ChallengeType)}
                       >
                         <option value="fitness">Fitness</option>
                         <option value="nutrition">Nutrition</option>
-                        <option value="mental">Mental</option>
+                        <option value="mental">Mental Health</option>
                         <option value="hybrid">Hybrid</option>
+                        <option value="productivity">Productivity</option>
                       </select>
                     </div>
-                  </div>
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold mt-3 ${currentDiff.bg} ${currentDiff.text}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${currentDiff.dot}`} />
-                    {form.difficulty.charAt(0).toUpperCase() + form.difficulty.slice(1)} · {form.duration} days · {form.type}
+
+                    <div>
+                      <label className={LABEL_CLS}>Est. Calorie Burn</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          min={0}
+                          className={`${INPUT_CLS} pr-12`}
+                          placeholder="0"
+                          value={form.estimatedCaloriesBurn ?? 0}
+                          onChange={(e) => update("estimatedCaloriesBurn", Number(e.target.value))}
+                        />
+                        <Flame size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-orange-400 pointer-events-none" />
+                      </div>
+                    </div>
                   </div>
                 </Section>
               </>
             )}
 
-            {/* ─── STEP 2 — Category + Media ─── */}
+            {/* ── STEP 2 — Media & Tags ── */}
             {step === 2 && (
               <>
-                <Section title="Classification" subtitle="How this challenge will be discovered">
-                  <div className="space-y-4">
+                <Section title="Classification" subtitle="How this challenge will be organized">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className={labelCls}>Category</label>
+                      <label className={LABEL_CLS}>Primary Category</label>
                       <select
-                        className={selectCls}
+                        className={SELECT_CLS}
                         value={form.category}
-                        onChange={(e) => update("category", e.target.value as Category)}
+                        onChange={(e) => update("category", e.target.value as ChallengeCategory)}
                       >
                         <option value="weight_loss">Weight Loss</option>
                         <option value="muscle_gain">Muscle Gain</option>
                         <option value="mental_wellness">Mental Wellness</option>
                         <option value="hydration">Hydration</option>
                         <option value="productivity">Productivity</option>
-                        <option value="custom">Custom</option>
+                        <option value="custom">Other / Custom</option>
                       </select>
                       {form.category === "custom" && (
-                        <div className="mt-3">
-                          <label className={labelCls}>Custom category name *</label>
+                        <div className="mt-4 animate-in slide-in-from-top-2 duration-300">
+                          <label className={LABEL_CLS}>Custom Category Name</label>
                           <input
-                            className={inputCls}
-                            placeholder="Enter custom category"
+                            className={INPUT_CLS}
+                            placeholder="e.g. Heart Health"
                             value={form.customCategory ?? ""}
                             onChange={(e) => update("customCategory", e.target.value)}
                           />
                         </div>
                       )}
                     </div>
+
                     <div>
-                      <label className={labelCls}>Tags (comma separated)</label>
+                      <label className={LABEL_CLS}>Search Tags</label>
                       <input
-                        className={inputCls}
-                        placeholder="e.g. water, health, daily habit"
+                        className={INPUT_CLS}
+                        placeholder="cardio, vegan, mindset (comma-separated)"
                         value={form.tags?.join(", ") ?? ""}
                         onChange={(e) =>
-                          update("tags", e.target.value ? e.target.value.split(",").map((t) => t.trim()) : [])
+                          update("tags", e.target.value ? splitByComma(e.target.value) : [])
                         }
                       />
-                      {(form.tags?.length ?? 0) > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2.5">
-                          {form.tags?.filter((t) => t.trim()).map((tag, i) => (
-                            <span key={`${tag}-${i}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-100">
-                              <span className="w-1 h-1 rounded-full bg-teal-400" />
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {form.tags?.filter(Boolean).map((tag, i) => (
+                          <span
+                            key={i}
+                            className="px-3 py-1 rounded-lg bg-slate-100 text-[11px] font-black text-slate-500 border border-slate-200"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </Section>
 
-                <Section title="Hero media" subtitle="Cover image, banner and intro video">
-                  <div className="space-y-5">
+                <Section title="Cinematics" subtitle="High-quality visuals to attract users">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <SingleMediaUploader
-                      label="Cover image"
-                      accept="image/png,image/jpeg,image/webp"
+                      label="Cover (3:4 aspect)"
+                      accept="image/*"
                       value={form.coverImage ?? ""}
-                      onChange={(_file: File | null, previewUrl: string) => update("coverImage", previewUrl)}
+                      onChange={(file, url) => {
+                        update("coverImage", url);
+                        setForm((p) => ({ ...p, coverImageFile: file ?? undefined }));
+                      }}
                       mediaType="image"
-                      error={errors.coverImage}
                     />
                     <SingleMediaUploader
-                      label="Banner image"
-                      accept="image/png,image/jpeg,image/webp"
+                      label="Banner (16:9 aspect)"
+                      accept="image/*"
                       value={form.bannerImage ?? ""}
-                      onChange={(_file: File | null, previewUrl: string) => update("bannerImage", previewUrl)}
+                      onChange={(file, url) => {
+                        update("bannerImage", url);
+                        setForm((p) => ({ ...p, bannerImageFile: file ?? undefined }));
+                      }}
                       mediaType="image"
-                      error={errors.bannerImage}
                     />
-                    <SingleMediaUploader
-                      label="Intro video"
-                      accept="video/mp4,video/webm"
-                      value={form.introVideo ?? ""}
-                      onChange={(_file: File | null, previewUrl: string) => update("introVideo", previewUrl)}
-                      mediaType="video"
-                      error={errors.introVideo}
-                    />
+                    <div className="md:col-span-2">
+                      <SingleMediaUploader
+                        label="Intro Video Trailer"
+                        accept="video/*"
+                        value={form.introVideo ?? ""}
+                        onChange={(file, url) => {
+                          update("introVideo", url);
+                          setForm((p) => ({ ...p, introVideoFile: file ?? undefined }));
+                        }}
+                        mediaType="video"
+                      />
+                    </div>
                   </div>
                 </Section>
 
                 <MediaGallerySection
-                  items={(form.media as IChallengeMedia[]) ?? []}
-                  onChange={(items) => setForm((prev) => ({ ...prev, media: items }))}
+                  items={form.media ?? []}
+                  onChange={(items) => update("media", items)}
                 />
               </>
             )}
 
-            {/* ─── STEP 3 — Pricing ─── */}
+            {/* ── STEP 3 — Access & Benefits ── */}
             {step === 3 && (
-              <Section title="Pricing & access" subtitle="Who can access this challenge">
-                <div className="space-y-5">
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Free */}
+              <>
+                <Section title="Access Control" subtitle="Select the pricing model">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <button
                       type="button"
                       onClick={() => update("isPremium", false)}
-                      className={`relative flex flex-col items-start gap-2 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                      className={`relative flex items-center gap-4 p-6 rounded-3xl border-2 text-left transition-all duration-300 ${
                         !form.isPremium
-                          ? "border-teal-500 bg-teal-50/40 shadow-[0_0_0_4px_rgba(13,148,136,0.08)]"
-                          : "border-slate-200 bg-white hover:border-slate-300"
+                          ? "border-teal-500 bg-teal-50/50 shadow-lg shadow-teal-500/10"
+                          : "border-slate-100 bg-white hover:border-slate-200"
                       }`}
                     >
-                      {!form.isPremium && <CheckCircle2 size={16} className="absolute top-4 right-4 text-teal-500" />}
-                      <span className="text-2xl">🌱</span>
-                      <div>
-                        <p className="text-[13px] font-bold text-slate-800">Free</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">Available to all users</p>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
+                        !form.isPremium ? "bg-teal-500 text-white shadow-md shadow-teal-500/20" : "bg-slate-50 text-slate-400"
+                      }`}>
+                        🌱
                       </div>
+                      <div>
+                        <p className="text-[15px] font-black text-slate-800">Community Free</p>
+                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Open to everyone</p>
+                      </div>
+                      {!form.isPremium && (
+                        <CheckCircle2 size={18} className="absolute top-4 right-4 text-teal-600" />
+                      )}
                     </button>
-                    {/* Premium */}
+
                     <button
                       type="button"
                       onClick={() => update("isPremium", true)}
-                      className={`relative flex flex-col items-start gap-2 p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
+                      className={`relative flex items-center gap-4 p-6 rounded-3xl border-2 text-left transition-all duration-300 ${
                         form.isPremium
-                          ? "border-amber-400 bg-amber-50/40 shadow-[0_0_0_4px_rgba(251,191,36,0.08)]"
-                          : "border-slate-200 bg-white hover:border-slate-300"
+                          ? "border-amber-400 bg-amber-50/50 shadow-lg shadow-amber-500/10"
+                          : "border-slate-100 bg-white hover:border-slate-200"
                       }`}
                     >
-                      {form.isPremium && <CheckCircle2 size={16} className="absolute top-4 right-4 text-amber-500" />}
-                      <span className="text-2xl">⭐</span>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${
+                        form.isPremium ? "bg-amber-400 text-white shadow-md shadow-amber-500/20" : "bg-slate-50 text-slate-400"
+                      }`}>
+                        ⭐
+                      </div>
                       <div>
-                        <p className="text-[13px] font-bold text-slate-800">Premium</p>
-                        <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">Subscribers only</p>
+                        <p className="text-[15px] font-black text-slate-800">Premium Vault</p>
+                        <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Subscribers only</p>
                       </div>
+                      {form.isPremium && (
+                        <CheckCircle2 size={18} className="absolute top-4 right-4 text-amber-600" />
+                      )}
                     </button>
-                  </div>
-                  <div className={`flex items-center gap-3 px-4 py-3.5 rounded-xl border text-[12px] font-semibold transition-all duration-300 ${
-                    form.isPremium
-                      ? "bg-amber-50 border-amber-200 text-amber-700"
-                      : "bg-teal-50 border-teal-100 text-teal-700"
-                  }`}>
-                    <Sparkles size={14} />
-                    {form.isPremium
-                      ? "Premium challenges are gated behind a subscription."
-                      : "Free challenges are open to the entire community."}
-                  </div>
-                </div>
-              </Section>
-            )}
-
-            {/* ─── STEP 4 — Rewards ─── */}
-            {step === 4 && (
-              <>
-                <Section title="XP & rewards" subtitle="What participants earn on completion">
-                  <div className="space-y-4">
-                    <div className="max-w-[200px]">
-                      <label className={labelCls}>XP points awarded</label>
-                      <div className="relative">
-                        <input
-                          type="number"
-                          className={`${inputCls} pr-12`}
-                          placeholder="500"
-                          value={form.rewards?.xpPoints ?? 0}
-                          onChange={(e) => update("rewards", { ...form.rewards, xpPoints: Number(e.target.value) })}
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-bold text-teal-500">XP</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelCls}>Reward bonuses</label>
-                      <div className="flex flex-wrap gap-2">
-                        <Chip
-                          active={!!form.rewards?.certificate}
-                          onClick={() => update("rewards", { ...form.rewards, xpPoints: form.rewards?.xpPoints ?? 0, certificate: !form.rewards?.certificate })}
-                        >
-                          🏅 Certificate
-                        </Chip>
-                        <Chip
-                          active={!!form.rewards?.premiumUnlock}
-                          onClick={() => update("rewards", { ...form.rewards, xpPoints: form.rewards?.xpPoints ?? 0, premiumUnlock: !form.rewards?.premiumUnlock })}
-                        >
-                          🔓 Premium Unlock
-                        </Chip>
-                      </div>
-                    </div>
                   </div>
                 </Section>
 
-                <Section title="Benefits & equipment" subtitle="What participants need and gain">
-                  <div className="space-y-4">
+                <Section title="Visibility" subtitle="Who can discover this challenge">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {(["public", "private"] as ChallengeVisibility[]).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => update("visibility", v)}
+                        className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all ${
+                          form.visibility === v
+                            ? "border-slate-900 bg-slate-900 text-white"
+                            : "border-slate-100 bg-white text-slate-700 hover:border-slate-200"
+                        }`}
+                      >
+                        {v === "public" ? <Globe size={18} /> : <Lock size={18} />}
+                        <span className="text-[13px] font-extrabold">
+                          {v === "public" ? "Public & Searchable" : "Private (Invite Link)"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </Section>
+
+                <Section title="Key Takeaways" subtitle="What participants gain and need">
+                  <div className="space-y-6">
                     <div>
-                      <label className={labelCls}>Benefits (comma separated)</label>
-                      <input
-                        className={inputCls}
-                        placeholder="e.g. Better sleep, More energy, Improved focus"
+                      <label className={LABEL_CLS}>Benefits</label>
+                      <textarea
+                        rows={2}
+                        className={INPUT_CLS}
+                        placeholder="Better sleep, Increased strength, etc. (comma-separated)"
                         value={form.benefits?.join(", ") ?? ""}
-                        onChange={(e) =>
-                          update("benefits", e.target.value ? e.target.value.split(",").map((b) => b.trim()) : [])
-                        }
+                        onChange={(e) => update("benefits", splitByComma(e.target.value))}
                       />
-                      {(form.benefits?.length ?? 0) > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {form.benefits?.filter((b) => b.trim()).map((b, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                              <span className="w-1 h-1 rounded-full bg-emerald-400" />
-                              {b}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
                     <div>
-                      <label className={labelCls}>Equipment needed (comma separated)</label>
-                      <input
-                        className={inputCls}
-                        placeholder="e.g. Water bottle, Yoga mat, Resistance bands"
+                      <label className={LABEL_CLS}>Equipment Needed</label>
+                      <textarea
+                        rows={2}
+                        className={INPUT_CLS}
+                        placeholder="Yoga mat, Dumbbells, etc. (comma-separated)"
                         value={form.equipmentNeeded?.join(", ") ?? ""}
-                        onChange={(e) =>
-                          update("equipmentNeeded", e.target.value ? e.target.value.split(",").map((eq) => eq.trim()) : [])
-                        }
+                        onChange={(e) => update("equipmentNeeded", splitByComma(e.target.value))}
                       />
-                      {(form.equipmentNeeded?.length ?? 0) > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {form.equipmentNeeded?.filter((e) => e.trim()).map((eq, i) => (
-                            <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
-                              <span className="w-1 h-1 rounded-full bg-blue-400" />
-                              {eq}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </Section>
               </>
             )}
 
-            {/* ─── STEP 5 — Publish ─── */}
-            {step === 5 && (
+            {/* ── STEP 4 — Review & SEO ── */}
+            {step === 4 && (
               <>
-                <Section title="Visibility & flags" subtitle="Who sees this and how it's surfaced">
-                  <div className="space-y-4">
+                <Section title="SEO Mastery" subtitle="How search engines see this challenge">
+                  <div className="space-y-5">
                     <div>
-                      <label className={labelCls}>Visibility</label>
-                      <div className="flex flex-wrap gap-2">
-                        {(["public", "private"] as Visibility[]).map((v) => (
-                          <Chip key={v} active={form.visibility === v} onClick={() => update("visibility", v)}>
-                            {v === "public" ? "🌍 Public" : "🔒 Private"}
-                          </Chip>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className={labelCls}>Feature flags</label>
-                      <div className="flex flex-wrap gap-2">
-                        <Chip active={!!form.isFeatured}    onClick={() => update("isFeatured",    !form.isFeatured)}>⭐ Featured</Chip>
-                        <Chip active={!!form.isTrending}    onClick={() => update("isTrending",    !form.isTrending)}>🔥 Trending</Chip>
-                        <Chip active={!!form.isRecommended} onClick={() => update("isRecommended", !form.isRecommended)}>👍 Recommended</Chip>
-                      </div>
-                    </div>
-                  </div>
-                </Section>
-
-                <Section title="SEO" subtitle="Metadata for search engines">
-                  <div className="space-y-4">
-                    <div>
-                      <label className={labelCls}>SEO title</label>
+                      <label className={LABEL_CLS}>Meta Title</label>
                       <input
-                        className={inputCls}
-                        placeholder="Optimized page title"
+                        className={INPUT_CLS}
+                        placeholder="Optimized for search results"
                         value={form.seoTitle ?? ""}
                         onChange={(e) => update("seoTitle", e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>SEO description</label>
+                      <label className={LABEL_CLS}>Meta Description</label>
                       <textarea
-                        rows={3}
-                        className={`${inputCls} resize-none leading-relaxed`}
-                        placeholder="Meta description for search engines…"
+                        rows={2}
+                        className={INPUT_CLS}
+                        placeholder="Compelling snippet for Google…"
                         value={form.seoDescription ?? ""}
                         onChange={(e) => update("seoDescription", e.target.value)}
                       />
@@ -684,104 +675,135 @@ export default function CreateChallengePage() {
                   </div>
                 </Section>
 
-                {/* Summary card */}
-                <div className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50 to-white p-5 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ready to publish</p>
-                    <CheckCircle2 size={15} className="text-emerald-400" />
+                <Section title="Final Polish" subtitle="Flags and summary">
+                  <div className="flex flex-wrap gap-3">
+                    <Chip
+                      active={!!form.isFeatured}
+                      onClick={() => update("isFeatured", !form.isFeatured)}
+                    >
+                      ⭐ Feature on Home
+                    </Chip>
+                    <Chip
+                      active={!!form.isTrending}
+                      onClick={() => update("isTrending", !form.isTrending)}
+                    >
+                      🔥 Set as Trending
+                    </Chip>
+                    <Chip
+                      active={!!form.isRecommended}
+                      onClick={() => update("isRecommended", !form.isRecommended)}
+                    >
+                      👍 AI Recommended
+                    </Chip>
                   </div>
-                  <p className="text-[16px] font-extrabold text-slate-800 leading-tight">
-                    {form.title || "Untitled Challenge"}
-                  </p>
-                  {form.shortDescription && (
-                    <p className="text-[12px] text-slate-500 leading-relaxed">{form.shortDescription}</p>
-                  )}
-                  <div className="flex flex-wrap gap-1.5">
-                    <Pill>{form.duration} days</Pill>
-                    <Pill>
-                      <span className={`mr-1 w-1.5 h-1.5 rounded-full inline-block ${currentDiff.dot}`} />
-                      <span className={`capitalize ${currentDiff.text}`}>{form.difficulty}</span>
-                    </Pill>
-                    <Pill>{form.type}</Pill>
-                    <Pill>{form.visibility === "public" ? "🌍 Public" : "🔒 Private"}</Pill>
-                    {form.isPremium             && <Pill>⭐ Premium</Pill>}
-                    {form.isFeatured            && <Pill>⭐ Featured</Pill>}
-                    {(form.rewards?.xpPoints ?? 0) > 0 && <Pill>{form.rewards!.xpPoints} XP</Pill>}
-                    {form.rewards?.certificate  && <Pill>🏅 Certificate</Pill>}
-                    {(form.media as IChallengeMedia[])?.length > 0 && (
-                      <Pill>🎞 {(form.media as IChallengeMedia[]).length} media item{(form.media as IChallengeMedia[]).length > 1 ? "s" : ""}</Pill>
-                    )}
-                  </div>
-                  {(form.coverImage || form.bannerImage) && (
-                    <div className="flex gap-2">
-                      {form.coverImage && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={form.coverImage} alt="cover" className="h-12 w-20 rounded-xl object-cover border border-slate-200" />
-                      )}
-                      {form.bannerImage && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={form.bannerImage} alt="banner" className="h-12 flex-1 rounded-xl object-cover border border-slate-200" />
-                      )}
-                    </div>
-                  )}
-                </div>
+                </Section>
 
-                {/* Publish button */}
-                <button
-                  type="button"
-                  disabled={loading || !form.title}
-                  onClick={handleSubmit}
-                  className="w-full group relative overflow-hidden rounded-2xl bg-slate-900 py-4 text-[13px] font-extrabold text-white shadow-[0_8px_24px_-4px_rgba(15,118,110,0.45)] transition-all duration-300 hover:shadow-[0_12px_32px_-4px_rgba(15,118,110,0.6)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-                >
-                  <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                  <span className="relative z-10 flex items-center justify-center gap-2.5">
-                    {loading ? (
-                      <>
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                        Publishing…
-                      </>
-                    ) : (
-                      <>
-                        <Rocket size={15} strokeWidth={2} />
-                        Publish Challenge
-                      </>
+                {/* Review card */}
+                <div className="relative rounded-[2rem] border border-slate-200 bg-white p-8 space-y-6 shadow-xl shadow-slate-200/50">
+                  <div className="absolute -top-4 -right-4 w-12 h-12 bg-teal-500 rounded-2xl flex items-center justify-center text-white rotate-12 shadow-lg shadow-teal-500/20">
+                    <CheckCircle2 size={24} />
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {form.coverImage && (
+                      <div className="relative w-16 h-20 rounded-xl overflow-hidden border border-slate-100 shadow-sm shrink-0">
+                        <Image
+                          src={form.coverImage}
+                          alt="Cover preview"
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      </div>
                     )}
-                  </span>
-                </button>
+                    <div className="space-y-1">
+                      <p className="text-xl font-black text-slate-800 leading-tight">
+                        {form.title || "Untitled Masterpiece"}
+                      </p>
+                      <p className="text-[11px] font-bold text-teal-600 uppercase tracking-widest flex items-center gap-1.5">
+                        <Layers size={11} />
+                        {form.type} · {form.duration} Days
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Pill>{form.category}</Pill>
+                    <Pill>
+                      <span className={`mr-2 w-1.5 h-1.5 rounded-full inline-block ${currentDiff.dot}`} />
+                      {form.difficulty}
+                    </Pill>
+                    {(form.estimatedCaloriesBurn ?? 0) > 0 && (
+                      <Pill>🔥 {form.estimatedCaloriesBurn} kcal</Pill>
+                    )}
+                    {form.isPremium && (
+                      <Pill className="bg-amber-100 text-amber-700 border-amber-200">Premium</Pill>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={loading || !form.title}
+                    onClick={handleSubmit}
+                    className="w-full relative group overflow-hidden rounded-[1.25rem] bg-slate-900 py-4 text-sm font-black text-white shadow-2xl shadow-teal-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100"
+                  >
+                    <span className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    <span className="relative z-10 flex items-center justify-center gap-3">
+                      {loading ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                          Generating Challenge…
+                        </>
+                      ) : (
+                        <>
+                          <Rocket size={18} strokeWidth={2.5} />
+                          Publish to Live Feed
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </div>
               </>
             )}
           </div>
 
-          {/* ── Footer nav ── */}
-          <div className="px-6 md:px-7 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
+          {/* Footer nav */}
+          <div className="px-8 py-5 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between">
             <button
               type="button"
               disabled={step === 1}
-              onClick={() => setStep((s) => Math.max(1, s - 1))}
-              className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-bold text-slate-500 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              onClick={handleBack}
+              className="flex items-center gap-2 px-6 py-3 text-[13px] font-black text-slate-500 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 hover:border-slate-300 shadow-sm transition-all disabled:opacity-30"
             >
-              <ChevronLeft size={13} /> Back
+              <ChevronLeft size={16} /> Back
             </button>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               {STEPS.map((s) => (
                 <div
                   key={s.id}
-                  className={`rounded-full transition-all duration-300 ${
-                    step === s.id ? "w-5 h-1.5 bg-teal-500" : step > s.id ? "w-1.5 h-1.5 bg-emerald-400" : "w-1.5 h-1.5 bg-slate-200"
+                  className={`rounded-full transition-all duration-500 ${
+                    step === s.id
+                      ? "w-8 h-2 bg-teal-500 shadow-sm shadow-teal-500/40"
+                      : step > s.id
+                      ? "w-2 h-2 bg-emerald-400"
+                      : "w-2 h-2 bg-slate-200"
                   }`}
                 />
               ))}
             </div>
 
-            <button
-              type="button"
-              disabled={step === STEPS.length}
-              onClick={handleNext}
-              className="flex items-center gap-1.5 px-4 py-2 text-[12px] font-bold text-white bg-slate-900 border border-transparent rounded-xl hover:bg-teal-600 shadow-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              Next <ChevronRight size={13} />
-            </button>
+            {step < STEPS.length ? (
+              <button
+                type="button"
+                onClick={handleNext}
+                className="flex items-center gap-2 px-6 py-3 text-[13px] font-black text-white bg-slate-900 rounded-2xl hover:bg-teal-600 shadow-lg shadow-teal-900/10 transition-all"
+              >
+                Continue <ChevronRight size={16} />
+              </button>
+            ) : (
+              <div className="w-[112px]" />
+            )}
           </div>
         </div>
       </div>

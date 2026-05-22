@@ -10,9 +10,31 @@ import {
   ClipboardList, Leaf, Clock, ShieldCheck
 } from "lucide-react";
 
+interface Program {
+  id: string;
+  completionPercentage: number;
+  planSnapshot?: {
+    title: string;
+    currency: string;
+    price: number;
+  };
+  user: {
+    fullName: string;
+    email: string;
+  };
+  goal: string;
+  activityLevel: string;
+  durationDays: number;
+  endDate: string;
+  currentDay: number;
+  focusAreas: string[];
+  notes?: string;
+  dietType: string;
+}
+
 export default function ProgramDetailsPage() {
   const { programId } = useParams();
-  const [program, setProgram] = useState<any>(null);
+  const [program, setProgram] = useState<Program | null>(null);
 
   useEffect(() => {
     fetchProgram();
@@ -135,7 +157,7 @@ export default function ProgramDetailsPage() {
             </div>
 
             <div className="flex flex-wrap gap-3 mb-10">
-              {program.focusAreas?.map((area: string, idx: number) => (
+              {program.focusAreas?.map((area, idx) => (
                 <span key={idx} className="px-5 py-2.5 bg-slate-50 text-slate-700 rounded-2xl text-[11px] font-black uppercase tracking-wider border border-slate-100 hover:border-emerald-200 hover:bg-emerald-50 transition-colors">
                   {area}
                 </span>
@@ -213,8 +235,17 @@ export default function ProgramDetailsPage() {
 
 /* ============================ HELPERS ============================ */
 
-function StatCard({ icon, label, value, subValue, theme, capitalize = false }: any) {
-  const colors: any = {
+interface StatCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  subValue: string | number;
+  theme: "emerald" | "teal" | "orange";
+  capitalize?: boolean;
+}
+
+function StatCard({ icon, label, value, subValue, theme, capitalize = false }: StatCardProps) {
+  const colors: Record<string, string> = {
     emerald: "bg-emerald-50 text-emerald-600",
     teal: "bg-teal-50 text-teal-600",
     orange: "bg-orange-50 text-orange-600"

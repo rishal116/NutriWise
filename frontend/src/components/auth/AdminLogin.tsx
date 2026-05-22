@@ -1,13 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, Loader2, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { adminAuthService } from "@/services/admin/adminAuth.service";
-import { adminLoginSchema } from "@/validation/adminAuth.validation";
+import { adminLoginSchema } from "@/validations/adminAuth.validation";
 import { ForgotPasswordModal } from "@/components/admin/ForgotPassword";
 import { Toaster, toast } from "sonner";
 import ANutriWiseLogo from "../layout/ANutriwiselogo";
+import { loginSuccess } from "@/redux/slices/authSlice";
+import { useDispatch } from "react-redux";
 
 interface FieldErrors {
   email?: string;
@@ -16,6 +20,8 @@ interface FieldErrors {
 
 export default function AdminLoginForm() {
   const router = useRouter();
+  const dispatch = useDispatch();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -23,15 +29,11 @@ export default function AdminLoginForm() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-    const token = localStorage.getItem("adminToken");
-    if (token) {
-      router.replace("/admin/dashboard");
-    }
-  }, [router]);
+  // ── No local redirect here; AuthProvider/Middleware handles session persistence ──
+
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,9 +45,7 @@ export default function AdminLoginForm() {
       const fieldErrors: FieldErrors = {};
       result.error.issues.forEach((issue) => {
         const field = String(issue.path[0]) as keyof FieldErrors;
-        if (!fieldErrors[field]) {
-          fieldErrors[field] = issue.message;
-        }
+        if (!fieldErrors[field]) fieldErrors[field] = issue.message;
       });
       setErrors(fieldErrors);
       return;
@@ -53,18 +53,19 @@ export default function AdminLoginForm() {
 
     setLoading(true);
     try {
-      const { message } = await adminAuthService.login({ email, password });
-      toast.success(message || "Login successful!", {
-        description: "Redirecting to your dashboard...",
+      const res = await adminAuthService.login({ email, password });
+      dispatch(loginSuccess({ token: res.accessToken, user: res.user }));
+      toast.success(res.message || "Access Granted", {
+        description: "Welcome to the NutriWise Control Center.",
       });
-      setTimeout(() => {
-        router.push("/admin/dashboard");
-      }, 1000);
+      setTimeout(() => router.push("/admin/dashboard"), 800);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      const errorMessage =
-        axiosErr.response?.data?.message ?? "Invalid credentials. Please try again.";
+      let errorMessage = "Authentication failed. Please verify your credentials.";
+      if (axios.isAxiosError(err)) {
+        errorMessage = err.response?.data?.message || errorMessage;
+      }
       setGlobalError(errorMessage);
+      toast.error("Access Denied", { description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -74,194 +75,239 @@ export default function AdminLoginForm() {
     <>
       <Toaster richColors position="top-center" />
 
-      {/* ── Ambient orbs ── */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-        <div className="absolute -top-32 -left-32 h-[500px] w-[500px] rounded-full bg-teal-300/20 blur-[120px]" />
-        <div className="absolute -bottom-32 -right-32 h-[500px] w-[500px] rounded-full bg-emerald-300/20 blur-[120px]" />
-        <div
-          className="absolute inset-0 opacity-[0.025]"
-          style={{
-            backgroundImage: "radial-gradient(circle, #0f766e 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-      </div>
-
       {/* ── Card ── */}
-      <div
-        className={`relative z-10 w-full max-w-[420px] transition-all duration-700 ${
-          mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-        }`}
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        className="relative w-full max-w-md mx-auto"
       >
-        <div className="rounded-[2rem] border border-white/60 bg-white/75 shadow-[0_32px_80px_-12px_rgba(15,118,110,0.15)] backdrop-blur-2xl px-8 py-10 md:px-10 md:py-12">
+        {/* Glow halos */}
+        <div className="pointer-events-none absolute -inset-px rounded-[2rem] bg-gradient-to-br from-emerald-400/20 via-transparent to-teal-400/10 blur-2xl" />
 
-          {/* ── Header ── */}
-          <div className="mb-10 flex flex-col items-center text-center">
+        <div className="relative rounded-[2rem] border border-white/60 bg-white/70 backdrop-blur-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12),0_0_0_1px_rgba(255,255,255,0.8)_inset] overflow-hidden">
 
-            {/* Logo with ping dot */}
-            <div className="relative mb-5">
-              {/* Scale up the logo badge slightly for the hero position */}
-              <div className="scale-125 origin-center">
+          {/* Loading bar */}
+          <AnimatePresence>
+            {loading && (
+              <motion.div
+                initial={{ scaleX: 0, originX: 0 }}
+                animate={{ scaleX: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+                className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 z-50"
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Top decorative strip */}
+          <div className="h-1.5 w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600" />
+
+          <div className="px-8 pt-10 pb-8 sm:px-10 sm:pt-12 sm:pb-10">
+
+            {/* ── Header ── */}
+            <div className="mb-10 flex flex-col items-center text-center gap-5">
+              <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 shadow-sm shadow-emerald-100">
                 <ANutriWiseLogo />
               </div>
-              {/* Live ping dot */}
-              <span className="absolute -top-0.5 -right-0.5 flex h-3 w-3">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
-              </span>
+
+              <div className="space-y-1.5">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                  Admin Console
+                </h1>
+                <p className="text-sm text-slate-500 font-medium">
+                  Secure access · NutriWise v2.0
+                </p>
+              </div>
+
+              {/* Access-level badge */}
+              <div className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/70 text-emerald-700 text-[11px] font-bold uppercase tracking-widest">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+                Authorized Personnel Only
+              </div>
             </div>
 
-            {/* Divider */}
-            <div className="mt-3 mb-4 h-px w-16 bg-gradient-to-r from-transparent via-teal-300 to-transparent" />
+            {/* ── Global error ── */}
+            <AnimatePresence>
+              {globalError && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
+                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-start gap-3 px-4 py-3.5 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm font-medium">
+                    <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
+                    <p className="leading-snug">{globalError}</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            <p className="text-sm text-slate-500">
-              Sign in to your&nbsp;
-              <span className="font-semibold text-teal-600">admin console</span>
+            {/* ── Form ── */}
+            <form onSubmit={handleSubmit} noValidate className="space-y-5">
+
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="admin-email"
+                  className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest"
+                >
+                  Email Address
+                </label>
+                <div className="relative">
+                  <span
+                    className={`pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
+                      emailFocused ? "text-emerald-500" : "text-slate-400"
+                    }`}
+                  >
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <input
+                    id="admin-email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onFocus={() => setEmailFocused(true)}
+                    onBlur={() => setEmailFocused(false)}
+                    placeholder="admin@nutriwise.com"
+                    className={`w-full rounded-xl border-2 bg-slate-50/60 py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 ${
+                      errors.email
+                        ? "border-red-300 focus:border-red-400 focus:bg-white"
+                        : "border-slate-200 focus:border-emerald-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(16,185,129,0.08)]"
+                    }`}
+                  />
+                </div>
+                <AnimatePresence>
+                  {errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="text-red-500 text-[11px] font-semibold pl-1"
+                    >
+                      {errors.email}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="admin-password"
+                    className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest"
+                  >
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotModal(true)}
+                    className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors underline underline-offset-2"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <span
+                    className={`pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 transition-colors duration-200 ${
+                      passwordFocused ? "text-emerald-500" : "text-slate-400"
+                    }`}
+                  >
+                    <Lock className="w-4 h-4" />
+                  </span>
+                  <input
+                    id="admin-password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setPasswordFocused(true)}
+                    onBlur={() => setPasswordFocused(false)}
+                    placeholder="••••••••••••"
+                    className={`w-full rounded-xl border-2 bg-slate-50/60 py-3.5 pl-11 pr-12 text-sm text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-200 ${
+                      errors.password
+                        ? "border-red-300 focus:border-red-400 focus:bg-white"
+                        : "border-slate-200 focus:border-emerald-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(16,185,129,0.08)]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-emerald-500 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <AnimatePresence>
+                  {errors.password && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      className="text-red-500 text-[11px] font-semibold pl-1"
+                    >
+                      {errors.password}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Submit */}
+              <div className="pt-1">
+                <motion.button
+                  whileHover={{ scale: loading ? 1 : 1.01 }}
+                  whileTap={{ scale: loading ? 1 : 0.98 }}
+                  type="submit"
+                  disabled={loading}
+                  className="relative w-full overflow-hidden rounded-xl py-3.5 text-sm font-bold text-white transition-all duration-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  style={{
+                    background: "linear-gradient(135deg, #059669 0%, #0d9488 50%, #059669 100%)",
+                    backgroundSize: "200% 200%",
+                  }}
+                >
+                  {/* Shimmer on hover */}
+                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+                  <span className="relative flex items-center justify-center gap-2 tracking-wide">
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Authenticating…
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        Access Admin Console
+                      </>
+                    )}
+                  </span>
+                </motion.button>
+              </div>
+            </form>
+
+            {/* ── Footer ── */}
+            <p className="mt-8 text-center text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
+              NutriWise © {new Date().getFullYear()} · Restricted Area
             </p>
           </div>
-
-          {/* ── Global error ── */}
-          {globalError && (
-            <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-100 bg-red-50/80 px-4 py-3 text-sm text-red-600 animate-[shake_0.35s_ease-in-out]">
-              <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-red-400" />
-              {globalError}
-            </div>
-          )}
-
-          {/* ── Form ── */}
-          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                Email Address
-              </label>
-              <div className="group relative">
-                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                  <Mail
-                    className="h-[18px] w-[18px] text-slate-400 transition-colors group-focus-within:text-teal-500"
-                    strokeWidth={1.75}
-                  />
-                </span>
-                <input
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@nutriwise.com"
-                  className={`block w-full rounded-xl bg-slate-50/80 py-[14px] pl-11 pr-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none ring-1 transition-all duration-200 focus:bg-white focus:ring-2 ${
-                    errors.email
-                      ? "ring-red-200 focus:ring-red-400"
-                      : "ring-slate-200 hover:ring-slate-300 focus:ring-teal-400/60"
-                  }`}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-500">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label className="block text-[11px] font-bold uppercase tracking-widest text-slate-400">
-                Password
-              </label>
-              <div className="group relative">
-                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                  <Lock
-                    className="h-[18px] w-[18px] text-slate-400 transition-colors group-focus-within:text-teal-500"
-                    strokeWidth={1.75}
-                  />
-                </span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••"
-                  className={`block w-full rounded-xl bg-slate-50/80 py-[14px] pl-11 pr-12 text-sm text-slate-800 placeholder:text-slate-400 outline-none ring-1 transition-all duration-200 focus:bg-white focus:ring-2 ${
-                    errors.password
-                      ? "ring-red-200 focus:ring-red-400"
-                      : "ring-slate-200 hover:ring-slate-300 focus:ring-teal-400/60"
-                  }`}
-                />
-                <button
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 transition-colors hover:text-teal-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                  ) : (
-                    <Eye className="h-[18px] w-[18px]" strokeWidth={1.75} />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-red-500">
-                  {errors.password}
-                </p>
-              )}
-            </div>
-
-            {/* Forgot link */}
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setShowForgotModal(true)}
-                className="text-xs font-semibold text-teal-600 transition-colors hover:text-teal-700"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full overflow-hidden rounded-xl bg-slate-900 py-[14px] text-sm font-bold text-white shadow-[0_6px_20px_-4px_rgba(15,118,110,0.4)] transition-all duration-300 hover:shadow-[0_10px_28px_-4px_rgba(15,118,110,0.55)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <span
-                aria-hidden
-                className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-              />
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                {loading ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    Authenticating…
-                  </>
-                ) : (
-                  "Sign In to Console"
-                )}
-              </span>
-            </button>
-          </form>
-
-          {/* Footer */}
-          <p className="mt-8 text-center text-[11px] font-medium tracking-wide text-slate-400">
-            🔒&nbsp; End-to-end encrypted · NutriWise v2
-          </p>
         </div>
-      </div>
+      </motion.div>
 
-      {showForgotModal && (
-        <ForgotPasswordModal onClose={() => setShowForgotModal(false)} />
-      )}
-
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&display=swap');
-
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          20%       { transform: translateX(-5px); }
-          40%       { transform: translateX(5px); }
-          60%       { transform: translateX(-3px); }
-          80%       { transform: translateX(3px); }
-        }
-      `}</style>
+      {/* Forgot Password Modal */}
+      <AnimatePresence>
+        {showForgotModal && (
+          <ForgotPasswordModal onClose={() => setShowForgotModal(false)} />
+        )}
+      </AnimatePresence>
     </>
   );
 }

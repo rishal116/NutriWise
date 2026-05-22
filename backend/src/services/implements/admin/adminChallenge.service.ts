@@ -1,29 +1,27 @@
 import { injectable, inject } from "inversify";
 import mongoose from "mongoose";
 import { TYPES } from "../../../types/types";
-
 import { IAdminChallengeService } from "../../interfaces/admin/IAdminChallengeService";
 import { IChallengeRepository } from "../../../repositories/interfaces/challenge/IChallengeRepository";
-import { ITaskRepository } from "../../../repositories/interfaces/challenge/ITaskRepository";
-import { IChallengeTemplateRepository } from "../../../repositories/interfaces/challenge/IChallengeTemplateRepository";
-
 import { UpdateChallengeDTO } from "../../../dtos/challenge/challenge.dto";
 import {
   CreateChallengeDTO,
   ChallengeUploadFiles,
-} from "../../../dtos/challenge/createChallenge.dto";
-
+} from "../../../dtos/challenge/challenge.dto";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
-
 import { IChallenge } from "../../../models/challenge.model";
 import logger from "../../../utils/logger";
-
 import { normalizeChallengeDto } from "../../../helper/challenge/challengeNormalizer";
 import { validateChallengeDto } from "../../../helper/challenge/challengeValidator";
 import { uploadHeroMedia } from "../../../helper/challenge/challengeMediaProcessor";
 import { processChallengeMedia } from "../../../helper/challenge/challengeMediaProcessor";
 import { buildChallengeData } from "../../../helper/challenge/challengeBuilder";
+import { mapChallengeToDTO } from "../../../mapper/challenge/challenge.mapper";
+import { ChallengeResponseDTO } from "../../../dtos/challenge/challengeResponse.dto";
+import { mapChallengeToListDTO } from "../../../mapper/challenge/challenge-list.mapper";
+import { ChallengeListDTO } from "../../../dtos/challenge/challenge-list.dto";
+import { ChallengeFilters } from "../../../dtos/challenge/challenge-filter.dto";
 
 @injectable()
 export class AdminChallengeService implements IAdminChallengeService {
@@ -31,12 +29,7 @@ export class AdminChallengeService implements IAdminChallengeService {
     @inject(TYPES.IChallengeRepository)
     private _challengeRepository: IChallengeRepository,
 
-    @inject(TYPES.ITaskRepository)
-    private _taskRepository: ITaskRepository,
-
-    @inject(TYPES.IChallengeTemplateRepository)
-    private _templateRepository: IChallengeTemplateRepository,
-  ) {}
+  ) { }
 
   async createChallenge(
     dto: CreateChallengeDTO,
@@ -44,7 +37,7 @@ export class AdminChallengeService implements IAdminChallengeService {
     adminId: string,
   ): Promise<IChallenge> {
     console.log(dto);
-    
+
     normalizeChallengeDto(dto);
 
     validateChallengeDto(dto);
@@ -64,6 +57,21 @@ export class AdminChallengeService implements IAdminChallengeService {
       dto.media = await processChallengeMedia(dto, files, adminId);
 
       const slug = await this._generateUniqueSlug(dto.title);
+
+      const existingChallenge = await this._challengeRepository.findBySlug(slug);
+
+      if (existingChallenge) {
+        console.log("Existing challenge found", {
+          challengeId: existingChallenge._id.toString(),
+          adminId,
+          slug,
+          action: "CREATE_CHALLENGE_EXIST",
+        });
+        throw new CustomError(
+          "A challenge with this title already exists.",
+          StatusCode.CONFLICT,
+        );
+      }
 
       const challengeData: Partial<IChallenge> = buildChallengeData(
         dto,
@@ -101,6 +109,8 @@ export class AdminChallengeService implements IAdminChallengeService {
         throw err;
       }
 
+    
+
       throw new CustomError(
         "Failed to create challenge",
         StatusCode.INTERNAL_SERVER_ERROR,
@@ -110,17 +120,38 @@ export class AdminChallengeService implements IAdminChallengeService {
     }
   }
 
-  async getChallenges(page: number, limit: number) {
-    logger.info("Fetching challenges list", {
+  async getChallenges(
+    page: number,
+    limit: number,
+    filters: ChallengeFilters,
+  ): Promise<{
+    data: ChallengeListDTO[];
+    total: number;
+  }> {
+    logger.info("Fetching admin challenges list", {
       page,
       limit,
-      action: "GET_CHALLENGES",
+      filters,
+      action: "ADMIN_GET_CHALLENGES",
     });
 
-    return this._challengeRepository.findAllPaginated(page, limit);
+    const { data, total } =
+      await this._challengeRepository.findPaginated(
+        page,
+        limit,
+        filters,
+        {
+          publicOnly: false,
+        },
+      );
+
+    return {
+      data: data.map(mapChallengeToListDTO),
+      total,
+    };
   }
 
-  async getChallengeById(id: string) {
+  async getChallengeById(id: string): Promise<ChallengeResponseDTO> {
     logger.info("Fetching challenge by ID", {
       challengeId: id,
       action: "GET_CHALLENGE_BY_ID",
@@ -132,7 +163,7 @@ export class AdminChallengeService implements IAdminChallengeService {
       throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
     }
 
-    return challenge;
+    return mapChallengeToDTO(challenge);
   }
 
   async updateChallenge(id: string, dto: UpdateChallengeDTO) {

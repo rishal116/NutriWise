@@ -5,7 +5,7 @@ export interface CreateSessionPayload {
   description?: string;
   type: SessionType;
   price?: number;
-  scheduledAt: string; // ISO string
+  scheduledAt: string;
   durationInMinutes: number;
   maxParticipants?: number;
 }
@@ -26,6 +26,7 @@ export interface Session {
 
 export interface PaginatedSessionResponse {
   success: boolean;
+  message:string;
   data: Session[];
   pagination: {
     total: number;

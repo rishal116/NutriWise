@@ -1,0 +1,46 @@
+import { IChallenge } from "../../models/challenge.model";
+import { ChallengeResponseDTO } from "../../dtos/challenge/challengeResponse.dto";
+
+export const mapChallengeToDTO = (
+  challenge: IChallenge,
+): ChallengeResponseDTO => {
+  return {
+    id: challenge._id.toString(),
+    title: challenge.title,
+    shortDescription: challenge.shortDescription,
+    description: challenge.description,
+    slug: challenge.slug,
+    duration: challenge.duration,
+    difficulty: challenge.difficulty,
+    type: challenge.type,
+    creationMethod: challenge.creationMethod || "manual",
+    aiInput: challenge.aiInput || null,
+    status: challenge.status,
+    tags: challenge.tags || [],
+    category: challenge.category,
+    customCategory: challenge.customCategory || "",
+    isPremium: challenge.isPremium,
+    coverImage: challenge.coverImage,
+    bannerImage: challenge.bannerImage,
+    introVideo: challenge.introVideo,
+    media: challenge.media || [],
+    totalEnrollments: challenge.totalEnrollments,
+    completionRate: challenge.completionRate,
+    averageRating: challenge.averageRating,
+    totalReviews: challenge.totalReviews,
+    seoTitle: challenge.seoTitle,
+    seoDescription: challenge.seoDescription,
+    isFeatured: challenge.isFeatured,
+    isTrending: challenge.isTrending,
+    isRecommended: challenge.isRecommended,
+    visibility: challenge.visibility,
+    isDeleted: challenge.isDeleted,
+    deletedAt: challenge.deletedAt,
+    benefits: challenge.benefits || [],
+    equipmentNeeded: challenge.equipmentNeeded || [],
+    estimatedCaloriesBurn: challenge.estimatedCaloriesBurn,
+    createdBy: challenge.createdBy.toString(),
+    createdAt: challenge.createdAt,
+    updatedAt: challenge.updatedAt,
+  };
+};

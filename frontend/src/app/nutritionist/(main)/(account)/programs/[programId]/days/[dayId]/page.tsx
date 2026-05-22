@@ -9,6 +9,33 @@ import {
   Zap, Info, CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+
+interface Meal {
+  title: string;
+  description?: string;
+  calories: number;
+  mealType?: string;
+}
+
+interface Workout {
+  title: string;
+  duration: number;
+  instructions?: string;
+}
+
+interface Habit {
+  title: string;
+  targetValue: number;
+  unit: string;
+}
+
+interface ProgramDay {
+  dayNumber: number;
+  meals: Meal[];
+  workouts: Workout[];
+  habits: Habit[];
+}
 
 export default function ProgramDayViewPage() {
   const params = useParams();
@@ -16,7 +43,7 @@ export default function ProgramDayViewPage() {
   const programId = params.programId as string;
   const dayId = params.dayId as string;
 
-  const [day, setDay] = useState<any>(null);
+  const [day, setDay] = useState<ProgramDay | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,7 +56,7 @@ export default function ProgramDayViewPage() {
       const res = await programDayService.getProgramDayById(dayId);
       // Accessing res.data based on your console log structure
       setDay(res.data || res);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
     } finally {
       setLoading(false);
@@ -39,7 +66,7 @@ export default function ProgramDayViewPage() {
   if (loading) return <LoadingSpinner />;
   if (!day) return <NotFound router={router} />;
 
-  const totalCalories = day.meals?.reduce((acc: number, m: any) => acc + (m.calories || 0), 0) || 0;
+  const totalCalories = day.meals?.reduce((acc: number, m) => acc + (m.calories || 0), 0) || 0;
 
   return (
     <div className="min-h-screen pb-20">
@@ -92,7 +119,7 @@ export default function ProgramDayViewPage() {
             </div>
 
             <div className="space-y-4">
-              {day.meals?.map((meal: any, idx: number) => (
+              {day.meals?.map((meal, idx) => (
                 <div key={idx} className="group flex items-center justify-between p-6 bg-slate-50/50 hover:bg-white border border-transparent hover:border-emerald-100 rounded-[2rem] transition-all">
                   <div className="flex items-center gap-5">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-emerald-600 shadow-sm border border-slate-100 uppercase text-[10px] font-black">
@@ -123,7 +150,7 @@ export default function ProgramDayViewPage() {
 
             {day.workouts?.length > 0 ? (
               <div className="space-y-4">
-                {day.workouts.map((work: any, idx: number) => (
+                {day.workouts.map((work, idx) => (
                   <div key={idx} className="p-6 bg-emerald-950 rounded-[2rem] text-white relative overflow-hidden">
                     <div className="relative z-10">
                       <div className="flex justify-between items-start mb-4">
@@ -185,7 +212,7 @@ export default function ProgramDayViewPage() {
               <h4 className="text-sm font-black text-emerald-800 uppercase tracking-widest">Habit Stacking</h4>
             </div>
             <div className="space-y-3">
-              {day.habits?.map((habit: any, idx: number) => (
+              {day.habits?.map((habit, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-emerald-100">
                   <div className="w-2 h-2 bg-emerald-500 rounded-full" />
                   <span className="text-xs font-bold text-slate-700">{habit.title}</span>
@@ -218,7 +245,7 @@ function LoadingSpinner() {
   );
 }
 
-function NotFound({ router }: { router: any }) {
+function NotFound({ router }: { router: AppRouterInstance }) {
   return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-6 text-center">
       <div className="bg-slate-50 p-6 rounded-full">
@@ -226,7 +253,7 @@ function NotFound({ router }: { router: any }) {
       </div>
       <div>
         <h3 className="text-xl font-black text-slate-800">Day Not Found</h3>
-        <p className="text-slate-500 text-sm">This day hasn't been programmed yet.</p>
+        <p className="text-slate-500 text-sm">{"This day hasn't been programmed yet."}</p>
       </div>
       <button
         onClick={() => router.back()}

@@ -1,7 +1,6 @@
 import { Server, Socket } from "socket.io";
 
 export const registerChatSocket = (io: Server, socket: Socket) => {
-
   socket.on("join_chat", (conversationId: string) => {
     socket.join(`chat:${conversationId}`);
   });
@@ -11,15 +10,24 @@ export const registerChatSocket = (io: Server, socket: Socket) => {
   });
 
   socket.on("sendMessage", ({ conversationId, ...message }) => {
-    io.to(`chat:${conversationId}`).emit("receiveMessage", message);
+    const fullMessage = {
+      ...message,
+      createdAt: new Date().toISOString(),
+    };
+    io.to(`chat:${conversationId}`).emit("receiveMessage", fullMessage);
+    io.emit("conversationUpdated", {
+      conversationId,
+      lastMessage: message.content,
+      lastMessageAt: fullMessage.createdAt,
+    });
   });
 
   socket.on("editMessage", ({ conversationId, messageId, newText }) => {
-  io.to(`chat:${conversationId}`).emit("messageEdited", {
-    messageId,
-    content: newText,
+    io.to(`chat:${conversationId}`).emit("messageEdited", {
+      messageId,
+      content: newText,
+    });
   });
-});
 
   socket.on("deleteMessage", ({ conversationId, messageId }) => {
     io.to(`chat:${conversationId}`).emit("messageDeleted", {
@@ -38,5 +46,4 @@ export const registerChatSocket = (io: Server, socket: Socket) => {
       userId: socket.data.user.userId,
     });
   });
-
 };

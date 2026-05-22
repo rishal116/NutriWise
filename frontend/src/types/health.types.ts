@@ -9,27 +9,11 @@ export type ActivityLevel =
   | "active"
   | "very_active";
 
-export type FitnessLevel =
-  | "beginner"
-  | "intermediate"
-  | "advanced";
+export type FitnessLevel = "beginner" | "intermediate" | "advanced";
 
-export type DietType =
-  | "vegetarian"
-  | "non_vegetarian"
-  | "vegan"
-  | "eggetarian";
+export type DietType = "vegetarian" | "non_vegetarian" | "vegan" | "eggetarian";
 
-export type GoalType =
-  | "weight_loss"
-  | "weight_gain"
-  | "muscle_build"
-  | "diabetes_management"
-  | "pcos_management"
-  | "general_fitness"
-  | "mental_wellness"
-  | "gut_health"
-  | "sports_performance";
+export type GoalType = (typeof GOALS)[number];
 
 export type TimelineType =
   | "4_weeks"
@@ -50,11 +34,7 @@ export const ACTIVITY_LEVELS = [
   "very_active",
 ] as const;
 
-export const FITNESS_LEVELS = [
-  "beginner",
-  "intermediate",
-  "advanced",
-] as const;
+export const FITNESS_LEVELS = ["beginner", "intermediate", "advanced"] as const;
 
 export const DIET_TYPES = [
   "vegetarian",
@@ -138,17 +118,11 @@ export const isValidGoal = (goal: string): goal is GoalType =>
 export const isValidDietType = (diet: string): diet is DietType =>
   DIET_TYPES.includes(diet as DietType);
 
-export const isValidActivityLevel = (
-  level: string
-): level is ActivityLevel =>
+export const isValidActivityLevel = (level: string): level is ActivityLevel =>
   ACTIVITY_LEVELS.includes(level as ActivityLevel);
 
-export const isValidFitnessLevel = (
-  level: string
-): level is FitnessLevel =>
+export const isValidFitnessLevel = (level: string): level is FitnessLevel =>
   FITNESS_LEVELS.includes(level as FitnessLevel);
 
-export const isValidTimeline = (
-  timeline: string
-): timeline is TimelineType =>
+export const isValidTimeline = (timeline: string): timeline is TimelineType =>
   TIMELINES.includes(timeline as TimelineType);

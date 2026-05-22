@@ -1,0 +1,33 @@
+import { ITask } from "../../models/task.model";
+import { TaskResponseDTO } from "../../dtos/task/taskResponse.dto";
+
+export const mapTaskToDTO = (task: ITask): TaskResponseDTO => ({
+  id: task._id.toString(),
+  challengeId: task.challengeId.toString(),
+  dayNumber: task.dayNumber,
+  order: task.order,
+  title: task.title,
+  slug: task.slug,
+  type: task.type,
+  status: task.status,
+  shortDescription: task.shortDescription,
+  description: task.description,
+  unit: task.unit,
+  targetValue: task.targetValue,
+  minimumValue: task.minimumValue,
+  maximumValue: task.maximumValue,
+  isOptional: task.isOptional,
+  isLocked: task.isLocked,
+  category: task.category,
+  coverImage: task.coverImage,
+  media: task.media,
+  instructionSteps: task.instructionSteps,
+  estimatedDurationMinutes: task.estimatedDurationMinutes,
+  difficulty: task.difficulty,
+  aiTips: task.aiTips,
+  safetyWarnings: task.safetyWarnings,
+  completionCount: task.completionCount,
+  averageCompletionRate: task.averageCompletionRate,
+  createdAt: task.createdAt,
+  updatedAt: task.updatedAt,
+});

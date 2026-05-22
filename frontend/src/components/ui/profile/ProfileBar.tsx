@@ -52,6 +52,7 @@ const navSections: NavSection[] = [
     title: "Communication",
     items: [
       { name: "Messages",  href: "/client/messages",  icon: MessageCircle },
+      { name: "My Posts",  href: "/client/posts",     icon: ClipboardList },
       { name: "Resources", href: "/client/resources", icon: BookOpen      },
     ],
   },

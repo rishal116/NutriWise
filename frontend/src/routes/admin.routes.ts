@@ -18,8 +18,8 @@ export const AdminRoutes = {
 
   // Users
   USERS: "/admin/users",
-  BLOCK_USER: "/admin/users/block/:userId",
-  UNBLOCK_USER: "/admin/users/unblock/:userId",
+  BLOCK_USER: "/admin/users/:userId/block",
+  UNBLOCK_USER: "/admin/users/:userId/unblock",
 
   // Profile
   PROFILE: "/admin/profile",

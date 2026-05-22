@@ -1,10 +1,12 @@
 import { IChallenge } from "../../../models/challenge.model";
-import { UpdateChallengeDTO } from "../../../dtos/challenge/challenge.dto";
-
+import { ChallengeFilters } from "../../../dtos/challenge/challenge-filter.dto";
+import { ChallengeListDTO } from "../../../dtos/challenge/challenge-list.dto";
+import { ChallengeResponseDTO } from "../../../dtos/challenge/challengeResponse.dto";
 import {
   CreateChallengeDTO,
   ChallengeUploadFiles,
-} from "../../../dtos/challenge/createChallenge.dto";
+  UpdateChallengeDTO, 
+} from "../../../dtos/challenge/challenge.dto";
 
 export interface IAdminChallengeService {
   createChallenge(
@@ -16,9 +18,13 @@ export interface IAdminChallengeService {
   getChallenges(
     page: number,
     limit: number,
-  ): Promise<{ data: IChallenge[]; total: number }>;
+    filters: ChallengeFilters,
+  ): Promise<{
+    data: ChallengeListDTO[];
+    total: number;
+  }>;
 
-  getChallengeById(id: string): Promise<IChallenge | null>;
+  getChallengeById(id: string): Promise<ChallengeResponseDTO | null>;
 
   updateChallenge(
     id: string,
@@ -28,5 +34,4 @@ export interface IAdminChallengeService {
   deleteChallenge(id: string): Promise<void>;
 
   publishChallenge(id: string): Promise<IChallenge | null>;
-
 }

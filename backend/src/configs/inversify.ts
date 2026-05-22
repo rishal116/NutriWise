@@ -110,6 +110,11 @@ import { UserMeetingsController } from "../controllers/implementations/user/user
 import { IUserMeetingsService } from "../services/interfaces/user/IUserMeetingsService";
 import { UserMeetingsService } from "../services/implements/user/userMeetings.service";
 
+import { IUserChallengeController } from "../controllers/interfaces/user/IUserChallengeController";
+import { UserChallengeController } from "../controllers/implementations/user/userChallenge.controller";
+import { IUserChallengeService } from "../services/interfaces/user/IUserChallengeService";
+import { UserChallengeService } from "../services/implements/user/userChallenge.service";
+
 // ======================================================
 // NUTRITIONIST MODULE
 // ======================================================
@@ -238,10 +243,9 @@ import { SocketService } from "../services/implements/socket/socket.service";
 
 import { IChallengeRepository } from "../repositories/interfaces/challenge/IChallengeRepository";
 import { ChallengeRepository } from "../repositories/implements/challenge/challenge.repository";
-import { IChallengeTemplateRepository } from "../repositories/interfaces/challenge/IChallengeTemplateRepository";
-import { ChallengeTemplateRepository } from "../repositories/implements/challenge/challengeTemplate.repository";
-import { ITaskRepository } from "../repositories/interfaces/challenge/ITaskRepository";
 import { TaskRepository } from "../repositories/implements/challenge/task.repository";
+import { IUserChallengeRepository } from "../repositories/interfaces/challenge/IUserChallengeRepository";
+import { UserChallengeRepository } from "../repositories/implements/challenge/userChallenge.repository";
 
 // ======================================================
 // ADMIN MODULE
@@ -284,6 +288,25 @@ import { IAdminChallengeService } from "../services/interfaces/admin/IAdminChall
 import { AdminChallengeService } from "../services/implements/admin/adminChallenge.service";
 import { IAdminChallengeController } from "../controllers/interfaces/admin/IAdminChallengeController";
 import { AdminChallengeController } from "../controllers/implementations/admin/adminChallenge.controller";
+import { IAdminTaskController } from "../controllers/interfaces/admin/IAdminTaskController";
+import { AdminTaskController } from "../controllers/implementations/admin/adminTask.controller";
+import { IAdminTaskService } from "../services/interfaces/admin/IAdminTaskService";
+import { AdminTaskService } from "../services/implements/admin/adminTask.service";
+import { IPostController } from "../controllers/interfaces/common/IPostController";
+import { PostController } from "../controllers/implementations/common/post.controller";
+import { IPostService } from "../services/interfaces/common/IPostService";
+import { PostService } from "../services/implements/common/post.service";
+import { PostRepository } from "../repositories/implements/common/post.repository";
+import { IPostRepository } from "../repositories/interfaces/common/IPostRepository";
+import { ICommentController } from "../controllers/interfaces/common/ICommentController";
+import { CommentController } from "../controllers/implementations/common/comment.controller";
+import { ICommentService } from "../services/interfaces/common/ICommentService";
+import { CommentService } from "../services/implements/common/comment.service";
+import { ICommentRepository } from "../repositories/interfaces/common/ICommentRepository";
+import { CommentRepository } from "../repositories/implements/common/comment.repository";
+import { ITaskRepository } from "../repositories/interfaces/challenge/ITaskRepository";
+import { IUserTaskProgressRepository } from "../repositories/interfaces/challenge/IUserTaskProgressRepository";
+import { UserTaskProgressRepository } from "../repositories/implements/challenge/userTaskProgress.repository";
 
 // ======================================================
 // CONTAINER SETUP
@@ -414,6 +437,25 @@ container
   .bind<IUserMeetingsService>(TYPES.IUserMeetingsService)
   .to(UserMeetingsService);
 
+// Challenges
+container
+  .bind<IUserChallengeController>(TYPES.IUserChallengeController)
+  .to(UserChallengeController);
+container
+  .bind<IUserChallengeService>(TYPES.IUserChallengeService)
+  .to(UserChallengeService);
+
+  // post
+  container.bind<IPostController>(TYPES.IPostController).to(PostController);
+  container.bind<IPostService>(TYPES.IPostService).to(PostService);
+  container.bind<IPostRepository>(TYPES.IPostRepository).to(PostRepository);
+
+  // comment
+  container.bind<ICommentController>(TYPES.ICommentController).to(CommentController);
+  container.bind<ICommentService>(TYPES.ICommentService).to(CommentService);
+  container.bind<ICommentRepository>(TYPES.ICommentRepository).to(CommentRepository);
+
+
 // ======================================================
 // NUTRITIONIST BINDINGS
 // ======================================================
@@ -541,6 +583,9 @@ container
   .bind<IAdminChallengeController>(TYPES.IAdminChallengeController)
   .to(AdminChallengeController);
 
+  container.bind<IAdminTaskController>(TYPES.IAdminTaskController).to(AdminTaskController)
+  container.bind<IAdminTaskService>(TYPES.IAdminTaskService).to(AdminTaskService)
+
 // ======================================================
 // COMMON BINDINGS
 // ======================================================
@@ -627,8 +672,12 @@ container
   .to(ChallengeRepository);
 container.bind<ITaskRepository>(TYPES.ITaskRepository).to(TaskRepository);
 container
-  .bind<IChallengeTemplateRepository>(TYPES.IChallengeTemplateRepository)
-  .to(ChallengeTemplateRepository);
+  .bind<IUserChallengeRepository>(TYPES.IUserChallengeRepository)
+  .to(UserChallengeRepository);
+
+  container
+  .bind<IUserTaskProgressRepository>(TYPES.IUserTaskProgressRepository)
+  .to(UserTaskProgressRepository);
 
 // ======================================================
 // EXPORT

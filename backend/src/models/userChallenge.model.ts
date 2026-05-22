@@ -1,11 +1,7 @@
 // userChallenge.model.ts
 import mongoose, { Schema, Document, Types } from "mongoose";
 
-export interface IUserReward {
-  badge?: string;
-  pointsEarned: number;
-  certificates?: string[];
-}
+
 
 export interface IUserChallenge extends Document {
   _id: Types.ObjectId;
@@ -33,7 +29,6 @@ export interface IUserChallenge extends Document {
   totalTasksCompleted: number;
   totalTasksSkipped: number;
 
-  rewards: IUserReward;
 
   notes?: string;
 
@@ -43,19 +38,6 @@ export interface IUserChallenge extends Document {
   updatedAt: Date;
 }
 
-const UserRewardSchema = new Schema<IUserReward>(
-  {
-    badge: String,
-
-    pointsEarned: {
-      type: Number,
-      default: 0,
-    },
-
-    certificates: [String],
-  },
-  { _id: false }
-);
 
 const UserChallengeSchema = new Schema<IUserChallenge>(
   {
@@ -128,12 +110,7 @@ const UserChallengeSchema = new Schema<IUserChallenge>(
       default: 0,
     },
 
-    rewards: {
-      type: UserRewardSchema,
-      default: () => ({
-        pointsEarned: 0,
-      }),
-    },
+
 
     notes: String,
 

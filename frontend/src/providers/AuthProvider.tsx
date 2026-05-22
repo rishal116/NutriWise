@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { api } from "@/lib/axios/api";
-import { setToken, logout } from "@/redux/slices/authSlice";
+import { setToken, setUser, logout } from "@/redux/slices/authSlice";
 
 export default function AuthProvider({
   children,
@@ -18,6 +18,7 @@ export default function AuthProvider({
         const res = await api.get("/refresh-token");
 
         dispatch(setToken(res.data.accessToken));
+        dispatch(setUser(res.data.user));
       } catch (err) {
         console.log(err);
         dispatch(logout());
@@ -29,3 +30,4 @@ export default function AuthProvider({
 
   return <>{children}</>;
 }
+

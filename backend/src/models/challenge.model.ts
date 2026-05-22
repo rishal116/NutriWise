@@ -7,48 +7,6 @@ export interface IAIInput {
   level: "beginner" | "intermediate" | "advanced";
 }
 
-export interface IChallengeMedia {
-  type: "image" | "video" | "audio" | "pdf";
-  url: string;
-  thumbnailUrl?: string;
-  title?: string;
-  description?: string;
-  duration?: number;
-}
-
-const ChallengeMediaSchema = new Schema<IChallengeMedia>(
-  {
-    type: {
-      type: String,
-      enum: ["image", "video", "audio", "pdf"],
-      required: true,
-    },
-    url: { type: String, required: true },
-    thumbnailUrl: String,
-    title: String,
-    description: String,
-    duration: Number,
-  },
-  { _id: false },
-);
-
-export interface IChallengeReward {
-  xpPoints: number;
-  badge?: string;
-  certificate?: boolean;
-  premiumUnlock?: boolean;
-}
-
-const ChallengeRewardSchema = new Schema<IChallengeReward>(
-  {
-    xpPoints: { type: Number, default: 0 },
-    badge: String,
-    certificate: { type: Boolean, default: false },
-    premiumUnlock: { type: Boolean, default: false },
-  },
-  { _id: false },
-);
-
 const AIInputSchema = new Schema<IAIInput>(
   {
     goal: {
@@ -63,85 +21,106 @@ const AIInputSchema = new Schema<IAIInput>(
   { _id: false },
 );
 
+export interface IChallengeMedia {
+  type: "image" | "video";
+  url: string;
+  thumbnailUrl?: string;
+  title?: string;
+  description?: string;
+  duration?: number;
+}
+
+const ChallengeMediaSchema = new Schema<IChallengeMedia>(
+  {
+    type: {
+      type: String,
+      enum: ["image", "video"],
+      required: true,
+    },
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    thumbnailUrl: String,
+    title: String,
+    description: String,
+    duration: Number,
+  },
+  { _id: false },
+);
+
 export interface IChallenge extends Document {
   _id: Types.ObjectId;
-
   title: string;
+  slug: string;
   shortDescription?: string;
   description?: string;
-  slug: string;
-
   duration: number;
   difficulty: "easy" | "medium" | "hard";
-  type: "fitness" | "nutrition" | "mental" | "hybrid";
-
+  type: "fitness" | "nutrition" | "mental" | "hybrid" | "productivity";
   creationMethod: CreationMethod;
-  aiInput?: IAIInput;
-
+  aiInput?: IAIInput | null;
   status: "draft" | "published" | "archived";
   createdBy: Types.ObjectId;
-
   tags: string[];
-
   category:
-    | "weight_loss"
-    | "muscle_gain"
-    | "mental_wellness"
-    | "hydration"
-    | "productivity"
-    | "custom";
-
-  customCategory?: string;
-
+  | "weight_loss"
+  | "muscle_gain"
+  | "mental_wellness"
+  | "hydration"
+  | "productivity"
+  | "custom";
+  customCategory?: string | null;
   isPremium: boolean;
-
   coverImage?: string;
   bannerImage?: string;
   introVideo?: string;
-
   media: IChallengeMedia[];
-  rewards: IChallengeReward;
-
   totalEnrollments: number;
   completionRate: number;
   averageRating: number;
   totalReviews: number;
-
   seoTitle?: string;
   seoDescription?: string;
-
   isFeatured: boolean;
   isTrending: boolean;
   isRecommended: boolean;
-
   visibility: "public" | "private";
-
-  isDeleted: boolean;
-  deletedAt?: Date | null;
-
   benefits: string[];
   equipmentNeeded: string[];
-
+  estimatedCaloriesBurn?: number;
+  isDeleted: boolean;
+  deletedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const ChallengeSchema = new Schema<IChallenge>(
   {
-    title: { type: String, required: true, trim: true },
-
-    shortDescription: {
+    title: {
       type: String,
-      maxlength: 300,
+      required: true,
+      trim: true,
+      maxlength: 150,
     },
-
-    description: String,
 
     slug: {
       type: String,
       unique: true,
       required: true,
       lowercase: true,
+      trim: true,
+    },
+
+    shortDescription: {
+      type: String,
+      maxlength: 300,
+      trim: true,
+    },
+
+    description: {
+      type: String,
       trim: true,
     },
 
@@ -160,7 +139,7 @@ const ChallengeSchema = new Schema<IChallenge>(
 
     type: {
       type: String,
-      enum: ["fitness", "nutrition", "mental", "hybrid"],
+      enum: ["fitness", "nutrition", "mental", "hybrid", "productivity"],
       required: true,
     },
 
@@ -188,7 +167,10 @@ const ChallengeSchema = new Schema<IChallenge>(
       required: true,
     },
 
-    tags: [{ type: String }],
+    tags: {
+      type: [String],
+      default: [],
+    },
 
     category: {
       type: String,
@@ -223,15 +205,6 @@ const ChallengeSchema = new Schema<IChallenge>(
       default: [],
     },
 
-    rewards: {
-      type: ChallengeRewardSchema,
-      default: () => ({
-        xpPoints: 0,
-        certificate: false,
-        premiumUnlock: false,
-      }),
-    },
-
     totalEnrollments: {
       type: Number,
       default: 0,
@@ -240,6 +213,8 @@ const ChallengeSchema = new Schema<IChallenge>(
     completionRate: {
       type: Number,
       default: 0,
+      min: 0,
+      max: 100,
     },
 
     averageRating: {
@@ -278,16 +253,6 @@ const ChallengeSchema = new Schema<IChallenge>(
       default: "public",
     },
 
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
-
-    deletedAt: {
-      type: Date,
-      default: null,
-    },
-
     benefits: {
       type: [String],
       default: [],
@@ -296,6 +261,18 @@ const ChallengeSchema = new Schema<IChallenge>(
     equipmentNeeded: {
       type: [String],
       default: [],
+    },
+
+    estimatedCaloriesBurn: Number,
+
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
   {
@@ -310,7 +287,6 @@ ChallengeSchema.index({ category: 1 });
 ChallengeSchema.index({ isFeatured: 1 });
 ChallengeSchema.index({ isPremium: 1 });
 ChallengeSchema.index({ creationMethod: 1 });
-
 ChallengeSchema.index({
   title: "text",
   description: "text",

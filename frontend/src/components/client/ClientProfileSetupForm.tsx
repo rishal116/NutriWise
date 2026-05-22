@@ -21,7 +21,7 @@ import {
 } from "@/types/health.types";
 
 import { ClientProfilePayload } from "@/types/clientProfile.types";
-import { ClientProfileSchema } from "@/validation/clientProfile.validation";
+import { ClientProfileSchema } from "@/validations/clientProfile.validation";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

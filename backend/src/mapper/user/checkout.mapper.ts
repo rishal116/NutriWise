@@ -1,8 +1,8 @@
-import { StripeCheckoutInputDTO } from "../../dtos/common/stripe.dto";
+import { StripeCheckoutPlanInputDTO } from "../../dtos/common/stripe.dto";
 import { IPlan } from "../../models/nutritionistPlan.model";
 
 export class CheckoutStripeMapper {
-  static toStripeInput(plan: IPlan, userId: string): StripeCheckoutInputDTO {
+  static toStripeInput(plan: IPlan, userId: string): StripeCheckoutPlanInputDTO {
     return {
       amount: plan.price,
       title: plan.title,

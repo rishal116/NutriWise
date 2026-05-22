@@ -4,6 +4,9 @@ import { useState, useEffect, ChangeEvent } from "react";
 import { Search, ChevronLeft, X } from "lucide-react";
 import { userChatService } from "@/services/user/userChat.service";
 import Image from "next/image";
+import { getSocket } from "@/lib/socket";
+
+
 
 type ChatType = "direct" | "group";
 
@@ -43,6 +46,37 @@ export default function ConversationList({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [search, setSearch] = useState<string>("");
+  
+
+
+
+//   useEffect(() => {
+//       if (!socket) return;
+//   socket.on("conversationUpdated", (data) => {
+//     setConversations((prev) =>
+//       prev.map((conv) =>
+//         conv.id === data.conversationId
+//           ? {
+//               ...conv,
+//               lastMessage: data.lastMessage,
+//               time: new Date(data.lastMessageAt).toLocaleTimeString(
+//                 "en-IN",
+//                 {
+//                   hour: "2-digit",
+//                   minute: "2-digit",
+//                   hour12: true,
+//                 },
+//               ),
+//             }
+//           : conv,
+//       ),
+//     );
+//   });
+
+//   return () => {
+//     socket.off("conversationUpdated");
+//   };
+// }, []);
 
   useEffect(() => {
     const fetchConversations = async () => {

@@ -34,23 +34,15 @@ export class ClientProfileRepository
   async updateByUserId(
     userId: string,
     data: Partial<IClientProfile>,
-  ): Promise<IClientProfile> {
+  ): Promise<IClientProfile | null> {
     return this._model
       .findOneAndUpdate(
-        {
-          userId: new Types.ObjectId(userId),
-        },
-        {
-          $set: data,
-        },
-        {
-          new: true,
-          runValidators: true,
-        },
+        { userId: new Types.ObjectId(userId) },
+        { $set: data },
+        { new: true, runValidators: true },
       )
-      .exec() as Promise<IClientProfile>;
+      .exec();
   }
-
 
   async deleteByUserId(userId: string): Promise<boolean> {
     const result = await this._model

@@ -15,9 +15,6 @@ import {
 // CREATE DTO
 // ================================
 export interface CreateClientProfileDTO {
-  dateOfBirth?: string;
-  gender?: "male" | "female" | "other";
-
   heightCm: number;
   weightKg: number;
 
@@ -44,9 +41,6 @@ export interface CreateClientProfileDTO {
   customTimelineWeeks?: number;
 
   focusAreas?: string[];
-
-  profileCompleted?: boolean;
-  profileCompletionPercentage?: number;
 }
 
 // ================================
@@ -68,9 +62,6 @@ export interface UpdateProfileCompletionDTO {
 export interface ClientProfileResponseDTO {
   _id: string;
   userId: string;
-
-  dateOfBirth?: string;
-  gender?: "male" | "female" | "other";
 
   heightCm: number;
   weightKg: number;

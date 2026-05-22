@@ -27,16 +27,14 @@ export const adminUserService = {
   },
 
   blockUser: async (userId: string) => {
-    const response = await adminApi.patch(
-      `${AdminRoutes.BLOCK_USER}/${userId}`,
-    );
+    const url = AdminRoutes.BLOCK_USER.replace(":userId", userId);
+    const response = await adminApi.patch(url);
     return response.data;
   },
 
   unblockUser: async (userId: string) => {
-    const response = await adminApi.patch(
-      `${AdminRoutes.UNBLOCK_USER}/${userId}`,
-    );
+    const url = AdminRoutes.UNBLOCK_USER.replace(":userId", userId);
+    const response = await adminApi.patch(url);
     return response.data;
   },
 };

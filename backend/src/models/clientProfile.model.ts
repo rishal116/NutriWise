@@ -117,7 +117,7 @@ const clientProfileSchema = new Schema<IClientProfile>(
     },
     goal: {
       type: String,
-      enum: GOALS,
+      enum: [...GOALS],
       required: true,
     },
     targetWeightKg: {

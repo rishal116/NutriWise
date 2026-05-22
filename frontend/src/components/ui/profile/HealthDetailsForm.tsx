@@ -1,200 +1,308 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { healthDetailsService } from "@/services/user/healthDetails.service";
-import { 
-  Activity, Ruler, Weight, Droplets, Moon, UtensilsCrossed, 
-  Target, TrendingUp, Loader2, Save, AlertCircle 
+import {
+  Activity,
+  Ruler,
+  Weight,
+  Droplets,
+  Moon,
+  UtensilsCrossed,
+  Target,
+  TrendingUp,
+  Loader2,
+  Save,
+  AlertCircle,
 } from "lucide-react";
-import { HealthDetailsPayload } from "@/constants/user/healthDetails.constant";
-import { TIMELINES, ACTIVITY_LEVELS, DIET_TYPES, FITNESS_LEVELS, GOALS } from "@/types/health.types";
 
-interface HealthDetailsFormProps {
+import {
+  TIMELINES,
+  ACTIVITY_LEVELS,
+  DIET_TYPES,
+  FITNESS_LEVELS,
+  GOALS,
+  ActivityLevel,
+  FitnessLevel,
+  DietType,
+  GoalType,
+  TimelineType,
+} from "@/types/health.types";
+import { toHealthDetailsPayload } from "@/mapper/user/healthDetails.mapper";
+
+type FormState = {
+  heightCm: string;
+  weightKg: string;
+
+  activityLevel: ActivityLevel | "";
+  fitnessLevel: FitnessLevel | "";
+  dietType: DietType | "";
+
+  dailyWaterIntakeLiters: string;
+  sleepDurationHours: string;
+
+  goal: GoalType | "";
+  preferredTimeline: TimelineType | "";
+
+  customTimelineWeeks: string;
+
+  targetWeightKg: string;
+  focusAreas: string;
+
+  allergies: string;
+  dietaryRestrictions: string;
+  medicalConditions: string;
+  injuries: string;
+
+  dailyStepGoal: string;
+  workoutDaysPerWeek: string;
+  workoutTimePerSession: string;
+};
+type Props = {
   onSuccess: () => void;
-  initialData?: Partial<HealthDetailsPayload>;
-}
+  initialData?: Partial<FormState>;
+};
 
-export default function HealthDetailsForm({ onSuccess, initialData }: HealthDetailsFormProps) {
+export default function HealthDetailsForm({ onSuccess, initialData }: Props) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     heightCm: "",
     weightKg: "",
+
     activityLevel: "",
     fitnessLevel: "",
     dietType: "",
+
     dailyWaterIntakeLiters: "",
     sleepDurationHours: "",
-    goal: "",
-    targetWeightKg: "",
-    preferredTimeline: "",
-    focusAreas: "",
-  });
 
-  // Helper to format enum strings for display
-  const formatLabel = (str: string) => str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    goal: "",
+    preferredTimeline: "",
+
+    customTimelineWeeks: "",
+
+    targetWeightKg: "",
+    focusAreas: "",
+
+    allergies: "",
+    dietaryRestrictions: "",
+    medicalConditions: "",
+    injuries: "",
+
+    dailyStepGoal: "",
+    workoutDaysPerWeek: "",
+    workoutTimePerSession: "",
+  });
 
   useEffect(() => {
     if (!initialData) return;
-    setForm({
-      heightCm: initialData.heightCm?.toString() || "",
-      weightKg: initialData.weightKg?.toString() || "",
-      activityLevel: initialData.activityLevel || "",
-      fitnessLevel: initialData.fitnessLevel || "",
-      dietType: initialData.dietType || "",
-      dailyWaterIntakeLiters: initialData.dailyWaterIntakeLiters?.toString() || "",
-      sleepDurationHours: initialData.sleepDurationHours?.toString() || "",
-      goal: initialData.goal || "",
-      targetWeightKg: initialData.targetWeightKg?.toString() || "",
-      preferredTimeline: initialData.preferredTimeline || "",
-      focusAreas: initialData.focusAreas?.[0] || "",
-    });
+
+    setForm((prev) => ({
+      ...prev,
+      ...initialData,
+    }));
   }, [initialData]);
 
-  const handleChange = (k: string, v: string) => {
-    setForm((p) => ({ ...p, [k]: v }));
-    setErrors((p) => ({ ...p, [k]: "" }));
-  };
+  function handleChange<K extends keyof FormState>(
+    key: K,
+    value: FormState[K],
+  ) {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setErrors((prev) => ({ ...prev, [key]: "" }));
+  }
 
-  const validate = () => {
+  function validate(): boolean {
     const e: Record<string, string> = {};
-    const h = +form.heightCm;
-    const w = +form.weightKg;
 
-    if (!h || h < 50 || h > 300) e.heightCm = "Enter valid height (50–300 cm)";
-    if (!w || w < 20 || w > 300) e.weightKg = "Enter valid weight (20–300 kg)";
-    if (!form.activityLevel) e.activityLevel = "Select activity level";
-    if (!form.fitnessLevel) e.fitnessLevel = "Select fitness level";
-    if (!form.dietType) e.dietType = "Select diet type";
-    if (!form.goal) e.goal = "Select your goal";
-    if (!form.preferredTimeline) e.preferredTimeline = "Select timeline";
+    const h = Number(form.heightCm);
+    const w = Number(form.weightKg);
+
+    if (!h || h < 50 || h > 300) e.heightCm = "Enter valid height";
+    if (!w || w < 20 || w > 300) e.weightKg = "Enter valid weight";
+
+    if (!form.activityLevel) e.activityLevel = "Required";
+    if (!form.fitnessLevel) e.fitnessLevel = "Required";
+    if (!form.dietType) e.dietType = "Required";
+    if (!form.goal) e.goal = "Required";
+    if (!form.preferredTimeline) e.preferredTimeline = "Required";
 
     setErrors(e);
     return Object.keys(e).length === 0;
-  };
+  }
+  useEffect(() => {
+    if (form.preferredTimeline !== "custom") {
+      setForm((prev) => ({
+        ...prev,
+        customTimelineWeeks: "",
+      }));
+    }
+  }, [form.preferredTimeline]);
 
-  const handleSubmit = async () => {
+  async function handleSubmit() {
     if (!validate()) return;
+
+    setLoading(true);
+
     try {
-      setLoading(true);
-      const payload: HealthDetailsPayload = {
-        heightCm: +form.heightCm,
-        weightKg: +form.weightKg,
-        activityLevel: form.activityLevel as any,
-        fitnessLevel: form.fitnessLevel as any,
-        dietType: form.dietType as any,
-        dailyWaterIntakeLiters: +form.dailyWaterIntakeLiters || 0,
-        sleepDurationHours: +form.sleepDurationHours || 0,
-        goal: form.goal as any,
-        preferredTimeline: form.preferredTimeline as any,
-        targetWeightKg: form.targetWeightKg ? +form.targetWeightKg : undefined,
-        focusAreas: form.focusAreas ? [form.focusAreas] : [],
-      };
+      const payload = toHealthDetailsPayload(form);
 
       await healthDetailsService.saveHealthDetails(payload);
+
       onSuccess();
-    } catch (error) {
-      console.error("Save Error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 py-12 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header Card */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-8 rounded-2xl shadow-xl mb-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="relative z-10">
-            <h2 className="text-3xl font-bold text-white mb-2">Health Profile</h2>
-            <p className="text-emerald-50">Personalize your emerald wellness journey</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 md:p-10 space-y-10">
-          
-          <Section title="Body Information" icon={<Ruler />}>
-            <Input 
-              label="Height (cm)" value={form.heightCm} error={errors.heightCm} 
-              onChange={v => handleChange("heightCm", v)} icon={<Ruler className="text-emerald-600" />} required 
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-6">
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="bg-white rounded-2xl p-6 shadow space-y-8">
+          <Section title="Body" icon={<Ruler />}>
+            <Input
+              label="Height"
+              value={form.heightCm}
+              onChange={(v) => handleChange("heightCm", v)}
+              error={errors.heightCm}
             />
-            <Input 
-              label="Weight (kg)" value={form.weightKg} error={errors.weightKg} 
-              onChange={v => handleChange("weightKg", v)} icon={<Weight className="text-emerald-600" />} required 
+            <Input
+              label="Weight"
+              value={form.weightKg}
+              onChange={(v) => handleChange("weightKg", v)}
+              error={errors.weightKg}
             />
           </Section>
 
           <Section title="Lifestyle" icon={<Activity />}>
-            <Select 
-              label="Fitness Level" value={form.fitnessLevel} error={errors.fitnessLevel}
-              options={FITNESS_LEVELS.map(f => ({ label: formatLabel(f), value: f }))}
-              onChange={v => handleChange("fitnessLevel", v)} required
+            <Select
+              label="Activity Level"
+              value={form.activityLevel}
+              options={ACTIVITY_LEVELS.map((v) => ({ label: v, value: v }))}
+              onChange={(v) => handleChange("activityLevel", v)}
             />
-            <Select 
-              label="Activity Level" value={form.activityLevel} error={errors.activityLevel}
-              options={ACTIVITY_LEVELS.map(a => ({ label: formatLabel(a), value: a }))}
-              onChange={v => handleChange("activityLevel", v)} icon={<Activity className="text-emerald-600" />} required
+
+            <Select
+              label="Fitness Level"
+              value={form.fitnessLevel}
+              options={FITNESS_LEVELS.map((v) => ({ label: v, value: v }))}
+              onChange={(v) => handleChange("fitnessLevel", v)}
             />
-            <Input 
-              label="Daily Water (L)" value={form.dailyWaterIntakeLiters} error={errors.dailyWaterIntakeLiters}
-              onChange={v => handleChange("dailyWaterIntakeLiters", v)} icon={<Droplets className="text-emerald-600" />}
+          </Section>
+          <Section title="Nutrition" icon={<UtensilsCrossed />}>
+            <Input
+              label="Daily Water (L)"
+              value={form.dailyWaterIntakeLiters}
+              onChange={(v) => handleChange("dailyWaterIntakeLiters", v)}
             />
-            <Input 
-              label="Sleep (Hours)" value={form.sleepDurationHours} error={errors.sleepDurationHours}
-              onChange={v => handleChange("sleepDurationHours", v)} icon={<Moon className="text-emerald-600" />}
+
+            <Input
+              label="Sleep Hours"
+              value={form.sleepDurationHours}
+              onChange={(v) => handleChange("sleepDurationHours", v)}
             />
           </Section>
 
-          <Section title="Nutrition & Goals" icon={<Target />}>
-            <Select 
-              label="Diet Type" value={form.dietType} options={DIET_TYPES.map(d => ({ label: formatLabel(d), value: d }))}
-              onChange={v => handleChange("dietType", v)} icon={<UtensilsCrossed className="text-emerald-600" />}
+          <Section title="Goals" icon={<Target />}>
+            <Input
+              label="Target Weight"
+              value={form.targetWeightKg}
+              onChange={(v) => handleChange("targetWeightKg", v)}
             />
-            <Select 
-              label="Goal" value={form.goal} error={errors.goal}
-              options={GOALS.map(g => ({ label: formatLabel(g), value: g }))}
-              onChange={v => handleChange("goal", v)} icon={<Target className="text-emerald-600" />} required
+
+            {form.preferredTimeline === "custom" && (
+              <Input
+                label="Custom Timeline (weeks)"
+                value={form.customTimelineWeeks}
+                onChange={(v) => handleChange("customTimelineWeeks", v)}
+                error={errors.customTimelineWeeks}
+                type="number"
+              />
+            )}
+          </Section>
+
+          <Section title="Health Details" icon={<AlertCircle />}>
+            <Input
+              label="Allergies (comma separated)"
+              value={form.allergies}
+              onChange={(v) => handleChange("allergies", v)}
             />
-            <Select
-              label="Timeline" value={form.preferredTimeline} error={errors.preferredTimeline}
-              options={TIMELINES.map(t => ({ label: formatLabel(t), value: t }))}
-              onChange={v => handleChange("preferredTimeline", v)} required
+
+            <Input
+              label="Dietary Restrictions"
+              value={form.dietaryRestrictions}
+              onChange={(v) => handleChange("dietaryRestrictions", v)}
             />
-            <Input 
-              label="Target Weight (kg)" value={form.targetWeightKg} error={errors.targetWeightKg}
-              onChange={v => handleChange("targetWeightKg", v)} icon={<TrendingUp className="text-emerald-600" />}
+
+            <Input
+              label="Medical Conditions"
+              value={form.medicalConditions}
+              onChange={(v) => handleChange("medicalConditions", v)}
+            />
+
+            <Input
+              label="Injuries"
+              value={form.injuries}
+              onChange={(v) => handleChange("injuries", v)}
+            />
+          </Section>
+
+          <Section title="Fitness Tracking" icon={<TrendingUp />}>
+            <Input
+              label="Daily Step Goal"
+              value={form.dailyStepGoal}
+              onChange={(v) => handleChange("dailyStepGoal", v)}
+            />
+
+            <Input
+              label="Workout Days / Week"
+              value={form.workoutDaysPerWeek}
+              onChange={(v) => handleChange("workoutDaysPerWeek", v)}
+            />
+
+            <Input
+              label="Workout Time (mins)"
+              value={form.workoutTimePerSession}
+              onChange={(v) => handleChange("workoutTimePerSession", v)}
             />
           </Section>
 
           <button
-            disabled={loading}
             onClick={handleSubmit}
-            className="w-full py-4 rounded-xl text-white font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg"
+            disabled={loading}
+            className="w-full py-3 bg-emerald-600 text-white rounded-lg"
           >
             {loading ? <Loader2 className="animate-spin" /> : <Save />}
-            <span>{loading ? "Saving..." : "Save Health Profile"}</span>
+            Save
           </button>
         </div>
       </div>
     </div>
   );
 }
-
-
-
 /* ---------------- Section Component ---------------- */
+type Option<T extends string> = {
+  label: string;
+  value: T;
+};
 
-function Section({ title, children, icon }: any) {
+function Section({
+  title,
+  children,
+  icon,
+}: {
+  title: string;
+  children: React.ReactNode;
+  icon: React.ReactNode;
+}) {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3 pb-3 border-b-2 border-gray-200">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center text-emerald-600">
           {icon}
         </div>
-        <h3 className="text-lg sm:text-xl font-bold text-gray-900">
-          {title}
-        </h3>
+        <h3 className="text-lg sm:text-xl font-bold text-gray-900">{title}</h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
         {children}
@@ -205,7 +313,27 @@ function Section({ title, children, icon }: any) {
 
 /* ---------------- Input Component ---------------- */
 
-function Input({ label, value, onChange, error, type = "number", icon, required, placeholder }: any) {
+type InputProps = {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+  type?: "number" | "text";
+  icon?: React.ReactNode;
+  required?: boolean;
+  placeholder?: string;
+};
+
+function Input({
+  label,
+  value,
+  onChange,
+  error,
+  type = "number",
+  icon,
+  required,
+  placeholder,
+}: InputProps) {
   return (
     <div className="space-y-2 group">
       <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -217,13 +345,14 @@ function Input({ label, value, onChange, error, type = "number", icon, required,
         <input
           type={type}
           value={value}
-          onChange={e => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           className={`w-full px-4 py-3 sm:px-5 sm:py-4 rounded-lg border-2 outline-none transition-all duration-300
           bg-white font-medium text-sm sm:text-base
-          ${error 
-            ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100" 
-            : "border-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
+          ${
+            error
+              ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : "border-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
           }`}
         />
       </div>
@@ -238,11 +367,32 @@ function Input({ label, value, onChange, error, type = "number", icon, required,
 }
 
 /* ---------------- Select Component ---------------- */
-function Select({ label, value, options, onChange, error, icon, required }: any) {
-  const selectId = `select-${label.replace(/\s+/g, '-').toLowerCase()}`;
+type SelectProps<T extends string> = {
+  label: string;
+  value: T | "";
+  options: Option<T>[];
+  onChange: (v: T) => void;
+  error?: string;
+  icon?: React.ReactNode;
+  required?: boolean;
+};
+
+function Select<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+  error,
+  icon,
+  required,
+}: SelectProps<T>) {
+  const selectId = `select-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
     <div className="space-y-2 group">
-      <label htmlFor={selectId} className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+      <label
+        htmlFor={selectId}
+        className="text-sm font-semibold text-gray-700 flex items-center gap-2"
+      >
         {icon}
         {label}
         {required && <span className="text-red-500">*</span>}
@@ -251,20 +401,21 @@ function Select({ label, value, options, onChange, error, icon, required }: any)
         <select
           id={selectId}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => onChange(e.target.value as T)}
           className={`w-full px-4 py-3 sm:px-5 sm:py-4 rounded-lg border-2 outline-none transition-all duration-300
           bg-white font-medium appearance-none cursor-pointer text-sm sm:text-base
-          ${error 
-            ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100" 
-            : "border-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
+          ${
+            error
+              ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
+              : "border-gray-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
           }`}
         >
           <option value="">Select {label}</option>
-          {options.map((o: any) => {
+          {options.map((o) => {
             // Check if the option is an object or a simple string
             const val = typeof o === "object" ? o.value : o;
             const labelStr = typeof o === "object" ? o.label : o;
-            
+
             return (
               <option key={val} value={val}>
                 {labelStr}
@@ -272,11 +423,21 @@ function Select({ label, value, options, onChange, error, icon, required }: any)
             );
           })}
         </select>
-        
+
         {/* Custom Arrow Icon */}
         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </div>
       </div>

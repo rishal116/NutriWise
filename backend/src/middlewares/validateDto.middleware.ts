@@ -4,32 +4,23 @@ import { Request, Response, NextFunction } from "express";
 import { CustomError } from "../utils/customError";
 import { StatusCode } from "../enums/statusCode.enum";
 
-// ==========================================
-// Generic DTO Constructor Type
-// ==========================================
 type ClassConstructor<T extends object> = {
   new (): T;
 };
 
-// ==========================================
-// Format Validation Errors
-// ==========================================
 const formatValidationErrors = (errors: ValidationError[]): string[] => {
   return errors.flatMap((error) =>
-    error.constraints ? Object.values(error.constraints) : []
+    error.constraints ? Object.values(error.constraints) : [],
   );
 };
 
-// ==========================================
-// Middleware Validation
-// ==========================================
 export const validateDtoMiddleware = <T extends object>(
-  DtoClass: ClassConstructor<T>
+  DtoClass: ClassConstructor<T>,
 ) => {
   return async (
     req: Request,
     _res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     const dtoInstance = plainToInstance(DtoClass, req.body, {
       enableImplicitConversion: true,
@@ -45,7 +36,7 @@ export const validateDtoMiddleware = <T extends object>(
 
       throw new CustomError(
         `Validation failed: ${messages.join(", ")}`,
-        StatusCode.BAD_REQUEST
+        StatusCode.BAD_REQUEST,
       );
     }
 
@@ -53,12 +44,9 @@ export const validateDtoMiddleware = <T extends object>(
   };
 };
 
-// ==========================================
-// Service Layer Validation
-// ==========================================
 export const validateDto = async <T extends object>(
   DtoClass: ClassConstructor<T>,
-  data: unknown
+  data: unknown,
 ): Promise<void> => {
   const dtoInstance = plainToInstance(DtoClass, data, {
     enableImplicitConversion: true,
@@ -74,7 +62,7 @@ export const validateDto = async <T extends object>(
 
     throw new CustomError(
       `Validation failed: ${messages.join(", ")}`,
-      StatusCode.BAD_REQUEST
+      StatusCode.BAD_REQUEST,
     );
   }
 };

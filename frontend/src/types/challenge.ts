@@ -1,18 +1,59 @@
-
 export interface IChallengeMedia {
-  type: "image" | "video" | "audio" | "pdf";
-  url: string;
+  type: "image" | "video";
+  url?: string;
+  file?: File;
+  previewUrl?: string;
   thumbnailUrl?: string;
+  thumbnailFile?: File;
   title?: string;
   description?: string;
   duration?: number;
 }
 
-export interface IChallengeReward {
-  xpPoints: number;
-  badge?: string;
-  certificate?: boolean;
-  premiumUnlock?: boolean;
+export type ChallengeCategory =
+  | "weight_loss"
+  | "muscle_gain"
+  | "mental_wellness"
+  | "hydration"
+  | "productivity"
+  | "custom";
+
+export type ChallengeVisibility =
+  | "public"
+  | "private";
+
+export type ChallengeSortBy =
+  | "latest"
+  | "oldest"
+  | "title";
+
+export type ChallengeStatus =
+  | "draft"
+  | "published"
+  | "archived";
+
+export type ChallengeType =
+  | "fitness"
+  | "nutrition"
+  | "mental"
+  | "hybrid"
+  | "productivity";
+
+export type ChallengeDifficulty =
+  | "easy"
+  | "medium"
+  | "hard";
+
+export type CreationMethod =
+  | "manual"
+  | "ai";
+
+export interface AIInput {
+  goal: string;
+  level:
+    | "beginner"
+    | "intermediate"
+    | "advanced";
 }
 
 export interface CreateChallengeDTO {
@@ -20,73 +61,137 @@ export interface CreateChallengeDTO {
   shortDescription?: string;
   description?: string;
   duration: number;
-  difficulty: "easy" | "medium" | "hard";
-  type: "fitness" | "nutrition" | "mental" | "hybrid";
-  category?:
-    | "weight_loss"
-    | "muscle_gain"
-    | "mental_wellness"
-    | "hydration"
-    | "productivity"
-    | "custom";
+  difficulty: ChallengeDifficulty;
+  type: ChallengeType;
+  category?: ChallengeCategory;
   customCategory?: string;
   tags?: string[];
   isPremium?: boolean;
+
   coverImage?: string;
+  coverImageFile?: File;
+
   bannerImage?: string;
+  bannerImageFile?: File;
+
   introVideo?: string;
+  introVideoFile?: File;
+
   media?: IChallengeMedia[];
-  rewards?: IChallengeReward;
+
+  templateId?: string;
+
   isFeatured?: boolean;
   isTrending?: boolean;
   isRecommended?: boolean;
-  visibility?: "public" | "private";
+
+  visibility?: ChallengeVisibility;
+
   benefits?: string[];
   equipmentNeeded?: string[];
+
+  estimatedCaloriesBurn?: number;
+
   seoTitle?: string;
   seoDescription?: string;
 }
 
+export interface UpdateChallengeDTO
+  extends Partial<CreateChallengeDTO> {
+  status?: ChallengeStatus;
+}
 
-export interface UpdateChallengeDTO {
-  title?: string;
+export interface Challenge {
+  id: string;
+  title: string;
   shortDescription?: string;
   description?: string;
-  duration?: number;
-  difficulty?: "easy" | "medium" | "hard";
-  type?: "fitness" | "nutrition" | "mental" | "hybrid";
-  category?:
-    | "weight_loss"
-    | "muscle_gain"
-    | "mental_wellness"
-    | "hydration"
-    | "productivity"
-    | "custom";
+  slug: string;
+
+  duration: number;
+  difficulty: ChallengeDifficulty;
+  type: ChallengeType;
+
+  creationMethod: CreationMethod;
+  aiInput: AIInput | null;
+
+  status: ChallengeStatus;
+
+  tags: string[];
+
+  category: ChallengeCategory;
   customCategory?: string;
-  tags?: string[];
-  method?: CreationMethod;
-  aiInput?: AIInput;
-  isPremium?: boolean;
-  price?: number;
+
+  isPremium: boolean;
+
   coverImage?: string;
   bannerImage?: string;
   introVideo?: string;
-  media?: IChallengeMedia[];
-  rewards?: IChallengeReward;
-  templateId?: string;
-  isFeatured?: boolean;
-  isTrending?: boolean;
-  isRecommended?: boolean;
-  visibility?: "public" | "private";
-  benefits?: string[];
-  equipmentNeeded?: string[];
+
+  media: IChallengeMedia[];
+
+  totalEnrollments: number;
+  completionRate: number;
+  averageRating: number;
+  totalReviews: number;
+
   seoTitle?: string;
   seoDescription?: string;
+
+  isFeatured: boolean;
+  isTrending: boolean;
+  isRecommended: boolean;
+
+  visibility: ChallengeVisibility;
+
+  benefits: string[];
+  equipmentNeeded: string[];
+
+  estimatedCaloriesBurn?: number;
+
+  isDeleted: boolean;
+  deletedAt?: string | null;
+
+  createdBy: string;
+
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type CreationMethod = "manual" | "ai";
+export interface ChallengeListItem {
+  id: string;
+  title: string;
+  slug: string;
+  shortDescription?: string;
 
-export type AIInput = {
-  goal: string;
-  level: "beginner" | "intermediate" | "advanced";
-};
+  difficulty: ChallengeDifficulty;
+  type: ChallengeType;
+  category: ChallengeCategory;
+
+  duration: number;
+
+  status: ChallengeStatus;
+
+  isPremium: boolean;
+  isFeatured: boolean;
+  isTrending: boolean;
+  isRecommended: boolean;
+
+  coverImage?: string;
+
+  totalEnrollments: number;
+  averageRating: number;
+
+  createdAt: string;
+}
+
+export interface ChallengeFilters {
+  search?: string;
+  status?: ChallengeStatus;
+  type?: ChallengeType;
+  difficulty?: ChallengeDifficulty;
+  category?: ChallengeCategory;
+  visibility?: ChallengeVisibility;
+  isPremium?: boolean;
+  sortBy?: ChallengeSortBy;
+}

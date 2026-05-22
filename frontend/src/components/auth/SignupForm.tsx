@@ -16,7 +16,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { loginSuccess } from "@/redux/slices/authSlice";
-import { UserSignupSchema } from "@/validation/userAuth.validation";
+import { UserSignupSchema } from "@/validations/userAuth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
 import Link from "next/link";
@@ -126,7 +126,12 @@ export default function SignupForm() {
           return;
         }
 
-        dispatch(loginSuccess(accessToken));
+        dispatch(
+          loginSuccess({
+            token: accessToken,
+            user: response.user,
+          }),
+        );
         sessionStorage.setItem(
           "tempUser",
           JSON.stringify({ email: user.email }),

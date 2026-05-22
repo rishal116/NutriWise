@@ -211,6 +211,9 @@ export class UserAuthService implements IUserAuthService {
       email,
     )) as UserEntity | null;
 
+
+
+
     if (!user) {
       logger.info("Creating new Google user", { email });
 
@@ -218,6 +221,7 @@ export class UserAuthService implements IUserAuthService {
         fullName: googlePayload.name || "",
         email,
         googleProviderId: googleId,
+        authProvider: "google",
 
         roles: ["client"],
         activeRole: "client",

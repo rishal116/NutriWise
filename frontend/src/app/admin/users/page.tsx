@@ -4,17 +4,20 @@ import { useState, useEffect } from "react";
 import UserTable from "@/components/admin/UserTable";
 import { adminUserService } from "@/services/admin/adminUser.service";
 import Loading from "@/app/admin/loading";
-import { Users, UserCheck, UserX, TrendingUp } from "lucide-react";
+import { Users, UserCheck, UserX, LayoutList } from "lucide-react";
+import toast from "react-hot-toast";
+import { isAxiosError } from "axios";
 
-interface UserDTO {
+export interface UserDTO {
   id: string;
   fullName: string;
   email: string;
-  role: string;
+  activeRole: string;
+  roles: string[];
   isBlocked: boolean;
 }
 
-interface PaginatedResponse<T> {
+export interface PaginatedResponse<T> {
   data: T[];
   page: number;
   limit: number;
@@ -30,10 +33,10 @@ interface StatCardProps {
 }
 
 const COLOR_MAP = {
-  teal:    { bg: "bg-teal-50",    icon: "bg-teal-100 text-teal-600",    text: "text-teal-700"    },
+  teal:    { bg: "bg-teal-50",    icon: "bg-teal-100 text-teal-600",       text: "text-teal-700"    },
   emerald: { bg: "bg-emerald-50", icon: "bg-emerald-100 text-emerald-600", text: "text-emerald-700" },
-  red:     { bg: "bg-red-50",     icon: "bg-red-100 text-red-500",       text: "text-red-600"     },
-  blue:    { bg: "bg-blue-50",    icon: "bg-blue-100 text-blue-600",     text: "text-blue-700"    },
+  red:     { bg: "bg-red-50",     icon: "bg-red-100 text-red-500",         text: "text-red-600"     },
+  blue:    { bg: "bg-blue-50",    icon: "bg-blue-100 text-blue-600",       text: "text-blue-700"    },
 };
 
 function StatCard({ label, value, icon, color }: StatCardProps) {
@@ -60,7 +63,16 @@ export default function UsersPage() {
       try {
         const res = await adminUserService.getAllUsers(1, 10);
         setUsers(res.data);
-      } catch (err) {
+      } catch (err: unknown) {
+        let message = "Failed to fetch users";
+        
+        if (isAxiosError(err)) {
+          message = err.response?.data?.message || err.message || message;
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
+
+        toast.error(message);
         console.error("Failed to fetch users:", err);
       } finally {
         setIsLoading(false);
@@ -108,13 +120,13 @@ export default function UsersPage() {
           color="teal"
         />
         <StatCard
-          label="Active"
+          label="Active (Page)"
           value={active}
           icon={<UserCheck size={18} strokeWidth={1.8} />}
           color="emerald"
         />
         <StatCard
-          label="Blocked"
+          label="Blocked (Page)"
           value={blocked}
           icon={<UserX size={18} strokeWidth={1.8} />}
           color="red"
@@ -122,7 +134,7 @@ export default function UsersPage() {
         <StatCard
           label="This Page"
           value={users?.data.length ?? 0}
-          icon={<TrendingUp size={18} strokeWidth={1.8} />}
+          icon={<LayoutList size={18} strokeWidth={1.8} />}
           color="blue"
         />
       </div>

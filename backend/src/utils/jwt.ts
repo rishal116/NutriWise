@@ -65,7 +65,7 @@ export const setAdminAuthCookies = (
   res: Response,
   refreshToken: string
 ): void => {
-  res.cookie("adminRefreshToken", refreshToken, {
+  res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite:
@@ -75,7 +75,7 @@ export const setAdminAuthCookies = (
 };
 
 export const clearAdminAuthCookies = (res: Response): void => {
-  res.clearCookie("adminRefreshToken", {
+  res.clearCookie("refreshToken", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite:

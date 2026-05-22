@@ -1,21 +1,12 @@
 "use client";
 
-import axios, {
-  InternalAxiosRequestConfig,
-} from "axios";
+import axios, { InternalAxiosRequestConfig } from "axios";
+import { store } from "@/redux/store";
+import { logout, setToken } from "@/redux/slices/authSlice";
 
-interface CustomAxiosRequestConfig
-  extends InternalAxiosRequestConfig {
+interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
-
-const redirectToAdminLogin = () => {
-  localStorage.removeItem("adminToken");
-
-  if (typeof window !== "undefined") {
-    window.location.href = "/admin/login";
-  }
-};
 
 export const adminApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -25,86 +16,63 @@ export const adminApi = axios.create({
   },
 });
 
-// REQUEST INTERCEPTOR
-adminApi.interceptors.request.use(
-  (config) => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("adminToken");
-
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+/* REQUEST INTERCEPTOR */
+adminApi.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = store.getState().auth.token;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+  }
+  return config;
+});
 
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
-
-// RESPONSE INTERCEPTOR
+/* RESPONSE INTERCEPTOR */
 adminApi.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest =
-      error.config as CustomAxiosRequestConfig;
+    const originalRequest = error.config as CustomAxiosRequestConfig;
 
-    if (!originalRequest) {
+    if (!originalRequest || originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // prevent infinite retry loop
-    if (originalRequest._retry) {
+    // Skip retry for login/logout
+    if (originalRequest.url?.includes("/admin/login") || originalRequest.url?.includes("/admin/logout")) {
       return Promise.reject(error);
     }
 
-    // skip refresh route itself
-    if (
-      originalRequest.url?.includes(
-        "/admin/refresh-token",
-      )
-    ) {
-      return Promise.reject(error);
-    }
-
-    // auto refresh on unauthorized
-    if (
-      error.response?.status === 401 &&
-      !originalRequest.url?.includes("/admin/login")
-    ) {
+    // Handle 401 Unauthorized
+    if (error.response?.status === 401) {
       originalRequest._retry = true;
 
       try {
-        const res = await adminApi.post(
-          "/admin/refresh-token",
-        );
+        // Use unified refresh token endpoint (could be common or admin-specific but uses same cookie)
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/refresh-token`, {
+          withCredentials: true,
+        });
 
         const newToken = res.data?.accessToken;
+        if (!newToken) throw new Error("No token received");
 
-        if (!newToken) {
-          throw new Error(
-            "No admin access token received",
-          );
-        }
-
-        localStorage.setItem(
-          "adminToken",
-          newToken,
-        );
-
+        store.dispatch(setToken(newToken));
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
-
         return adminApi(originalRequest);
       } catch (refreshError) {
-        redirectToAdminLogin();
+        // Full logout if refresh fails
+        store.dispatch(logout());
+        if (typeof window !== "undefined") {
+          window.location.href = "/admin/login";
+        }
         return Promise.reject(refreshError);
       }
     }
 
-    // forbidden
+    // Handle 403 Forbidden - No hard redirect anymore
     if (error.response?.status === 403) {
-      redirectToAdminLogin();
+      return Promise.reject(error);
     }
 
     return Promise.reject(error);
-  },
+  }
 );

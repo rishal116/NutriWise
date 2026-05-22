@@ -35,7 +35,7 @@ const readableFormat = combine(
 ----------------------- */
 
 const consoleFormat = combine(
-  colorize(),
+  colorize({ all: true }),
   readableFormat
 );
 

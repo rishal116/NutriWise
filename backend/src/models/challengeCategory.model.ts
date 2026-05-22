@@ -1,4 +1,4 @@
-// challengeCategory.model.ts
+
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface IChallengeCategory extends Document {
@@ -116,19 +116,16 @@ const ChallengeCategorySchema = new Schema<IChallengeCategory>(
   { timestamps: true }
 );
 
-// Core indexes
 ChallengeCategorySchema.index({ slug: 1 }, { unique: true });
 ChallengeCategorySchema.index({ type: 1, difficultyLevel: 1 });
 ChallengeCategorySchema.index({ isFeatured: 1, isActive: 1 });
 ChallengeCategorySchema.index({ popularityScore: -1 });
 
-// Search optimization
 ChallengeCategorySchema.index({
   name: "text",
   description: "text",
 });
 
-// Auto-generate slug
 ChallengeCategorySchema.pre("save", function (next) {
   if (!this.slug && this.name) {
     this.slug = this.name

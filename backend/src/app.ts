@@ -10,6 +10,8 @@ import nutriRoutes from "./routes/nutritionist.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import chatRoutes from "./routes/chat.routes"
 import sessionRoutes from "./routes/session.routes"
+import livekitRoutes from "./routes/livekit.routes";
+import challengeRoutes from "./routes/challenge.routes";
 
 
 dotenv.config();
@@ -61,6 +63,8 @@ app.use("/", userRoutes);
 app.use("/chat", chatRoutes);
 app.use("/nutritionist", nutriRoutes);
 app.use("/session", sessionRoutes);
+app.use("/livekit", livekitRoutes);
+app.use("/challenges", challengeRoutes);
 
 app.use(errorMiddleware);
 

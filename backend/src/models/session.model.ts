@@ -1,4 +1,4 @@
-import { Schema, model, Types, Document } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 export enum SessionType {
   FREE = "free",
@@ -12,27 +12,19 @@ export enum SessionStatus {
   CANCELLED = "cancelled",
 }
 
-export interface ISession extends Document {
+export interface ISession {
   _id: Types.ObjectId;
   title: string;
   description?: string;
-
   nutritionistId: Types.ObjectId;
-
-  roomId: string; // video room id
-
-  type: SessionType; // free / paid
-  price?: number; // only for paid
-
+  roomId: string;
+  type: SessionType;
+  price?: number;
   scheduledAt: Date;
   durationInMinutes: number;
-
   status: SessionStatus;
-
-  maxParticipants?: number;
-
+  maxParticipants: number;
   isDeleted: boolean;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -61,6 +53,7 @@ const sessionSchema = new Schema<ISession>(
       type: String,
       required: true,
       unique: true,
+      index: true,
     },
 
     type: {
@@ -72,7 +65,7 @@ const sessionSchema = new Schema<ISession>(
     price: {
       type: Number,
       default: 0,
-      
+      min: 0,
     },
 
     scheduledAt: {
@@ -84,22 +77,28 @@ const sessionSchema = new Schema<ISession>(
     durationInMinutes: {
       type: Number,
       required: true,
+      min: 1,
     },
 
     status: {
       type: String,
       enum: Object.values(SessionStatus),
       default: SessionStatus.SCHEDULED,
+      index: true,
     },
 
     maxParticipants: {
       type: Number,
-      default: 100,
+      required: true,
+      default: 60,
+      min: 1,
+      max: 100,
     },
 
     isDeleted: {
       type: Boolean,
       default: false,
+      index: true,
     },
   },
   {

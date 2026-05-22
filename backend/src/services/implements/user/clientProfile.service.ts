@@ -31,10 +31,7 @@ export class ClientProfileService implements IClientProfileService {
     private _healthProgressRepository: IHealthProgressRepository,
   ) {}
 
-
-  async getMyProfile(
-    userId: string,
-  ): Promise<ClientProfileResponseDTO | null> {
+  async getMyProfile(userId: string): Promise<ClientProfileResponseDTO | null> {
     logger.info("Fetching client profile", { userId });
 
     if (!userId) {
@@ -136,10 +133,7 @@ export class ClientProfileService implements IClientProfileService {
         await this._clientProfileRepository.findByUserId(userId);
 
       if (!existingProfile) {
-        throw new CustomError(
-          "Client profile not found",
-          StatusCode.NOT_FOUND,
-        );
+        throw new CustomError("Client profile not found", StatusCode.NOT_FOUND);
       }
 
       const updatedData = {
@@ -161,14 +155,15 @@ export class ClientProfileService implements IClientProfileService {
         profileCompletionPercentage,
       );
 
-      const updatedProfile =
-        await this._clientProfileRepository.updateByUserId(
-          userId,
-          persistenceData,
-        );
+      const updatedProfile = await this._clientProfileRepository.updateByUserId(
+        userId,
+        persistenceData,
+      );
 
+      if (!updatedProfile) {
+        throw new CustomError("Client profile not found", StatusCode.NOT_FOUND);
+      }
       logger.info("Client profile updated successfully", { userId });
-
       return ClientProfileMapper.toResponse(updatedProfile);
     } catch (error) {
       logger.error("Error updating client profile", {
@@ -193,14 +188,13 @@ export class ClientProfileService implements IClientProfileService {
     logger.info("Updating client profile completion", { userId });
 
     try {
-      const updatedProfile =
-        await this._clientProfileRepository.updateByUserId(userId, payload);
+      const updatedProfile = await this._clientProfileRepository.updateByUserId(
+        userId,
+        payload,
+      );
 
       if (!updatedProfile) {
-        throw new CustomError(
-          "Client profile not found",
-          StatusCode.NOT_FOUND,
-        );
+        throw new CustomError("Client profile not found", StatusCode.NOT_FOUND);
       }
 
       logger.info("Client profile completion updated successfully", {
@@ -232,10 +226,7 @@ export class ClientProfileService implements IClientProfileService {
         await this._clientProfileRepository.deleteByUserId(userId);
 
       if (!deleted) {
-        throw new CustomError(
-          "Client profile not found",
-          StatusCode.NOT_FOUND,
-        );
+        throw new CustomError("Client profile not found", StatusCode.NOT_FOUND);
       }
 
       logger.info("Client profile deleted successfully", { userId });

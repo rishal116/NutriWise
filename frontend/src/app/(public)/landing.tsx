@@ -325,7 +325,7 @@ export default function NutriWiseLanding() {
                     <Star key={i} className="w-5 h-5 text-yellow-400 fill-current" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-6 italic text-lg leading-relaxed">"{testimonial.quote}"</p>
+                <p className="text-gray-700 mb-6 italic text-lg leading-relaxed">{testimonial.quote}</p>
                 <div className="flex items-center">
                   <div className={`w-14 h-14 bg-gradient-to-br ${testimonial.gradient} rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
                     {testimonial.initial}

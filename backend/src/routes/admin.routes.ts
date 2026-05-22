@@ -11,6 +11,7 @@ import { authorize } from "../middlewares/role.middleware";
 import { ROLES } from "../constants";
 import { upload } from "../middlewares/multer.middleware";
 import { refreshToken } from "../middlewares/refreshToken.middleware";
+import { IAdminTaskController } from "../controllers/interfaces/admin/IAdminTaskController";
 
 const adminAuthController = container.get<IAdminAuthController>(
   TYPES.IAdminAuthController,
@@ -28,10 +29,14 @@ const adminChallengeController = container.get<IAdminChallengeController>(
   TYPES.IAdminChallengeController,
 );
 
+const adminTaskController = container.get<IAdminTaskController>(
+  TYPES.IAdminTaskController,
+);
+
 const router = Router();
 
 router.post("/login", adminAuthController.login);
-router.post("/refresh-token", refreshToken);
+router.get("/refresh-token", refreshToken);
 router.post("/logout", adminAuthController.logout);
 
 router.use(authMiddleware);
@@ -40,7 +45,6 @@ router.use(authorize(ROLES.ADMIN));
 router.get("/users", adminClientController.getAllUsers);
 router.patch("/users/:userId/block", adminClientController.blockUser);
 router.patch("/users/:userId/unblock", adminClientController.unblockUser);
-
 
 router.get("/nutritionists", adminNutritionistController.getAllNutritionists);
 router.get(
@@ -59,6 +63,7 @@ router.patch(
   "/nutritionists/:userId/reject",
   adminNutritionistController.rejectNutritionist,
 );
+
 router.patch(
   "/nutritionists/:userId/level",
   adminNutritionistController.updateNutritionistLevel,
@@ -79,11 +84,43 @@ router.post(
 );
 router.get("/challenges", adminChallengeController.getChallenges);
 router.get("/challenges/:id", adminChallengeController.getChallengeById);
-router.put("/challenges/:id", adminChallengeController.updateChallenge);
+router.put("/challenges/:id",  upload.fields([
+    { name: "coverImage", maxCount: 1 },
+    { name: "bannerImage", maxCount: 1 },
+    { name: "introVideo", maxCount: 1 },
+    { name: "mediaFiles", maxCount: 50 },
+  ]), adminChallengeController.updateChallenge);
 router.delete("/challenges/:id", adminChallengeController.deleteChallenge);
 router.patch(
   "/challenges/:id/publish",
   adminChallengeController.publishChallenge,
 );
+
+router.post(
+  "/challenges/:challengeId/tasks",
+  upload.fields([
+    { name: "coverImage", maxCount: 1 },
+    { name: "mediaFiles", maxCount: 50 },
+    { name: "instructionMediaFiles", maxCount: 100 },
+  ]),
+  adminTaskController.createTask,
+);
+
+router.get(
+  "/challenges/:challengeId/tasks",
+  adminTaskController.getTasksByChallenge,
+);
+router.get("/tasks/:taskId", adminTaskController.getTaskById);
+router.put(
+  "/tasks/:taskId",
+  upload.fields([
+    { name: "coverImage", maxCount: 1 },
+    { name: "mediaFiles", maxCount: 50 },
+    { name: "instructionMediaFiles", maxCount: 100 },
+  ]),
+  adminTaskController.updateTask,
+);
+
+router.delete("/tasks/:taskId", adminTaskController.deleteTask);
 
 export default router;

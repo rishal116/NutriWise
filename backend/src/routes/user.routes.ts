@@ -22,6 +22,8 @@ import { IHealthProgressController } from "../controllers/interfaces/user/IHealt
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupController";
 import { IUserSessionController } from "../controllers/interfaces/user/IUserSessionController";
+import { IPostController } from "../controllers/interfaces/common/IPostController";
+import { ICommentController } from "../controllers/interfaces/common/ICommentController";
 
 const router = express.Router();
 
@@ -74,6 +76,12 @@ const groupController = container.get<IUserGroupController>(
 );
 const sessionController = container.get<IUserSessionController>(
   TYPES.IUserSessionController,
+);
+
+const postController = container.get<IPostController>(TYPES.IPostController);
+
+const commentController = container.get<ICommentController>(
+  TYPES.ICommentController,
 );
 
 router.post("/signup", userAuthController.signup);
@@ -202,11 +210,85 @@ router.get(
 router.get("/groups", authMiddleware, groupController.getGroups);
 router.post("/groups/:id/join", authMiddleware, groupController.joinGroup);
 
-router.get("/sessions", authMiddleware, sessionController.getSessions);
+router.get(
+  "/sessions/public",
+  sessionController.getPublicSessions,
+);
 
-router.post("/sessions/join", authMiddleware, sessionController.joinSession);
+router.get(
+  "/sessions/public/:sessionId",
+  sessionController.getPublicSessionDetails,
+);
 
-router.post("/sessions/leave", authMiddleware, sessionController.leaveSession);
+router.get(
+  "/sessions/my",
+  authMiddleware,
+  sessionController.getMySessions,
+);
+
+router.get(
+  "/sessions/my/:sessionId",
+  authMiddleware,
+  sessionController.getMySessionDetails,
+);
+
+router.post(
+  "/sessions/:sessionId/join-free",
+  authMiddleware,
+  sessionController.joinFreeSession,
+);
+
+router.post(
+  "/sessions/:sessionId/create-payment",
+  authMiddleware,
+  sessionController.createPaidSessionPayment,
+);
+
+router.post(
+  "/sessions/:sessionId/verify-payment",
+  authMiddleware,
+  sessionController.verifySessionPayment,
+);
+
+router.post(
+  "/sessions/:sessionId/leave",
+  authMiddleware,
+  sessionController.leaveSession,
+);
+
+router.get(
+  "/sessions/:sessionId/access",
+  authMiddleware,
+  sessionController.getSessionAccess,
+);
+
+router.post("/post", authMiddleware, postController.createPost);
+
+router.get("/posts", authMiddleware, postController.getAllPosts);
+
+router.get("/posts/me", authMiddleware, postController.getMyPosts);
+
+router.get("/post/:postId", authMiddleware, postController.getPostById);
+
+router.patch("/post/:postId", authMiddleware, postController.updatePost);
+
+router.delete("/post/:postId", authMiddleware, postController.deletePost);
+
+router.post("/post/:postId/like", authMiddleware, postController.toggleLike);
+
+router.get(
+  "/post/:postId/comments",
+  authMiddleware,
+  commentController.getPostComments,
+);
+
+router.post("/comment", authMiddleware, commentController.addComment);
+
+router.delete(
+  "/comment/:commentId",
+  authMiddleware,
+  commentController.deleteComment,
+);
 
 router.get(
   "/client-profile/me",

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export interface ITaskMedia {
-  type: "image" | "video" | "audio" | "pdf";
+  type: "image" | "video";
   url: string;
   thumbnailUrl?: string;
   title?: string;
@@ -13,10 +13,14 @@ const TaskMediaSchema = new Schema<ITaskMedia>(
   {
     type: {
       type: String,
-      enum: ["image", "video", "audio", "pdf"],
+      enum: ["image", "video"],
       required: true,
     },
-    url: { type: String, required: true },
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
     thumbnailUrl: String,
     title: String,
     description: String,
@@ -34,50 +38,47 @@ export interface ITaskInstructionStep {
 
 const TaskInstructionStepSchema = new Schema<ITaskInstructionStep>(
   {
-    stepNumber: { type: Number, required: true },
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    media: [TaskMediaSchema],
-  },
-  { _id: false },
-);
-
-export interface ITaskReward {
-  xpPoints?: number;
-  badge?: string;
-}
-
-const TaskRewardSchema = new Schema<ITaskReward>(
-  {
-    xpPoints: { type: Number, default: 0 },
-    badge: String,
+    stepNumber: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    media: {
+      type: [TaskMediaSchema],
+      default: [],
+    },
   },
   { _id: false },
 );
 
 export interface ITask extends Document {
   _id: Types.ObjectId;
-
   challengeId: Types.ObjectId;
   dayNumber: number;
-  type: "fitness" | "nutrition" | "mental";
+  order: number;
   title: string;
-  status?: "draft" | "published" | "archived";
-
-  order?: number;
-
+  slug: string;
+  type: "fitness" | "nutrition" | "mental" | "recovery" | "productivity";
+  status: "draft" | "published" | "archived";
   shortDescription?: string;
   description?: string;
-
   unit?: "reps" | "minutes" | "liters" | "count" | "steps" | "calories";
   targetValue?: number;
   minimumValue?: number;
   maximumValue?: number;
-
-  isOptional?: boolean;
-  isLocked?: boolean;
-
-  category?:
+  isOptional: boolean;
+  isLocked: boolean;
+  category:
     | "strength"
     | "cardio"
     | "hydration"
@@ -86,27 +87,17 @@ export interface ITask extends Document {
     | "sleep"
     | "focus"
     | "general";
-
   coverImage?: string;
-  media?: ITaskMedia[];
-
-  instructionSteps?: ITaskInstructionStep[];
-
+  media: ITaskMedia[];
+  instructionSteps: ITaskInstructionStep[];
   estimatedDurationMinutes?: number;
-
-  difficulty?: "easy" | "medium" | "hard";
-
-  rewards?: ITaskReward;
-
-  aiTips?: string[];
-  safetyWarnings?: string[];
-
-  completionCount?: number;
-  averageCompletionRate?: number;
-
-  isDeleted?: boolean;
+  difficulty: "easy" | "medium" | "hard";
+  aiTips: string[];
+  safetyWarnings: string[];
+  completionCount: number;
+  averageCompletionRate: number;
+  isDeleted: boolean;
   deletedAt?: Date | null;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,6 +108,7 @@ const TaskSchema = new Schema<ITask>(
       type: Schema.Types.ObjectId,
       ref: "Challenge",
       required: true,
+      index: true,
     },
 
     dayNumber: {
@@ -128,26 +120,45 @@ const TaskSchema = new Schema<ITask>(
     order: {
       type: Number,
       default: 1,
-    },
-
-    type: {
-      type: String,
-      enum: ["fitness", "nutrition", "mental"],
-      required: true,
+      min: 1,
     },
 
     title: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 150,
+    },
+
+    slug: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+    },
+
+    type: {
+      type: String,
+      enum: ["fitness", "nutrition", "mental", "recovery", "productivity"],
+      required: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["draft", "published", "archived"],
+      default: "draft",
     },
 
     shortDescription: {
       type: String,
       maxlength: 300,
+      trim: true,
     },
 
-    description: String,
+    description: {
+      type: String,
+      trim: true,
+    },
 
     unit: {
       type: String,
@@ -155,7 +166,9 @@ const TaskSchema = new Schema<ITask>(
     },
 
     targetValue: Number,
+
     minimumValue: Number,
+
     maximumValue: Number,
 
     isOptional: {
@@ -195,25 +208,15 @@ const TaskSchema = new Schema<ITask>(
       default: [],
     },
 
-    estimatedDurationMinutes: Number,
+    estimatedDurationMinutes: {
+      type: Number,
+      min: 1,
+    },
 
     difficulty: {
       type: String,
       enum: ["easy", "medium", "hard"],
       default: "easy",
-    },
-
-    status: {
-      type: String,
-      enum: ["draft", "published", "archived"],
-      default: "draft",
-    },
-
-    rewards: {
-      type: TaskRewardSchema,
-      default: () => ({
-        xpPoints: 0,
-      }),
     },
 
     aiTips: {
@@ -234,6 +237,8 @@ const TaskSchema = new Schema<ITask>(
     averageCompletionRate: {
       type: Number,
       default: 0,
+      min: 0,
+      max: 100,
     },
 
     isDeleted: {
@@ -253,9 +258,17 @@ const TaskSchema = new Schema<ITask>(
 
 TaskSchema.index({ challengeId: 1, dayNumber: 1, order: 1 }, { unique: true });
 
+TaskSchema.index({ challengeId: 1, slug: 1 }, { unique: true });
+
 TaskSchema.index({ type: 1 });
 TaskSchema.index({ category: 1 });
 TaskSchema.index({ difficulty: 1 });
-TaskSchema.index({ title: "text", description: "text" });
+TaskSchema.index({ status: 1 });
+
+TaskSchema.index({
+  title: "text",
+  description: "text",
+  shortDescription: "text",
+});
 
 export default mongoose.model<ITask>("Task", TaskSchema);

@@ -143,7 +143,9 @@ conversationSchema.pre("validate", function (next) {
   if (this.chatType === "direct") {
     this.title = undefined;
     this.description = undefined;
-    this.visibility = undefined;
+    this.visibility = "private";
+    this.admins = undefined;
+
   }
 
   if (this.chatType === "group") {

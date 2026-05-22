@@ -50,7 +50,7 @@ const navLinks = [
   { name: "Home", href: "/home", icon: Home },
   { name: "Challenges", href: "/challenges", icon: Flame },
   { name: "Nutritionists", href: "/coaching", icon: Sparkles },
-  { name: "Communities", href: "/communities", icon: Users },
+  { name: "Communities", href: "/communities/groups", icon: Users },
 ];
 
 // ─── Role meta ────────────────────────────────────────────────────────────────

@@ -6,20 +6,63 @@ export type SessionUserDTO = {
   email: string;
 };
 
+export type UserSessionListDTO = {
+  id: string;
+  title: string;
+  description?: string;
+  scheduledAt: Date;
+  durationInMinutes: number;
+  type: SessionType;
+  price?: number;
+  status: SessionStatus;
+  joinedUsersCount: number;
+  maxParticipants?: number;
+};
+
+export type UserSessionDetailsDTO = {
+  id: string;
+  title: string;
+  description?: string;
+  scheduledAt: Date;
+  durationInMinutes: number;
+  type: SessionType;
+  price?: number;
+  status: SessionStatus;
+  roomId: string;
+  joinedUsersCount: number;
+  maxParticipants?: number;
+  nutritionist: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  users: {
+    id: string;
+    name: string;
+    email: string;
+  }[];
+};
+
+
 export type UserSessionDTO = {
   id: string;
   title: string;
   description?: string;
-
   scheduledAt: Date;
   durationInMinutes: number;
-
   type: SessionType;
   price?: number;
-
   status: SessionStatus;
+  joinedUsersCount: number;
+  maxParticipants?: number;
+};
 
-  users: SessionUserDTO[];
+export type SessionPaymentDTO = {
+  checkoutUrl: string;
+};
 
-  joinStatus: "none" | "pending" | "approved";
+export type SessionAccessDTO = {
+  roomId: string;
+  sessionId: string;
+  token?: string;
 };

@@ -9,25 +9,26 @@ export const errorMiddleware = (
   res: Response,
   _next: NextFunction,
 ) => {
-  const isCustomError = err instanceof CustomError;
+  let statusCode = StatusCode.INTERNAL_SERVER_ERROR;
+  let message = "Something went wrong";
 
-  const status = isCustomError
-    ? err.statusCode
-    : StatusCode.INTERNAL_SERVER_ERROR;
-
-  const message = isCustomError ? err.message : "Something went wrong";
-
-  logger.error("Global Error Middleware", {
-    message,
-    status,
-    error: err,
-  });
-
-  if (err instanceof Error) {
-    console.error(err.stack);
+  if (err instanceof CustomError) {
+    statusCode = err.statusCode;
+    message = err.message;
   }
 
-  return res.status(status).json({
+  else if (err instanceof Error) {
+    message = err.message;
+  }
+
+  logger.error("Global Error Middleware", {
+    path: req.originalUrl,
+    method: req.method,
+    statusCode,
+    message,
+  });
+
+  return res.status(statusCode).json({
     success: false,
     message,
   });

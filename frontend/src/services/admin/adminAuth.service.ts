@@ -21,10 +21,6 @@ export const adminAuthService = {
       AdminRoutes.LOGIN,
       data,
     );
-    const { accessToken } = response.data;
-    if (accessToken) {
-      localStorage.setItem("adminToken", accessToken);
-    }
     return response.data;
   },
 
@@ -35,7 +31,6 @@ export const adminAuthService = {
 
   logout: async (): Promise<GenericResponse> => {
     const response = await adminApi.post(AdminRoutes.LOGOUT);
-    localStorage.removeItem("adminToken");
     return response.data;
   },
 };

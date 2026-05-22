@@ -3,7 +3,18 @@
 import { useEffect, useState, useRef } from "react";
 import { groupService } from "@/services/nutritionist/nutriCommunity.service";
 import { useRouter } from "next/navigation";
-import { Users, Plus, Lock, Globe, ArrowRight, LayoutGrid } from "lucide-react";
+import { 
+  Users, 
+  Plus, 
+  Lock, 
+  Globe, 
+  ArrowRight, 
+  LayoutGrid, 
+  Search,
+  MoreVertical,
+  Activity
+} from "lucide-react";
+import { GroupPaginationCursor } from "@/dtos/nutritionist/group.dto";
 
 interface Group {
   id: string;
@@ -21,50 +32,48 @@ const GroupsPage = () => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [cursor, setCursor] = useState<GroupPaginationCursor | null>(null);
 
   const LIMIT = 6;
   const observerRef = useRef<HTMLDivElement | null>(null);
 
-  // 🔥 Initial + pagination fetch
   useEffect(() => {
-    fetchGroups(page);
-  }, [page]);
+    fetchGroups();
+  }, []);
 
-  // 🔥 Intersection observer (fixed)
   useEffect(() => {
     if (!observerRef.current || !hasMore) return;
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && !loadingMore) {
-        setPage((prev) => prev + 1);
-      }
-    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore && hasMore) {
+          fetchGroups(true);
+        }
+      },
+      { threshold: 0.5 }
+    );
 
     observer.observe(observerRef.current);
     return () => observer.disconnect();
-  }, [hasMore, loadingMore]);
+  }, [loadingMore, hasMore, cursor]);
 
-  const fetchGroups = async (pageNumber = 0) => {
+  const fetchGroups = async (loadMore = false) => {
     try {
-      if (pageNumber === 0) setLoading(true);
-      else setLoadingMore(true);
+      if (loadMore) setLoadingMore(true);
+      else setLoading(true);
 
-      const data = await groupService.getMyGroups({
+      const response = await groupService.getMyGroups({
         limit: LIMIT,
-        skip: pageNumber * LIMIT,
+        cursor: loadMore ? cursor || undefined : undefined,
       });
 
-      if (data.length < LIMIT) {
-        setHasMore(false);
-      }
-
-      setGroups((prev) =>
-        pageNumber === 0 ? data : [...prev, ...data]
-      );
-    } catch (err) {
-      console.error(err);
+      const newGroups = response.data;
+      setGroups((prev) => (loadMore ? [...prev, ...newGroups] : newGroups));
+      setHasMore(response.pagination.hasMore);
+      setCursor(response.pagination.nextCursor);
+    } catch (error) {
+      console.error("Failed to fetch groups:", error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -72,95 +81,125 @@ const GroupsPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 sm:px-8 py-12 space-y-10">
-      
-      {/* Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-slate-200">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs uppercase tracking-widest">
-            <LayoutGrid size={14} />
-            Community Hub
-          </div>
-          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
-            Your Groups
-          </h1>
-          <p className="text-slate-600 font-medium">
-            Manage your nutrition tribes and engage with your clients.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Decorative Background Element */}
+      <div className="absolute top-0 left-0 right-0 h-80 bg-gradient-to-b from-emerald-50/50 to-transparent -z-10" />
 
-        <button
-          onClick={() => router.push("/nutritionist/groups/create")}
-          className="flex items-center gap-3 bg-emerald-700 hover:bg-emerald-800 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-emerald-200/50"
-        >
-          <Plus size={20} />
-          Create New Group
-        </button>
-      </header>
-
-      {/* Loading & Content */}
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-700 rounded-full animate-spin" />
-        </div>
-      ) : groups.length === 0 ? (
-        <div className="text-center py-24 bg-slate-50 rounded-3xl border border-dashed border-slate-300">
-          <Users size={48} className="mx-auto text-slate-400 mb-4" />
-          <h3 className="text-xl font-bold text-slate-900">No groups yet</h3>
-          <p className="text-slate-500">Get started by creating your first community.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {groups.map((g) => (
-            <div
-              key={g.id}
-              className="group bg-white border border-slate-200 rounded-2xl p-6 transition-all hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-500/5"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
-                  <Users size={20} />
-                </div>
-                <div className="text-[11px] font-bold uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-full">
-                  {g.visibility === "public" ? (
-                    <span className="text-emerald-700 flex items-center gap-1">
-                      <Globe size={10} /> Public
-                    </span>
-                  ) : (
-                    <span className="text-slate-500 flex items-center gap-1">
-                      <Lock size={10} /> Private
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <h2 className="font-bold text-lg text-slate-900 mb-1">{g.title}</h2>
-              <p className="text-sm text-slate-500 mb-6 line-clamp-2 h-10">
-                {g.description || "No description provided."}
-              </p>
-
-              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
-                <span className="text-xs font-bold text-slate-400">
-                  {g.memberCount} MEMBERS
-                </span>
-
-                <button
-                  onClick={() => router.push(`/nutritionist/groups/${g.id}`)}
-                  className="p-2 text-emerald-700 bg-emerald-50 rounded-full hover:bg-emerald-700 hover:text-white transition-colors"
-                >
-                  <ArrowRight size={18} />
-                </button>
-              </div>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 space-y-12">
+        
+        {/* Header Section */}
+        <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+              <Activity size={14} strokeWidth={2.5} />
+              <span className="text-[10px] font-black uppercase tracking-[0.15em]">Nutritionist Portal</span>
             </div>
-          ))}
-        </div>
-      )}
+            <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
+              Your <span className="text-emerald-700">Tribes.</span>
+            </h1>
+            <p className="text-slate-500 text-lg max-w-xl font-medium leading-relaxed">
+              Manage your communities, monitor engagement, and foster healthy client transformations.
+            </p>
+          </div>
 
-      {/* Pagination Loader */}
-      {hasMore && (
-        <div ref={observerRef} className="flex justify-center py-6">
-          {loadingMore && <div className="w-8 h-8 border-4 border-emerald-100 border-t-emerald-700 rounded-full animate-spin" />}
+          <button
+            onClick={() => router.push("/nutritionist/groups/create")}
+            className="group flex items-center justify-center gap-3 bg-slate-900 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold transition-all duration-300 shadow-xl shadow-slate-200 hover:shadow-emerald-200"
+          >
+            <Plus size={20} strokeWidth={3} />
+            Create New Group
+          </button>
+        </header>
+
+        {/* Search & Filter Bar (UI Mockup) */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-600 transition-colors" size={20} />
+            <input 
+              type="text" 
+              placeholder="Filter by group name..." 
+              className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-emerald-500/5 focus:border-emerald-500 transition-all shadow-sm text-slate-600 placeholder:text-slate-400 font-medium"
+            />
+          </div>
         </div>
-      )}
+
+        {/* Main Content */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-32 space-y-4">
+            <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-700 rounded-full animate-spin" />
+            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Loading your hub</p>
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="flex flex-col items-center text-center py-32 bg-white rounded-[2.5rem] border border-dashed border-slate-300 shadow-inner">
+            <div className="p-6 bg-slate-50 rounded-full mb-6">
+              <Users size={48} className="text-slate-300" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900">Silence in the hub</h3>
+            <p className="text-slate-500 mt-2 max-w-xs font-medium">{"You haven't created any groups yet. Start your first tribe today!"}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {groups.map((g) => (
+              <div
+                key={g.id}
+                className="group relative bg-white border border-slate-200 rounded-[2rem] p-8 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] hover:-translate-y-2 hover:border-emerald-100"
+              >
+                {/* Card Top Actions */}
+                <div className="flex justify-between items-start mb-8">
+                  <div className="p-3 bg-emerald-50 text-emerald-700 rounded-2xl transition-colors group-hover:bg-emerald-600 group-hover:text-white">
+                    <Users size={24} strokeWidth={2.5} />
+                  </div>
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
+                    g.visibility === "public" 
+                    ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
+                    : "bg-slate-50 border-slate-100 text-slate-500"
+                  }`}>
+                    {g.visibility === "public" ? <Globe size={12} /> : <Lock size={12} />}
+                    {g.visibility}
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="space-y-3">
+                  <h2 className="text-xl font-black text-slate-900 group-hover:text-emerald-800 transition-colors line-clamp-1">
+                    {g.title}
+                  </h2>
+                  <p className="text-slate-500 text-sm leading-relaxed line-clamp-2 h-10 font-medium">
+                    {g.description || "Building a healthy culture through shared goals and expert nutrition guidance."}
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-8 mt-8 border-t border-slate-50">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Engagement</span>
+                    <span className="text-sm font-bold text-slate-800 uppercase tracking-tighter italic">{g.memberCount} Clients</span>
+                  </div>
+
+                  <button
+                    onClick={() => router.push(`/nutritionist/groups/${g.id}`)}
+                    className="flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 group-hover:bg-emerald-700 group-hover:text-white transition-all duration-300"
+                  >
+                    <ArrowRight size={20} strokeWidth={3} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination Trigger */}
+        {hasMore && (
+          <div ref={observerRef} className="flex justify-center py-12">
+            {loadingMore && (
+              <div className="flex items-center gap-3 px-6 py-3 bg-white rounded-full border border-slate-200 shadow-sm animate-pulse">
+                <div className="w-4 h-4 border-2 border-emerald-100 border-t-emerald-700 rounded-full animate-spin" />
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Fetching more</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

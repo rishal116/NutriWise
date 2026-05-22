@@ -1,11 +1,9 @@
 import { IConversation } from "../../../models/conversation.model";
 import { IBaseRepository } from "../common/IBaseRepository";
 
-import { UpdateResult } from "mongodb";
-
-type JoinRequestInput = {
-  userId: string;
-  requestedAt: Date;
+export type ConversationCursor = {
+  lastMessageAt: string;
+  id: string;
 };
 
 export interface IConversationRepository extends IBaseRepository<IConversation> {
@@ -14,24 +12,24 @@ export interface IConversationRepository extends IBaseRepository<IConversation> 
   findUserConversations(
     userId: string,
     limit: number,
+    cursor?: ConversationCursor,
+  ): Promise<IConversation[]>;
+
+  findUserConversationsPaginated(
+    conversationIds: string[],
+    limit: number,
+    cursor?: ConversationCursor,
+  ): Promise<IConversation[]>;
+
+  findGroups(
+    limit: number,
     cursor?: string,
   ): Promise<IConversation[]>;
 
-
-  findUserConversationsPaginated(
-  conversationIds: string[],
-  limit: number,
-  cursor?: string,
-): Promise<IConversation[]>;
-
-  findGroups(limit: number, cursor?: string): Promise<IConversation[]>;
-
-  incrementMemberCount(groupId: string, value: number): Promise<void>;
+  incrementMemberCount(
+    groupId: string,
+    value: number,
+  ): Promise<void>;
 
   countGroups(): Promise<number>;
-
-  addJoinRequest(
-    groupId: string,
-    request: JoinRequestInput,
-  ): Promise<UpdateResult>;
 }

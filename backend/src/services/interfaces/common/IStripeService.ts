@@ -1,3 +1,5 @@
+import Stripe from "stripe";
+
 export interface IStripeService {
   createCheckoutSession(data: {
     amount: number;
@@ -7,4 +9,8 @@ export interface IStripeService {
     cancelUrl: string;
     metadata: Record<string, string>;
   }): Promise<string>;
+
+  retrieveCheckoutSession(
+    sessionId: string
+  ): Promise<Stripe.Checkout.Session>;
 }

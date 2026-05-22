@@ -1,19 +1,24 @@
 "use client";
+
 import React, { useState, useCallback } from "react";
-import Cropper from "react-easy-crop";
+import Cropper, { Area } from "react-easy-crop";
 import { X, Loader2, Upload } from "lucide-react";
 import { userAccountService } from "@/services/user/userProfile.service";
+import { toast } from "sonner";
 
 interface ProfileImageUploaderProps {
   onClose: () => void;
   onUploadSuccess: (newImageUrl: string) => void;
 }
 
-export default function ProfileImageUploader({ onClose, onUploadSuccess }: ProfileImageUploaderProps) {
+export default function ProfileImageUploader({
+  onClose,
+  onUploadSuccess,
+}: ProfileImageUploaderProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,70 +29,72 @@ export default function ProfileImageUploader({ onClose, onUploadSuccess }: Profi
     }
   };
 
-  const onCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+  const onCropComplete = useCallback((_: Area, croppedPixels: Area) => {
+    setCroppedAreaPixels(croppedPixels);
   }, []);
 
-const handleUpload = async () => {
-  if (!imageSrc || !croppedAreaPixels) return;
+  const handleUpload = async () => {
+    if (!imageSrc || !croppedAreaPixels) return;
 
-  setIsUploading(true);
-  try {
-    // 1. Create Canvas and Crop (Keep your existing canvas logic...)
-    const image = new Image();
-    image.src = imageSrc;
-    await new Promise((resolve) => (image.onload = resolve));
+    setIsUploading(true);
+    try {
+      const image = new window.Image();
+      image.src = imageSrc;
+      await new Promise<void>((resolve) => {
+        image.onload = () => resolve();
+      });
 
-    const canvas = document.createElement("canvas");
-    canvas.width = croppedAreaPixels.width;
-    canvas.height = croppedAreaPixels.height;
-    const ctx = canvas.getContext("2d");
+      const canvas = document.createElement("canvas");
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+      const ctx = canvas.getContext("2d");
 
-    if (ctx) {
-      ctx.drawImage(
-        image,
-        croppedAreaPixels.x,
-        croppedAreaPixels.y,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height,
-        0, 0,
-        croppedAreaPixels.width,
-        croppedAreaPixels.height
+      if (ctx) {
+        ctx.drawImage(
+          image,
+          croppedAreaPixels.x,
+          croppedAreaPixels.y,
+          croppedAreaPixels.width,
+          croppedAreaPixels.height,
+          0,
+          0,
+          croppedAreaPixels.width,
+          croppedAreaPixels.height,
+        );
+      }
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9),
       );
+
+      if (blob) {
+        const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
+        const response = await userAccountService.uploadProfileImage(file);
+        const newImageUrl =
+          response.data?.profileImage ?? response.profileImage;
+
+        toast.success("Profile picture updated successfully!");
+
+        onUploadSuccess(newImageUrl);
+        onClose();
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
     }
-
-    // 2. Convert to Blob
-    const blob = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
-    );
-
-    if (blob) {
-      // 3. CREATE A RAW FILE (Do NOT create FormData here)
-      const file = new File([blob], "profile.jpg", { type: "image/jpeg" });
-
-      // 4. CALL SERVICE WITH FILE
-      // This fixes: Argument of type 'FormData' is not assignable to parameter of type 'File'
-      const response = await userAccountService.uploadProfileImage(file);
-
-      // Handle response based on your backend structure
-      const newImageUrl = response.data?.profileImage || response.profileImage;
-      onUploadSuccess(newImageUrl);
-      onClose();
-    }
-  } catch (error) {
-    console.error("Upload failed:", error);
-    alert("Failed to upload image.");
-  } finally {
-    setIsUploading(false);
-  }
-};
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
         <div className="p-4 border-b flex justify-between items-center bg-emerald-50">
           <h3 className="font-bold text-emerald-900">Update Profile Picture</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
             <X size={24} />
           </button>
         </div>
@@ -102,12 +109,19 @@ const handleUpload = async () => {
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <label htmlFor="fileInput" className="cursor-pointer flex flex-col items-center">
+              <label
+                htmlFor="fileInput"
+                className="cursor-pointer flex flex-col items-center"
+              >
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4">
                   <Upload size={30} />
                 </div>
-                <span className="text-gray-700 font-medium">Click to upload or drag and drop</span>
-                <span className="text-gray-400 text-sm mt-1">PNG, JPG up to 5MB</span>
+                <span className="text-gray-700 font-medium">
+                  Click to upload or drag and drop
+                </span>
+                <span className="text-gray-400 text-sm mt-1">
+                  PNG, JPG up to 5MB
+                </span>
               </label>
             </div>
           ) : (
@@ -123,7 +137,7 @@ const handleUpload = async () => {
                   onCropComplete={onCropComplete}
                 />
               </div>
-              
+
               <div className="mt-6 space-y-4">
                 <div className="flex items-center gap-4">
                   <span className="text-sm text-gray-500">Zoom</span>
@@ -150,7 +164,11 @@ const handleUpload = async () => {
                     disabled={isUploading}
                     className="flex-[2] py-2.5 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-200"
                   >
-                    {isUploading ? <Loader2 className="animate-spin" size={20} /> : "Save Profile Picture"}
+                    {isUploading ? (
+                      <Loader2 className="animate-spin" size={20} />
+                    ) : (
+                      "Save Profile Picture"
+                    )}
                   </button>
                 </div>
               </div>

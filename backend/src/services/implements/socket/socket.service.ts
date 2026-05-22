@@ -5,21 +5,17 @@ import { MessageResponseDTO } from "../../../dtos/chat/messageResponse.dto";
 
 @injectable()
 export class SocketService implements ISocketService {
-
   emitNewMessage(conversationId: string, message: MessageResponseDTO): void {
-
     const io = getIO();
 
     io.to(`chat:${conversationId}`).emit("receiveMessage", message);
-
   }
 
   emitMessageEdited(
     conversationId: string,
     messageId: string,
-    content: string
+    content: string,
   ): void {
-
     const io = getIO();
 
     io.to(`chat:${conversationId}`).emit("messageEdited", {
@@ -27,35 +23,23 @@ export class SocketService implements ISocketService {
       messageId,
       content,
     });
-
   }
 
-  emitMessageDeleted(
-    conversationId: string,
-    messageId: string
-  ): void {
-
+  emitMessageDeleted(conversationId: string, messageId: string): void {
     const io = getIO();
 
     io.to(`chat:${conversationId}`).emit("messageDeleted", {
       conversationId,
       messageId,
     });
-
   }
 
-  emitMessagesRead(
-    conversationId: string,
-    userId: string
-  ): void {
-
+  emitMessagesRead(conversationId: string, userId: string): void {
     const io = getIO();
 
     io.to(`chat:${conversationId}`).emit("messagesRead", {
       conversationId,
       userId,
     });
-
   }
-
 }

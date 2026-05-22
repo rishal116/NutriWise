@@ -5,7 +5,7 @@ import { Save, Lock, Eye, EyeOff, ArrowLeft, Shield, Check } from "lucide-react"
 import Toast from "@/components/common/Toast";
 import { userAccountService } from "@/services/user/userAccount.service";
 import { useRouter } from "next/navigation";
-import { strongPasswordSchema } from "@/validation/password.validation";
+import { strongPasswordSchema } from "@/validations/password.validation";
 
 export default function ChangePasswordPage() {
   const router = useRouter();
