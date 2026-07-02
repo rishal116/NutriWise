@@ -1,4 +1,4 @@
-import Header from "@/components/layout/Header";
+import Header from "@/components/common/Header";
 
 export default function PlansLayout({
   children,

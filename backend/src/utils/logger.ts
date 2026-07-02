@@ -1,102 +1,74 @@
 import fs from "fs";
 import path from "path";
 import { createLogger, format, transports } from "winston";
-import type Transport from "winston-transport";
 import DailyRotateFile from "winston-daily-rotate-file";
 
-const { combine, timestamp, printf, errors, colorize } = format;
+const { combine, timestamp, errors, printf, colorize } = format;
 
 const logDir = path.join(process.cwd(), "logs");
-fs.mkdirSync(logDir, { recursive: true });
+
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
 
 const isProduction = process.env.NODE_ENV === "production";
 
 const LOG_RETENTION = isProduction ? "14d" : "3d";
 
-/* -----------------------
-   Pretty log format
------------------------ */
+const logFormat = printf(({ timestamp, level, message, stack, ...meta }) => {
+  const metadata =
+    Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : "";
 
-const readableFormat = combine(
-  timestamp(),
+  return `${timestamp} [${level}] ${stack || message}${metadata}`;
+});
+
+const fileFormat = combine(
+  timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   errors({ stack: true }),
-  printf(({ timestamp, level, message, stack, ...meta }) => {
-    const metaString =
-      Object.keys(meta).length > 0
-        ? ` ${JSON.stringify(meta)}`
-        : "";
-
-    return `${timestamp} [${level}]: ${stack || message}${metaString}`;
-  })
+  logFormat,
 );
-
-/* -----------------------
-   Console format
------------------------ */
 
 const consoleFormat = combine(
   colorize(),
-  readableFormat
+  timestamp({ format: "HH:mm:ss" }),
+  errors({ stack: true }),
+  logFormat,
 );
-
-/* -----------------------
-   File transports
------------------------ */
-
-const transportList: Transport[] = [
-
-  new DailyRotateFile({
-    filename: path.join(logDir, "error-%DATE%.log"),
-    datePattern: "YYYY-MM-DD",
-    level: "error",
-    maxSize: "10m",
-    maxFiles: LOG_RETENTION,
-    zippedArchive: true,
-    auditFile: path.join(logDir, "error-audit.json"),
-    format: readableFormat
-  }),
-
-  new DailyRotateFile({
-    filename: path.join(logDir, "app-%DATE%.log"),
-    datePattern: "YYYY-MM-DD",
-    level: "info",
-    maxSize: "20m",
-    maxFiles: LOG_RETENTION,
-    zippedArchive: true,
-    auditFile: path.join(logDir, "app-audit.json"),
-    format: readableFormat
-  })
-
-];
-
-/* -----------------------
-   Console only in dev
------------------------ */
-
-if (!isProduction) {
-  transportList.unshift(
-    new transports.Console({
-      format: consoleFormat
-    })
-  );
-}
-
-/* -----------------------
-   Logger
------------------------ */
 
 const logger = createLogger({
   level: isProduction ? "info" : "debug",
-  transports: transportList,
+
+  format: fileFormat,
+
+  exitOnError: false,
+
+  transports: [
+    new DailyRotateFile({
+      filename: path.join(logDir, "error-%DATE%.log"),
+      level: "error",
+      datePattern: "YYYY-MM-DD",
+      maxSize: "10m",
+      maxFiles: LOG_RETENTION,
+      zippedArchive: true,
+    }),
+
+    new DailyRotateFile({
+      filename: path.join(logDir, "app-%DATE%.log"),
+      level: "info",
+      datePattern: "YYYY-MM-DD",
+      maxSize: "20m",
+      maxFiles: LOG_RETENTION,
+      zippedArchive: true,
+    }),
+  ],
 
   exceptionHandlers: [
     new DailyRotateFile({
       filename: path.join(logDir, "exceptions-%DATE%.log"),
       datePattern: "YYYY-MM-DD",
       maxFiles: LOG_RETENTION,
-      auditFile: path.join(logDir, "exceptions-audit.json"),
-      format: readableFormat
-    })
+      zippedArchive: true,
+    }),
   ],
 
   rejectionHandlers: [
@@ -104,11 +76,17 @@ const logger = createLogger({
       filename: path.join(logDir, "rejections-%DATE%.log"),
       datePattern: "YYYY-MM-DD",
       maxFiles: LOG_RETENTION,
-      auditFile: path.join(logDir, "rejections-audit.json"),
-      format: readableFormat
-    })
-  ]
-
+      zippedArchive: true,
+    }),
+  ],
 });
+
+if (!isProduction) {
+  logger.add(
+    new transports.Console({
+      format: consoleFormat,
+    }),
+  );
+}
 
 export default logger;

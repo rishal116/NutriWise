@@ -10,47 +10,28 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { OAuth2Client } from "google-auth-library";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
-import {
-  ResendOtpDto,
-  UserRegisterDto,
-  VerifyOtpDto,
-  LoginDto,
-} from "../../../dtos/user/UserAuth.dto";
 import { generateTokens } from "../../../utils/jwt";
 import crypto from "crypto";
 import { sendResetPasswordEmail } from "../../../utils/sendOtp";
+import { UserRegisterDto } from "../../../dtos/user/auth/signup.dto";
+import { MessageResponseDto } from "../../../dtos/user/auth/message-response.dto";
+import { VerifyOtpDto } from "../../../dtos/user/auth/verify-otp.dto";
+import { VerifyOtpResponseDto } from "../../../dtos/user/auth/verify-otp-response.dto";
+import { generateUniqueUsername } from "../../../utils/username.util";
 import {
-  SignupResponseDto,
-  VerifyOtpResponseDto,
-  LoginResponseDto,
-  GoogleLoginRequestDto,
-  GoogleLoginResponseDto,
-  GoogleSigninRequestDto,
-  MessageResponseDto,
-  GetMeResponseDto,
-} from "../../../dtos/user/userAuth.response.dto";
-import {
-  mapUserToSafeUserDto,
-  mapUserToGetMeDto,
-  UserEntity,
-} from "../../../mapper/user/userAuth.mapper";
-
-type TempUserSession = {
-  fullName: string;
-  email: string;
-  password: string;
-  role: "client" | "nutritionist" | "admin";
-};
-
-const getTempUser = (req: Request): TempUserSession | undefined => {
-  const sessionObj = req.session as unknown as { tempUser?: TempUserSession };
-  return sessionObj.tempUser;
-};
-
-const deleteTempUser = (req: Request) => {
-  const sessionObj = req.session as unknown as { tempUser?: TempUserSession };
-  delete sessionObj.tempUser;
-};
+  deleteTempUser,
+  getTempUser,
+  setTempUser,
+} from "../../../utils/session.util";
+import { LoginDto } from "../../../dtos/user/auth/login.dto";
+import { ResendOtpDto } from "../../../dtos/user/auth/resend-otp.dto";
+import { AuthResponseDto } from "../../../dtos/user/auth/auth-response.dto";
+import { IPasswordResetRepository } from "../../../repositories/interfaces/common/IPasswordResetRepository";
+import { GetMeResponseDto } from "../../../dtos/user/get-me-response.dto";
+import { GoogleAuthDto } from "../../../dtos/user/auth/google-auth.dto";
+import { ForgotPasswordDto } from "../../../dtos/user/auth/forgot-password.dto";
+import { ResetPasswordDto } from "../../../dtos/user/auth/reset-password.dto";
+import { Types } from "mongoose";
 
 @injectable()
 export class UserAuthService implements IUserAuthService {
@@ -59,6 +40,8 @@ export class UserAuthService implements IUserAuthService {
   constructor(
     @inject(TYPES.IUserRepository) private _userRepository: IUserRepository,
     @inject(TYPES.IOTPService) private _otpService: IOTPService,
+    @inject(TYPES.IPasswordResetRepository)
+    private _passwordResetRepository: IPasswordResetRepository,
   ) {
     this._googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   }
@@ -66,23 +49,26 @@ export class UserAuthService implements IUserAuthService {
   async signup(
     req: Request,
     data: UserRegisterDto,
-  ): Promise<SignupResponseDto> {
+  ): Promise<MessageResponseDto> {
     await validateDto(UserRegisterDto, data);
-
-    const { fullName, email, password, role } = data;
-    logger.info("Signup request", { email, role });
-
+    const { fullName, email, password, confirmPassword } = data;
+    if (password !== confirmPassword) {
+      throw new CustomError("Passwords do not match", StatusCode.BAD_REQUEST);
+    }
+    logger.info("Signup request", { email });
     const existingUser = await this._userRepository.findByEmail(email);
-    if (existingUser) throw new CustomError("User already exists", 409);
-    (req.session as unknown as { tempUser?: TempUserSession }).tempUser = {
+    if (existingUser) {
+      throw new CustomError("User already exists", StatusCode.CONFLICT);
+    }
+    setTempUser(req, {
       fullName,
       email,
       password,
-      role,
-    };
-
+    });
     await this._otpService.requestOtp(email);
-    return { message: "OTP sent successfully. Please verify your email." };
+    return {
+      message: "OTP sent successfully. Please verify your email.",
+    };
   }
 
   async verifyOtp(
@@ -90,221 +76,197 @@ export class UserAuthService implements IUserAuthService {
     data: VerifyOtpDto,
   ): Promise<VerifyOtpResponseDto> {
     await validateDto(VerifyOtpDto, data);
-
     const { email, otp } = data;
-    logger.info("Verify OTP", { email });
-
-    const isValid = await this._otpService.verifyOtp(email, otp);
-    if (!isValid)
-      throw new CustomError("Invalid or expired OTP", StatusCode.BAD_REQUEST);
-
+    logger.info("Verifying OTP", { email });
+    await this._otpService.verifyOtp(email, otp);
     const tempUser = getTempUser(req);
-    if (!tempUser)
+    if (!tempUser) {
       throw new CustomError(
         "Temporary user data not found",
         StatusCode.NOT_FOUND,
       );
-
+    }
     const hashedPassword = await bcrypt.hash(tempUser.password, 10);
-    const createPayload: {
-      fullName: string;
-      email: string;
-      password: string;
-      role: TempUserSession["role"];
-    } = {
+    const username = await generateUniqueUsername(tempUser.fullName);
+    const newUser = await this._userRepository.create({
       fullName: tempUser.fullName,
       email: tempUser.email,
+      username,
       password: hashedPassword,
-      role: tempUser.role,
-    };
-
-    const newUser = (await this._userRepository.create(
-      createPayload,
-    )) as unknown as UserEntity;
-
+    });
     const { accessToken, refreshToken } = generateTokens(
-      (newUser._id as { toString: () => string }).toString(),
-      newUser.role || "client",
+      newUser._id.toString(),
+      newUser.activeRole,
     );
-
     deleteTempUser(req);
-
     return {
       message: "Signup successful",
       accessToken,
       refreshToken,
-      role: mapUserToSafeUserDto(newUser).role,
     };
   }
 
   async resendOtp(data: ResendOtpDto): Promise<MessageResponseDto> {
     await validateDto(ResendOtpDto, data);
-
     const { email } = data;
-    logger.info("Resend OTP", { email });
-
-    const existingUser = await this._userRepository.findByEmail(email);
-    if (existingUser)
-      throw new CustomError("Account already verified", StatusCode.BAD_REQUEST);
-
-    const response = await this._otpService.requestOtp(email);
-    return { message: response };
+    logger.info("Resend OTP request", { email });
+    const user = await this._userRepository.findByEmail(email);
+    if (user) {
+      throw new CustomError("Account already exists", StatusCode.BAD_REQUEST);
+    }
+    await this._otpService.requestOtp(email);
+    return {
+      message: "OTP sent successfully",
+    };
   }
 
-  async login(data: LoginDto): Promise<LoginResponseDto> {
+  async login(data: LoginDto): Promise<AuthResponseDto> {
     await validateDto(LoginDto, data);
     const { email, password } = data;
-    logger.info("Login request received", { email });
-    const user = (await this._userRepository.findByEmail(
-      email,
-    )) as unknown as UserEntity & { password?: string };
+    console.log(password)
+    logger.info("Login request", { email });
+    const user = await this._userRepository.findByEmail(email);
     if (!user) {
-      logger.warn("Login failed: user not found", { email });
-      throw new CustomError("User not found", 404);
+      throw new CustomError("User not found", StatusCode.NOT_FOUND);
     }
+    console.log(user);
+    
     if (!user.password) {
-      logger.warn("Login failed: Google auth user tried password login", {
-        email,
-        userId: user._id,
-      });
-
       throw new CustomError(
-        "This account is registered with Google. Please login with Google",
-        400,
+        "This account is registered with Google. Please sign in with Google.",
+        StatusCode.BAD_REQUEST,
       );
     }
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      logger.warn("Login failed: invalid password", {
-        email,
-        userId: user._id,
-      });
-      throw new CustomError("Invalid password", 401);
+    const hashedPassword = user.password;
+    const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+
+    if (!isPasswordValid) {
+      throw new CustomError(
+        "Invalid email or password",
+        StatusCode.UNAUTHORIZED,
+      );
     }
     const { accessToken, refreshToken } = generateTokens(
-      (user._id as { toString: () => string }).toString(),
-      user.role,
+      user._id.toString(),
+      user.activeRole,
     );
     logger.info("Login successful", {
       userId: user._id,
       email,
-      role: user.role,
     });
     return {
-      user: mapUserToSafeUserDto(user),
+      message: "Login successful",
       accessToken,
       refreshToken,
+      activeRole: user.activeRole,
+      isProfileCompleted: user.isProfileCompleted,
     };
   }
 
-  async googleLogin(
-    payload: GoogleLoginRequestDto,
-  ): Promise<GoogleLoginResponseDto> {
-    const { credential, role } = payload;
-
+  async googleAuth(data: GoogleAuthDto): Promise<AuthResponseDto> {
+    await validateDto(GoogleAuthDto, data);
+    const { credential } = data;
     const ticket = await this._googleClient.verifyIdToken({
       idToken: credential,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-
-    const tokenPayload = ticket.getPayload();
-    if (!tokenPayload) throw new Error("Invalid Google token");
-
-    let user = (await this._userRepository.findByGoogleId(
-      tokenPayload.sub!,
-    )) as unknown as UserEntity;
-
-    if (!user) {
-      user = (await this._userRepository.create({
-        fullName: tokenPayload.name || "",
-        email: tokenPayload.email || "",
-        googleId: tokenPayload.sub!,
-        role,
-      })) as unknown as UserEntity;
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email || !payload.sub) {
+      throw new CustomError("Invalid Google token", StatusCode.BAD_REQUEST);
     }
-
+    let user = await this._userRepository.findByEmail(payload.email);
+    if (!user) {
+      const username = await generateUniqueUsername(payload.name ?? "user");
+      user = await this._userRepository.create({
+        fullName: payload.name ?? "",
+        email: payload.email,
+        username,
+        googleId: payload.sub,
+      });
+    }
     const { accessToken, refreshToken } = generateTokens(
-      (user._id as { toString: () => string }).toString(),
-      user.role,
+      user._id.toString(),
+      user.activeRole,
     );
-
-    return { user: mapUserToSafeUserDto(user), accessToken, refreshToken };
+    return {
+      message: "Google authentication successful",
+      accessToken,
+      refreshToken,
+      activeRole: user.activeRole,
+      isProfileCompleted: user.isProfileCompleted,
+    };
   }
 
-  async requestPasswordReset(email: string): Promise<MessageResponseDto> {
+  async requestPasswordReset(
+    data: ForgotPasswordDto,
+  ): Promise<MessageResponseDto> {
+    await validateDto(ForgotPasswordDto, data);
+    const { email } = data;
+    logger.info("Password reset request", { email });
     const user = await this._userRepository.findByEmail(email);
-    if (!user) throw new CustomError("User not found", StatusCode.NOT_FOUND);
-
+    if (!user) {
+      throw new CustomError("User not found", StatusCode.NOT_FOUND);
+    }
     const token = crypto.randomBytes(32).toString("hex");
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-    const expires = new Date(Date.now() + 60 * 60 * 1000);
-
-    await this._userRepository.setResetToken(email, hashedToken, expires);
-
+    await this._passwordResetRepository.deleteUserResetTokens(
+      user._id.toString(),
+    );
+    await this._passwordResetRepository.createResetToken(
+      user._id.toString(),
+      hashedToken,
+      new Date(Date.now() + 60 * 60 * 1000),
+    );
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
-    console.log(resetLink);
-
-    await sendResetPasswordEmail(email, resetLink);
-
-    return { message: "Password reset link sent to your email." };
+    await sendResetPasswordEmail(user.email, resetLink);
+    return {
+      message: "Password reset link sent successfully.",
+    };
   }
 
-  async resetPassword(
-    token: string,
-    newPassword: string,
-  ): Promise<MessageResponseDto> {
+  async resetPassword(data: ResetPasswordDto): Promise<MessageResponseDto> {
+    await validateDto(ResetPasswordDto, data);
+    const { token, newPassword, confirmPassword } = data;
+    if (newPassword !== confirmPassword) {
+      throw new CustomError("Passwords do not match", StatusCode.BAD_REQUEST);
+    }
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-    const user = await this._userRepository.findByResetToken(hashedToken);
-    if (!user)
-      throw new CustomError("Invalid or expired token", StatusCode.BAD_REQUEST);
-
+    const resetToken =
+      await this._passwordResetRepository.findResetToken(hashedToken);
+    if (!resetToken) {
+      throw new CustomError(
+        "Invalid or expired reset link",
+        StatusCode.BAD_REQUEST,
+      );
+    }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await this._userRepository.updatePasswordByEmail(
-      user.email,
+    await this._userRepository.updatePasswordById(
+      resetToken.userId.toString(),
       hashedPassword,
     );
-    await this._userRepository.setResetToken(user.email, "", new Date(0));
-
-    return { message: "Password reset successfully." };
-  }
-
-  async googleSignin(
-    payload: GoogleSigninRequestDto,
-  ): Promise<GoogleLoginResponseDto> {
-    const { credential } = payload;
-
-    const ticket = await this._googleClient.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const googlePayload = ticket.getPayload();
-    const email = googlePayload?.email;
-    if (!email) throw new CustomError("Google email not found", 400);
-
-    const user = (await this._userRepository.findByEmail(
-      email,
-    )) as unknown as UserEntity;
-    if (!user)
-      throw new CustomError(
-        "Account not found. Please sign up first with Google.",
-        404,
-      );
-
-    const { accessToken, refreshToken } = generateTokens(
-      (user._id as { toString: () => string }).toString(),
-      user.role,
-    );
-
-    return { user: mapUserToSafeUserDto(user), accessToken, refreshToken };
+    await this._passwordResetRepository.deleteResetToken(hashedToken);
+    return {
+      message: "Password reset successfully.",
+    };
   }
 
   async getMe(userId: string): Promise<GetMeResponseDto> {
-    const user = (await this._userRepository.findById(
-      userId,
-    )) as unknown as UserEntity;
-    if (!user) throw new CustomError("User not found", 404);
-
-    return mapUserToGetMeDto(user);
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new CustomError("Invalid user ID", StatusCode.BAD_REQUEST);
+    }
+    const user = await this._userRepository.findById(userId);
+    if (!user) {
+      throw new CustomError("User not found", StatusCode.NOT_FOUND);
+    }
+    return {
+      id: user._id.toString(),
+      fullName: user.fullName,
+      email: user.email,
+      username: user.username,
+      profileImage: user.profileImage ?? null,
+      activeRole: user.activeRole,
+      roles: user.roles,
+      isProfileCompleted: user.isProfileCompleted,
+    };
   }
 }

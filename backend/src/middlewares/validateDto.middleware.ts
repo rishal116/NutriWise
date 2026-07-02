@@ -1,32 +1,46 @@
-import { plainToInstance } from "class-transformer";
+import { ClassConstructor, plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
 import { Request, Response, NextFunction } from "express";
 import { CustomError } from "../utils/customError";
+import { StatusCode } from "../enums/statusCode.enum";
 
-export const validateDtoMiddleware = (DtoClass: any) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const dtoInstance = plainToInstance(DtoClass, req.body);
+export const validateDtoMiddleware = <T extends object>(
+  DtoClass: ClassConstructor<T>,
+) => {
+  return async (
+    req: Request,
+    _res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    const dto = plainToInstance(DtoClass, req.body);
 
-    const errors = await validate(dtoInstance);
+    const errors = await validate(dto);
+
     if (errors.length > 0) {
       const messages = errors
-        .flatMap((err) => Object.values(err.constraints || {}))
+        .flatMap((error) => Object.values(error.constraints ?? {}))
         .join(", ");
-      throw new CustomError(messages, 400);
+
+      return next(new CustomError(messages, StatusCode.BAD_REQUEST));
     }
 
     next();
   };
 };
 
-export const validateDto = async (DtoClass: any, data: any) => {
-  const dtoInstance = plainToInstance(DtoClass, data);
-  const errors = await validate(dtoInstance);
+export const validateDto = async <T extends object>(
+  DtoClass: ClassConstructor<T>,
+  payload: unknown,
+): Promise<void> => {
+  const dto = plainToInstance(DtoClass, payload);
+
+  const errors = await validate(dto);
 
   if (errors.length > 0) {
     const messages = errors
-      .flatMap((err) => Object.values(err.constraints || {}))
+      .flatMap((error) => Object.values(error.constraints ?? {}))
       .join(", ");
-    throw new CustomError(messages, 400);
+
+    throw new CustomError(messages, StatusCode.BAD_REQUEST);
   }
 };

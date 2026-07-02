@@ -1,5 +1,6 @@
 export const USER_MESSAGES = {
   PROFILE_UPDATED: "Profile updated successfully",
+  PROFILE_COMPLETED:"Profile complete successfully",
   HEALTH_DETAILS_UPDATED: "Health details updated successfully",
   PLANS_FETCHED: "Plans fetched successfully",
   OTP_SENT: "OTP sent successfully",

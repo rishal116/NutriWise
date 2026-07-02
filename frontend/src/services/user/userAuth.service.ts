@@ -1,70 +1,72 @@
 import { api } from "@/lib/axios/api";
-import { UserSignupType } from "@/validation/userAuth.validation";
 import { API_ROUTES } from "@/routes/user.routes";
-import { AuthSuccessResponse, GoogleAuthPayload } from "@/types/auth.types";
+
+import {
+  ApiResponse,
+  AuthResponse,
+  GetMeResponse,
+} from "@/types/auth/auth-response.types";
+
+import {
+  VerifyOtpRequest,
+  LoginRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  ResendOtpRequest,
+  GoogleAuthRequest,
+  SignupRequest,
+} from "@/types/auth/auth-request.types";
 
 export const userAuthService = {
-  register: async (payload: UserSignupType): Promise<AuthSuccessResponse> => {
+  async register(payload: SignupRequest): Promise<ApiResponse> {
     const res = await api.post(API_ROUTES.AUTH.SIGNUP, payload);
     return res.data;
   },
 
-  verifyOtp: async (email: string, otp: string): Promise<AuthSuccessResponse> => {
-    const res = await api.post(
-      API_ROUTES.AUTH.VERIFY_OTP,
-      { email, otp },
-      { withCredentials: true },
-    );
-    return res.data;
-  },
-
-  resendOtp: async (email: string): Promise<AuthSuccessResponse> => {
-    const res = await api.post(API_ROUTES.AUTH.RESEND_OTP, { email });
-    return res.data;
-  },
-
-  login: async (email: string, password: string): Promise<AuthSuccessResponse> => {
-    const res = await api.post(API_ROUTES.AUTH.LOGIN, {
-      email,
-      password,
+  async verifyOtp(payload: VerifyOtpRequest): Promise<AuthResponse> {
+    const res = await api.post(API_ROUTES.AUTH.VERIFY_OTP, payload, {
+      withCredentials: true,
     });
     return res.data;
   },
 
-  logout: async (): Promise<void> => {
-    await api.post(API_ROUTES.AUTH.LOGOUT, {}, { withCredentials: true });
+  async resendOtp(payload: ResendOtpRequest): Promise<ApiResponse> {
+    const res = await api.post(API_ROUTES.AUTH.RESEND_OTP, payload);
+    return res.data;
+  },
 
+  async login(payload: LoginRequest): Promise<AuthResponse> {
+    const res = await api.post(API_ROUTES.AUTH.LOGIN, payload);
+    return res.data;
+  },
+
+  async googleAuth(payload: GoogleAuthRequest): Promise<AuthResponse> {
+    const res = await api.post(API_ROUTES.AUTH.GOOGLE, payload);
+    return res.data;
+  },
+
+  async forgotPassword(payload: ForgotPasswordRequest): Promise<ApiResponse> {
+    const res = await api.post(API_ROUTES.AUTH.FORGOT_PASSWORD, payload);
+    return res.data;
+  },
+
+  async resetPassword(payload: ResetPasswordRequest): Promise<ApiResponse> {
+    const res = await api.post(API_ROUTES.AUTH.RESET_PASSWORD, payload);
+    return res.data;
+  },
+
+  async getMe(): Promise<GetMeResponse> {
+    const res = await api.get(API_ROUTES.AUTH.ME);
+    return res.data;
+  },
+
+  async logout(): Promise<void> {
+    await api.post(API_ROUTES.AUTH.LOGOUT, {}, { withCredentials: true });
     window.location.href = "/";
   },
 
-  googleSignup: async (payload: GoogleAuthPayload): Promise<AuthSuccessResponse> => {
-    const res = await api.post(API_ROUTES.AUTH.GOOGLE_SIGNUP, payload);
-    return res.data;
-  },
-
-  googleSignin: async (payload: GoogleAuthPayload): Promise<AuthSuccessResponse> => {
-    const res = await api.post(API_ROUTES.AUTH.GOOGLE_SIGNIN, payload);
-    return res.data;
-  },
-
-  forgotPassword: async (email: string): Promise<AuthSuccessResponse> => {
-    const res = await api.post(API_ROUTES.AUTH.FORGOT_PASSWORD, { email });
-    return res.data;
-  },
-
-  resetPassword: async (
-    token: string,
-    password: string,
-  ): Promise<AuthSuccessResponse> => {
-    const res = await api.post(API_ROUTES.AUTH.RESET_PASSWORD, {
-      token,
-      password,
-    });
-    return res.data;
-  },
-
-  getMe: async (): Promise<AuthSuccessResponse> => {
-    const res = await api.get(API_ROUTES.AUTH.ME);
+  async refreshToken() {
+    const res = await api.post(API_ROUTES.AUTH.REFRESH_TOKEN);
     return res.data;
   },
 };

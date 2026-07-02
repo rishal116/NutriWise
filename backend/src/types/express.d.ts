@@ -1,13 +1,16 @@
 import "express";
-import { Role } from "./role";
+import { UserRole } from "../enums/userRole.enum";
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
         userId: string;
-        role: Role;
+        activeRole: UserRole;
+        roles: UserRole[];
       };
     }
   }
 }
+
+export {};

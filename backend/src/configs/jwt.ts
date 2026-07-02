@@ -7,11 +7,12 @@ if (!process.env.ACCESS_TOKEN_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
 
 export const jwtConfig = {
   accessToken: {
-    secret: process.env.ACCESS_TOKEN_SECRET,
-    expiresIn: (process.env.ACCESS_TOKEN_EXPIRES_IN as string),
+    secret: process.env.ACCESS_TOKEN_SECRET!,
+    expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN!,
   },
   refreshToken: {
-    secret: process.env.REFRESH_TOKEN_SECRET,
-    expiresIn: (process.env.REFRESH_TOKEN_EXPIRES_IN as string),
+    secret: process.env.REFRESH_TOKEN_SECRET!,
+    expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN!,
+    cookieMaxAge: Number(process.env.REFRESH_TOKEN_COOKIE_MAX_AGE),
   },
 };

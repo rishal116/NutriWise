@@ -6,13 +6,14 @@ import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
-import axios from "axios";
 
 import { userAuthService } from "@/services/user/userAuth.service";
 import { loginSuccess } from "@/redux/slices/authSlice";
-import { UserLoginSchema } from "@/validation/userAuth.validation";
+import { loginSchema } from "@/validations/auth.validation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
+import { getErrorMessage } from "@/utils/getErrorMessage";
+import Logo from "../common/Logo";
 
 interface FormErrors {
   email?: string;
@@ -29,12 +30,11 @@ export default function LoginForm() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
-  const [serverError, setServerError] = useState<string>("");
 
   const token = useSelector((state: RootState) => state.auth.token);
   useEffect(() => {
     if (token) {
-      router.replace("/home");
+      router.replace("/");
     }
   }, [token, router]);
 
@@ -42,9 +42,8 @@ export default function LoginForm() {
     e?.preventDefault();
 
     setFormErrors({});
-    setServerError("");
 
-    const validation = UserLoginSchema.safeParse({ email, password });
+    const validation = loginSchema.safeParse({ email, password });
 
     if (!validation.success) {
       const errors: FormErrors = {};
@@ -59,39 +58,31 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const res = await userAuthService.login(email, password);
-      if (res.user?.isBlocked) {
-        const msg = "Your account has been blocked. Please contact support.";
-        setServerError(msg);
-        toast.error(msg);
-        return;
-      }
+      const res = await userAuthService.login({ email, password });
+
       if (!res.accessToken) {
         throw new Error("Access token missing");
       }
 
       dispatch(loginSuccess(res.accessToken));
-      toast.success(`Welcome back ${res.user?.fullName}`);
-      router.replace("/home");
-    } catch (error: unknown) {
-      let message = "Something went wrong";
 
-      if (axios.isAxiosError(error)) {
-        message =
-          (error.response?.data as { message?: string })?.message ||
-          error.message;
-      } else if (
-        typeof error === "object" &&
-        error !== null &&
-        "message" in error
-      ) {
-        message = (error as { message: string }).message;
-      } else if (error instanceof Error) {
-        message = error.message;
+      if (!res.isProfileCompleted) {
+        router.replace("/complete-profile");
+        return;
       }
 
-      setServerError(message);
-      toast.error(message);
+      switch (res.activeRole) {
+        case "admin":
+          router.replace("/admin");
+          break;
+        case "nutritionist":
+          router.replace("/nutritionist");
+          break;
+        default:
+          router.replace("/");
+      }
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -106,185 +97,155 @@ export default function LoginForm() {
     }
 
     try {
-      const res = await userAuthService.googleSignin({
+      const res = await userAuthService.googleAuth({
         credential: credentialResponse.credential,
       });
 
-      if (res.user?.isBlocked) {
-        toast.error("Your account has been blocked.");
+      if (!res.accessToken) {
+        toast.error("Login failed");
         return;
       }
 
       dispatch(loginSuccess(res.accessToken));
-      toast.success(`Welcome ${res.user?.fullName}`);
-      router.push("/home");
-    } catch (error: unknown) {
-      let message = "Something went wrong";
-      if (axios.isAxiosError(error)) {
-        message = error.response?.data?.message || message;
-      } else if (error instanceof Error) {
-        message = error.message;
+
+      if (!res.isProfileCompleted) {
+        router.push("/complete-profile");
+        return;
       }
-      toast.error(message || "Google login failed");
+
+      switch (res.activeRole) {
+        case "admin":
+          router.push("/admin");
+          break;
+        case "nutritionist":
+          router.push("/nutritionist");
+          break;
+        default:
+          router.push("/home");
+      }
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error));
     }
   };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleLogin();
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleLogin();
-    }
-  };
-
-  /* =========================
-            UI
-  ========================= */
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 px-4 py-8 sm:py-12 lg:py-16">
-      <div className="max-w-md w-full bg-white shadow-2xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border border-gray-100">
-        {/* HEADER */}
-        <div className="text-center mb-6 sm:mb-8 lg:mb-10">
-          <div className="inline-flex items-center justify-center mb-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-3xl sm:text-4xl">🍃</span>
+    <div className="min-h-screen flex items-center justify-center bg-emerald-50/60 px-4 py-10 sm:py-14">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl shadow-emerald-900/10 border border-emerald-100 p-6 sm:p-8 lg:p-10">
+          <div className="flex flex-col items-center text-center mb-8">
+            <Logo size="large" linkable={false} />
+            <h1 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight mt-5">
+              Welcome back
+            </h1>
+            <p className="text-gray-500 text-sm mt-1.5">
+              Sign in to continue your wellness journey
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  className={`w-full pl-10 pr-3 py-2.5 sm:py-3 rounded-xl bg-gray-50 border ${
+                    formErrors.email
+                      ? "border-red-400"
+                      : "border-gray-200 focus:border-emerald-500"
+                  } focus:bg-white focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm`}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              {formErrors.email && (
+                <p className="text-red-500 text-xs mt-1.5">
+                  {formErrors.email}
+                </p>
+              )}
             </div>
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-            Welcome Back
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Sign in to continue your wellness journey
-          </p>
-        </div>
 
-        {/* SERVER ERROR */}
-        {serverError && (
-          <div className="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{serverError}</p>
-          </div>
-        )}
-
-        {/* FORM */}
-        <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
-          {/* EMAIL */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail
-                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600"
-                size={18}
-              />
-              <input
-                type="email"
-                placeholder="you@example.com"
-                className={`w-full pl-10 sm:pl-11 pr-4 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${
-                  formErrors.email
-                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                    : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
-                }`}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyPress={handleKeyDown}
-              />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <Lock
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className={`w-full pl-10 pr-10 py-2.5 sm:py-3 rounded-xl bg-gray-50 border ${
+                    formErrors.password
+                      ? "border-red-400"
+                      : "border-gray-200 focus:border-emerald-500"
+                  } focus:bg-white focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm`}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {formErrors.password && (
+                <p className="text-red-500 text-xs mt-1.5">
+                  {formErrors.password}
+                </p>
+              )}
             </div>
-            {formErrors.email && (
-              <p className="text-red-500 text-xs sm:text-sm mt-1">
-                {formErrors.email}
-              </p>
-            )}
-          </div>
 
-          {/* PASSWORD */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock
-                className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-emerald-600"
-                size={18}
-              />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                className={`w-full pl-10 sm:pl-11 pr-12 py-3 sm:py-3.5 rounded-lg sm:rounded-xl bg-gray-50 border transition-all text-sm sm:text-base outline-none focus:ring-2 focus:bg-white ${
-                  formErrors.password
-                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                    : "border-gray-200 focus:border-emerald-500 focus:ring-emerald-100"
-                }`}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
+            <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                onClick={() => router.push("/forgot-password")}
+                className="text-xs text-emerald-600 font-semibold hover:underline"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                Forgot Password?
               </button>
             </div>
-            {formErrors.password && (
-              <p className="text-red-500 text-xs sm:text-sm mt-1">
-                {formErrors.password}
-              </p>
-            )}
-          </div>
 
-          {/* FORGOT PASSWORD */}
-          <div className="flex justify-end">
             <button
-              type="button"
-              onClick={() => router.push("/forgot-password")}
-              className="text-xs sm:text-sm text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+              type="submit"
+              disabled={loading}
+              className="w-full mt-1 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-2.5 sm:py-3 rounded-xl font-semibold transition-colors flex justify-center items-center gap-2 shadow-sm shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-not-allowed text-sm"
             >
-              Forgot Password?
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Signing in...
+                </>
+              ) : (
+                <>
+                  Sign In <LogIn className="w-4 h-4" />
+                </>
+              )}
             </button>
+          </form>
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3 bg-white text-gray-400">
+                Or continue with
+              </span>
+            </div>
           </div>
 
-          {/* SUBMIT BUTTON */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-3 sm:py-4 rounded-lg sm:rounded-xl font-semibold transition-all flex justify-center items-center gap-2 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="animate-spin" size={20} />
-                <span>Signing in...</span>
-              </>
-            ) : (
-              <>
-                <span>Sign In</span>
-                <LogIn size={20} />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* DIVIDER */}
-        <div className="relative my-6 sm:my-8">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
-          </div>
-          <div className="relative flex justify-center text-xs sm:text-sm">
-            <span className="px-4 bg-white text-gray-500">
-              Or continue with
-            </span>
-          </div>
-        </div>
-
-        {/* GOOGLE LOGIN */}
-        <div className="flex justify-center">
-          <div className="w-full">
+          <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => toast.error("Google login failed")}
@@ -296,13 +257,12 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {/* FOOTER LINK */}
-        <p className="text-center text-xs sm:text-sm text-gray-600 mt-6 sm:mt-8">
+        <p className="text-center text-sm text-gray-600 mt-6">
           {`Don't have an account? `}
           <button
             type="button"
             onClick={() => router.push("/signup")}
-            className="text-emerald-600 hover:text-emerald-700 font-semibold hover:underline"
+            className="text-emerald-600 font-semibold hover:underline"
           >
             Sign up
           </button>

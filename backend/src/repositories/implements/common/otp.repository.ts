@@ -1,5 +1,4 @@
 import { injectable } from "inversify";
-import { Types } from "mongoose";
 import { OtpModel, IOTP } from "../../../models/otp.model";
 import { IOtpRepository } from "../../interfaces/common/IOtpRepository";
 

@@ -1,75 +1,58 @@
-// ================================
-// Health Domain Types
-// ================================
-
 export type ActivityLevel =
   | "sedentary"
-  | "light"
-  | "moderate"
+  | "lightly_active"
+  | "moderately_active"
   | "active"
   | "very_active";
-
-export type FitnessLevel =
-  | "beginner"
-  | "intermediate"
-  | "advanced";
-
-export type DietType =
-  | "veg"
-  | "non_veg"
-  | "vegan"
-  | "eggetarian";
-
-export type GoalType =
-  | "weight_loss"
-  | "weight_gain"
-  | "muscle_build"
-  | "diabetes_management"
-  | "pcos_management"
-  | "general_fitness"
-  | "meditation";
-
-// ================================
-// Enum Arrays (for mongoose)
-// ================================
-
 export const ACTIVITY_LEVELS = [
   "sedentary",
-  "light",
-  "moderate",
+  "lightly_active",
+  "moderately_active",
   "active",
   "very_active",
 ] as const;
+export type ActivityLevelType = (typeof ACTIVITY_LEVELS)[number];
 
-export const FITNESS_LEVELS = [
-  "beginner",
-  "intermediate",
-  "advanced",
-] as const;
+export type DietType = "veg" | "non_veg" | "vegan" | "eggetarian";
+export const DIET_TYPES = ["veg", "non_veg", "vegan", "eggetarian"] as const;
+export type DietTypeEnum = (typeof DIET_TYPES)[number];
 
-export const DIET_TYPES = [
-  "veg",
-  "non_veg",
-  "vegan",
-  "eggetarian",
-] as const;
-
+export type GoalType =
+  | "fitness_weight_loss"
+  | "fitness_weight_gain"
+  | "muscle_build"
+  | "medical_diabetes"
+  | "medical_pcos"
+  | "lifestyle_general"
+  | "mental_wellness";
 export const GOALS = [
-  "weight_loss",
-  "weight_gain",
+  "fitness_weight_loss",
+  "fitness_weight_gain",
   "muscle_build",
-  "diabetes_management",
-  "pcos_management",
-  "general_fitness",
-  "meditation",
+  "medical_diabetes",
+  "medical_pcos",
+  "lifestyle_general",
+  "mental_wellness",
 ] as const;
+export type GoalTypeEnum = (typeof GOALS)[number];
 
+export type FitnessLevel = "beginner" | "intermediate" | "advanced";
+export const FITNESS_LEVELS = ["beginner", "intermediate", "advanced"] as const;
+export type FitnessLevelType = (typeof FITNESS_LEVELS)[number];
+
+export type TimelineType =
+  | "4_weeks"
+  | "8_weeks"
+  | "12_weeks"
+  | "16_weeks"
+  | "20_weeks"
+  | "24_weeks";
 export const TIMELINES = [
-  "4_WEEKS",
-  "8_WEEKS",
-  "12_WEEKS",
-  "24_WEEKS",
-  "CUSTOM",
+  "4_weeks",
+  "8_weeks",
+  "12_weeks",
+  "16_weeks",
+  "20_weeks",
+  "24_weeks",
 ] as const;
-
-export type TimelineType = (typeof TIMELINES)[number];
+export type TimelineTypeEnum = (typeof TIMELINES)[number];

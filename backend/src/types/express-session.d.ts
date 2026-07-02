@@ -1,5 +1,4 @@
 import "express-session";
-import { UserRole } from "../enums/userRole.enum"; 
 
 declare module "express-session" {
   interface SessionData {
@@ -7,7 +6,6 @@ declare module "express-session" {
       fullName: string;
       email: string;
       password: string;
-      role: UserRole; 
     };
   }
 }

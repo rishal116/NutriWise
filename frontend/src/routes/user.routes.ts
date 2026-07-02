@@ -5,10 +5,11 @@ export const API_ROUTES = {
     LOGOUT: "/logout",
     VERIFY_OTP: "/verify-otp",
     RESEND_OTP: "/resend-otp",
-    GOOGLE_SIGNUP: "/google",
+    GOOGLE: "/google",
     GOOGLE_SIGNIN: "/google-signin",
     FORGOT_PASSWORD: "/forgot-password",
     RESET_PASSWORD: "/reset-password",
+    REFRESH_TOKEN:"/refresh-token",
     ME: "/me",
   },
   CHECKOUT: {

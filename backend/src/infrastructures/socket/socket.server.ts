@@ -1,9 +1,12 @@
 import { Server, Socket } from "socket.io";
 import { Server as HTTPServer } from "http";
-import jwt from "jsonwebtoken";
+import jwt, {
+  JsonWebTokenError,
+  TokenExpiredError,
+} from "jsonwebtoken";
 
 import { jwtConfig } from "../../configs/jwt";
-import { ROLES, Role } from "../../types/role";
+import { UserRole } from "../../enums/userRole.enum";
 import { registerChatSocket } from "./chat.socket";
 import { registerVideoSocket } from "./video.socket";
 
@@ -11,7 +14,7 @@ let io: Server;
 
 interface JwtPayload {
   userId: string;
-  role: Role;
+  activeRole: UserRole;
 }
 
 export const initializeSocket = (server: HTTPServer) => {
@@ -22,10 +25,9 @@ export const initializeSocket = (server: HTTPServer) => {
     },
   });
 
-  // 🔐 Socket Authentication Middleware
   io.use((socket: Socket, next) => {
     try {
-      const token = socket.handshake.auth?.token;
+      const token = socket.handshake.auth.token;
 
       if (!token) {
         return next(new Error("ACCESS_TOKEN_MISSING"));
@@ -33,26 +35,25 @@ export const initializeSocket = (server: HTTPServer) => {
 
       const decoded = jwt.verify(
         token,
-        jwtConfig.accessToken.secret
+        jwtConfig.accessToken.secret,
       ) as JwtPayload;
 
-      if (!ROLES.includes(decoded.role)) {
-        return next(new Error("INVALID_ROLE"));
-      }
-
-      // Attach verified user to socket
       socket.data.user = {
         userId: decoded.userId,
-        role: decoded.role,
+        activeRole: decoded.activeRole,
       };
 
-      next();
-    } catch (error: any) {
-      if (error.name === "TokenExpiredError") {
+      return next();
+    } catch (error: unknown) {
+      if (error instanceof TokenExpiredError) {
         return next(new Error("ACCESS_TOKEN_EXPIRED"));
       }
 
-      return next(new Error("INVALID_TOKEN"));
+      if (error instanceof JsonWebTokenError) {
+        return next(new Error("INVALID_TOKEN"));
+      }
+
+      return next(new Error("SOCKET_AUTH_FAILED"));
     }
   });
 
@@ -75,5 +76,6 @@ export const getIO = () => {
   if (!io) {
     throw new Error("Socket not initialized");
   }
+
   return io;
 };

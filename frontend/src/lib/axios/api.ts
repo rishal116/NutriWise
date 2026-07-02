@@ -1,8 +1,16 @@
-import axios from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { API_ROUTES } from "@/routes/user.routes";
 import { store } from "@/redux/store";
-import { logout } from "@/redux/slices/authSlice";
-import { userAuthService } from "@/services/user/userAuth.service";
-import { setToken } from "@/redux/slices/authSlice";
+import { logout, setToken } from "@/redux/slices/authSlice";
+
+interface RetryRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+interface ApiErrorResponse {
+  success: boolean;
+  message: string;
+}
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -12,92 +20,80 @@ export const api = axios.create({
   },
 });
 
-// REQUEST INTERCEPTOR
 api.interceptors.request.use(
   (config) => {
-    if (typeof window !== "undefined") {
-      const token = store.getState().auth.token;
-      if (token) config.headers["Authorization"] = `Bearer ${token}`;
+    const token = store.getState().auth.token;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// RESPONSE INTERCEPTOR
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError<ApiErrorResponse>) => {
+    const originalRequest = error.config as RetryRequestConfig;
 
-    const authEndpoints = ["/login", "/signup", "/google"];
-
-    if (authEndpoints.some((url) => originalRequest.url?.includes(url))) {
+    if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    if (originalRequest._retry) {
-      return Promise.reject(error.response?.data || error);
+    const ignoredRoutes = [
+      API_ROUTES.AUTH.LOGIN,
+      API_ROUTES.AUTH.SIGNUP,
+      API_ROUTES.AUTH.VERIFY_OTP,
+      API_ROUTES.AUTH.RESEND_OTP,
+      API_ROUTES.AUTH.GOOGLE,
+      API_ROUTES.AUTH.FORGOT_PASSWORD,
+      API_ROUTES.AUTH.RESET_PASSWORD,
+    ];
+
+    if (ignoredRoutes.some((route) => originalRequest.url?.includes(route))) {
+      return Promise.reject(error);
     }
 
-    if (originalRequest.url?.includes("/refresh-token")) {
-      return Promise.reject(error.response?.data || error);
+    if (
+      originalRequest.url?.includes(API_ROUTES.AUTH.REFRESH_TOKEN) ||
+      originalRequest._retry
+    ) {
+      store.dispatch(logout());
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+
+      return Promise.reject(error);
     }
 
-    // ✅ 401 TOKEN REFRESH
     if (error.response?.status === 401) {
       originalRequest._retry = true;
 
       try {
-        const res = await api.post("/refresh-token");
+        const response = await api.post<{
+          success: boolean;
+          accessToken: string;
+        }>(API_ROUTES.AUTH.REFRESH_TOKEN);
 
-        const newToken = res.data?.accessToken;
-        if (!newToken) throw new Error("No access token");
+        const accessToken = response.data.accessToken;
 
-        store.dispatch(setToken(newToken));
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        store.dispatch(setToken(accessToken));
+
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
         return api(originalRequest);
-      } catch (err) {
+      } catch {
         store.dispatch(logout());
-        window.location.href = "/";
 
-        if (axios.isAxiosError(err)) {
-          return Promise.reject(err.response?.data || { message: err.message });
+        if (typeof window !== "undefined") {
+          window.location.href = "/";
         }
-
-        return Promise.reject({ message: "Something went wrong" });
+        return Promise.reject(error);
       }
     }
-
-    // ✅ 403 LOGOUT
-    if (error.response?.status === 403) {
-      store.dispatch(logout());
-      await userAuthService.logout();
-      window.location.href = "/";
-      return Promise.reject(error.response?.data);
-    }
-
-    // ✅ 🔥 HANDLE 404 + 500 + OTHERS
-    if (error.response) {
-      const message = error.response.data?.message || "Something went wrong";
-
-      return Promise.reject({
-        status: error.response.status,
-        message,
-      });
-    }
-
-    // ✅ NETWORK ERROR
-    if (error.request) {
-      return Promise.reject({
-        message: "Network error. Please check your connection.",
-      });
-    }
-
-    // ✅ FALLBACK
-    return Promise.reject({
-      message: error.message,
-    });
+    return Promise.reject(error);
   },
 );

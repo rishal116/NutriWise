@@ -1,57 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
+import { UserRole } from "@/enums/user/userRole.enum";
 
-type Role = "client" | "nutritionist" | "admin";
+interface JwtPayload {
+  userId: string;
+  activeRole: UserRole;
+}
 
-const publicRoutes = [
-  "/",
-  "/login",
-  "/signup",
-  "/verify-otp",
-  "/forgot-password",
-  "/reset-password",
-  "/admin/login",
+const protectedRoutes = [
+  "/profile",
+  "/messages",
+  "/settings",
+  "/notifications",
+  "/complete-profile",
 ];
 
 export const protectRoutes = (req: NextRequest) => {
-  const path = req.nextUrl.pathname;
-  if (publicRoutes.includes(path)) {
-    return null;
+  const { pathname } = req.nextUrl;
+
+  if (pathname.startsWith("/admin")) {
+    return authorize(req, UserRole.ADMIN);
   }
-  
-  let tokenCookieName = "refreshToken";
-  let loginRedirect = "/login";
-  if (path.startsWith("/admin")) {
-    tokenCookieName = "adminRefreshToken";
-    loginRedirect = "/admin/login";
+
+  if (pathname.startsWith("/nutritionist")) {
+    return authorize(req, UserRole.NUTRITIONIST);
   }
-  
-  const token = req.cookies.get(tokenCookieName)?.value;
+
+  if (pathname.startsWith("/user")) {
+    return authorize(req);
+  }
+
+  // General authenticated routes
+  const isProtected = protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+
+  if (isProtected) {
+    return authorize(req);
+  }
+
+  // Everything else is public
+  return NextResponse.next();
+};
+
+function authorize(
+  req: NextRequest,
+  requiredRole?: UserRole,
+): NextResponse | null {
+  const token = req.cookies.get("refreshToken")?.value;
+
   if (!token) {
-    return NextResponse.redirect(new URL(loginRedirect, req.url));
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   try {
-    const decoded = jwt.decode(token) as { userId: string; role: Role } | null;
-    if (!decoded?.role) {
-      return NextResponse.redirect(new URL(loginRedirect, req.url));
+    const payload = jwt.decode(token) as JwtPayload | null;
+
+    if (!payload) {
+      return NextResponse.redirect(new URL("/login", req.url));
     }
-    const { role } = decoded;
-    if (path.startsWith("/admin") && role !== "admin") {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
-    }
-    
-    if (path.startsWith("/nutritionist") && !["nutritionist", "admin"].includes(role)) {
+
+    if (requiredRole && payload.activeRole !== requiredRole) {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
-    if (path.startsWith("/") && !["client", "nutritionist", "admin"].includes(role)) {
-      return NextResponse.redirect(new URL("/unauthorized", req.url));
-    }
-
-    return null;
-  } catch (err) {
-    console.log("JWT decode failed:", err);
-    return NextResponse.redirect(new URL(loginRedirect, req.url));
+    return NextResponse.next();
+  } catch {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
-};
+}

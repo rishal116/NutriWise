@@ -41,14 +41,7 @@ import { UserAccountService } from "../services/implements/user/userAccount.serv
 import { IUserProgramRepository } from "../repositories/interfaces/user/IUserProgramRepository";
 import { UserProgramRepository } from "../repositories/implements/user/userProgram.repository";
 
-
 // ---------------- ADMIN ----------------
-import { IAdminAuthController } from "../controllers/interfaces/admin/IAdminAuthController";
-import { AdminAuthController } from "../controllers/implementations/admin/adminAuth.controller";
-import { IAdminAuthService } from "../services/interfaces/admin/IAdminAuthService";
-import { AdminAuthService } from "../services/implements/admin/adminAuth.service";
-import { IAdminAuthRepository } from "../repositories/interfaces/admin/IAdminAuthRepository";
-import { AdminAuthRepository } from "../repositories/implements/admin/admin.repository";
 
 import { IAdminClientController } from "../controllers/interfaces/admin/IAdminClientController";
 import { AdminClientController } from "../controllers/implementations/admin/adminClient.controller";
@@ -71,15 +64,11 @@ import { NotificationService } from "../services/implements/admin/adminNotificat
 import { INotificationRepository } from "../repositories/interfaces/common/INotificationRepository";
 import { NotificationRepository } from "../repositories/implements/common/notification.repository";
 
-
-
-
 // ---------------- NUTRITIONIST ----------------
 import { INutritionistAuthController } from "../controllers/interfaces/nutritionist/INutritionistAuthController";
 import { NutritionistAuthController } from "../controllers/implementations/nutritionist/nutritionistAuth.controller";
 import { INutritionistAuthService } from "../services/interfaces/nutritionist/INutritionistAuthService";
 import { NutritionistAuthService } from "../services/implements/nutritionist/nutriAuth.service";
-
 
 import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutritionistProfileRepository";
 import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutritionistProfile.repository";
@@ -116,7 +105,6 @@ import { WalletRepository } from "../repositories/implements/common/wallet.repos
 import { PaymentRepository } from "../repositories/implements/common/payment.repository";
 import { IPaymentRepository } from "../repositories/interfaces/common/IPaymentRepository";
 
-
 import { IConversationController } from "../controllers/interfaces/chat/IConversationController";
 import { ConversationController } from "../controllers/implementations/chat/conversation.controller";
 import { IMessageController } from "../controllers/interfaces/chat/IMessageController";
@@ -136,7 +124,6 @@ import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMee
 import { UserMeetingsController } from "../controllers/implementations/user/userMeetings.controller";
 import { IUserMeetingsService } from "../services/interfaces/user/IUserMeetingsService";
 import { UserMeetingsService } from "../services/implements/user/userMeetings.service";
-
 
 // socket
 import { ISocketService } from "../services/interfaces/socket/ISocketService";
@@ -184,123 +171,241 @@ import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupC
 import { UserGroupController } from "../controllers/implementations/user/userGroup.controller";
 import { IUserGroupService } from "../services/interfaces/user/IUserGroupService";
 import { UserGroupService } from "../services/implements/user/userGroup.service";
-
-
+import { IPasswordResetRepository } from "../repositories/interfaces/common/IPasswordResetRepository";
+import { PasswordResetRepository } from "../repositories/implements/common/passwordReset.repository";
+import { IOnboardingController } from "../controllers/interfaces/user/IOnboardingController";
+import { OnboardingController } from "../controllers/implementations/user/onboarding.controller";
+import { IOnboardingService } from "../services/interfaces/user/IOnboardingService";
+import { OnboardingService } from "../services/implements/user/onboarding.service";
 
 // ---------------- CONTAINER ----------------
 const container = new Container();
 
 // -------- USER BINDINGS --------
-container.bind<IUserAuthController>(TYPES.IUserAuthController).to(UserAuthController);
+container
+  .bind<IUserAuthController>(TYPES.IUserAuthController)
+  .to(UserAuthController);
 container.bind<IUserAuthService>(TYPES.IUserAuthService).to(UserAuthService);
 container.bind<IUserRepository>(TYPES.IUserRepository).to(UserRepository);
+container
+  .bind<IPasswordResetRepository>(TYPES.IPasswordResetRepository)
+  .to(PasswordResetRepository);
 container.bind<IOTPService>(TYPES.IOTPService).to(OtpService);
 container.bind<IOtpRepository>(TYPES.IOtpRepository).to(OtpRepository);
-container.bind<INutritionistController>(TYPES.INutritionistController).to(NutritionistController);
-container.bind<INutritionistService>(TYPES.INutritionistService).to(NutritionistService);
-container.bind<IUserProfileController>(TYPES.IUserProfileController).to(UserProfileController);
-container.bind<IUserProfileService>(TYPES.IUserProfileService).to(UserProfileService);
-container.bind<IHealthDetailsController>(TYPES.IHealthDetailsController).to(HealthDetailsController);
-container.bind<IHealthDetailsRepository>(TYPES.IHealthDetailsRepository).to(HealthDetailsRepository);
-container.bind<IHealthDetailsService>(TYPES.IHealthDetailsService).to(HealthDetailsService);
-container.bind<IUserPlanRepository>(TYPES.IUserPlanRepository).to(UserPlanRepository);
-container.bind<IUserPlanController>(TYPES.IUserPlanController).to(UserPlanController)
-container.bind<IUserPlanService>(TYPES.IUserPlanService).to(UserPlanService)
-container.bind<IUserAccountService>(TYPES.IUserAccountService).to(UserAccountService)
-container.bind<IUserAccountController>(TYPES.IUserAccountController).to(UserAccountController)
-container.bind<IUserProgramRepository>(TYPES.IUserProgramRepository).to(UserProgramRepository)
-container.bind<IProgramDayRepository>(TYPES.IProgramDayRepository).to(ProgramDayRepository)
-container.bind<IUserProgramController>(TYPES.IUserProgramController).to(UserProgramController)
-container.bind<IUserProgramService>(TYPES.IUserProgramService).to(UserProgramService)
-container.bind<ITaskController>(TYPES.ITaskController).to(TaskController)
-container.bind<ITaskService>(TYPES.ITaskService).to(TaskService)
-container.bind<ITaskLogRepository>(TYPES.ITaskLogRepository).to(TaskLogRepository)
-container.bind<IHealthProgressRepository>(TYPES.IHealthProgressRepository).to(HealthProgressRepository)
-container.bind<IHealthProgressService>(TYPES.IHealthProgressService).to(HealthProgressService)
-container.bind<IHealthProgressController>(TYPES.IHealthProgressController).to(HealthProgressController)
-container.bind<IReviewController>(TYPES.IReviewController).to(ReviewController)
-container.bind<IReviewService>(TYPES.IReviewService).to(ReviewService)
-container.bind<IReviewRepository>(TYPES.IReviewRepository).to(ReviewRepository)
-container.bind<IUserGroupController>(TYPES.IUserGroupController).to(UserGroupController)
-container.bind<IUserGroupService>(TYPES.IUserGroupService).to(UserGroupService)
+container
+  .bind<INutritionistController>(TYPES.INutritionistController)
+  .to(NutritionistController);
+container
+  .bind<INutritionistService>(TYPES.INutritionistService)
+  .to(NutritionistService);
+container
+  .bind<IUserProfileController>(TYPES.IUserProfileController)
+  .to(UserProfileController);
+container
+  .bind<IUserProfileService>(TYPES.IUserProfileService)
+  .to(UserProfileService);
+container
+  .bind<IHealthDetailsController>(TYPES.IHealthDetailsController)
+  .to(HealthDetailsController);
+container
+  .bind<IHealthDetailsRepository>(TYPES.IHealthDetailsRepository)
+  .to(HealthDetailsRepository);
+container
+  .bind<IHealthDetailsService>(TYPES.IHealthDetailsService)
+  .to(HealthDetailsService);
+container
+  .bind<IUserPlanRepository>(TYPES.IUserPlanRepository)
+  .to(UserPlanRepository);
+container
+  .bind<IUserPlanController>(TYPES.IUserPlanController)
+  .to(UserPlanController);
+container.bind<IUserPlanService>(TYPES.IUserPlanService).to(UserPlanService);
+container
+  .bind<IUserAccountService>(TYPES.IUserAccountService)
+  .to(UserAccountService);
+container
+  .bind<IUserAccountController>(TYPES.IUserAccountController)
+  .to(UserAccountController);
+container
+  .bind<IUserProgramRepository>(TYPES.IUserProgramRepository)
+  .to(UserProgramRepository);
+container
+  .bind<IProgramDayRepository>(TYPES.IProgramDayRepository)
+  .to(ProgramDayRepository);
+container
+  .bind<IUserProgramController>(TYPES.IUserProgramController)
+  .to(UserProgramController);
+container
+  .bind<IUserProgramService>(TYPES.IUserProgramService)
+  .to(UserProgramService);
+container.bind<ITaskController>(TYPES.ITaskController).to(TaskController);
+container.bind<ITaskService>(TYPES.ITaskService).to(TaskService);
+container
+  .bind<ITaskLogRepository>(TYPES.ITaskLogRepository)
+  .to(TaskLogRepository);
+container
+  .bind<IHealthProgressRepository>(TYPES.IHealthProgressRepository)
+  .to(HealthProgressRepository);
+container
+  .bind<IHealthProgressService>(TYPES.IHealthProgressService)
+  .to(HealthProgressService);
+container
+  .bind<IHealthProgressController>(TYPES.IHealthProgressController)
+  .to(HealthProgressController);
+container.bind<IReviewController>(TYPES.IReviewController).to(ReviewController);
+container.bind<IReviewService>(TYPES.IReviewService).to(ReviewService);
+container.bind<IReviewRepository>(TYPES.IReviewRepository).to(ReviewRepository);
+container
+  .bind<IUserGroupController>(TYPES.IUserGroupController)
+  .to(UserGroupController);
+container.bind<IUserGroupService>(TYPES.IUserGroupService).to(UserGroupService);
 
-
-
+container.bind<IOnboardingController>(TYPES.IOnboardingController).to(OnboardingController)
+container.bind<IOnboardingService>(TYPES.IOnboardingService).to(OnboardingService)
 
 // -------- ADMIN BINDINGS --------
-container.bind<IAdminAuthController>(TYPES.IAdminAuthController).to(AdminAuthController);
-container.bind<IAdminAuthService>(TYPES.IAdminAuthService).to(AdminAuthService);
-container.bind<IAdminAuthRepository>(TYPES.IAdminAuthRepository).to(AdminAuthRepository);
-container.bind<IAdminClientController>(TYPES.IAdminClientController).to(AdminClientController);
-container.bind<IAdminClientService>(TYPES.IAdminClientService).to(AdminClientService);
-container.bind<IAdminClientRepository>(TYPES.IAdminClientRepository).to(AdminClientRepository);
-container.bind<IAdminNutritionistController>(TYPES.IAdminNutritionistController).to(AdminNutritionistController);
-container.bind<IAdminNutritionistService>(TYPES.IAdminNutritionistService).to(AdminNutritionistService);
-container.bind<IAdminNutritionistRepository>(TYPES.IAdminNutritionistRepository).to(AdminNutritionistRepository);
-container.bind<IAdminNotificationController>(TYPES.IAdminNotificationController).to(AdminNotificationController);
-container.bind<INotificationService>(TYPES.INotificationService).to(NotificationService);
-container.bind<INotificationRepository>(TYPES.INotificationRepository).to(NotificationRepository);
 
+container
+  .bind<IAdminClientController>(TYPES.IAdminClientController)
+  .to(AdminClientController);
+container
+  .bind<IAdminClientService>(TYPES.IAdminClientService)
+  .to(AdminClientService);
+container
+  .bind<IAdminClientRepository>(TYPES.IAdminClientRepository)
+  .to(AdminClientRepository);
+container
+  .bind<IAdminNutritionistController>(TYPES.IAdminNutritionistController)
+  .to(AdminNutritionistController);
+container
+  .bind<IAdminNutritionistService>(TYPES.IAdminNutritionistService)
+  .to(AdminNutritionistService);
+container
+  .bind<IAdminNutritionistRepository>(TYPES.IAdminNutritionistRepository)
+  .to(AdminNutritionistRepository);
+container
+  .bind<IAdminNotificationController>(TYPES.IAdminNotificationController)
+  .to(AdminNotificationController);
+container
+  .bind<INotificationService>(TYPES.INotificationService)
+  .to(NotificationService);
+container
+  .bind<INotificationRepository>(TYPES.INotificationRepository)
+  .to(NotificationRepository);
 
 // -------- NUTRITIONIST BINDINGS --------
-container.bind<INutritionistAuthController>(TYPES.INutritionistAuthController).to(NutritionistAuthController);
-container.bind<INutritionistAuthService>(TYPES.INutritionistAuthService).to(NutritionistAuthService);
-container.bind<IUserNutritionistProfileRepository>(TYPES.IUserNutritionistProfileRepository).to(UserNutritionistRepository);
+container
+  .bind<INutritionistAuthController>(TYPES.INutritionistAuthController)
+  .to(NutritionistAuthController);
+container
+  .bind<INutritionistAuthService>(TYPES.INutritionistAuthService)
+  .to(NutritionistAuthService);
+container
+  .bind<IUserNutritionistProfileRepository>(
+    TYPES.IUserNutritionistProfileRepository,
+  )
+  .to(UserNutritionistRepository);
 
+container
+  .bind<INutritionistProfileRepository>(TYPES.INutritionistProfileRepository)
+  .to(NutritionistProfileRepository);
 
-container.bind<INutritionistProfileRepository>(TYPES.INutritionistProfileRepository).to(NutritionistProfileRepository);
+container
+  .bind<INutritionistPlanController>(TYPES.INutritionistPlanController)
+  .to(NutritionistPlanController);
+container
+  .bind<INutritionistPlanService>(TYPES.INutritionistPlanService)
+  .to(NutritionistPlanService);
+container
+  .bind<INutritionistPlanRepository>(TYPES.INutritionistPlanRepository)
+  .to(NutritionistPlanRepository);
 
+container
+  .bind<INutritionistSubscriptionController>(
+    TYPES.INutritionistSubscriptionController,
+  )
+  .to(NutritionistSubscriptionController);
 
-container.bind<INutritionistPlanController>(TYPES.INutritionistPlanController).to(NutritionistPlanController);
-container.bind<INutritionistPlanService>(TYPES.INutritionistPlanService).to(NutritionistPlanService);
-container.bind<INutritionistPlanRepository>(TYPES.INutritionistPlanRepository).to(NutritionistPlanRepository);
-
-container.bind<INutritionistSubscriptionController>(TYPES.INutritionistSubscriptionController).to(NutritionistSubscriptionController);
-
-container.bind<INutriMeetingsController>(TYPES.INutriMeetingsController).to(NutriMeetingsController)
-container.bind<INutriMeetingsService>(TYPES.INutriMeetingsService).to(NutriMeetingsService)
-container.bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository).to(NutriMeetingsRepository)
-container.bind<INutriProgramController>(TYPES.INutriProgramController).to(NutriProgramController)
-container.bind<INutriProgramService>(TYPES.INutriProgramService).to(NutriProgramService)
-container.bind<INutriSubscriptionService>(TYPES.INutriSubscriptionService).to(NutriSubscriptionService)
-container.bind<INutriGroupController>(TYPES.INutriGroupController).to(NutriGroupController)
-container.bind<INutriGroupService>(TYPES.INutriGroupService).to(NutriGroupService)
-
-
+container
+  .bind<INutriMeetingsController>(TYPES.INutriMeetingsController)
+  .to(NutriMeetingsController);
+container
+  .bind<INutriMeetingsService>(TYPES.INutriMeetingsService)
+  .to(NutriMeetingsService);
+container
+  .bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository)
+  .to(NutriMeetingsRepository);
+container
+  .bind<INutriProgramController>(TYPES.INutriProgramController)
+  .to(NutriProgramController);
+container
+  .bind<INutriProgramService>(TYPES.INutriProgramService)
+  .to(NutriProgramService);
+container
+  .bind<INutriSubscriptionService>(TYPES.INutriSubscriptionService)
+  .to(NutriSubscriptionService);
+container
+  .bind<INutriGroupController>(TYPES.INutriGroupController)
+  .to(NutriGroupController);
+container
+  .bind<INutriGroupService>(TYPES.INutriGroupService)
+  .to(NutriGroupService);
 
 // common
 container.bind<ICheckoutService>(TYPES.ICheckoutService).to(CheckoutService);
 
-container.bind<ICheckoutController>(TYPES.ICheckoutController).to(CheckoutController);
+container
+  .bind<ICheckoutController>(TYPES.ICheckoutController)
+  .to(CheckoutController);
 
 container.bind<IStripeService>(TYPES.IStripeService).to(StripeService);
-container.bind<IStripeWebhookService>(TYPES.IStripeWebhookService).to(StripeWebhookService);
+container
+  .bind<IStripeWebhookService>(TYPES.IStripeWebhookService)
+  .to(StripeWebhookService);
 
-container.bind<IStripeWebhookController>(TYPES.IStripeWebhookController).to(StripeWebhookController);
+container
+  .bind<IStripeWebhookController>(TYPES.IStripeWebhookController)
+  .to(StripeWebhookController);
 container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
-container.bind<IPaymentRepository>(TYPES.IPaymentRepository).to(PaymentRepository);
+container
+  .bind<IPaymentRepository>(TYPES.IPaymentRepository)
+  .to(PaymentRepository);
 
 // community
 
-
-
-
 // chat
-container.bind<IConversationController>(TYPES.IConversationController).to(ConversationController)
-container.bind<IMessageController>(TYPES.IMessageController).to(MessageController)
-container.bind<IConversationService>(TYPES.IConversationService).to(ConversationService)
-container.bind<IMessageService>(TYPES.IMessageService).to(MessageService)
-container.bind<IConversationRepository>(TYPES.IConversationRepository).to(ConversationRepository)
-container.bind<IMessageRepository>(TYPES.IMessageRepository).to(MessageRepository)
-container.bind<IConversationMemberRepository>(TYPES.IConversationMemberRepository).to(ConversationMemberRepository)
-container.bind<IMessageReceiptRepository>(TYPES.IMessageReceiptRepository).to(MessageReceiptRepository)
-
+container
+  .bind<IConversationController>(TYPES.IConversationController)
+  .to(ConversationController);
+container
+  .bind<IMessageController>(TYPES.IMessageController)
+  .to(MessageController);
+container
+  .bind<IConversationService>(TYPES.IConversationService)
+  .to(ConversationService);
+container.bind<IMessageService>(TYPES.IMessageService).to(MessageService);
+container
+  .bind<IConversationRepository>(TYPES.IConversationRepository)
+  .to(ConversationRepository);
+container
+  .bind<IMessageRepository>(TYPES.IMessageRepository)
+  .to(MessageRepository);
+container
+  .bind<IConversationMemberRepository>(TYPES.IConversationMemberRepository)
+  .to(ConversationMemberRepository);
+container
+  .bind<IMessageReceiptRepository>(TYPES.IMessageReceiptRepository)
+  .to(MessageReceiptRepository);
 
 // video
-container.bind<IUserMeetingsController>(TYPES.IUserMeetingsController).to(UserMeetingsController)
-container.bind<IUserMeetingsService>(TYPES.IUserMeetingsService).to(UserMeetingsService)
+container
+  .bind<IUserMeetingsController>(TYPES.IUserMeetingsController)
+  .to(UserMeetingsController);
+container
+  .bind<IUserMeetingsService>(TYPES.IUserMeetingsService)
+  .to(UserMeetingsService);
 
 // socket
-container.bind<ISocketService>(TYPES.ISocketService).to(SocketService)
+container.bind<ISocketService>(TYPES.ISocketService).to(SocketService);
 
 export { container };

@@ -21,7 +21,7 @@ import { ITaskController } from "../controllers/interfaces/user/ITaskController"
 import { IHealthProgressController } from "../controllers/interfaces/user/IHealthProgressController";
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupController";
-
+import { IOnboardingController } from "../controllers/interfaces/user/IOnboardingController";
 
 const router = express.Router();
 
@@ -70,20 +70,29 @@ const reviewController = container.get<IReviewController>(
 );
 
 const groupController = container.get<IUserGroupController>(
-  TYPES.IUserGroupController
-)
+  TYPES.IUserGroupController,
+);
+
+const onboardingController = container.get<IOnboardingController>(
+  TYPES.IOnboardingController,
+);
 
 router.post("/signup", userAuthController.signup);
 router.post("/verify-otp", userAuthController.verifyOtp);
 router.post("/resend-otp", userAuthController.resendOtp);
 router.post("/login", userAuthController.login);
-router.post("/google", userAuthController.googleLogin);
+router.post("/google", userAuthController.googleAuth);
 router.post("/logout", userAuthController.logout);
 router.post("/forgot-password", userAuthController.forgotPassword);
 router.post("/reset-password", userAuthController.resetPassword);
 router.post("/refresh-token", refreshToken);
-router.get("/me", authMiddleware, blockLoggedInUser, userAuthController.getMe);
-router.post("/google-signin", userAuthController.googleSignin);
+router.get("/me", authMiddleware, userAuthController.getMe);
+
+router.patch(
+  "/complete-profile",
+  authMiddleware,
+  onboardingController.completeProfile,
+);
 
 router.get("/profile", authMiddleware, profileController.getMyProfile);
 router.put("/profile", authMiddleware, profileController.updateMyProfile);
@@ -201,5 +210,5 @@ router.get(
   healthProgressController.getLatestProgress,
 );
 
-router.get("/groups",authMiddleware,groupController.getGroups)
+router.get("/groups", authMiddleware, groupController.getGroups);
 export default router;

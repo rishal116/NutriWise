@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import GProviders from "../providers";
+import GProviders from "../../providers/providers";
 
 interface AuthLayoutProps {
   children: ReactNode;

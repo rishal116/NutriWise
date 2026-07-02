@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { adminNutriService } from "@/services/admin/adminNutri.service";
-import { NutritionistLevel, LEVELS } from "@/enum/admin/nutritionist.enum";
+import { NutritionistLevel, LEVELS } from "@/enums/admin/nutritionist.enum";
 import Image from "next/image";
 import {
   ChevronLeft,

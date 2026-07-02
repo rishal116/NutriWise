@@ -1,5 +1,6 @@
 export const TYPES = {
   //User
+  IPasswordResetRepository:Symbol.for("IPasswordResetRepository"),
   IUserAuthController: Symbol.for("IUserAuthController"),
   IUserAuthService: Symbol.for("IUserAuthService"),
   IUserRepository: Symbol.for("IUserRepository"),
@@ -37,6 +38,10 @@ export const TYPES = {
   IReviewController:Symbol.for("IReviewController"),
   IUserGroupController:Symbol.for("IUserGroupController"),
   IUserGroupService:Symbol.for("IUserGroupService"),
+
+
+  IOnboardingService:Symbol.for("IOnboardingService"),
+  IOnboardingController:Symbol.for("IOnboardingController"),
 
 
   

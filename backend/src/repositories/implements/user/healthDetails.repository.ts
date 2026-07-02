@@ -23,7 +23,7 @@ export class HealthDetailsRepository
   async upsertByUserId(
     userId: string,
     data: Partial<IHealthDetails>,
-  ): Promise<IHealthDetails> {
+  ): Promise<IHealthDetails | null> {
     return this._model
       .findOneAndUpdate(
         { userId: new Types.ObjectId(userId) },
@@ -34,6 +34,6 @@ export class HealthDetailsRepository
           runValidators: true,
         },
       )
-      .exec() as Promise<IHealthDetails>;
+      .exec();
   }
 }

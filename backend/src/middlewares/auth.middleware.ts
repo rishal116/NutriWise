@@ -1,26 +1,29 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { jwtConfig } from "../configs/jwt";
 import { StatusCode } from "../enums/statusCode.enum";
-import { ROLES, Role } from "../types/role";
-import { AUTH_MESSAGES } from "../constants/index";
+import { AUTH_MESSAGES } from "../constants";
 import { UserModel } from "../models/user.model";
-import { AdminModel } from "../models/admin.model";
+import { UserRole } from "../enums/userRole.enum";
+import logger from "../utils/logger";
 
 interface JwtPayload {
   userId: string;
-  role: Role;
+  activeRole: UserRole;
 }
 
 export const authMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
-) => {
+): Promise<Response | void> => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
+    logger.warn("Authorization header missing");
+
     return res.status(StatusCode.UNAUTHORIZED).json({
+      success: false,
       message: AUTH_MESSAGES.AUTH_HEADER_MISSING,
       code: "ACCESS_TOKEN_MISSING",
     });
@@ -34,48 +37,79 @@ export const authMiddleware = async (
       jwtConfig.accessToken.secret,
     ) as JwtPayload;
 
-    if (!ROLES.includes(decoded.role)) {
-      return res.status(StatusCode.UNAUTHORIZED).json({
-        message: AUTH_MESSAGES.INVALID_ROLE,
-      });
-    }
 
-    let user;
 
-    if (decoded.role === "admin") {
-      user = await AdminModel.findById(decoded.userId);
-    } else {
-      user = await UserModel.findById(decoded.userId);
-    }
+    const user = await UserModel.findById(decoded.userId);
 
     if (!user) {
+      logger.warn("Access token used for non-existent user", {
+        userId: decoded.userId,
+      });
+
       return res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
         message: "User not found",
       });
     }
 
     if (user.isBlocked) {
+      logger.warn("Blocked user attempted to access protected route", {
+        userId: user._id.toString(),
+      });
+
       return res.status(StatusCode.FORBIDDEN).json({
+        success: false,
         message: "User is blocked",
+      });
+    }
+
+    if (decoded.activeRole !== user.activeRole) {
+      logger.warn("Role mismatch detected", {
+        userId: user._id.toString(),
+        tokenRole: decoded.activeRole,
+        activeRole: user.activeRole,
+      });
+
+      return res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: AUTH_MESSAGES.INVALID_ROLE,
       });
     }
 
     req.user = {
       userId: user._id.toString(),
-      role: user.role,
+      activeRole: user.activeRole,
+      roles: user.roles,
     };
 
-    next();
+    return next();
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === "TokenExpiredError") {
+    if (error instanceof TokenExpiredError) {
+      logger.warn("Access token expired");
+
       return res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
         message: AUTH_MESSAGES.TOKEN_EXPIRED,
         code: "ACCESS_TOKEN_EXPIRED",
       });
     }
 
-    return res.status(StatusCode.UNAUTHORIZED).json({
-      message: AUTH_MESSAGES.INVALID_TOKEN,
+    if (error instanceof JsonWebTokenError) {
+      logger.warn("Invalid access token");
+
+      return res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: AUTH_MESSAGES.INVALID_TOKEN,
+      });
+    }
+
+    logger.error("Authentication middleware failed", {
+      error,
+    });
+
+    return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };

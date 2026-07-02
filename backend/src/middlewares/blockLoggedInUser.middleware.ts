@@ -1,17 +1,17 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { UserModel } from "../models/user.model";
-import { Role } from "../types/role";
+import { UserRole } from "../enums/userRole.enum";
 
 interface JwtPayload {
   userId: string;
-  role: Role;
+  activeRole: UserRole;
 }
 
 export const blockLoggedInUser = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const authHeader = req.headers.authorization;
 
@@ -22,10 +22,15 @@ export const blockLoggedInUser = async (
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET!) as JwtPayload;
+    const decoded = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET!,
+    ) as JwtPayload;
 
     // Query DB for dynamic blocked status
-    const user = await UserModel.findById(decoded.userId).select("role isBlocked");
+    const user = await UserModel.findById(decoded.userId).select(
+      "role isBlocked",
+    );
 
     if (!user) return res.status(401).json({ message: "User not found" });
 
@@ -35,10 +40,10 @@ export const blockLoggedInUser = async (
         .json({ message: "Your account has been blocked by admin" });
     }
 
-    // Attach user to request
     req.user = {
-      userId: decoded.userId,
-      role: decoded.role,
+      userId: user._id.toString(),
+      activeRole: user.activeRole,
+      roles: user.roles,
     };
 
     next();

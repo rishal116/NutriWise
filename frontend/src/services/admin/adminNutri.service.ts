@@ -1,5 +1,5 @@
 import { AdminRoutes } from "@/routes/admin.routes";
-import { NutritionistLevel } from "@/enum/admin/nutritionist.enum";
+import { NutritionistLevel } from "@/enums/admin/nutritionist.enum";
 import { adminApi } from "@/lib/axios/adminApi";
 
 export const adminNutriService = {
