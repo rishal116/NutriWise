@@ -1,4 +1,4 @@
-import { NutritionistNameDTO } from "../../dtos/nutritionist/nutritionistAuth.dto";
+import { NutritionistNameDTO } from "../../dtos/nutritionist/nutritionistApplication.dto.ts";
 import { INutritionistProfile } from "../../models/nutritionistProfile.model";
 import { IUser } from "../../models/user.model";
 

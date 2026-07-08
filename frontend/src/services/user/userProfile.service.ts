@@ -1,8 +1,8 @@
-import { api } from "@/lib/axios/api";
+import { clientApi} from "@/lib/axios/clientApi";
 
 export const userAccountService = {
   getProfile: async () => {
-    const response = await api.get("/profile");
+    const response = await clientApi.get("/profile");
     return response.data;
   },
 
@@ -15,19 +15,19 @@ export const userAccountService = {
     age?: number;
     profileImage?: string;
   }) => {
-    const response = await api.put("/profile", payload);
+    const response = await clientApi.put("/profile", payload);
     return response.data;
   },
 
   getProfileImage: async () => {
-    const response = await api.get("/profile/upload-image");
+    const response = await clientApi.get("/profile/upload-image");
     return response.data; 
   },
   
   uploadProfileImage: async (file: File) => {
     const formData = new FormData();
     formData.append("image", file); 
-    const response = await api.post("/profile/upload-image", formData, {
+    const response = await clientApi.post("/profile/upload-image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;

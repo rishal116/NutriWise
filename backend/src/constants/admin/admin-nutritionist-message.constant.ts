@@ -9,4 +9,5 @@ export const ADMIN_NUTRITIONIST_MESSAGES = {
   NOT_FOUND: "Nutritionist not found",
   PROFILE_NOT_FOUND: "Nutritionist profile not found",
   REJECTION_REASON_REQUIRED: "Rejection reason is required",
+  STATUS_UPDATED:"Application Verified",
 };

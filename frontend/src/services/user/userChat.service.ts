@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/api";
+import { api } from "@/lib/axios/clientApi";
 
 export const userChatService = {
   createChat: async (otherUserId: string, context: "user" | "nutritionist") => {

@@ -1,25 +1,45 @@
+import { clientApi } from "@/lib/axios/clientApi";
 import { AdminRoutes } from "@/routes/admin.routes";
-import { NutritionistLevel } from "@/enums/admin/nutritionist.enum";
-import { adminApi } from "@/lib/axios/adminApi";
 
-export const adminNutriService = {
-    getNutritionistProfile: async (userId: string) => {
-        const res = await adminApi.get(`/admin/nutritionist/${userId}`);
-        return res.data;
-    },
-    
-    approveNutritionist: async (userId: string) => {
-        const res = await adminApi.patch(`/admin/nutritionist/approve/${userId}`);
-        return res.data;
-    },
-    
-    rejectNutritionist: async (userId: string, reason: string) => {
-        const res = await adminApi.patch(`/admin/nutritionist/reject/${userId}`, { reason });
-        return res.data;
-    },
-    updateNutritionistLevel:async (userId: string,level: NutritionistLevel) => {
-        const res = await adminApi.patch(`/admin/nutritionist/${userId}/level`, { level });
-        return res.data;
-    },
-    
+import { NutritionistLevel } from "@/enums/admin/nutritionist.enum";
+import { AdminNutritionistListQueryDto } from "@/dtos/admin/nutritionist/admin-nutritionist-list-query.dto";
+import { AdminNutritionistListItemDto } from "@/dtos/admin/nutritionist/admin-nutritionist-list-item.dto";
+import { AdminNutritionistDetailsDto } from "@/dtos/admin/nutritionist/admin-nutritionist-details.dto";
+import { InfiniteScrollResponseDto } from "@/dtos/common/infinite-scroll-response.dto";
+import { ApiResponse } from "@/types/api/apiResponse";
+
+export const adminNutritionistService = {
+  async getNutritionists(
+    query: AdminNutritionistListQueryDto,
+  ): Promise<InfiniteScrollResponseDto<AdminNutritionistListItemDto>> {
+    const response = await clientApi.get<
+      InfiniteScrollResponseDto<AdminNutritionistListItemDto>
+    >(AdminRoutes.NUTRITIONISTS, {
+      params: query,
+    });
+
+    return response.data;
+  },
+
+  async getNutritionistDetails(
+    userId: string,
+  ): Promise<AdminNutritionistDetailsDto> {
+    const response = await clientApi.get<
+      ApiResponse<AdminNutritionistDetailsDto>
+    >(`${AdminRoutes.NUTRITIONISTS}/${userId}`);
+
+    return response.data.data;
+  },
+
+  async updateCoachLevel(
+    userId: string,
+    coachLevel: NutritionistLevel,
+  ): Promise<void> {
+    await clientApi.patch(
+      `${AdminRoutes.NUTRITIONISTS}/${userId}/coach-level`,
+      {
+        coachLevel,
+      },
+    );
+  },
 };

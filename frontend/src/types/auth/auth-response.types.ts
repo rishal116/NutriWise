@@ -6,7 +6,6 @@ export interface ApiResponse {
 }
 
 export interface AuthResponse extends ApiResponse {
-  accessToken: string;
   activeRole: UserRole;
   isProfileCompleted: boolean;
 }

@@ -2,7 +2,7 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
 import { INotificationService } from "../../interfaces/admin/INotificationService";
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
-import { NotificationDTO } from "../../../dtos/admin/notificationList.dto";
+
 
 @injectable()
 export class NotificationService implements INotificationService {

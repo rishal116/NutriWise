@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/api";
+import { api } from "@/lib/axios/clientApi";
 
 interface ChangePasswordPayload {
   currentPassword: string;

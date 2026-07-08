@@ -1,42 +1,26 @@
-import { adminApi } from "@/lib/axios/adminApi";
+import { clientApi } from "@/lib/axios/clientApi";
 import { AdminRoutes } from "@/routes/admin.routes";
 
-const buildParams = (page: number, limit: number, search?: string) => {
-  return {
-    page,
-    limit,
-    ...(search ? { search } : {}),
-  };
-};
+import { AdminUserListQueryDto } from "@/dtos/admin/user/admin-user-list-query.dto";
+import { AdminUserListItemDto } from "@/dtos/admin/user/admin-user-list-item.dto";
+import { InfiniteScrollResponseDto } from "@/dtos/common/infinite-scroll-response.dto";
 
 export const adminUserService = {
-  getAllUsers: async (page = 1, limit = 10, search?: string) => {
-    const response = await adminApi.get(AdminRoutes.GET_ALL_USERS, {
-      params: buildParams(page, limit, search),
-    });
-
-    return response.data; 
-  },
-
-  getAllNutritionists: async (page = 1, limit = 10, search?: string) => {
-    const response = await adminApi.get(AdminRoutes.NUTRITIONISTS, {
-      params: buildParams(page, limit, search),
+  async getUsers(
+    query: AdminUserListQueryDto,
+  ): Promise<InfiniteScrollResponseDto<AdminUserListItemDto>> {
+    const response = await clientApi.get<
+      InfiniteScrollResponseDto<AdminUserListItemDto>
+    >(AdminRoutes.USERS, {
+      params: query,
     });
 
     return response.data;
   },
 
-  blockUser: async (userId: string) => {
-    const response = await adminApi.patch(
-      `${AdminRoutes.BLOCK_USER}/${userId}`,
-    );
-    return response.data;
-  },
-
-  unblockUser: async (userId: string) => {
-    const response = await adminApi.patch(
-      `${AdminRoutes.UNBLOCK_USER}/${userId}`,
-    );
-    return response.data;
+  async updateBlockStatus(userId: string, isBlocked: boolean): Promise<void> {
+    await clientApi.patch(`${AdminRoutes.USERS}/${userId}/block-status`, {
+      isBlocked,
+    });
   },
 };

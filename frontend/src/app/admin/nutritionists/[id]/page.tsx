@@ -2,14 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
-import { adminNutriService } from "@/services/admin/adminNutri.service";
-import { NutritionistLevel, LEVELS } from "@/enums/admin/nutritionist.enum";
+import { toast } from "sonner";
 import Image from "next/image";
 import {
   ChevronLeft,
-  CheckCircle,
-  XCircle,
   Clock,
   User,
   Phone,
@@ -20,86 +16,113 @@ import {
   FileText,
   Star,
   ShieldCheck,
-  MapPin,
+  XCircle,
+  CheckCircle2,
   Loader2,
 } from "lucide-react";
 
-// Types
-interface Experience {
-  role: string;
-  organization: string;
-  years: number;
-}
+import { adminNutritionistService } from "@/services/admin/adminNutri.service";
+import { adminNutritionistApplicationService } from "@/services/admin/adminNutriApplication.service";
+import { AdminNutritionistDetailsDto } from "@/dtos/admin/nutritionist/admin-nutritionist-details.dto";
+import { NutritionistLevel } from "@/enums/admin/nutritionist.enum";
+import { CoachLevel } from "@/types/nutritionist.types";
 
-interface UserDTO {
-  id: string;
-  fullName: string;
-  email: string;
-  phone?: string;
-  birthdate?: string;
-  gender?: string;
-  age?: number;
-  nutritionistStatus?: "pending" | "approved" | "rejected" | "none";
-  rejectionReason?: string;
-  isBlocked: boolean;
-  createdAt: string;
-}
+// Assumption: NutritionistLevel enum members correspond 1:1 to these
+// CoachLevel string values. Confirm against the actual enum definition.
+const COACH_LEVELS: CoachLevel[] = [
+  "beginner",
+  "verified",
+  "expert",
+  "top_coach",
+];
 
-interface NutritionistProfileDTO {
-  profileImage?: string;
-  qualifications?: string[];
-  specializations?: string[];
-  experiences?: Experience[];
-  bio?: string;
-  languages?: string[];
-  country?: string;
-  cv?: string;
-  certifications?: string[];
-  availabilityStatus?: "available" | "unavailable" | "busy";
-  totalExperienceYears?: number;
-  nutritionistStatus: NutritionistLevel;
-  rating?: number;
+const AVAILABILITY_STYLES: Record<string, string> = {
+  available: "bg-emerald-50 text-emerald-600",
+  busy: "bg-amber-50 text-amber-600",
+  offline: "bg-slate-100 text-slate-500",
+};
+
+function MetadataItem({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value?: string | number | null;
+}) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-3">
+      <div className="p-2 bg-slate-50 rounded-lg text-slate-400 shrink-0">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-none mb-1">
+          {label}
+        </p>
+        <p className="text-sm font-semibold text-slate-800 truncate">{value}</p>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminNutritionistProfilePage() {
   const router = useRouter();
   const params = useParams();
-  const id = params.id as string;
+  const userId = params.id as string;
 
-  const [user, setUser] = useState<UserDTO | null>(null);
-  const [profile, setProfile] = useState<NutritionistProfileDTO | null>(null);
+  const [details, setDetails] = useState<AdminNutritionistDetailsDto | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
-  const [rejectionReason, setRejectionReason] = useState("");
+  const [isUpdatingLevel, setIsUpdatingLevel] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [showRejectInput, setShowRejectInput] = useState(false);
 
-  const isApproved = user?.nutritionistStatus === "approved";
-
-  const fetchProfile = useCallback(async () => {
+  const fetchDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await adminNutriService.getNutritionistProfile(id);
-      setUser(res.data.user);
-      setProfile(res.data.profile);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load profile");
+      const res = await adminNutritionistService.getNutritionistDetails(userId);
+      setDetails(res);
+    } catch {
+      toast.error("Failed to load nutritionist profile");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [userId]);
 
   useEffect(() => {
-    if (id) fetchProfile();
-  }, [id, fetchProfile]);
+    if (userId) fetchDetails();
+  }, [userId, fetchDetails]);
+
+  const handleCoachLevelUpdate = async (level: CoachLevel) => {
+    try {
+      setIsUpdatingLevel(true);
+      await adminNutritionistService.updateCoachLevel(
+        userId,
+        level as unknown as NutritionistLevel,
+      );
+      toast.success(`Coach level updated to ${level.replace("_", " ")}`);
+      fetchDetails();
+    } catch {
+      toast.error("Coach level update failed");
+    } finally {
+      setIsUpdatingLevel(false);
+    }
+  };
 
   const handleApprove = async () => {
     try {
       setIsActionLoading(true);
-      await adminNutriService.approveNutritionist(id);
-      toast.success("Nutritionist approved successfully");
-      fetchProfile();
-    } catch (err) {
-      console.error(err);
+      await adminNutritionistApplicationService.updateApplicationStatus(
+        userId,
+        "approved",
+      );
+      toast.success("Application approved");
+      fetchDetails();
+    } catch {
       toast.error("Approval failed");
     } finally {
       setIsActionLoading(false);
@@ -107,241 +130,310 @@ export default function AdminNutritionistProfilePage() {
   };
 
   const handleReject = async () => {
-    if (!rejectionReason.trim()) return toast.error("Please provide a reason");
+    if (!rejectionReason.trim()) {
+      toast.error("Please provide a reason");
+      return;
+    }
     try {
       setIsActionLoading(true);
-      await adminNutriService.rejectNutritionist(id, rejectionReason);
-      toast.success("Nutritionist rejected");
+      await adminNutritionistApplicationService.updateApplicationStatus(
+        userId,
+        "rejected",
+        rejectionReason,
+      );
+      toast.success("Application rejected");
       setRejectionReason("");
-      fetchProfile();
-    } catch (err) {
-      console.error(err);
+      setShowRejectInput(false);
+      fetchDetails();
+    } catch {
       toast.error("Rejection failed");
     } finally {
       setIsActionLoading(false);
     }
   };
 
-  const handleLevelUpdate = async (level: NutritionistLevel) => {
-    try {
-      await adminNutriService.updateNutritionistLevel(id, level);
-      toast.success(`Rank updated to ${level}`);
-      fetchProfile();
-    } catch {
-      toast.error("Level update failed");
-    }
-  };
-
-  if (loading)
+  if (loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-emerald-500 animate-spin" />
-        <p className="text-slate-500 font-medium">Loading professional profile...</p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        <p className="text-slate-500 font-medium text-sm">
+          Loading nutritionist profile...
+        </p>
       </div>
     );
+  }
+
+  if (!details) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <p className="text-slate-400 font-medium text-sm">
+          Nutritionist not found.
+        </p>
+      </div>
+    );
+  }
+
+  const isPending = details.applicationStatus === "pending";
+  const isApproved = details.applicationStatus === "approved";
+  const isRejected = details.applicationStatus === "rejected";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-500">
-      {/* Navigation Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in duration-500">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <button
           onClick={() => router.back()}
-          className="group flex items-center gap-2 text-slate-500 hover:text-emerald-600 font-bold text-xs uppercase tracking-widest transition-all"
+          className="group flex items-center gap-1.5 text-slate-500 hover:text-emerald-600 font-semibold text-sm transition-colors"
         >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Back to Directory
+          <ChevronLeft
+            size={16}
+            className="group-hover:-translate-x-0.5 transition-transform"
+          />
+          Back
         </button>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {!isApproved && (
-            <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-1.5 shadow-sm focus-within:border-emerald-500 transition-colors">
-              <input
-                type="text"
-                placeholder="Reason for rejection..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                className="px-4 py-2 text-sm bg-transparent outline-none w-48 md:w-64 font-medium placeholder:text-slate-400"
-              />
-              <button
-                onClick={handleReject}
-                disabled={isActionLoading}
-                className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-5 py-2 rounded-xl text-xs font-black transition-colors disabled:opacity-50"
-              >
-                REJECT
-              </button>
-            </div>
-          )}
-
-          <button
-            onClick={handleApprove}
-            disabled={isActionLoading || isApproved}
-            className={`${
-              isApproved
-                ? "bg-slate-100 text-emerald-600 border border-emerald-100 cursor-default"
-                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-100"
-            } px-8 py-3.5 rounded-2xl text-sm font-black transition-all disabled:opacity-80 flex items-center gap-2`}
-          >
-            {isActionLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : isApproved ? (
-              <ShieldCheck className="w-4 h-4" />
+        {(isPending || isRejected) && (
+          <div className="flex flex-wrap items-center gap-3">
+            {showRejectInput ? (
+              <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm focus-within:border-emerald-400">
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="Reason for rejection..."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="px-3 py-2 text-sm bg-transparent outline-none w-44 sm:w-64 font-medium placeholder:text-slate-400"
+                />
+                <button
+                  onClick={() => {
+                    setShowRejectInput(false);
+                    setRejectionReason("");
+                  }}
+                  disabled={isActionLoading}
+                  className="text-slate-400 hover:text-slate-600 px-3 py-2 text-xs font-bold shrink-0"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={isActionLoading}
+                  className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 shrink-0"
+                >
+                  {isActionLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    "Confirm"
+                  )}
+                </button>
+              </div>
             ) : (
-              <CheckCircle className="w-4 h-4" />
+              <button
+                onClick={() => {
+                  setShowRejectInput(true);
+                  setRejectionReason(details.rejectionReason ?? "");
+                }}
+                disabled={isActionLoading}
+                className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-60"
+              >
+                <XCircle size={16} />
+                {isRejected ? "Update Reason" : "Reject"}
+              </button>
             )}
-            {isApproved ? "VERIFIED PARTNER" : "APPROVE NUTRITIONIST"}
-          </button>
-        </div>
-      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Panel */}
+            <button
+              onClick={handleApprove}
+              disabled={isActionLoading}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-emerald-100 transition-all disabled:opacity-60"
+            >
+              {isActionLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <CheckCircle2 size={16} />
+              )}
+              Approve
+            </button>
+          </div>
+        )}
+      </header>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left panel */}
         <aside className="lg:col-span-4 space-y-6">
-          <section className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm text-center">
-            <div className="relative inline-block mx-auto mb-6">
-              {profile?.profileImage ? (
+          <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm text-center">
+            <div className="relative inline-block mx-auto mb-4">
+              {details.profileImage ? (
                 <Image
-                  src={profile.profileImage}
-                  alt={user?.fullName || "Profile"}
-                  width={160}
-                  height={160}
-                  className="w-40 h-40 rounded-[2rem] object-cover border-4 border-white shadow-xl"
+                  src={details.profileImage}
+                  alt={details.fullName}
+                  width={128}
+                  height={128}
+                  className="w-32 h-32 rounded-2xl object-cover border border-slate-200"
                 />
               ) : (
-                <div className="w-40 h-40 rounded-[2rem] bg-slate-50 flex items-center justify-center text-slate-300 border-4 border-white shadow-lg">
-                  <User size={64} />
+                <div className="w-32 h-32 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-300 border border-slate-200">
+                  <User size={48} />
                 </div>
               )}
-              <div className="absolute -bottom-2 -right-2 bg-white p-2 rounded-2xl shadow-lg border border-slate-100">
+              <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-xl shadow-md border border-slate-100">
                 {isApproved ? (
-                  <ShieldCheck className="text-emerald-500" size={24} />
+                  <ShieldCheck className="text-emerald-500" size={18} />
+                ) : isRejected ? (
+                  <XCircle className="text-red-500" size={18} />
                 ) : (
-                  <Clock className="text-amber-500" size={24} />
+                  <Clock className="text-amber-500" size={18} />
                 )}
               </div>
             </div>
 
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight leading-tight uppercase">
-              {user?.fullName}
+            <h1 className="text-lg font-bold text-slate-900">
+              {details.fullName}
             </h1>
-            <p className="text-slate-500 font-bold text-sm mb-6 lowercase">
-              {user?.email}
+            <p className="text-slate-500 text-sm font-medium mb-4">
+              {details.email}
             </p>
 
-            <div className="space-y-3 text-left">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
-                Tier Assignment
-              </label>
-              <div className="relative group">
-                <select
-                  value={profile?.nutritionistStatus}
-                  onChange={(e) =>
-                    handleLevelUpdate(e.target.value as NutritionistLevel)
-                  }
-                  className="w-full appearance-none bg-slate-50 border border-slate-200 text-emerald-700 font-black text-xs px-5 py-4 rounded-2xl cursor-pointer hover:border-emerald-300 transition-colors focus:ring-2 focus:ring-emerald-500/20 outline-none"
-                >
-                  {LEVELS.map((level) => (
-                    <option key={level} value={level}>
-                      {level.replace("_", " ")}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                  <ChevronLeft className="w-4 h-4 rotate-270" />
-                </div>
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${
+                  AVAILABILITY_STYLES[details.availabilityStatus] ??
+                  "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {details.availabilityStatus}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-600">
+                <Star size={11} className="fill-amber-500 text-amber-500" />
+                {details.rating.toFixed(1)} ({details.totalReviews})
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-6 text-left">
+              <div className="bg-slate-50 rounded-xl p-3">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">
+                  Clients Coached
+                </p>
+                <p className="text-lg font-bold text-slate-900">
+                  {details.totalPeopleCoached}
+                </p>
               </div>
+              <div className="bg-slate-50 rounded-xl p-3">
+                <p className="text-[10px] font-bold text-slate-400 uppercase">
+                  Experience
+                </p>
+                <p className="text-lg font-bold text-slate-900">
+                  {details.totalExperienceYears}y
+                </p>
+              </div>
+            </div>
+
+            <div className="text-left">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                Coach Level
+              </label>
+              <select
+                value={details.coachLevel}
+                disabled={isUpdatingLevel}
+                onChange={(e) =>
+                  handleCoachLevelUpdate(e.target.value as CoachLevel)
+                }
+                className="mt-1.5 w-full appearance-none bg-slate-50 border border-slate-200 text-emerald-700 font-bold text-sm px-4 py-2.5 rounded-xl cursor-pointer hover:border-emerald-300 outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60"
+              >
+                {COACH_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {level.replace("_", " ")}
+                  </option>
+                ))}
+              </select>
             </div>
           </section>
 
-          <section className="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">
-              Contact Metadata
+          <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+              Contact
             </h3>
-            <div className="space-y-5">
-              <MetadataItem icon={<Phone size={16} />} label="Phone Number" value={user?.phone} />
-              <MetadataItem 
-                icon={<Calendar size={16} />} 
-                label="Registration" 
-                value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : null} 
-              />
-              <MetadataItem icon={<MapPin size={16} />} label="Location" value={profile?.country} />
-              <MetadataItem icon={<Globe size={16} />} label="Native Languages" value={profile?.languages?.join(", ")} />
-            </div>
+            <MetadataItem
+              icon={<Phone size={15} />}
+              label="Phone"
+              value={details.phone}
+            />
+            <MetadataItem
+              icon={<Calendar size={15} />}
+              label="Applied On"
+              value={new Date(details.createdAt).toLocaleDateString()}
+            />
+            <MetadataItem
+              icon={<Globe size={15} />}
+              label="Languages"
+              value={details.languages.join(", ")}
+            />
           </section>
         </aside>
 
-        {/* Right Panel */}
+        {/* Right panel */}
         <main className="lg:col-span-8 space-y-6">
-          {/* Status Alerts */}
           {isApproved && (
-            <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-[2rem] flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="bg-white p-2 rounded-xl shadow-sm">
-                  <ShieldCheck className="text-emerald-600" size={24} />
-                </div>
-                <div>
-                  <h4 className="text-sm font-black text-emerald-900 uppercase tracking-wide">
-                    Account Approved
-                  </h4>
-                  <p className="text-sm text-emerald-600 font-medium">
-                    This nutritionist has been verified and is active on NutriWise.
-                  </p>
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <span className="text-[10px] font-black bg-emerald-600 text-white px-3 py-1 rounded-lg uppercase tracking-widest">
-                  Verified
-                </span>
-              </div>
-            </div>
-          )}
-
-          {user?.nutritionistStatus === "rejected" && (
-            <div className="bg-rose-50 border border-rose-100 p-6 rounded-[2rem] flex items-start gap-4">
-              <XCircle className="text-rose-500 shrink-0 mt-1" size={24} />
+            <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl flex items-center gap-3">
+              <ShieldCheck className="text-emerald-600 shrink-0" size={22} />
               <div>
-                <h4 className="text-sm font-black text-rose-800 uppercase tracking-wide">
-                  Application Rejected
+                <h4 className="text-sm font-bold text-emerald-900">
+                  Application approved
                 </h4>
-                <p className="text-sm text-rose-600 font-medium mt-1">
-                  {user.rejectionReason}
+                <p className="text-sm text-emerald-600 font-medium">
+                  This nutritionist is verified and active on NutriWise.
                 </p>
               </div>
             </div>
           )}
 
-          <section className="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-10 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 text-slate-50 pointer-events-none">
-              <Award size={120} />
+          {isRejected && (
+            <div className="bg-red-50 border border-red-100 p-5 rounded-2xl flex items-start gap-3">
+              <XCircle className="text-red-500 shrink-0 mt-0.5" size={22} />
+              <div>
+                <h4 className="text-sm font-bold text-red-800">
+                  Application rejected
+                </h4>
+                {details.rejectionReason && (
+                  <p className="text-sm text-red-600 font-medium mt-1">
+                    {details.rejectionReason}
+                  </p>
+                )}
+              </div>
             </div>
+          )}
 
-            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-6 flex items-center gap-3">
-              <Award className="text-emerald-500" size={28} /> Professional Biography
+          <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+            <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <Award className="text-emerald-500" size={20} /> Biography
             </h3>
-            <p className="text-slate-600 leading-relaxed font-medium text-lg relative z-10">
-              {profile?.bio || "No biography provided by the professional."}
+            <p className="text-slate-600 leading-relaxed font-medium">
+              {details.bio || "No biography provided."}
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-12 pt-10 border-t border-slate-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-100">
               <div>
-                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Core Specializations
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">
+                  Specializations
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {profile?.specializations?.map((s) => (
-                    <span key={s} className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl text-xs font-black uppercase tracking-wider">
-                      {s}
+                  {details.specializations.map((s) => (
+                    <span
+                      key={s}
+                      className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-bold"
+                    >
+                      {s.replace(/_/g, " ")}
                     </span>
                   ))}
                 </div>
               </div>
               <div>
-                <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Key Qualifications
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">
+                  Qualifications
                 </h4>
-                <ul className="grid grid-cols-1 gap-3">
-                  {profile?.qualifications?.map((q) => (
-                    <li key={q} className="text-slate-700 text-sm font-bold flex items-center gap-3">
-                      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" /> {q}
+                <ul className="space-y-2">
+                  {details.qualifications.map((q, i) => (
+                    <li
+                      key={i}
+                      className="text-sm font-semibold text-slate-700"
+                    >
+                      {q.degree} — {q.institution} ({q.year})
                     </li>
                   ))}
                 </ul>
@@ -349,83 +441,85 @@ export default function AdminNutritionistProfilePage() {
             </div>
           </section>
 
-          <section className="bg-white border border-slate-200 rounded-[2.5rem] p-8 md:p-10 shadow-sm">
-            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-8 flex items-center gap-3">
-              <Briefcase className="text-emerald-500" size={28} /> Career History
+          <section className="bg-white border border-slate-200 rounded-2xl p-6 md:p-8 shadow-sm">
+            <h3 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-2">
+              <Briefcase className="text-emerald-500" size={20} /> Experience
             </h3>
-            <div className="space-y-8">
-              {profile?.experiences?.map((exp, idx) => (
-                <div key={idx} className="relative pl-10">
-                  <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-100" />
-                  <div className="absolute -left-1.5 top-1.5 w-3 h-3 rounded-full bg-white border-2 border-emerald-500 shadow-sm shadow-emerald-200" />
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                    <p className="text-lg font-black text-slate-900 uppercase">{exp.role}</p>
-                    <span className="text-xs font-black bg-slate-100 text-slate-500 px-3 py-1 rounded-lg uppercase tracking-widest">
-                      {exp.years} Years
+            <div className="space-y-6">
+              {details.experiences.map((exp, idx) => (
+                <div key={idx} className="relative pl-6">
+                  <div className="absolute left-0 top-1 bottom-0 w-px bg-slate-100" />
+                  <div className="absolute -left-1 top-1 w-2 h-2 rounded-full bg-emerald-500" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <p className="font-bold text-slate-900 text-sm">
+                      {exp.role}
+                    </p>
+                    <span className="text-xs font-bold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg w-fit">
+                      {exp.durationYears}y
                     </span>
                   </div>
-                  <p className="text-sm font-bold text-emerald-600 mt-1">{exp.organization}</p>
+                  <p className="text-sm font-semibold text-emerald-600">
+                    {exp.organization}
+                  </p>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* Files Grid */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-10">
-            <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-slate-200">
-              <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-3">
-                <FileText className="text-emerald-400" size={20} /> Curriculum Vitae
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <FileText className="text-emerald-500" size={18} /> Resume
               </h3>
-              {profile?.cv ? (
+              {details.resumeUrl ? (
                 <a
-                  href={profile.cv}
+                  href={details.resumeUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-emerald-600 hover:bg-emerald-500 rounded-2xl text-xs font-black transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors"
                 >
-                  DOWNLOAD ASSET
+                  View Resume
                 </a>
               ) : (
-                <p className="text-slate-500 text-xs font-bold italic uppercase tracking-widest">No file attached</p>
+                <p className="text-slate-400 text-xs font-semibold">
+                  No file attached
+                </p>
               )}
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-[2.5rem] p-8 shadow-sm">
-              <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-3">
-                <Star className="text-amber-500" size={20} /> Verified Certificates
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <Star className="text-amber-500" size={18} /> Certifications
               </h3>
-              <div className="grid grid-cols-1 gap-3">
-                {profile?.certifications?.map((cert, i) => (
+              <div className="space-y-2">
+                {details.certifications.map((cert, i) => (
                   <a
                     key={i}
-                    href={cert}
+                    href={cert.certificateUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-transparent hover:border-emerald-200 hover:bg-white transition-all group"
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
                   >
-                    <span className="text-xs font-black text-slate-600 uppercase">Verification File {i + 1}</span>
-                    <FileText className="w-4 h-4 text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-700 truncate">
+                        {cert.name}
+                      </p>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {cert.issuedBy}
+                      </p>
+                    </div>
+                    <FileText size={14} className="text-slate-300 shrink-0" />
                   </a>
                 ))}
+                {details.certifications.length === 0 && (
+                  <p className="text-slate-400 text-xs font-semibold">
+                    No certifications uploaded
+                  </p>
+                )}
               </div>
             </div>
           </section>
         </main>
-      </div>
-    </div>
-  );
-}
-
-function MetadataItem({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | null | number }) {
-  if (!value) return null;
-  return (
-    <div className="flex items-start gap-4 group">
-      <div className="p-2.5 bg-slate-50 rounded-xl text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
-        {icon}
-      </div>
-      <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5">{label}</p>
-        <p className="text-sm font-black text-slate-800 tracking-tight">{value}</p>
       </div>
     </div>
   );

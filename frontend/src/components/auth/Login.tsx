@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
-import { useDispatch } from "react-redux";
 import toast from "react-hot-toast";
 
 import { userAuthService } from "@/services/user/userAuth.service";
-import { loginSuccess } from "@/redux/slices/authSlice";
 import { loginSchema } from "@/validations/auth.validation";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Logo from "../common/Logo";
 
@@ -22,7 +18,6 @@ interface FormErrors {
 
 export default function LoginForm() {
   const router = useRouter();
-  const dispatch = useDispatch();
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -30,13 +25,6 @@ export default function LoginForm() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
-
-  const token = useSelector((state: RootState) => state.auth.token);
-  useEffect(() => {
-    if (token) {
-      router.replace("/");
-    }
-  }, [token, router]);
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -60,12 +48,6 @@ export default function LoginForm() {
     try {
       const res = await userAuthService.login({ email, password });
 
-      if (!res.accessToken) {
-        throw new Error("Access token missing");
-      }
-
-      dispatch(loginSuccess(res.accessToken));
-
       if (!res.isProfileCompleted) {
         router.replace("/complete-profile");
         return;
@@ -73,10 +55,10 @@ export default function LoginForm() {
 
       switch (res.activeRole) {
         case "admin":
-          router.replace("/admin");
+          router.replace("/admin/dashboard");
           break;
         case "nutritionist":
-          router.replace("/nutritionist");
+          router.replace("/nutritionist/dashboard");
           break;
         default:
           router.replace("/");
@@ -101,13 +83,6 @@ export default function LoginForm() {
         credential: credentialResponse.credential,
       });
 
-      if (!res.accessToken) {
-        toast.error("Login failed");
-        return;
-      }
-
-      dispatch(loginSuccess(res.accessToken));
-
       if (!res.isProfileCompleted) {
         router.push("/complete-profile");
         return;
@@ -115,13 +90,15 @@ export default function LoginForm() {
 
       switch (res.activeRole) {
         case "admin":
-          router.push("/admin");
+          router.replace("/admin/dashboard");
           break;
+
         case "nutritionist":
-          router.push("/nutritionist");
+          router.replace("/nutritionist/dashboard");
           break;
+
         default:
-          router.push("/home");
+          router.replace("/");
       }
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));

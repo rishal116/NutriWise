@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-import { jwtConfig } from "../configs/jwt";
+import { jwtConfig } from "../configs/jwt.config";
 import { StatusCode } from "../enums/statusCode.enum";
 import { AUTH_MESSAGES } from "../constants";
 import { UserModel } from "../models/user.model";
@@ -17,19 +17,21 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction,
 ): Promise<Response | void> => {
-  const authHeader = req.headers.authorization;
+  console.log("Auth middleware started");
+  const token =
+    req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+    console.log(token);
+    
 
-  if (!authHeader?.startsWith("Bearer ")) {
-    logger.warn("Authorization header missing");
+  if (!token) {
+    logger.warn(AUTH_MESSAGES.ACCESS_TOKEN_MISSING);
 
     return res.status(StatusCode.UNAUTHORIZED).json({
       success: false,
-      message: AUTH_MESSAGES.AUTH_HEADER_MISSING,
+      message: AUTH_MESSAGES.ACCESS_TOKEN_MISSING,
       code: "ACCESS_TOKEN_MISSING",
     });
   }
-
-  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(
@@ -37,42 +39,34 @@ export const authMiddleware = async (
       jwtConfig.accessToken.secret,
     ) as JwtPayload;
 
-
+    console.log(decoded);
+    
 
     const user = await UserModel.findById(decoded.userId);
 
     if (!user) {
-      logger.warn("Access token used for non-existent user", {
-        userId: decoded.userId,
-      });
-
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
-        message: "User not found",
+        message: AUTH_MESSAGES.USER_NOT_FOUND,
+        code: "USER_NOT_FOUND",
       });
     }
 
     if (user.isBlocked) {
-      logger.warn("Blocked user attempted to access protected route", {
-        userId: user._id.toString(),
-      });
-
       return res.status(StatusCode.FORBIDDEN).json({
         success: false,
-        message: "User is blocked",
+        message: AUTH_MESSAGES.USER_BLOCKED,
+        code: "USER_BLOCKED",
       });
     }
 
-    if (decoded.activeRole !== user.activeRole) {
-      logger.warn("Role mismatch detected", {
-        userId: user._id.toString(),
-        tokenRole: decoded.activeRole,
-        activeRole: user.activeRole,
-      });
+    
 
+    if (decoded.activeRole !== user.activeRole) {
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.INVALID_ROLE,
+        code: "INVALID_ROLE",
       });
     }
 
@@ -82,11 +76,10 @@ export const authMiddleware = async (
       roles: user.roles,
     };
 
-    return next();
-  } catch (error: unknown) {
+    console.log("Auth middleware passed");
+    next();
+  } catch (error) {
     if (error instanceof TokenExpiredError) {
-      logger.warn("Access token expired");
-
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.TOKEN_EXPIRED,
@@ -95,17 +88,14 @@ export const authMiddleware = async (
     }
 
     if (error instanceof JsonWebTokenError) {
-      logger.warn("Invalid access token");
-
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.INVALID_TOKEN,
+        code: "INVALID_ACCESS_TOKEN",
       });
     }
 
-    logger.error("Authentication middleware failed", {
-      error,
-    });
+    logger.error("Authentication middleware failed", { error });
 
     return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
       success: false,

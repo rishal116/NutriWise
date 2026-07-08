@@ -1,6 +1,5 @@
 "use client";
 
-import { useNutritionistGuard } from "@/hooks/nutritionist/useNutritionistGuard";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -13,8 +12,6 @@ import {
 } from "lucide-react";
 
 export default function NutritionistDashboard() {
-  useNutritionistGuard();
-
   const containerVars = {
     initial: { opacity: 0 },
     animate: {

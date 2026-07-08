@@ -17,14 +17,33 @@ export const errorMiddleware = (
 
   const message = isCustomError ? err.message : "Something went wrong";
 
-  logger.error("Global Error Middleware", {
-    message,
-    status,
-    error: err,
-  });
+  if (isCustomError && err.isOperational) {
+    logger.warn(message, {
+      status,
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+      userAgent: req.get("user-agent"),
+    });
+    logger.error("Global Error Middleware", {
+      message,
+      status,
+      error: err,
+    });
 
-  if (err instanceof Error) {
-    console.error(err.stack);
+    console.log("ERROR OBJECT:", err);
+  } else {
+    logger.error("Unexpected Error", {
+      message,
+      status,
+      method: req.method,
+      url: req.originalUrl,
+      error: err,
+    });
+
+    if (err instanceof Error) {
+      console.error(err.stack);
+    }
   }
 
   return res.status(status).json({

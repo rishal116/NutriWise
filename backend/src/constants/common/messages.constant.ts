@@ -8,17 +8,24 @@ export const COMMON_MESSAGES = {
   SOMETHING_WENT_WRONG: "Something went wrong",
 } as const;
 
+
+
 export const AUTH_MESSAGES = {
-  AUTH_HEADER_MISSING: "Authorization header missing",
+  ACCESS_TOKEN_MISSING: "Access token missing",
+  TOKEN_EXPIRED: "Access token expired",
+  INVALID_TOKEN: "Invalid access token",
+  INVALID_ROLE: "Invalid active role",
+  USER_NOT_FOUND: "User not found",
+  USER_BLOCKED: "User is blocked",
+
   UNAUTHORIZED: "Unauthorized",
   FORBIDDEN: "Forbidden",
-  TOKEN_EXPIRED: "Token expired",
-  INVALID_TOKEN: "Invalid token",
-  AUTH_FAILED: "Authentication failed",
-  INVALID_ROLE: "Invalid role in token",
+
   LOGIN_SUCCESS: "Login successful",
   LOGOUT_SUCCESS: "Logout successful",
 } as const;
+
+
 
 export const PAYMENT_MESSAGES = {
   CHECKOUT_CREATED: "Checkout session created",

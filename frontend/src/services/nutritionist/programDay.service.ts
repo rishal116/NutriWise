@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/api";
+import { api } from "@/lib/axios/clientApi";
 
 export const programDayService = {
   async getProgramDays(programId: string) {

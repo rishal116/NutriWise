@@ -1,13 +1,13 @@
-import { api } from "@/lib/axios/api";
+import { clientApi } from "@/lib/axios/clientApi";
 
 export const userPlanService = {
   getMyPlans: async () => {
-    const res = await api.get("/plans");
+    const res = await clientApi.get("/plans");
     return res.data;
   },
 
   getPlanById: async (planId: string) => {
-    const res = await api.get(`/plans/${planId}`);
+    const res = await clientApi.get(`/plans/${planId}`);
     return res.data;
   },
 };

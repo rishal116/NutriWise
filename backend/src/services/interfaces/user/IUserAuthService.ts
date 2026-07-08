@@ -10,6 +10,7 @@ import { AuthResponseDto } from "../../../dtos/user/auth/auth-response.dto";
 import { GetMeResponseDto } from "../../../dtos/user/get-me-response.dto";
 import { ForgotPasswordDto } from "../../../dtos/user/auth/forgot-password.dto";
 import { ResetPasswordDto } from "../../../dtos/user/auth/reset-password.dto";
+import { SwitchRoleDto } from "../../../dtos/user/auth/switch-role.dto";
 
 export interface IUserAuthService {
   signup(req: Request, data: UserRegisterDto): Promise<MessageResponseDto>;
@@ -20,4 +21,8 @@ export interface IUserAuthService {
   requestPasswordReset(data: ForgotPasswordDto): Promise<MessageResponseDto>;
   resetPassword(data: ResetPasswordDto): Promise<MessageResponseDto>;
   getMe(userId: string): Promise<GetMeResponseDto>;
+  switchRole(
+    userId: string,
+    dto: SwitchRoleDto,
+  ): Promise<{ accessToken: string; refreshToken: string }>;
 }

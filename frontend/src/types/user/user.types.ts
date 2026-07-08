@@ -9,4 +9,5 @@ export interface User {
   activeRole: UserRole;
   roles: UserRole[];
   isProfileCompleted: boolean;
+  nutritionistStatus: "pending" | "approved" | "rejected" | null;
 }

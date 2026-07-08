@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/api";
+import { clientApi } from "@/lib/axios/clientApi";
 import { GetGroupsResponse } from "@/types/group.types";
 
 export const userGroupService = {
@@ -6,14 +6,14 @@ export const userGroupService = {
     limit: number;
     skip: number;
   }): Promise<GetGroupsResponse> => {
-    const res = await api.get("/groups", {
+    const res = await clientApi.get("/groups", {
       params: payload,
     });
 
     return res.data;
   },
   joinGroup: async (groupId: string) => {
-  const res = await api.post(`/groups/${groupId}/join`);
-  return res.data;
-},
+    const res = await clientApi.post(`/groups/${groupId}/join`);
+    return res.data;
+  },
 };

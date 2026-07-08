@@ -1,8 +1,8 @@
 import jwt, { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
 import { Request, Response } from "express";
 import { UserModel } from "../models/user.model";
-import { jwtConfig } from "../configs/jwt";
-import { generateTokens, setAuthCookies } from "../utils/jwt";
+import { jwtConfig } from "../configs/jwt.config";
+import { generateTokens, setAuthCookies } from "../utils/token.util";
 import { StatusCode } from "../enums/statusCode.enum";
 import { UserRole } from "../enums/userRole.enum";
 import logger from "../utils/logger";
@@ -17,9 +17,9 @@ export const refreshToken = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const token = req.cookies.refreshToken;
+    const refreshToken = req.cookies.refreshToken;
 
-    if (!token) {
+    if (!refreshToken) {
       logger.warn("Refresh token not found");
 
       return res.status(StatusCode.UNAUTHORIZED).json({
@@ -29,7 +29,7 @@ export const refreshToken = async (
     }
 
     const decoded = jwt.verify(
-      token,
+      refreshToken,
       jwtConfig.refreshToken.secret,
     ) as JwtPayload;
 
@@ -46,23 +46,18 @@ export const refreshToken = async (
       });
     }
 
-    const { accessToken, refreshToken } = generateTokens(
-      user._id.toString(),
-      user.activeRole,
-    );
+    const tokens = generateTokens(user._id.toString(), user.activeRole);
 
-    setAuthCookies(res, refreshToken);
+    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
 
-    logger.info("Access token refreshed", {
+    logger.info("Tokens refreshed", {
       userId: user._id.toString(),
       activeRole: user.activeRole,
     });
 
     return res.status(StatusCode.OK).json({
       success: true,
-      message: "Access token refreshed successfully",
-      accessToken,
-      activeRole: user.activeRole,
+      message: "Tokens refreshed successfully",
     });
   } catch (error: unknown) {
     if (error instanceof TokenExpiredError) {
@@ -83,7 +78,7 @@ export const refreshToken = async (
       });
     }
 
-    logger.error("Failed to refresh access token", {
+    logger.error("Failed to refresh tokens", {
       error,
     });
 

@@ -1,8 +1,8 @@
-import { api } from "@/lib/axios/api";
+import { clientApi } from "@/lib/axios/clientApi";
 
 export const userMeetService = {
   getMeetings: async () => {
-    const res = await api.get("/meetings");
+    const res = await clientApi.get("/meetings");
     return res.data;
   },
 };

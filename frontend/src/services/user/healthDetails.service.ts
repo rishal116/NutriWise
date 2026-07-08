@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/api";
+import { api } from "@/lib/axios/clientApi";
 import { HealthDetailsPayload } from "@/constants/user/healthDetails.constant";
 
 

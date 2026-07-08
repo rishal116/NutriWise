@@ -10,7 +10,7 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { OAuth2Client } from "google-auth-library";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
-import { generateTokens } from "../../../utils/jwt";
+import { generateTokens } from "../../../utils/token.util";
 import crypto from "crypto";
 import { sendResetPasswordEmail } from "../../../utils/sendOtp";
 import { UserRegisterDto } from "../../../dtos/user/auth/signup.dto";
@@ -32,6 +32,8 @@ import { GoogleAuthDto } from "../../../dtos/user/auth/google-auth.dto";
 import { ForgotPasswordDto } from "../../../dtos/user/auth/forgot-password.dto";
 import { ResetPasswordDto } from "../../../dtos/user/auth/reset-password.dto";
 import { Types } from "mongoose";
+import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
+import { SwitchRoleDto } from "../../../dtos/user/auth/switch-role.dto";
 
 @injectable()
 export class UserAuthService implements IUserAuthService {
@@ -42,6 +44,8 @@ export class UserAuthService implements IUserAuthService {
     @inject(TYPES.IOTPService) private _otpService: IOTPService,
     @inject(TYPES.IPasswordResetRepository)
     private _passwordResetRepository: IPasswordResetRepository,
+    @inject(TYPES.INutritionistProfileRepository)
+    private _nutritionistRepository: INutritionistProfileRepository,
   ) {
     this._googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   }
@@ -123,14 +127,13 @@ export class UserAuthService implements IUserAuthService {
   async login(data: LoginDto): Promise<AuthResponseDto> {
     await validateDto(LoginDto, data);
     const { email, password } = data;
-    console.log(password)
+    console.log(password);
     logger.info("Login request", { email });
     const user = await this._userRepository.findByEmail(email);
     if (!user) {
       throw new CustomError("User not found", StatusCode.NOT_FOUND);
     }
-    console.log(user);
-    
+
     if (!user.password) {
       throw new CustomError(
         "This account is registered with Google. Please sign in with Google.",
@@ -258,6 +261,8 @@ export class UserAuthService implements IUserAuthService {
     if (!user) {
       throw new CustomError("User not found", StatusCode.NOT_FOUND);
     }
+    const nutritionist =
+      await this._nutritionistRepository.findByUserId(userId);
     return {
       id: user._id.toString(),
       fullName: user.fullName,
@@ -267,6 +272,28 @@ export class UserAuthService implements IUserAuthService {
       activeRole: user.activeRole,
       roles: user.roles,
       isProfileCompleted: user.isProfileCompleted,
+      nutritionistStatus: nutritionist?.applicationStatus ?? null,
+    };
+  }
+
+  async switchRole(
+    userId: string,
+    dto: SwitchRoleDto,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const user = await this._userRepository.findById(userId);
+    if (!user) {
+      throw new CustomError("User not found");
+    }
+    if (!user.roles.includes(dto.role)) {
+      throw new CustomError("You do not have access to this role");
+    }
+    await this._userRepository.updateById(userId, {
+      activeRole: dto.role,
+    });
+    const { accessToken, refreshToken } = generateTokens(userId, dto.role);
+    return {
+      accessToken,
+      refreshToken,
     };
   }
 }

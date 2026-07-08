@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/api";
+import { api } from "@/lib/axios/clientApi";
 import { API_ROUTES } from "@/routes/user.routes";
 import {
   CreateCheckoutSessionPayload,

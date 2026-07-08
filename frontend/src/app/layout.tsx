@@ -2,9 +2,10 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import { ReduxProvider } from "@/redux/provider";
-import SocketProvider from "@/providers/socket-provider";
-import AuthProvider from "@/providers/AuthProvider";
+import SocketProvider from "@/providers/SocketProvider";
 import { Toaster } from "sonner";
+import { ThemeProviders } from "@/providers/ThemeProvider";
+import AuthProvider from "@/providers/AuthProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -20,24 +21,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
         <ReduxProvider>
           <AuthProvider>
-            <SocketProvider>{children}</SocketProvider>
+            <ThemeProviders>
+              <SocketProvider>
+                {children}
 
-            <Toaster
-              position="top-right"
-              richColors
-              closeButton
-              duration={3000}
-            />
+                <Toaster
+                  position="top-right"
+                  richColors
+                  closeButton
+                  duration={3000}
+                />
+              </SocketProvider>
+            </ThemeProviders>
           </AuthProvider>
         </ReduxProvider>
       </body>

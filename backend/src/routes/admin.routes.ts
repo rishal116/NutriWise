@@ -1,15 +1,16 @@
 import { Router } from "express";
 import { TYPES } from "../types/types";
-import { IAdminClientController } from "../controllers/interfaces/admin/IAdminClientController";
+import { IAdminUserController } from "../controllers/interfaces/admin/IAdminUserController";
 import { IAdminNotificationController } from "../controllers/interfaces/admin/IAdminNotificationController";
 import { IAdminNutritionistController } from "../controllers/interfaces/admin/IAdminNutritionistController";
 import { container } from "../configs/inversify";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
-import { ROLES } from "../constants/index";
+import { UserRole } from "../enums/userRole.enum";
+import { IAdminNutritionistApplicationController } from "../controllers/interfaces/admin/IAdminNutritionistApplicationController";
 
-const adminClientController = container.get<IAdminClientController>(
-  TYPES.IAdminClientController,
+const adminUserController = container.get<IAdminUserController>(
+  TYPES.IAdminUserController,
 );
 const adminNutritionistController = container.get<IAdminNutritionistController>(
   TYPES.IAdminNutritionistController,
@@ -18,35 +19,40 @@ const adminNotificationController = container.get<IAdminNotificationController>(
   TYPES.IAdminNotificationController,
 );
 
+const adminNutritionistApplicationController =
+  container.get<IAdminNutritionistApplicationController>(
+    TYPES.IAdminNutritionistApplicationController,
+  );
+
+  
 const router = Router();
-
-//    PUBLIC ROUTES
-
-//    PROTECTED ROUTES
-
 router.use(authMiddleware);
-router.use(authorize(ROLES.ADMIN));
+router.use(authorize(UserRole.ADMIN));
 
-router.get("/users", adminClientController.getAllUsers);
-router.patch("/block-user/:userId", adminClientController.blockUser);
-router.patch("/unblock-user/:userId", adminClientController.unblockUser);
+router.get("/users", adminUserController.getUsers);
+router.patch(
+  "/users/:userId/block-status",
+  adminUserController.updateBlockStatus,
+);
 
-router.get("/nutritionists", adminNutritionistController.getAllNutritionists);
-router.patch(
-  "/nutritionist/approve/:userId",
-  adminNutritionistController.approveNutritionist,
-);
-router.patch(
-  "/nutritionist/reject/:userId",
-  adminNutritionistController.rejectNutritionist,
-);
-router.patch(
-  "/nutritionist/:userId/level",
-  adminNutritionistController.updateNutritionistLevel,
-);
+router.get("/nutritionists", adminNutritionistController.getNutritionists);
 router.get(
-  "/nutritionist/:userId",
-  adminNutritionistController.getNutritionistProfile,
+  "/nutritionists/:userId",
+  adminNutritionistController.getNutritionistDetails,
+);
+router.patch(
+  "/nutritionists/:userId/coach-level",
+  adminNutritionistController.updateCoachLevel,
+);
+
+router.get(
+  "/nutritionist-applications",
+  adminNutritionistApplicationController.getApplications,
+);
+
+router.patch(
+  "/nutritionist-applications/:userId/status",
+  adminNutritionistApplicationController.updateApplicationStatus,
 );
 
 router.get("/notifications", adminNotificationController.getAllNotifications);

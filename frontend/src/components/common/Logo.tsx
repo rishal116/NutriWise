@@ -8,6 +8,7 @@ interface LogoProps {
   href?: string;
   onClick?: () => void;
   linkable?: boolean;
+  showText?: boolean;
   className?: string;
 }
 
@@ -22,6 +23,7 @@ export default function Logo({
   href = "/",
   onClick,
   linkable = true,
+  showText = true,
   className = "",
 }: LogoProps) {
   const currentSize = sizes[size];
@@ -55,9 +57,11 @@ export default function Logo({
           strokeLinejoin="round"
         />
       </svg>
-      <span className={`${currentSize.text} font-semibold text-gray-900`}>
-        NutriWise
-      </span>
+      {showText && (
+        <span className={`${currentSize.text} font-semibold text-slate-900 dark:text-white truncate`}>
+          NutriWise
+        </span>
+      )}
     </div>
   );
 

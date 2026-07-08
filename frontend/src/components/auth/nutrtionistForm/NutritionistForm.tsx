@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { nutritionistAuthService } from "@/services/nutritionist/nutritionistAuth.service";
+import { nutritionistAuthService } from "@/services/nutritionist/nutriApplication.service";
 import { X, Award, Briefcase, Globe, FileText, Clock, RefreshCw} from "lucide-react";
 import { 
   Section, 

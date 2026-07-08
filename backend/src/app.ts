@@ -6,32 +6,28 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import userRoutes from "./routes/user.routes";
 import adminRoutes from "./routes/admin.routes";
-import nutriRoutes from "./routes/nutritionist.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
-import chatRoutes from "./routes/chat.routes"
-import sessionRoutes from "./routes/session.routes"
-
+import chatRoutes from "./routes/chat.routes";
+import sessionRoutes from "./routes/session.routes";
+import nutritionistApplicationRoutes from "./routes/nutritionist-application.routes";
+import nutritionistRoutes from "./routes/nutritionist.routes";
 
 dotenv.config();
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
 
-app.use(
-  "/stripe/webhook",
-  express.raw({ type: "application/json" })
-);
+app.use("/stripe/webhook", express.raw({ type: "application/json" }));
 
 app.use(cookieParser());
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
-  })
+  }),
 );
 
 if (isProduction && !process.env.SESSION_SECRET) {
@@ -53,13 +49,14 @@ app.use(
       httpOnly: true,
       sameSite: isProduction ? "none" : "lax",
     },
-  })
+  }),
 );
 
 app.use("/admin", adminRoutes);
 app.use("/", userRoutes);
 app.use("/chat", chatRoutes);
-app.use("/nutritionist", nutriRoutes);
+app.use("/nutritionist/application", nutritionistApplicationRoutes);
+app.use("/nutritionist", nutritionistRoutes);
 app.use("/session", sessionRoutes);
 
 app.use(errorMiddleware);

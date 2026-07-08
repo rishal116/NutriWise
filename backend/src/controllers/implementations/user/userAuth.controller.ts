@@ -6,7 +6,7 @@ import { IUserAuthController } from "../../interfaces/user/IUserAuthController";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { setAuthCookies, clearAuthCookies } from "../../../utils/jwt";
+import { setAuthCookies, clearAuthCookies } from "../../../utils/token.util";
 import { AUTH_MESSAGES } from "../../../constants";
 
 @injectable()
@@ -36,11 +36,10 @@ export class UserAuthController implements IUserAuthController {
       email,
       otp,
     });
-    setAuthCookies(res, response.refreshToken);
+    setAuthCookies(res, response.accessToken, response.refreshToken);
     return res.status(StatusCode.CREATED).json({
       success: true,
       message: response.message,
-      accessToken: response.accessToken,
     });
   });
 
@@ -61,11 +60,10 @@ export class UserAuthController implements IUserAuthController {
       email,
       password,
     });
-    setAuthCookies(res, response.refreshToken);
+    setAuthCookies(res, response.accessToken, response.refreshToken);
     return res.status(StatusCode.OK).json({
       success: true,
       message: response.message,
-      accessToken: response.accessToken,
       activeRole: response.activeRole,
       isProfileCompleted: response.isProfileCompleted,
     });
@@ -76,11 +74,10 @@ export class UserAuthController implements IUserAuthController {
     const response = await this._userAuthService.googleAuth({
       credential,
     });
-    setAuthCookies(res, response.refreshToken);
+    setAuthCookies(res, response.accessToken, response.refreshToken);
     return res.status(StatusCode.OK).json({
       success: true,
       message: response.message,
-      accessToken: response.accessToken,
       activeRole: response.activeRole,
       isProfileCompleted: response.isProfileCompleted,
     });
@@ -124,6 +121,18 @@ export class UserAuthController implements IUserAuthController {
     return res.status(StatusCode.OK).json({
       success: true,
       message: AUTH_MESSAGES.LOGOUT_SUCCESS,
+    });
+  });
+
+  switchRole = asyncHandler(async (req: Request, res: Response) => {
+    const { userId } = req.user!;
+    const dto = req.body;
+    const { accessToken, refreshToken } =
+      await this._userAuthService.switchRole(userId, dto);
+    setAuthCookies(res, accessToken, refreshToken);
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Role switched successfully",
     });
   });
 }

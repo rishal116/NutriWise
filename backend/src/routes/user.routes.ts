@@ -13,7 +13,6 @@ import { IUserPlanController } from "../controllers/interfaces/user/IUserPlanCon
 import { upload } from "../middlewares/multer.middleware";
 import { IConversationController } from "../controllers/interfaces/chat/IConversationController";
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
-import { blockLoggedInUser } from "../middlewares/blockLoggedInUser.middleware";
 import { IMessageController } from "../controllers/interfaces/chat/IMessageController";
 import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMeetingsController";
 import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
@@ -87,6 +86,7 @@ router.post("/forgot-password", userAuthController.forgotPassword);
 router.post("/reset-password", userAuthController.resetPassword);
 router.post("/refresh-token", refreshToken);
 router.get("/me", authMiddleware, userAuthController.getMe);
+router.patch("/switch-role", authMiddleware, userAuthController.switchRole);
 
 router.patch(
   "/complete-profile",

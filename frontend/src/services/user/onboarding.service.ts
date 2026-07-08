@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/api";
+import { clientApi } from "@/lib/axios/clientApi";
 
 export interface CompleteProfileDto {
   gender: string;
@@ -14,7 +14,7 @@ export interface CompleteProfileDto {
 
 export const onboardingService = {
   completeProfile: async (data: CompleteProfileDto) => {
-    const res = await api.patch("/complete-profile", data);
+    const res = await clientApi.patch("/complete-profile", data);
     return res.data;
   },
 };

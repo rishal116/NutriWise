@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { GoogleLogin } from "@react-oauth/google";
 import { CredentialResponse } from "@react-oauth/google";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 import {
   Eye,
   EyeOff,
@@ -15,13 +15,9 @@ import {
   UserPlus,
   Loader2,
 } from "lucide-react";
-import { loginSuccess } from "@/redux/slices/authSlice";
 import { signupSchema } from "@/validations/auth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
-import { useEffect } from "react";
-import { RootState } from "@/redux/store";
-import { useSelector } from "react-redux";
 import Link from "next/link";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { SignupRequest } from "@/types/auth/auth-request.types";
@@ -40,11 +36,6 @@ export default function SignupForm() {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const token = useSelector((state: RootState) => state.auth.token);
-
-  useEffect(() => {
-    if (token) router.replace("/");
-  }, [token, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,7 +72,9 @@ export default function SignupForm() {
         });
       }
     } catch (error: unknown) {
-      toast.error(getErrorMessage(error));
+      const message = getErrorMessage(error);
+      console.log(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -111,7 +104,6 @@ export default function SignupForm() {
         toast.error(response.message || "Signup failed");
         return;
       }
-      dispatch(loginSuccess(response.accessToken));
       if (!response.isProfileCompleted) {
         router.push("/complete-profile");
         return;
@@ -269,8 +261,7 @@ export default function SignupForm() {
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Creating
-                account...
+                <Loader2 className="w-4 h-4 animate-spin" /> Creating account...
               </>
             ) : (
               <>

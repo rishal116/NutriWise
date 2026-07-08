@@ -4,16 +4,8 @@ import { useRouter } from "next/navigation";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
 import { userAuthService } from "@/services/user/userAuth.service";
-import { loginSuccess } from "@/redux/slices/authSlice";
-import toast, { Toaster } from "react-hot-toast";
-import {
-  Mail,
-  Shield,
-  Clock,
-  RotateCw,
-  CheckCircle2,
-  Loader2,
-} from "lucide-react";
+import { toast } from "sonner";
+import { Mail, Shield, Clock, RotateCw, Loader2 } from "lucide-react";
 import {
   restoreSignupEmail,
   clearSignupEmail,
@@ -112,7 +104,6 @@ export default function OtpForm() {
 
   const handleVerify = useCallback(async () => {
     if (isVerifying) return;
-
     if (!email) {
       toast.error("Invalid session. Please sign up again.");
       router.replace("/signup");
@@ -126,7 +117,6 @@ export default function OtpForm() {
 
     const otpValue = otp.join("");
     const validation = verifyOtpSchema.safeParse({ email, otp: otpValue });
-
     if (!validation.success) {
       setOtpError(validation.error.issues[0]?.message || "Invalid code");
       return;
@@ -148,42 +138,22 @@ export default function OtpForm() {
       }
 
       setIsVerified(true);
-
       toast.success(res.message || "OTP verified successfully!");
 
-      if (res.accessToken) {
-        dispatch(loginSuccess(res.accessToken));
+      dispatch(clearSignupEmail());
+      localStorage.removeItem("signupEmail");
+
+      if (!res.isProfileCompleted) {
+        router.replace("/complete-profile");
+        return;
       }
-
-      setTimeout(() => {
-        dispatch(clearSignupEmail());
-        localStorage.removeItem("signupEmail");
-
-        if (!res.isProfileCompleted) {
-          router.replace("/complete-profile");
-          return;
-        }
-
-        switch (res.activeRole) {
-          case "admin":
-            router.replace("/admin");
-            break;
-          default:
-            router.replace("/");
-        }
-      }, 1000);
+      router.replace("/");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
       setIsVerifying(false);
     }
   }, [email, otp, isVerifying, isExpired, dispatch, router]);
-
-  useEffect(() => {
-    if (isOtpComplete && !isExpired && !isVerifying) {
-      handleVerify();
-    }
-  }, [isOtpComplete, isExpired, isVerifying, handleVerify]);
 
   const handleResend = useCallback(async () => {
     if (!email) {
@@ -218,7 +188,6 @@ export default function OtpForm() {
 
   return (
     <>
-      <Toaster />
       <div className="min-h-screen flex items-center justify-center bg-emerald-50/60 px-4 py-10 sm:py-14">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl shadow-emerald-900/10 border border-emerald-100 p-6 sm:p-8 lg:p-10">
@@ -301,18 +270,18 @@ export default function OtpForm() {
             </div>
 
             <button
+              type="button"
               onClick={handleVerify}
-              disabled={!isOtpComplete || isVerifying || isExpired}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-2.5 sm:py-3 rounded-xl font-semibold transition-colors flex justify-center items-center gap-2 shadow-sm shadow-emerald-600/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              disabled={!isOtpComplete || isExpired || isVerifying}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-3 transition-colors disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
             >
               {isVerifying ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Verifying...
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Verifying...
                 </>
               ) : (
-                <>
-                  Verify Code <CheckCircle2 className="w-4 h-4" />
-                </>
+                "Verify OTP"
               )}
             </button>
 

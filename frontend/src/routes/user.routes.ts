@@ -9,8 +9,9 @@ export const API_ROUTES = {
     GOOGLE_SIGNIN: "/google-signin",
     FORGOT_PASSWORD: "/forgot-password",
     RESET_PASSWORD: "/reset-password",
-    REFRESH_TOKEN:"/refresh-token",
+    REFRESH_TOKEN: "/refresh-token",
     ME: "/me",
+    SWITCH_ROLE: "/switch-role",
   },
   CHECKOUT: {
     CREATE_SESSION: "/checkout/session",

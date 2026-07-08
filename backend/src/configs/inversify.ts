@@ -43,12 +43,12 @@ import { UserProgramRepository } from "../repositories/implements/user/userProgr
 
 // ---------------- ADMIN ----------------
 
-import { IAdminClientController } from "../controllers/interfaces/admin/IAdminClientController";
-import { AdminClientController } from "../controllers/implementations/admin/adminClient.controller";
-import { IAdminClientService } from "../services/interfaces/admin/IAdminClientService";
-import { AdminClientService } from "../services/implements/admin/adminClient.service";
-import { IAdminClientRepository } from "../repositories/interfaces/admin/IAdminClientRepository";
-import { AdminClientRepository } from "../repositories/implements/admin/adminClient.repository";
+import { IAdminUserController } from "../controllers/interfaces/admin/IAdminUserController";
+import { AdminUserController } from "../controllers/implementations/admin/adminUser.controller";
+import { IAdminUserService } from "../services/interfaces/admin/IAdminUserService";
+import { AdminUserService } from "../services/implements/admin/adminUser.service";
+import { IAdminUserRepository } from "../repositories/interfaces/admin/IAdminUserRepository";
+import { AdminUserRepository } from "../repositories/implements/admin/adminUser.repository";
 
 import { IAdminNutritionistController } from "../controllers/interfaces/admin/IAdminNutritionistController";
 import { AdminNutritionistController } from "../controllers/implementations/admin/adminNutritionist.controller";
@@ -65,10 +65,10 @@ import { INotificationRepository } from "../repositories/interfaces/common/INoti
 import { NotificationRepository } from "../repositories/implements/common/notification.repository";
 
 // ---------------- NUTRITIONIST ----------------
-import { INutritionistAuthController } from "../controllers/interfaces/nutritionist/INutritionistAuthController";
-import { NutritionistAuthController } from "../controllers/implementations/nutritionist/nutritionistAuth.controller";
-import { INutritionistAuthService } from "../services/interfaces/nutritionist/INutritionistAuthService";
-import { NutritionistAuthService } from "../services/implements/nutritionist/nutriAuth.service";
+import { INutritionistApplicationController } from "../controllers/interfaces/nutritionist/INutriApplicationController";
+import { NutritionistApplicationController } from "../controllers/implementations/nutritionist/nutriApplication.controller";
+import { INutritionistApplicationService } from "../services/interfaces/nutritionist/INutriApplicationService";
+import { NutritionistApplicationService } from "../services/implements/nutritionist/nutriApplication.service";
 
 import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutritionistProfileRepository";
 import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutritionistProfile.repository";
@@ -177,6 +177,12 @@ import { IOnboardingController } from "../controllers/interfaces/user/IOnboardin
 import { OnboardingController } from "../controllers/implementations/user/onboarding.controller";
 import { IOnboardingService } from "../services/interfaces/user/IOnboardingService";
 import { OnboardingService } from "../services/implements/user/onboarding.service";
+import { IAdminNutritionistApplicationController } from "../controllers/interfaces/admin/IAdminNutritionistApplicationController";
+import { AdminNutritionistApplicationController } from "../controllers/implementations/admin/adminNutritionistApplication.controller";
+import { IAdminNutritionistApplicationService } from "../services/interfaces/admin/IAdminNutritionistApplicationService";
+import { AdminNutritionistApplicationService } from "../services/implements/admin/adminNutritionistApplication.service";
+import { IAdminNutritionistApplicationRepository } from "../repositories/interfaces/admin/IAdminNutritionistApplicationRepository";
+import { AdminNutritionistApplicationRepository } from "../repositories/implements/admin/adminNutritionistApplication.repository";
 
 // ---------------- CONTAINER ----------------
 const container = new Container();
@@ -260,20 +266,22 @@ container
   .to(UserGroupController);
 container.bind<IUserGroupService>(TYPES.IUserGroupService).to(UserGroupService);
 
-container.bind<IOnboardingController>(TYPES.IOnboardingController).to(OnboardingController)
-container.bind<IOnboardingService>(TYPES.IOnboardingService).to(OnboardingService)
+container
+  .bind<IOnboardingController>(TYPES.IOnboardingController)
+  .to(OnboardingController);
+container
+  .bind<IOnboardingService>(TYPES.IOnboardingService)
+  .to(OnboardingService);
 
 // -------- ADMIN BINDINGS --------
 
 container
-  .bind<IAdminClientController>(TYPES.IAdminClientController)
-  .to(AdminClientController);
+  .bind<IAdminUserController>(TYPES.IAdminUserController)
+  .to(AdminUserController);
+container.bind<IAdminUserService>(TYPES.IAdminUserService).to(AdminUserService);
 container
-  .bind<IAdminClientService>(TYPES.IAdminClientService)
-  .to(AdminClientService);
-container
-  .bind<IAdminClientRepository>(TYPES.IAdminClientRepository)
-  .to(AdminClientRepository);
+  .bind<IAdminUserRepository>(TYPES.IAdminUserRepository)
+  .to(AdminUserRepository);
 container
   .bind<IAdminNutritionistController>(TYPES.IAdminNutritionistController)
   .to(AdminNutritionistController);
@@ -283,6 +291,23 @@ container
 container
   .bind<IAdminNutritionistRepository>(TYPES.IAdminNutritionistRepository)
   .to(AdminNutritionistRepository);
+
+container
+  .bind<IAdminNutritionistApplicationController>(
+    TYPES.IAdminNutritionistApplicationController,
+  )
+  .to(AdminNutritionistApplicationController);
+container
+  .bind<IAdminNutritionistApplicationService>(
+    TYPES.IAdminNutritionistApplicationService,
+  )
+  .to(AdminNutritionistApplicationService);
+container
+  .bind<IAdminNutritionistApplicationRepository>(
+    TYPES.IAdminNutritionistApplicationRepository,
+  )
+  .to(AdminNutritionistApplicationRepository);
+
 container
   .bind<IAdminNotificationController>(TYPES.IAdminNotificationController)
   .to(AdminNotificationController);
@@ -295,11 +320,13 @@ container
 
 // -------- NUTRITIONIST BINDINGS --------
 container
-  .bind<INutritionistAuthController>(TYPES.INutritionistAuthController)
-  .to(NutritionistAuthController);
+  .bind<INutritionistApplicationController>(
+    TYPES.INutritionistApplicationController,
+  )
+  .to(NutritionistApplicationController);
 container
-  .bind<INutritionistAuthService>(TYPES.INutritionistAuthService)
-  .to(NutritionistAuthService);
+  .bind<INutritionistApplicationService>(TYPES.INutritionistApplicationService)
+  .to(NutritionistApplicationService);
 container
   .bind<IUserNutritionistProfileRepository>(
     TYPES.IUserNutritionistProfileRepository,

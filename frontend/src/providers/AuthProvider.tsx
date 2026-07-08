@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
-import { setToken, logout } from "@/redux/slices/authSlice";
+import { useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { logout, setUser } from "@/redux/slices/authSlice";
 import { userAuthService } from "@/services/user/userAuth.service";
 
 export default function AuthProvider({
@@ -12,34 +11,32 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   const dispatch = useDispatch();
-  const token = useSelector((state: RootState) => state.auth.token);
-
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     const initializeAuth = async () => {
-      if (token) {
-        setLoading(false);
-        return;
-      }
-
       try {
-        const res = await userAuthService.refreshToken();
+        const res = await userAuthService.getMe();
+        console.log(res);
+        
 
-        dispatch(setToken(res.accessToken));
+        if (!isMounted) return;
+
+        dispatch(setUser(res.data));
       } catch {
+        if (!isMounted) return;
+
         dispatch(logout());
-      } finally {
-        setLoading(false);
       }
     };
 
     initializeAuth();
-  }, [dispatch, token]);
 
-  if (loading) {
-    return null;
-  }
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch]);
 
   return <>{children}</>;
 }

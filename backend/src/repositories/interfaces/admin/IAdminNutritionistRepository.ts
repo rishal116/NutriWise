@@ -1,7 +1,17 @@
-import { INutritionistProfile } from "../../../models/nutritionistProfile.model";
-import { NutritionistLevel } from "../../../enums/nutritionist.enum";
+import { CoachLevel } from "../../../types/nutritionist.types";
+import { AdminNutritionistListQueryDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-list-query.dto";
+import { AdminNutritionistListItemDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-list-item.dto";
+import { AdminNutritionistDetailsDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-details.dto";
 
 export interface IAdminNutritionistRepository {
-  findByUserId(userId: string): Promise<INutritionistProfile | null>;
-  updateNutritionistLevel(userId: string,level: NutritionistLevel): Promise<INutritionistProfile | null>;
+  getNutritionists(query: AdminNutritionistListQueryDto): Promise<{
+    nutritionists: AdminNutritionistListItemDto[];
+    total: number;
+  }>;
+
+  getNutritionistDetails(
+    userId: string,
+  ): Promise<AdminNutritionistDetailsDto | null>;
+
+  updateCoachLevel(userId: string, coachLevel: CoachLevel): Promise<void>;
 }

@@ -10,7 +10,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { nutritionistAuthService } from "@/services/nutritionist/nutritionistAuth.service";
+import {}
 
 interface Notification {
   id: string;

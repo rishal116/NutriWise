@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { nutritionistAuthService } from "@/services/nutritionist/nutritionistAuth.service";
+import { nutritionistAuthService } from "@/services/nutritionist/nutriApplication.service";
 
 export const useNutritionistStatus = () => {
   const router = useRouter();

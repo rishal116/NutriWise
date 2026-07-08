@@ -1,30 +1,20 @@
-import { INutritionistProfile } from "../../../models/nutritionistProfile.model";
-import { PaginatedResponseDto } from "../../../dtos/base/BaseResponse.dtos";
-import {
-  AdminNutritionistProfileDTO,
-  NutritionistStatusDTO,
-} from "../../../dtos/admin/user.dto";
-import { NutritionistLevel } from "../../../enums/nutritionist.enum";
+import { CoachLevel } from "../../../types/nutritionist.types";
+import { AdminNutritionistListQueryDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-list-query.dto";
+import { AdminNutritionistListItemDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-list-item.dto";
+import { AdminNutritionistDetailsDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-details.dto";
 
 export interface IAdminNutritionistService {
-  getAllNutritionists(
-    page: number,
-    limit: number,
-    search?: string
-  ): Promise<PaginatedResponseDto<NutritionistStatusDTO>>;
+  getNutritionists(query: AdminNutritionistListQueryDto): Promise<{
+    data: AdminNutritionistListItemDto[];
+    total: number;
+    skip: number;
+    limit: number;
+    hasMore: boolean;
+  }>;
 
-  getNutritionistById(userId: string): Promise<INutritionistProfile | null>;
+  getNutritionistDetails(
+    userId: string,
+  ): Promise<AdminNutritionistDetailsDto | null>;
 
-  approveNutritionist(userId: string): Promise<void>;
-
-  rejectNutritionist(userId: string, reason: string): Promise<void>;
-
-  getNutritionistProfile(
-    userId: string
-  ): Promise<AdminNutritionistProfileDTO>;
-
-  updateNutritionistLevel(
-    nutritionistId: string,
-    level: NutritionistLevel
-  ): Promise<void>;
+  updateCoachLevel(userId: string, coachLevel: CoachLevel): Promise<void>;
 }
