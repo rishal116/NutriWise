@@ -34,6 +34,7 @@ import { ResetPasswordDto } from "../../../dtos/user/auth/reset-password.dto";
 import { Types } from "mongoose";
 import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
 import { SwitchRoleDto } from "../../../dtos/user/auth/switch-role.dto";
+import { AuthProvider } from "../../../enums/user.enum";
 
 @injectable()
 export class UserAuthService implements IUserAuthService {
@@ -64,10 +65,11 @@ export class UserAuthService implements IUserAuthService {
     if (existingUser) {
       throw new CustomError("User already exists", StatusCode.CONFLICT);
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
     setTempUser(req, {
       fullName,
       email,
-      password,
+      password: hashedPassword,
     });
     await this._otpService.requestOtp(email);
     return {
@@ -90,13 +92,18 @@ export class UserAuthService implements IUserAuthService {
         StatusCode.NOT_FOUND,
       );
     }
-    const hashedPassword = await bcrypt.hash(tempUser.password, 10);
+    const existingUser = await this._userRepository.findByEmail(tempUser.email);
+    if (existingUser) {
+      throw new CustomError("User already exists", StatusCode.CONFLICT);
+    }
     const username = await generateUniqueUsername(tempUser.fullName);
     const newUser = await this._userRepository.create({
       fullName: tempUser.fullName,
       email: tempUser.email,
       username,
-      password: hashedPassword,
+      password: tempUser.password,
+      authProvider: AuthProvider.LOCAL,
+      emailVerifiedAt: new Date(),
     });
     const { accessToken, refreshToken } = generateTokens(
       newUser._id.toString(),
@@ -129,19 +136,33 @@ export class UserAuthService implements IUserAuthService {
     const { email, password } = data;
     console.log(password);
     logger.info("Login request", { email });
-    const user = await this._userRepository.findByEmail(email);
+    const user = await this._userRepository.findByEmailWithPassword(email);
     if (!user) {
       throw new CustomError("User not found", StatusCode.NOT_FOUND);
     }
 
-    if (!user.password) {
+    if (user.isBlocked) {
       throw new CustomError(
-        "This account is registered with Google. Please sign in with Google.",
+        "Your account has been blocked. Please contact support.",
+        StatusCode.FORBIDDEN,
+      );
+    }
+
+    if (user.authProvider === AuthProvider.GOOGLE) {
+      throw new CustomError(
+        "This account uses Google Sign-In.",
         StatusCode.BAD_REQUEST,
       );
     }
-    const hashedPassword = user.password;
-    const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+
+    if (!user.password) {
+      throw new CustomError(
+        "Password is missing for this account.",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new CustomError(
@@ -149,6 +170,9 @@ export class UserAuthService implements IUserAuthService {
         StatusCode.UNAUTHORIZED,
       );
     }
+    await this._userRepository.updateById(user._id.toString(), {
+      lastLoginAt: new Date(),
+    });
     const { accessToken, refreshToken } = generateTokens(
       user._id.toString(),
       user.activeRole,
@@ -177,16 +201,39 @@ export class UserAuthService implements IUserAuthService {
     if (!payload || !payload.email || !payload.sub) {
       throw new CustomError("Invalid Google token", StatusCode.BAD_REQUEST);
     }
+    logger.info("Google authentication request", {
+      email: payload.email,
+    });
     let user = await this._userRepository.findByEmail(payload.email);
-    if (!user) {
+    if (user) {
+      if (user.isBlocked) {
+        throw new CustomError(
+          "Your account has been blocked. Please contact support.",
+          StatusCode.FORBIDDEN,
+        );
+      }
+      if (!user.googleId) {
+        await this._userRepository.updateById(user._id.toString(), {
+          googleId: payload.sub,
+          authProvider: AuthProvider.GOOGLE,
+          emailVerifiedAt: new Date(),
+        });
+      }
+    } else {
       const username = await generateUniqueUsername(payload.name ?? "user");
       user = await this._userRepository.create({
         fullName: payload.name ?? "",
         email: payload.email,
         username,
         googleId: payload.sub,
+        profileImage: payload.picture,
+        authProvider: AuthProvider.GOOGLE,
+        emailVerifiedAt: new Date(),
       });
     }
+    await this._userRepository.updateById(user._id.toString(), {
+      lastLoginAt: new Date(),
+    });
     const { accessToken, refreshToken } = generateTokens(
       user._id.toString(),
       user.activeRole,

@@ -4,7 +4,6 @@ import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepo
 import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
 import { TYPES } from "../../../types/types";
 import { Types } from "mongoose";
-import { NotificationDto } from "../../../dtos/common/notification.dto";
 import {
   uploadToCloudinary,
   uploadMultipleToCloudinary,
@@ -21,6 +20,8 @@ import { NutritionistApplicationStatusDto } from "../../../dtos/nutritionist/for
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { ICertification } from "../../../models/nutritionistProfile.model";
+import { UserRole } from "../../../enums/user.enum";
+import { NotificationType } from "../../../models/notification.model";
 
 @injectable()
 export class NutritionistApplicationService implements INutritionistApplicationService {
@@ -115,6 +116,7 @@ export class NutritionistApplicationService implements INutritionistApplicationS
       certifications: mappedCertifications,
       totalExperienceYears,
     };
+    const isReapplication = !!existingProfile;
     if (existingProfile) {
       await this._nutritionistProfileRepository.updateByUserId(userId, {
         ...profile,
@@ -133,15 +135,27 @@ export class NutritionistApplicationService implements INutritionistApplicationS
     if (!nutritionist) {
       throw new CustomError("Nutritionist not found");
     }
-    const notification: NotificationDto = {
-      title: "New Nutritionist Profile Submitted",
-      message: `Nutritionist ${nutritionist.fullName} has submitted their profile. Please review and approve.`,
-      type: "info",
-      senderId: nutritionist._id.toString(),
-      recipientType: "admin",
-      receiverId: process.env.ADMIN_ID!,
-    };
-    await this._notificationRepository.createNotification(notification);
+
+    const admin = await this._userRepository.findOne({
+      activeRole: UserRole.ADMIN,
+    });
+    if (!admin) {
+      throw new CustomError("Admin not found");
+    }
+    await this._notificationRepository.create({
+      recipientId: admin._id,
+      senderId: nutritionist._id,
+      type: NotificationType.INFO,
+      title: isReapplication
+        ? "Nutritionist Application Resubmitted"
+        : "New Nutritionist Application",
+      message: isReapplication
+        ? `${nutritionist.fullName} resubmitted their nutritionist application for review.`
+        : `${nutritionist.fullName} submitted a new nutritionist application for review.`,
+      data: {
+        applicantId: nutritionist._id.toString(),
+      },
+    });
   }
 
   async getApplicationStatus(

@@ -1,7 +1,7 @@
 import jwt, { SignOptions } from "jsonwebtoken";
 import { Response } from "express";
 import { jwtConfig } from "../configs/jwt.config";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
 
 export const generateTokens = (userId: string, activeRole: UserRole) => {
   const payload = {

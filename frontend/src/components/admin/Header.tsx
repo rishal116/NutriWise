@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { User as UserType } from "@/types/user/user.types";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
 import { userAuthService } from "@/services/user/userAuth.service";
@@ -27,12 +28,35 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const section = pathname.split("/")[2];
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const router = useRouter();
 
   const currentPage = PAGE_TITLES[section] || {
     title: "Admin Panel",
     subtitle: "NutriWise Administration",
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await userAuthService.getMe();
+        setUser(response.data);
+      } catch (error) {
+        console.error("Failed to fetch user:", error);
+        router.push("/login");
+      }
+    };
+
+    fetchUser();
+  }, [router]);
+
+  const initials =
+    user?.fullName
+      ?.split(" ")
+      .map((name) => name[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() ?? "AD";
 
   const handleLogout = async () => {
     try {
@@ -69,10 +93,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
             <Menu size={20} />
           </button>
 
-          <div className="w-8 h-8 bg-admin-accent rounded-lg flex items-center justify-center shrink-0">
-            <span className="text-admin-accent-fg font-bold text-xs">N</span>
-          </div>
-
           <div className="hidden md:block min-w-0">
             <h1 className="text-sm font-bold text-admin-text tracking-tight truncate">
               {currentPage.title}
@@ -87,7 +107,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="w-px h-6 bg-admin-border mx-1 hidden sm:block" />
 
-          {/* Profile — moved here from Sidebar */}
+          {/* Profile */}
           <div ref={dropdownRef} className="relative">
             <button
               onClick={() => setOpen(!open)}
@@ -96,12 +116,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
               className="flex items-center gap-2 pl-1 pr-1.5 sm:pr-2 py-1 rounded-lg hover:bg-admin-surface-hover transition-colors"
             >
               <div className="w-8 h-8 bg-admin-accent text-admin-accent-fg rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0">
-                AD
+                {initials}
               </div>
               <div className="hidden md:flex flex-col items-start leading-tight">
-                <span className="text-xs font-bold text-admin-text">Admin</span>
-                <span className="text-[10px] text-admin-muted">
-                  admin@nutriwise.com
+                <span className="text-xs font-bold text-admin-text">
+                  {user?.fullName ?? "Loading..."}
+                </span>
+                <span className="text-[10px] text-admin-muted uppercase">
+                  {user?.activeRole ?? ""}
                 </span>
               </div>
               <ChevronDown

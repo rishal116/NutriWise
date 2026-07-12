@@ -5,7 +5,7 @@ import { upload } from "../middlewares/multer.middleware";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
 import { INutritionistApplicationController } from "../controllers/interfaces/nutritionist/INutriApplicationController";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
 
 const router = Router();
 const nutriApplicationController =

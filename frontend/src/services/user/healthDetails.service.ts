@@ -1,15 +1,14 @@
-import { api } from "@/lib/axios/clientApi";
+import { clientApi } from "@/lib/axios/clientApi";
 import { HealthDetailsPayload } from "@/constants/user/healthDetails.constant";
-
 
 export const healthDetailsService = {
   getHealthDetails: async () => {
-    const res = await api.get("/health-details");
+    const res = await clientApi.get("/health-details");
     return res.data;
   },
 
   saveHealthDetails: async (payload: HealthDetailsPayload) => {
-    const res = await api.post("/health-details", payload);
+    const res = await clientApi.post("/health-details", payload);
     return res.data;
-  }
+  },
 };

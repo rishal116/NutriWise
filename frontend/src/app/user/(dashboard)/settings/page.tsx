@@ -14,7 +14,7 @@ export default function SettingsPage() {
           icon: Lock,
           label: "Change Password",
           description: "Update your password and security settings",
-          onClick: () => router.push("/change-password"),
+          onClick: () => router.push("/user/settings/change-password"),
           color: "text-emerald-600",
           bgColor: "bg-emerald-50"
         },

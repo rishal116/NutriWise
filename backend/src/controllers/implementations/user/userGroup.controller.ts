@@ -1,5 +1,3 @@
-
-
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
@@ -18,9 +16,9 @@ export class UserGroupController implements IUserGroupController {
   getGroups = asyncHandler(async (req: Request, res: Response) => {
     const limit = Number(req.query.limit) || 10;
     const skip = Number(req.query.skip) || 0;
-    const {userId} = req.user! 
+    const { userId } = req.user!;
 
-    const data = await this._userGroupService.getGroups(userId,limit, skip);
+    const data = await this._userGroupService.getGroups(userId, limit, skip);
 
     return res.status(StatusCode.OK).json({
       success: true,

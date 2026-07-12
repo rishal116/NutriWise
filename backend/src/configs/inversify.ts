@@ -57,12 +57,10 @@ import { AdminNutritionistService } from "../services/implements/admin/adminNutr
 import { IAdminNutritionistRepository } from "../repositories/interfaces/admin/IAdminNutritionistRepository";
 import { AdminNutritionistRepository } from "../repositories/implements/admin/adminNutritionist.repository";
 
-import { IAdminNotificationController } from "../controllers/interfaces/admin/IAdminNotificationController";
-import { AdminNotificationController } from "../controllers/implementations/admin/adminNotification.controller";
-import { INotificationService } from "../services/interfaces/admin/INotificationService";
-import { NotificationService } from "../services/implements/admin/adminNotification.service";
 import { INotificationRepository } from "../repositories/interfaces/common/INotificationRepository";
 import { NotificationRepository } from "../repositories/implements/common/notification.repository";
+import { INotificationService } from "../services/interfaces/common/INotificationService";
+import { NotificationService } from "../services/implements/common/notification.service";
 
 // ---------------- NUTRITIONIST ----------------
 import { INutritionistApplicationController } from "../controllers/interfaces/nutritionist/INutriApplicationController";
@@ -308,15 +306,8 @@ container
   )
   .to(AdminNutritionistApplicationRepository);
 
-container
-  .bind<IAdminNotificationController>(TYPES.IAdminNotificationController)
-  .to(AdminNotificationController);
-container
-  .bind<INotificationService>(TYPES.INotificationService)
-  .to(NotificationService);
-container
-  .bind<INotificationRepository>(TYPES.INotificationRepository)
-  .to(NotificationRepository);
+
+
 
 // -------- NUTRITIONIST BINDINGS --------
 container
@@ -380,6 +371,13 @@ container
 
 // common
 container.bind<ICheckoutService>(TYPES.ICheckoutService).to(CheckoutService);
+container
+  .bind<INotificationRepository>(TYPES.INotificationRepository)
+  .to(NotificationRepository);
+container
+  .bind<INotificationService>(TYPES.INotificationService)
+  .to(NotificationService);
+
 
 container
   .bind<ICheckoutController>(TYPES.ICheckoutController)

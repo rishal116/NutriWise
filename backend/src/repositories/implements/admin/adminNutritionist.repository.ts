@@ -33,33 +33,40 @@ export class AdminNutritionistRepository
       sortBy = "createdAt",
       sortOrder = "desc",
     } = query;
-    const match: Record<string, unknown> = {};
+
+    const nutritionistFilter: Record<string, unknown> = {};
+    const userFilter: Record<string, unknown> = {};
+
     if (coachLevel) {
-      match.coachLevel = coachLevel;
+      nutritionistFilter.coachLevel = coachLevel;
     }
+
     if (availabilityStatus) {
-      match.availabilityStatus = availabilityStatus;
+      nutritionistFilter.availabilityStatus = availabilityStatus;
     }
+
     if (applicationStatus) {
-      match.applicationStatus = applicationStatus;
+      nutritionistFilter.applicationStatus = applicationStatus;
     }
-    const userMatch: Record<string, unknown> = {
-      isDeleted: false,
-    };
+
     if (typeof isBlocked === "boolean") {
-      userMatch.isBlocked = isBlocked;
+      userFilter["user.isBlocked"] = isBlocked;
     }
-    if (search) {
-      userMatch.$or = [
-        { fullName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { username: { $regex: search, $options: "i" } },
+
+    const keyword = search?.trim();
+
+    if (keyword) {
+      userFilter.$or = [
+        { "user.fullName": { $regex: keyword, $options: "i" } },
+        { "user.email": { $regex: keyword, $options: "i" } },
+        { "user.username": { $regex: keyword, $options: "i" } },
       ];
     }
+
     const [nutritionists, count] = await Promise.all([
       this._model.aggregate<AdminNutritionistListItemDto>([
         {
-          $match: match,
+          $match: nutritionistFilter,
         },
         {
           $lookup: {
@@ -74,8 +81,8 @@ export class AdminNutritionistRepository
         },
         {
           $match: {
-            "user.isDeleted": false,
-            ...userMatch,
+            "user.deletedAt": null,
+            ...userFilter,
           },
         },
         {
@@ -108,9 +115,10 @@ export class AdminNutritionistRepository
           $limit: limit,
         },
       ]),
+
       this._model.aggregate([
         {
-          $match: match,
+          $match: nutritionistFilter,
         },
         {
           $lookup: {
@@ -125,8 +133,8 @@ export class AdminNutritionistRepository
         },
         {
           $match: {
-            "user.isDeleted": false,
-            ...userMatch,
+            "user.deletedAt": null,
+            ...userFilter,
           },
         },
         {
@@ -134,6 +142,7 @@ export class AdminNutritionistRepository
         },
       ]),
     ]);
+
     return {
       nutritionists,
       total: count[0]?.total ?? 0,
@@ -164,6 +173,7 @@ export class AdminNutritionistRepository
         {
           $project: {
             // User
+            // User
             _id: "$user._id",
             userId: "$user._id",
 
@@ -179,11 +189,13 @@ export class AdminNutritionistRepository
             roles: "$user.roles",
             activeRole: "$user.activeRole",
 
+            authProvider: "$user.authProvider",
+            emailVerifiedAt: "$user.emailVerifiedAt",
+
             isBlocked: "$user.isBlocked",
             isProfileCompleted: "$user.isProfileCompleted",
 
             lastLoginAt: "$user.lastLoginAt",
-            lastActiveAt: "$user.lastActiveAt",
 
             // Nutritionist Profile
             qualifications: 1,

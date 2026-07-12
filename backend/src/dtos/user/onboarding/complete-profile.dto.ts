@@ -11,7 +11,7 @@ import {
   TIMELINES,
 } from "../../../types/health.types";
 
-import { Gender } from "../../../enums/userRole.enum";
+import { Gender } from "../../../enums/user.enum";
 
 export class CompleteProfileDto {
   @IsIn(Object.values(Gender))

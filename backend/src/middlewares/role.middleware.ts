@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { CustomError } from "../utils/customError";
 import { StatusCode } from "../enums/statusCode.enum";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
 import { AUTH_MESSAGES } from "../constants";
 
 export const authorize =

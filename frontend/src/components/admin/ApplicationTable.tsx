@@ -31,9 +31,7 @@ type StatusFilter = "all" | ApplicationStatus;
 
 // NOTE: adjust these to match your actual ApplicationStatus enum values.
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "All" },
   { value: "pending" as ApplicationStatus, label: "Pending" },
-  { value: "approved" as ApplicationStatus, label: "Approved" },
   { value: "rejected" as ApplicationStatus, label: "Rejected" },
 ];
 

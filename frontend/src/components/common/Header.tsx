@@ -293,7 +293,7 @@ export default function Header() {
             }`}
           >
             {activeRole === role && <Check className="w-3 h-3" />}
-            {role === "user" ? "Client" : "Nutritionist"}
+            {role === "user" ? "User" : "Nutritionist"}
           </button>
         ))}
       </div>

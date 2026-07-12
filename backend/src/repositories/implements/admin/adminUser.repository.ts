@@ -3,7 +3,7 @@ import { IAdminUserRepository } from "../../interfaces/admin/IAdminUserRepositor
 import { UserModel, IUser } from "../../../models/user.model";
 import { FilterQuery } from "mongoose";
 import { AdminUserListQueryDto } from "../../../dtos/admin/user/admin-user-list-query.dto";
-import { UserRole } from "../../../enums/userRole.enum";
+import { UserRole } from "../../../enums/user.enum";
 
 export class AdminUserRepository
   extends BaseRepository<IUser>
@@ -26,7 +26,7 @@ export class AdminUserRepository
       isBlocked,
     } = query;
     const filter: FilterQuery<IUser> = {
-      isDeleted: false,
+      deletedAt: null,
       roles: {
         $nin: [UserRole.ADMIN],
       },
@@ -54,6 +54,7 @@ export class AdminUserRepository
         .skip(skip)
         .limit(limit)
         .lean<IUser[]>(),
+
       this._model.countDocuments(filter),
     ]);
     return {

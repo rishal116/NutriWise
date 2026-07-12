@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { API_ROUTES } from "@/routes/user.routes";
 import { store } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
+import { userAuthService } from "@/services/user/userAuth.service";
 
 interface RetryRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -60,13 +61,11 @@ clientApi.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      await clientApi.post(API_ROUTES.AUTH.REFRESH_TOKEN);
+      await userAuthService.refreshToken();
 
       return clientApi(originalRequest);
     } catch (refreshError) {
       store.dispatch(logout());
-
-      window.location.href = "/login";
 
       return Promise.reject(refreshError);
     }

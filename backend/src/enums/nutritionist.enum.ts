@@ -4,3 +4,9 @@ export enum NutritionistLevel {
   EXPERT = "EXPERT",
   TOP_COACH = "TOP_COACH",
 }
+
+export enum ApplicationStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+}

@@ -1,22 +1,36 @@
 import NutritionistTable from "@/components/admin/NutritionistTable";
+import { adminNutritionistServerService } from "@/services/server/admin/adminNutri.service";
 
 export const metadata = {
   title: "Admin – Nutritionists",
   description: "Manage professional nutritionist profiles and approvals",
 };
 
-export default function NutritionistsPage() {
+export default async function NutritionistsPage() {
+  const initialData =
+    await adminNutritionistServerService.getNutritionists({
+      skip: 0,
+      limit: 10,
+      search: "",
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    });
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Nutritionists</h1>
+        <h1 className="text-2xl font-bold text-slate-900">
+          Nutritionists
+        </h1>
+
         <p className="text-sm text-slate-500 font-medium">
-          Manage professional profiles, verify credentials, and control account access.
+          Manage professional profiles, verify credentials, and control account
+          access.
         </p>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <NutritionistTable />
+        <NutritionistTable initialData={initialData} limit={10} />
       </div>
     </div>
   );

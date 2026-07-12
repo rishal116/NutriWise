@@ -1,32 +1,101 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
-export type NotificationType = "info" | "success" | "warning" | "error";
-export type RecipientType = "user" | "admin";
+export enum NotificationType {
+  SYSTEM = "system",
+  INFO = "info",
+  SUCCESS = "success",
+  WARNING = "warning",
+  ERROR = "error",
+}
 
-export interface INotification extends Document {
+export interface INotification {
   _id: Types.ObjectId;
-  title: string;
-  message: string;
+
+  recipientId: Types.ObjectId;
+
+  senderId?: Types.ObjectId | null;
+
   type: NotificationType;
-  read: boolean;
-  recipientType: RecipientType;
-  receiverId: Types.ObjectId;
-  senderId?: Types.ObjectId;
+
+  title: string;
+
+  message: string;
+
+  data?: Record<string, unknown>;
+
+  isRead: boolean;
+
+  readAt?: Date | null;
+
   createdAt: Date;
+
   updatedAt: Date;
 }
 
-const NotificationSchema = new Schema<INotification>(
+const notificationSchema = new Schema<INotification>(
   {
-    title: { type: String, required: true, trim: true },
-    message: { type: String, required: true, trim: true },
-    type: { type: String, enum: ["info", "success", "warning", "error"], default: "info" },
-    read: { type: Boolean, default: false },
-    recipientType: { type: String, enum: ["user", "admin"], required: true },
-    receiverId: { type: Schema.Types.ObjectId, required: true },
-    senderId: { type: Schema.Types.ObjectId },
+    recipientId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    senderId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    type: {
+      type: String,
+      enum: Object.values(NotificationType),
+      required: true,
+      default: NotificationType.INFO,
+    },
+
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 120,
+    },
+
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 500,
+    },
+
+    data: {
+      type: Map,
+      of: Schema.Types.Mixed,
+      default: undefined,
+    },
+
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+
+    readAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  },
 );
 
-export const NotificationModel = model<INotification>("Notification", NotificationSchema);
+notificationSchema.index({
+  recipientId: 1,
+  isRead: 1,
+  createdAt: -1,
+});
+
+export const NotificationModel = model<INotification>(
+  "Notification",
+  notificationSchema,
+);
