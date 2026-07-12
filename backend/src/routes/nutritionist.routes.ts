@@ -5,11 +5,10 @@ import { authMiddleware } from "../middlewares/auth.middleware";
 import { INutritionistPlanController } from "../controllers/interfaces/nutritionist/INutritionistPlanController";
 import { INutritionistSubscriptionController } from "../controllers/interfaces/nutritionist/INutritionistSubscriptionController";
 import { authorize } from "../middlewares/role.middleware";
-import { ROLES } from "../constants/index";
 import { INutriMeetingsController } from "../controllers/interfaces/nutritionist/INutriMeetingsController";
 import { INutriProgramController } from "../controllers/interfaces/nutritionist/INutriProgramController";
 import { INutriGroupController } from "../controllers/interfaces/nutritionist/INutriGroupController";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
 
 const router = Router();
 

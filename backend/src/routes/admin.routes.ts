@@ -1,12 +1,11 @@
 import { Router } from "express";
 import { TYPES } from "../types/types";
 import { IAdminUserController } from "../controllers/interfaces/admin/IAdminUserController";
-import { IAdminNotificationController } from "../controllers/interfaces/admin/IAdminNotificationController";
 import { IAdminNutritionistController } from "../controllers/interfaces/admin/IAdminNutritionistController";
 import { container } from "../configs/inversify";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
 import { IAdminNutritionistApplicationController } from "../controllers/interfaces/admin/IAdminNutritionistApplicationController";
 
 const adminUserController = container.get<IAdminUserController>(
@@ -15,16 +14,12 @@ const adminUserController = container.get<IAdminUserController>(
 const adminNutritionistController = container.get<IAdminNutritionistController>(
   TYPES.IAdminNutritionistController,
 );
-const adminNotificationController = container.get<IAdminNotificationController>(
-  TYPES.IAdminNotificationController,
-);
 
 const adminNutritionistApplicationController =
   container.get<IAdminNutritionistApplicationController>(
     TYPES.IAdminNutritionistApplicationController,
   );
 
-  
 const router = Router();
 router.use(authMiddleware);
 router.use(authorize(UserRole.ADMIN));
@@ -54,8 +49,5 @@ router.patch(
   "/nutritionist-applications/:userId/status",
   adminNutritionistApplicationController.updateApplicationStatus,
 );
-
-router.get("/notifications", adminNotificationController.getAllNotifications);
-router.patch("/notifications/read/:id", adminNotificationController.markAsRead);
 
 export default router;

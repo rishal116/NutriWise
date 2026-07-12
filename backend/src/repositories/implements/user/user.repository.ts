@@ -1,7 +1,6 @@
 import { BaseRepository } from "../common/base.repository";
 import { IUserRepository } from "../../interfaces/user/IUserRepository";
-import { UserModel, IUser } from "../../../models/user.model";
-import { Types } from "mongoose";
+import { IUser, UserModel } from "../../../models/user.model";
 
 export class UserRepository
   extends BaseRepository<IUser>
@@ -12,17 +11,19 @@ export class UserRepository
   }
 
   async findByEmail(email: string): Promise<IUser | null> {
-    return this._model.findOne({ email });
+    return this._model.findOne({ email }).lean<IUser | null>();
   }
 
-  async updatePasswordByEmail(
-    email: string,
-    hashedPassword: string,
-  ): Promise<void> {
-    await this._model.updateOne(
-      { email },
-      { $set: { password: hashedPassword } },
-    );
+  async findByEmailWithPassword(email: string): Promise<IUser | null> {
+    return this._model.findOne({ email }).select("+password");
+  }
+
+  async findByUsername(username: string): Promise<IUser | null> {
+    return this._model.findOne({ username }).lean<IUser | null>();
+  }
+
+  async findByGoogleId(googleId: string): Promise<IUser | null> {
+    return this._model.findOne({ googleId }).lean<IUser | null>();
   }
 
   async updatePasswordById(
@@ -31,18 +32,12 @@ export class UserRepository
   ): Promise<void> {
     await this._model.updateOne(
       { _id: userId },
-      { $set: { password: hashedPassword } },
+      {
+        $set: {
+          password: hashedPassword,
+        },
+      },
     );
-  }
-
-  async findByGoogleId(googleId: string): Promise<IUser | null> {
-    return this._model.findOne({ googleId });
-  }
-
-  async findByIds(ids: string[]): Promise<IUser[]> {
-    return this._model
-      .find({ _id: { $in: ids.map((id) => new Types.ObjectId(id)) } })
-      .lean<IUser[]>();
   }
 
   async getProfileImageById(

@@ -32,26 +32,27 @@ export class AdminNutritionistApplicationRepository
       sortOrder = "desc",
     } = query;
 
-    const profileMatch: Record<string, unknown> = {};
+    const profileFilter: Record<string, unknown> = {};
+    const userFilter: Record<string, unknown> = {};
 
     if (applicationStatus) {
-      profileMatch.applicationStatus = applicationStatus;
+      profileFilter.applicationStatus = applicationStatus;
     }
 
-    const userMatch: Record<string, unknown> = {};
+    const keyword = search?.trim();
 
-    if (search) {
-      userMatch.$or = [
-        { fullName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { username: { $regex: search, $options: "i" } },
+    if (keyword) {
+      userFilter.$or = [
+        { "user.fullName": { $regex: keyword, $options: "i" } },
+        { "user.email": { $regex: keyword, $options: "i" } },
+        { "user.username": { $regex: keyword, $options: "i" } },
       ];
     }
 
     const [applications, count] = await Promise.all([
       this._model.aggregate<AdminNutritionistApplicationListItemDto>([
         {
-          $match: profileMatch,
+          $match: profileFilter,
         },
         {
           $lookup: {
@@ -66,8 +67,8 @@ export class AdminNutritionistApplicationRepository
         },
         {
           $match: {
-            "user.isDeleted": false,
-            ...userMatch,
+            "user.deletedAt": null,
+            ...userFilter,
           },
         },
         {
@@ -96,7 +97,7 @@ export class AdminNutritionistApplicationRepository
 
       this._model.aggregate([
         {
-          $match: profileMatch,
+          $match: profileFilter,
         },
         {
           $lookup: {
@@ -111,8 +112,8 @@ export class AdminNutritionistApplicationRepository
         },
         {
           $match: {
-            "user.isDeleted": false,
-            ...userMatch,
+            "user.deletedAt": null,
+            ...userFilter,
           },
         },
         {

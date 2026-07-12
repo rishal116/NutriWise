@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
 import ProfileSidebar from "@/components/ui/profile/ProfileBar";
-import { Menu, X } from "lucide-react";
+import { Menu } from "lucide-react";
 
 export default function DashboardLayout({
   children,
@@ -34,13 +34,11 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-
       {/* ── 1. HEADER (sticky, sits above everything) ── */}
       <Header />
 
       {/* ── 2. BODY (sidebar + main) fills remaining height ── */}
       <div className="flex flex-1 relative overflow-hidden">
-
         {/* Mobile backdrop overlay */}
         {mobileOpen && (
           <div
@@ -71,7 +69,6 @@ export default function DashboardLayout({
 
         {/* ── MAIN CONTENT ── */}
         <main className="flex-1 min-w-0 overflow-y-auto">
-
           {/* Mobile top bar — only visible on small screens */}
           <div className="lg:hidden sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
             <button
@@ -88,9 +85,7 @@ export default function DashboardLayout({
 
           {/* Page content */}
           <div className="p-4 md:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-              {children}
-            </div>
+            <div className="max-w-7xl mx-auto">{children}</div>
           </div>
         </main>
       </div>

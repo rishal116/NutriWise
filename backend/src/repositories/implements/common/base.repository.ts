@@ -1,8 +1,8 @@
-import { Model, FilterQuery, UpdateQuery } from "mongoose";
+import { FilterQuery, Model, UpdateQuery } from "mongoose";
 import { IBaseRepository } from "../../interfaces/common/IBaseRepository";
 
 export class BaseRepository<T> implements IBaseRepository<T> {
-  protected _model: Model<T>;
+  protected readonly _model: Model<T>;
 
   constructor(model: Model<T>) {
     this._model = model;
@@ -19,26 +19,26 @@ export class BaseRepository<T> implements IBaseRepository<T> {
   async findById(id: string): Promise<T | null> {
     return this._model.findById(id).lean<T | null>();
   }
-  
-  async findByIds(ids: string[]): Promise<T[]> {
-    return this._model.find({ _id: { $in: ids } });
-  }
 
-  async findAll(filter: FilterQuery<T>): Promise<T[]> {
+  async find(filter: FilterQuery<T>): Promise<T[]> {
     return this._model.find(filter).lean<T[]>();
   }
 
-  async updateOne(filter: FilterQuery<T>, update: UpdateQuery<T>): Promise<number> {
+  async updateOne(
+    filter: FilterQuery<T>,
+    update: UpdateQuery<T>,
+  ): Promise<number> {
     const result = await this._model.updateOne(filter, update);
     return result.modifiedCount;
   }
 
   async updateById(id: string, update: UpdateQuery<T>): Promise<T | null> {
-    return this._model.findByIdAndUpdate(id, update, { new: true }).lean<T | null>();
+    return this._model
+      .findByIdAndUpdate(id, update, { new: true })
+      .lean<T | null>();
   }
 
-  async deleteOne(filter: FilterQuery<T>): Promise<number> {
-    const result = await this._model.deleteOne(filter);
-    return result.deletedCount ?? 0;
+  async count(filter: FilterQuery<T>): Promise<number> {
+    return this._model.countDocuments(filter);
   }
 }

@@ -10,12 +10,18 @@ import { AdminNutritionistListItemDto } from "../../../dtos/admin/nutritionist/a
 import { AdminNutritionistDetailsDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-details.dto";
 import { CoachLevel } from "../../../types/nutritionist.types";
 import { NutritionistMapper } from "../../../mapper/admin/nutritionist/nutritionist.mapper";
+import { Types } from "mongoose";
+import { NotificationType } from "../../../models/notification.model";
+import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
 
 @injectable()
 export class AdminNutritionistService implements IAdminNutritionistService {
   constructor(
     @inject(TYPES.IAdminNutritionistRepository)
-    private readonly _nutritionistRepository: IAdminNutritionistRepository,
+    private _nutritionistRepository: IAdminNutritionistRepository,
+
+    @inject(TYPES.INotificationRepository)
+    private _notificationRepository: INotificationRepository,
   ) {}
 
   async getNutritionists(query: AdminNutritionistListQueryDto): Promise<{
@@ -28,6 +34,7 @@ export class AdminNutritionistService implements IAdminNutritionistService {
     logger.info("Fetching nutritionists", query);
     const { nutritionists, total } =
       await this._nutritionistRepository.getNutritionists(query);
+
     const data =
       NutritionistMapper.toAdminNutritionistListItemDtos(nutritionists);
     return {
@@ -51,7 +58,6 @@ export class AdminNutritionistService implements IAdminNutritionistService {
     return NutritionistMapper.toAdminNutritionistDetailsDto(nutritionist);
   }
 
-
   async updateCoachLevel(
     userId: string,
     coachLevel: CoachLevel,
@@ -60,6 +66,17 @@ export class AdminNutritionistService implements IAdminNutritionistService {
       userId,
       coachLevel,
     });
+
     await this._nutritionistRepository.updateCoachLevel(userId, coachLevel);
+
+    await this._notificationRepository.create({
+      recipientId: new Types.ObjectId(userId),
+      type: NotificationType.SUCCESS,
+      title: "Coach Level Updated",
+      message: `Your coach level has been updated to ${coachLevel.replace("_", " ")}.`,
+      data: {
+        coachLevel,
+      },
+    });
   }
 }

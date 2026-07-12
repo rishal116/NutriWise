@@ -1,30 +1,37 @@
-import { Schema, model, Document, Types } from "mongoose";
-import { Gender, UserRole } from "../enums/userRole.enum";
+import { Document, Schema, Types, model } from "mongoose";
+import { Gender, UserRole, AuthProvider } from "../enums/user.enum";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
 
+  // Identity
   fullName: string;
-  email: string;
   username: string;
-
-  password?: string;
-  googleId?: string;
-
-  profileImage?: string;
+  email: string;
   phone?: string;
   birthDate?: Date;
   gender?: Gender;
+  profileImage?: string;
 
+  // Authentication
+  password?: string;
+  googleId?: string;
+  authProvider: AuthProvider;
+  emailVerifiedAt?: Date;
+
+  // Authorization
   roles: UserRole[];
   activeRole: UserRole;
 
+  // Account Status
   isBlocked: boolean;
-  isDeleted: boolean;
   isProfileCompleted: boolean;
 
+  // Activity
   lastLoginAt?: Date;
-  lastActiveAt?: Date;
+
+  // Soft Delete
+  deletedAt?: Date;
 
   createdAt: Date;
   updatedAt: Date;
@@ -37,7 +44,18 @@ const userSchema = new Schema<IUser>(
       required: true,
       trim: true,
       minlength: 3,
-      maxlength: 50,
+      maxlength: 60,
+    },
+
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      minlength: 3,
+      maxlength: 30,
+      match: /^[a-z0-9-]+$/,
     },
 
     email: {
@@ -46,26 +64,26 @@ const userSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/\S+@\S+\.\S+/, "Invalid email format"],
     },
 
-    username: {
+    phone: {
       type: String,
-      required: true,
-      unique: true,
       trim: true,
-      lowercase: true,
-      immutable: true,
-      minlength: 3,
-      maxlength: 30,
-      match: [
-        /^[a-z0-9-]+$/,
-        "Username can only contain lowercase letters, numbers and hyphens",
-      ],
+      default: null,
     },
+
+    birthDate: Date,
+
+    gender: {
+      type: String,
+      enum: Object.values(Gender),
+    },
+
+    profileImage: String,
 
     password: {
       type: String,
+      select: false,
     },
 
     googleId: {
@@ -74,50 +92,27 @@ const userSchema = new Schema<IUser>(
       sparse: true,
     },
 
-    profileImage: {
+    authProvider: {
       type: String,
-      default: null,
+      enum: Object.values(AuthProvider),
+      default: AuthProvider.LOCAL,
     },
 
-    phone: {
-      type: String,
-      trim: true,
-      match: [/^\d{10}$/, "Phone number must be 10 digits"],
-    },
-
-    birthDate: {
-      type: Date,
-    },
-
-    gender: {
-      type: String,
-      enum: Object.values(Gender),
-    },
+    emailVerifiedAt: Date,
 
     roles: {
       type: [String],
       enum: Object.values(UserRole),
-      required: true,
       default: [UserRole.USER],
-      validate: {
-        validator: (roles: string[]) => roles.length > 0,
-        message: "At least one role is required",
-      },
     },
 
     activeRole: {
       type: String,
       enum: Object.values(UserRole),
-      required: true,
       default: UserRole.USER,
     },
 
     isBlocked: {
-      type: Boolean,
-      default: false,
-    },
-
-    isDeleted: {
       type: Boolean,
       default: false,
     },
@@ -127,13 +122,9 @@ const userSchema = new Schema<IUser>(
       default: false,
     },
 
-    lastLoginAt: {
-      type: Date,
-    },
+    lastLoginAt: Date,
 
-    lastActiveAt: {
-      type: Date,
-    },
+    deletedAt: Date,
   },
   {
     timestamps: true,
@@ -151,7 +142,7 @@ userSchema.pre("save", function (next) {
 userSchema.index({ activeRole: 1 });
 userSchema.index({ roles: 1 });
 userSchema.index({ isBlocked: 1 });
-userSchema.index({ isDeleted: 1 });
+userSchema.index({ deletedAt: 1 });
 userSchema.index({ createdAt: -1 });
 
 export const UserModel = model<IUser>("User", userSchema);

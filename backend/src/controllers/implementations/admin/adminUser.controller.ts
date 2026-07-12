@@ -12,7 +12,7 @@ import { AdminUserListQueryDto } from "../../../dtos/admin/user/admin-user-list-
 export class AdminUserController implements IAdminUserController {
   constructor(
     @inject(TYPES.IAdminUserService)
-    private readonly _adminUserService: IAdminUserService,
+    private _adminUserService: IAdminUserService,
   ) {}
 
   getUsers = asyncHandler(async (req: Request, res: Response) => {

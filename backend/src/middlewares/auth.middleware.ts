@@ -4,7 +4,8 @@ import { jwtConfig } from "../configs/jwt.config";
 import { StatusCode } from "../enums/statusCode.enum";
 import { AUTH_MESSAGES } from "../constants";
 import { UserModel } from "../models/user.model";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
+import { clearAuthCookies } from "../utils/token.util";
 import logger from "../utils/logger";
 
 interface JwtPayload {
@@ -20,8 +21,7 @@ export const authMiddleware = async (
   console.log("Auth middleware started");
   const token =
     req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
-    console.log(token);
-    
+  console.log(token);
 
   if (!token) {
     logger.warn(AUTH_MESSAGES.ACCESS_TOKEN_MISSING);
@@ -40,7 +40,6 @@ export const authMiddleware = async (
     ) as JwtPayload;
 
     console.log(decoded);
-    
 
     const user = await UserModel.findById(decoded.userId);
 
@@ -60,9 +59,15 @@ export const authMiddleware = async (
       });
     }
 
-    
-
     if (decoded.activeRole !== user.activeRole) {
+      logger.warn("User role changed. Clearing authentication.", {
+        userId: user._id.toString(),
+        tokenRole: decoded.activeRole,
+        currentRole: user.activeRole,
+      });
+
+      clearAuthCookies(res);
+
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.INVALID_ROLE,
