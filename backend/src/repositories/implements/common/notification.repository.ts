@@ -1,50 +1,92 @@
-import { Model } from "mongoose";
-import { BaseRepository } from "./base.repository";
-import { INotification, NotificationModel } from "../../../models/notification.model";
-import { NotificationDto, NotificationQuery } from "../../../dtos/common/notification.dto";
+import { FilterQuery } from "mongoose";
+import { BaseRepository } from "../common/base.repository";
 import { INotificationRepository } from "../../interfaces/common/INotificationRepository";
+import {
+  INotification,
+  NotificationModel,
+} from "../../../models/notification.model";
 
-export class NotificationRepository extends BaseRepository<INotification> implements INotificationRepository {
-  constructor(model: Model<INotification> = NotificationModel) {
-    super(model);
+export class NotificationRepository
+  extends BaseRepository<INotification>
+  implements INotificationRepository
+{
+  constructor() {
+    super(NotificationModel);
   }
 
-  async createNotification(data: NotificationDto): Promise<void> {
-    await this._model.create(data);
-  }
-  
-  async getNotifications(query: NotificationQuery) {
-    const { page = 1, limit = 10, search = "", receiverId, recipientType } = query;
-    const filter: any = {};
-    if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { message: { $regex: search, $options: "i" } },
-      ];
-    }
-    if (receiverId) filter.receiverId = receiverId;
-    if (recipientType) filter.recipientType = recipientType;
-    const total = await this._model.countDocuments(filter);
-    const data = await this._model
-    .find(filter)
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit);
-    return { data, total };
+  async getNotifications(
+    recipientId: string,
+    skip: number,
+    limit: number,
+  ): Promise<INotification[]> {
+    return this._model
+      .find({ recipientId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean<INotification[]>();
   }
 
-  async markNotificationRead(id: string) {
-    await this._model.findByIdAndUpdate(id, { read: true });
+  async getUnreadCount(recipientId: string): Promise<number> {
+    return this._model.countDocuments({
+      recipientId,
+      isRead: false,
+    });
   }
 
-  async markAllRead(receiverId: string, recipientType: "user" | "admin") {
-    await this._model.updateMany(
-      { receiverId, recipientType },
-      { read: true }
+  async markAsRead(
+    notificationId: string,
+    recipientId: string,
+  ): Promise<boolean> {
+    const result = await this._model.updateOne(
+      {
+        _id: notificationId,
+        recipientId,
+        isRead: false,
+      },
+      {
+        $set: {
+          isRead: true,
+          readAt: new Date(),
+        },
+      },
     );
+
+    return result.modifiedCount > 0;
   }
 
-  async deleteNotification(id: string) {
-    await this._model.findByIdAndDelete(id);
+  async markAllAsRead(recipientId: string): Promise<number> {
+    const result = await this._model.updateMany(
+      {
+        recipientId,
+        isRead: false,
+      },
+      {
+        $set: {
+          isRead: true,
+          readAt: new Date(),
+        },
+      },
+    );
+
+    return result.modifiedCount;
+  }
+
+  async deleteNotification(
+    notificationId: string,
+    recipientId: string,
+  ): Promise<boolean> {
+    const result = await this._model.deleteOne({
+      _id: notificationId,
+      recipientId,
+    });
+
+    return result.deletedCount > 0;
+  }
+
+  async deleteMany(filter: FilterQuery<INotification>): Promise<number> {
+    const result = await this._model.deleteMany(filter);
+
+    return result.deletedCount;
   }
 }

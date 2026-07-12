@@ -57,7 +57,6 @@ export const userAuthService = {
 
   async getMe(): Promise<GetMeResponse> {
     const res = await clientApi.get(API_ROUTES.AUTH.ME);
-    console.log("/me");
     return res.data;
   },
 

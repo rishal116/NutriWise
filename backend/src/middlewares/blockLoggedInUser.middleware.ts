@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { UserModel } from "../models/user.model";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
 
 interface JwtPayload {
   userId: string;

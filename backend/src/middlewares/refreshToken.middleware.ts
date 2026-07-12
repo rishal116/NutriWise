@@ -1,10 +1,14 @@
-import jwt, { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
+import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 import { Request, Response } from "express";
 import { UserModel } from "../models/user.model";
 import { jwtConfig } from "../configs/jwt.config";
-import { generateTokens, setAuthCookies } from "../utils/token.util";
+import {
+  clearAuthCookies,
+  generateTokens,
+  setAuthCookies,
+} from "../utils/token.util";
 import { StatusCode } from "../enums/statusCode.enum";
-import { UserRole } from "../enums/userRole.enum";
+import { UserRole } from "../enums/user.enum";
 import logger from "../utils/logger";
 
 interface JwtPayload {
@@ -21,6 +25,8 @@ export const refreshToken = async (
 
     if (!refreshToken) {
       logger.warn("Refresh token not found");
+
+      clearAuthCookies(res);
 
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
@@ -40,9 +46,37 @@ export const refreshToken = async (
         userId: decoded.userId,
       });
 
+      clearAuthCookies(res);
+
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    if (user.deletedAt) {
+      logger.warn("Refresh token used for deleted user", {
+        userId: user._id.toString(),
+      });
+
+      clearAuthCookies(res);
+
+      return res.status(StatusCode.UNAUTHORIZED).json({
+        success: false,
+        message: "Account has been deleted",
+      });
+    }
+
+    if (user.isBlocked) {
+      logger.warn("Refresh token used for blocked user", {
+        userId: user._id.toString(),
+      });
+
+      clearAuthCookies(res);
+
+      return res.status(StatusCode.FORBIDDEN).json({
+        success: false,
+        message: "Account has been blocked",
       });
     }
 
@@ -60,6 +94,8 @@ export const refreshToken = async (
       message: "Tokens refreshed successfully",
     });
   } catch (error: unknown) {
+    clearAuthCookies(res);
+
     if (error instanceof TokenExpiredError) {
       logger.warn("Refresh token expired");
 
