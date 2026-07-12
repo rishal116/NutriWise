@@ -39,7 +39,6 @@ export const authMiddleware = async (
       jwtConfig.accessToken.secret,
     ) as JwtPayload;
 
-    console.log(decoded);
     
 
     const user = await UserModel.findById(decoded.userId);

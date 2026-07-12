@@ -1,8 +1,19 @@
-import { UserProfile,UpdateUserProfileDto,UserProfileImage } from "../../../dtos/user/userProfile.dto";
+import {
+  UserProfile,
+  UpdateUserProfileDto,
+  UserProfileImage,
+} from "../../../dtos/user/userProfile.dto";
 
 export interface IUserProfileService {
-  getMyProfile(userId: string): Promise<UserProfile>;
-  updateMyProfile(userId: string,data: UpdateUserProfileDto): Promise<UserProfile>;
-  getMyProfileImage(userId: string): Promise<UserProfileImage | null>;
-  updateMyProfileImage(userId: string,file: Express.Multer.File): Promise<UserProfileImage>;
+  getProfile(userId: string): Promise<UserProfile>;
+  updateProfile(
+    userId: string,
+    data: UpdateUserProfileDto,
+  ): Promise<UserProfile>;
+
+  getProfileImage(userId: string): Promise<UserProfileImage | null>;
+  updateProfileImage(
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<UserProfileImage>;
 }
