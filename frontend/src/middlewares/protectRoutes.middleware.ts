@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-import { UserRole } from "@/enums/user/userRole.enum";
+import { UserRole } from "@/enums/user/user.enum";
 import { redirectAuthenticatedUsers } from "@/utils/redirectAuthenticatedUser";
 
 interface JwtPayload {

@@ -4,8 +4,8 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-import userRoutes from "./routes/user.routes";
-import adminRoutes from "./routes/admin.routes";
+import userRoutes from "./routes/user";
+import adminRoutes from "./routes/admin";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import chatRoutes from "./routes/chat.routes";
 import sessionRoutes from "./routes/session.routes";
@@ -52,8 +52,9 @@ app.use(
   }),
 );
 
-app.use("/admin", adminRoutes);
-app.use("/", userRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
+
 app.use("/chat", chatRoutes);
 app.use("/nutritionist/application", nutritionistApplicationRoutes);
 app.use("/nutritionist", nutritionistRoutes);

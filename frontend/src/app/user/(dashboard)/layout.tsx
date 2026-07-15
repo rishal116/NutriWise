@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
-import ProfileSidebar from "@/components/ui/profile/ProfileBar";
+import ProfileSidebar from "@/components/ui/profile/ProfileSideBar";
 import { Menu } from "lucide-react";
 
 export default function DashboardLayout({
@@ -33,29 +33,27 @@ export default function DashboardLayout({
   }, [mobileOpen]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* ── 1. HEADER (sticky, sits above everything) ── */}
+    <div className="min-h-screen flex flex-col bg-slate-50">
       <Header />
 
-      {/* ── 2. BODY (sidebar + main) fills remaining height ── */}
       <div className="flex flex-1 relative overflow-hidden">
         {/* Mobile backdrop overlay */}
         {mobileOpen && (
           <div
-            className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+            className="fixed inset-0 top-16 bg-black/40 z-30 lg:hidden"
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
         )}
 
-        {/* ── SIDEBAR ──
-            - Desktop: static in the flex row, always visible
-            - Mobile:  fixed, slides in from left over the content
-        ── */}
+        {/* SIDEBAR */}
         <aside
+          role="dialog"
+          aria-modal={mobileOpen}
+          aria-label="Profile navigation"
           className={`
-            fixed top-0 left-0 h-full z-40
-            lg:static lg:h-auto lg:z-auto
+            fixed top-16 left-0 h-[calc(100%-4rem)] z-40
+            lg:static lg:top-0 lg:h-auto lg:z-auto
             transition-transform duration-300 ease-in-out
             ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
             lg:translate-x-0
@@ -67,10 +65,10 @@ export default function DashboardLayout({
           />
         </aside>
 
-        {/* ── MAIN CONTENT ── */}
+        {/* MAIN CONTENT */}
         <main className="flex-1 min-w-0 overflow-y-auto">
-          {/* Mobile top bar — only visible on small screens */}
-          <div className="lg:hidden sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm px-4 py-3 flex items-center gap-3">
+          {/* Mobile top bar */}
+          <div className="lg:hidden sticky top-0 z-20 bg-white border-b border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
             <button
               onClick={() => setMobileOpen(true)}
               className="p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 hover:bg-emerald-100 transition-colors"
@@ -78,7 +76,7 @@ export default function DashboardLayout({
             >
               <Menu className="w-5 h-5" />
             </button>
-            <span className="text-sm font-semibold text-gray-700 truncate">
+            <span className="text-sm font-semibold text-slate-700 truncate">
               Dashboard
             </span>
           </div>
@@ -90,7 +88,6 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {/* ── 3. FOOTER ── */}
       <Footer />
     </div>
   );

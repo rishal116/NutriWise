@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
   User,
   Camera,
@@ -13,58 +14,57 @@ import {
   Pencil,
   X,
 } from "lucide-react";
-import ProfileImageUploader from "@/components/common/image";
+import ProfileImageUploader from "@/components/common/ProfileImageUploader";
 import Toast from "@/components/common/Toast";
-import { userAccountService } from "@/services/user/userProfile.service";
+import { userProfileService } from "@/services/user/userProfile.service";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import "react-phone-number-input/style.css";
 import PhoneInput from "react-phone-number-input";
-
-/* ── TYPES ── */
-interface UserProfile {
-  _id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  gender: "male" | "female" | "other" | "";
-  birthdate: string;
-  profileImage?: string;
-}
+import { GetUserProfileDto } from "@/dtos/user/profile/get-user-profile.dto";
+import { UpdateUserProfileDto } from "@/dtos/user/profile/update-user-profile.dto";
+import { Gender } from "@/enums/user/user.enum";
 
 interface ToastState {
   message: string;
   type: "success" | "error";
 }
 
-/* ── PAGE ── */
-export default function AccountPage() {
-  const [user,             setUser]             = useState<UserProfile | null>(null);
-  const [form,             setForm]             = useState<UserProfile | null>(null);
-  const [loading,          setLoading]          = useState(true);
-  const [saving,           setSaving]           = useState(false);
-  const [editingForm,      setEditingForm]      = useState(false);
-  const [showImageCropper, setShowImageCropper] = useState(false);
-  const [toast,            setToast]            = useState<ToastState | null>(null);
+function toDateInputValue(date?: string | Date): string {
+  if (!date) return "";
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toISOString().split("T")[0];
+}
 
-  /* ── fetch ── */
+function toFormState(profile: GetUserProfileDto): UpdateUserProfileDto {
+  return {
+    fullName: profile.fullName,
+    phone: profile.phone,
+    gender: profile.gender,
+    birthDate: toDateInputValue(profile.birthDate),
+  };
+}
+
+export default function AccountPage() {
+  const [user, setUser] = useState<GetUserProfileDto | null>(null);
+  const [form, setForm] = useState<UpdateUserProfileDto>({
+    fullName: "",
+    phone: "",
+    gender: undefined,
+    birthDate: "",
+  });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editingForm, setEditingForm] = useState(false);
+  const [showImageCropper, setShowImageCropper] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
   useEffect(() => {
     async function fetchProfile() {
       try {
-        const profileRes = await userAccountService.getProfile();
-        const imageRes   = await userAccountService.getProfileImage();
-
-        const profile: UserProfile = {
-          _id:          profileRes.user._id,
-          fullName:     profileRes.user.fullName   || "",
-          email:        profileRes.user.email       || "",
-          phone:        profileRes.user.phone       || "",
-          gender:       profileRes.user.gender      || "",
-          birthdate:    profileRes.user.birthdate   || "",
-          profileImage: imageRes.data?.profileImage || "",
-        };
-
+        const profile = await userProfileService.getProfile();
         setUser(profile);
-        setForm(profile);
+        setForm(toFormState(profile));
       } catch (err) {
         console.error(err);
         setToast({ message: "Failed to load profile", type: "error" });
@@ -76,26 +76,26 @@ export default function AccountPage() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
-    if (!form) return;
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const calculateAge = (birthdate: string): string => {
-    if (!birthdate) return "—";
-    const diff = Date.now() - new Date(birthdate).getTime();
-    return `${Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25))} yrs`;
+  const calculateAge = (birthDate?: string | Date): string => {
+    if (!birthDate) return "—";
+    const diffMs = Date.now() - new Date(birthDate).getTime();
+    return `${Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365.25))} yrs`;
   };
 
-  const phoneError = !!form?.phone && !isValidPhoneNumber(form.phone);
+  const phoneError = !!form.phone && !isValidPhoneNumber(form.phone);
 
   const handleSaveForm = async () => {
-    if (!form || phoneError) return;
+    if (phoneError) return;
     setSaving(true);
     try {
-      await userAccountService.updateProfile(form);
-      setUser(form);
+      const updatedProfile = await userProfileService.updateProfile(form);
+      setUser(updatedProfile);
+      setForm(toFormState(updatedProfile));
       setEditingForm(false);
       setToast({ message: "Profile updated successfully!", type: "success" });
     } catch {
@@ -106,12 +106,11 @@ export default function AccountPage() {
   };
 
   const handleCancelEdit = () => {
-    setForm(user);
+    if (user) setForm(toFormState(user));
     setEditingForm(false);
   };
 
-  /* ── loading ── */
-  if (loading || !user || !form) {
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="text-center space-y-3">
@@ -126,35 +125,31 @@ export default function AccountPage() {
 
   return (
     <div className="font-sans pb-12 space-y-6">
-
-      {/* ── PAGE HEADER ── */}
-      <div className="relative bg-gradient-to-r from-emerald-600 to-teal-500 rounded-2xl px-7 py-9 text-white overflow-hidden">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-14 -mt-14 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-28 h-28 bg-white/5 rounded-full -ml-8 -mb-8 blur-2xl pointer-events-none" />
-        <div className="relative">
-          <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight mb-1">
-            Account Settings
-          </h1>
-          <p className="text-white/70 text-sm font-medium">
-            Manage your profile information and preferences
-          </p>
-        </div>
+      {/* PAGE HEADER */}
+      <div className="bg-emerald-600 rounded-2xl px-7 py-8 text-white">
+        <h1 className="text-2xl sm:text-3xl font-bold leading-tight mb-1">
+          Ac Settings
+        </h1>
+        <p className="text-emerald-50 text-sm font-medium">
+          Manage your profile information and preferences
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-        {/* ── LEFT — PROFILE CARD ── */}
+        {/* LEFT — PROFILE CARD */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-
-            {/* Avatar */}
-            <div className="relative w-fit mx-auto mb-5">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+            <div className="relative w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-5">
               <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-full blur-sm opacity-25" />
-              <img
-                src={user.profileImage || "/images/images.jpg"}
-                className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white shadow-lg"
-                alt={user.fullName}
-              />
+              <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg">
+                <Image
+                  src={user.profileImage || "/images/images.jpg"}
+                  alt={user.fullName}
+                  fill
+                  sizes="128px"
+                  className="object-cover"
+                />
+              </div>
               <button
                 onClick={() => setShowImageCropper(true)}
                 className="absolute bottom-1 right-1 w-9 h-9 bg-emerald-600 hover:bg-emerald-700 rounded-full flex items-center justify-center text-white shadow-md transition-colors"
@@ -164,9 +159,8 @@ export default function AccountPage() {
               </button>
             </div>
 
-            {/* Name + badge */}
             <div className="text-center mb-5">
-              <h2 className="text-xl font-extrabold text-gray-900 mb-1">
+              <h2 className="text-xl font-extrabold text-slate-900 mb-1">
                 {user.fullName}
               </h2>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100">
@@ -175,45 +169,55 @@ export default function AccountPage() {
               </span>
             </div>
 
-            {/* Contact info */}
-            <div className="space-y-2.5 pt-4 border-t border-gray-50">
-              <div className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
+            <div className="space-y-2.5 pt-4 border-t border-slate-50">
+              <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
                 <div className="bg-emerald-100 p-1.5 rounded-lg flex-shrink-0">
                   <Mail size={13} className="text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Email</p>
-                  <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
+                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                    Email
+                  </p>
+                  <p className="text-sm font-semibold text-slate-800 truncate">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 
               {user.phone && (
-                <div className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
                   <div className="bg-teal-100 p-1.5 rounded-lg flex-shrink-0">
                     <Phone size={13} className="text-teal-600" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Phone</p>
-                    <p className="text-sm font-semibold text-gray-800">{user.phone}</p>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Phone
+                    </p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {user.phone}
+                    </p>
                   </div>
                 </div>
               )}
 
-              {user.birthdate && (
-                <div className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
+              {user.birthDate && (
+                <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
                   <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0">
                     <Calendar size={13} className="text-purple-500" />
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Age</p>
-                    <p className="text-sm font-semibold text-gray-800">{calculateAge(user.birthdate)}</p>
+                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
+                      Age
+                    </p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {calculateAge(user.birthDate)}
+                    </p>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Edit / Cancel button */}
           {!editingForm ? (
             <button
               onClick={() => setEditingForm(true)}
@@ -225,7 +229,7 @@ export default function AccountPage() {
           ) : (
             <button
               onClick={handleCancelEdit}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
             >
               <X size={14} className="flex-shrink-0" />
               Cancel Edit
@@ -233,15 +237,15 @@ export default function AccountPage() {
           )}
         </div>
 
-        {/* ── RIGHT — FORM ── */}
+        {/* RIGHT — FORM */}
         <div className="lg:col-span-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-
-            {/* Card header */}
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-1 h-5 bg-emerald-500 rounded-full flex-shrink-0" />
-                <h3 className="text-sm font-extrabold text-gray-900">Personal Information</h3>
+                <h3 className="text-sm font-extrabold text-slate-900">
+                  Personal Information
+                </h3>
               </div>
               {editingForm && (
                 <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full">
@@ -252,11 +256,10 @@ export default function AccountPage() {
 
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                 <FieldInput
                   label="Full Name"
                   name="fullName"
-                  value={form.fullName}
+                  value={form.fullName ?? ""}
                   onChange={handleChange}
                   disabled={!editingForm}
                   icon={<User size={13} className="text-emerald-600" />}
@@ -264,9 +267,9 @@ export default function AccountPage() {
                 />
 
                 <PhoneField
-                  value={form.phone}
+                  value={form.phone ?? ""}
                   onChange={(phone: string) =>
-                    setForm((prev) => (prev ? { ...prev, phone } : prev))
+                    setForm((prev) => ({ ...prev, phone }))
                   }
                   error={phoneError}
                   disabled={!editingForm}
@@ -274,53 +277,55 @@ export default function AccountPage() {
 
                 <FieldInput
                   label="Birthdate"
-                  name="birthdate"
+                  name="birthDate"
                   type="date"
-                  value={form.birthdate}
+                  value={form.birthDate ?? ""}
                   onChange={handleChange}
                   disabled={!editingForm}
                   icon={<Calendar size={13} className="text-emerald-600" />}
                 />
 
                 <GenderSelect
-                  value={form.gender}
+                  value={form.gender ?? ""}
                   onChange={handleChange}
                   disabled={!editingForm}
                 />
 
                 <FieldInput
                   label="Age"
-                  value={calculateAge(form.birthdate)}
+                  value={calculateAge(form.birthDate)}
                   disabled
-                  icon={<User size={13} className="text-gray-400" />}
+                  icon={<User size={13} className="text-slate-400" />}
                 />
 
                 <FieldInput
                   label="Email"
-                  value={form.email}
+                  value={user.email}
                   disabled
-                  icon={<Mail size={13} className="text-gray-400" />}
+                  icon={<Mail size={13} className="text-slate-400" />}
                 />
               </div>
 
-              {/* Save / cancel row */}
               {editingForm && (
-                <div className="pt-5 border-t border-gray-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
+                <div className="pt-5 border-t border-slate-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
                   <button
                     onClick={handleCancelEdit}
                     disabled={saving}
-                    className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-bold rounded-xl transition-colors"
+                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveForm}
                     disabled={phoneError || saving}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-emerald-100 hover:shadow-md transition-all disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-emerald-100 hover:shadow-md transition-all disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                   >
                     {saving ? (
                       <>
-                        <Loader2 size={15} className="animate-spin flex-shrink-0" />
+                        <Loader2
+                          size={15}
+                          className="animate-spin flex-shrink-0"
+                        />
                         Saving…
                       </>
                     ) : (
@@ -337,38 +342,47 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* Image Cropper Modal */}
       {showImageCropper && (
         <ProfileImageUploader
           onClose={() => setShowImageCropper(false)}
+          uploadImage={userProfileService.uploadProfileImage}
           onUploadSuccess={(newUrl: string) => {
-            setUser((prev) => (prev ? { ...prev, profileImage: newUrl } : null));
-            setToast({ message: "Image updated successfully!", type: "success" });
+            setUser((prev) =>
+              prev ? { ...prev, profileImage: newUrl } : prev,
+            );
+            setToast({
+              message: "Image updated successfully!",
+              type: "success",
+            });
           }}
         />
       )}
 
-      {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} />}
     </div>
   );
 }
 
-/* ── FIELD INPUT ── */
+/* FIELD INPUT */
+interface FieldInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  icon?: React.ReactNode;
+  error?: boolean;
+}
+
 function FieldInput({
   label,
   icon,
   error,
   disabled,
-  required,
   ...rest
-}: any) {
+}: FieldInputProps) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wide">
+      <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-wide">
         {icon}
         {label}
-        {required && <span className="text-red-400 ml-0.5">*</span>}
+        {rest.required && <span className="text-red-400 ml-0.5">*</span>}
       </label>
       <input
         {...rest}
@@ -376,11 +390,11 @@ function FieldInput({
         className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 ${
           error
             ? "border-red-300 focus:ring-red-200"
-            : "border-gray-200 focus:ring-emerald-100 focus:border-emerald-400"
+            : "border-slate-200 focus:ring-emerald-100 focus:border-emerald-400"
         } ${
           disabled
-            ? "bg-gray-50 text-gray-400 cursor-not-allowed"
-            : "bg-white text-gray-800"
+            ? "bg-slate-50 text-slate-400 cursor-not-allowed"
+            : "bg-white text-slate-800"
         }`}
       />
       {error && (
@@ -392,7 +406,7 @@ function FieldInput({
   );
 }
 
-/* ── GENDER SELECT ── */
+/* GENDER SELECT */
 function GenderSelect({
   value,
   onChange,
@@ -404,7 +418,7 @@ function GenderSelect({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wide">
+      <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-wide">
         <User size={13} className="text-emerald-600" />
         Gender
       </label>
@@ -415,20 +429,21 @@ function GenderSelect({
         disabled={disabled}
         className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-400 ${
           disabled
-            ? "bg-gray-50 text-gray-400 cursor-not-allowed border-gray-200"
-            : "bg-white text-gray-800 border-gray-200"
+            ? "bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200"
+            : "bg-white text-slate-800 border-slate-200"
         }`}
       >
         <option value="">Select gender</option>
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-        <option value="other">Other</option>
+        <option value={Gender.MALE}>Male</option>
+        <option value={Gender.FEMALE}>Female</option>
+        <option value={Gender.OTHER}>Other</option>
+        <option value={Gender.PREFER_NOT_TO_SAY}>Prefer not to say</option>
       </select>
     </div>
   );
 }
 
-/* ── PHONE FIELD ── */
+/* PHONE FIELD */
 function PhoneField({
   value,
   onChange,
@@ -442,14 +457,14 @@ function PhoneField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-bold text-gray-600 uppercase tracking-wide">
+      <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-wide">
         <Phone size={13} className="text-emerald-600" />
         Phone Number
       </label>
       <div
         className={`phone-wrap rounded-xl border transition-all ${
-          error ? "border-red-300" : "border-gray-200"
-        } ${disabled ? "bg-gray-50" : "bg-white"}`}
+          error ? "border-red-300" : "border-slate-200"
+        } ${disabled ? "bg-slate-50" : "bg-white"}`}
       >
         <PhoneInput
           international
@@ -478,7 +493,7 @@ function PhoneField({
           border: none;
           outline: none;
           font-size: 13px;
-          color: ${disabled ? "#9ca3af" : "#374151"};
+          color: ${disabled ? "#94a3b8" : "#334155"};
           cursor: ${disabled ? "not-allowed" : "pointer"};
         }
         .nutriwise-phone .PhoneInputInput {
@@ -488,11 +503,11 @@ function PhoneField({
           background: transparent;
           font-size: 14px;
           font-weight: 500;
-          color: ${disabled ? "#9ca3af" : "#1f2937"};
+          color: ${disabled ? "#94a3b8" : "#1e293b"};
           cursor: ${disabled ? "not-allowed" : "text"};
         }
         .nutriwise-phone .PhoneInputInput::placeholder {
-          color: #d1d5db;
+          color: #cbd5e1;
         }
       `}</style>
     </div>

@@ -1,5 +1,5 @@
 import { clientApi } from "@/lib/axios/clientApi";
-import { AdminRoutes } from "@/routes/admin.routes";
+import { ADMIN_NUTRITIONIST_APPLICATION_ROUTES } from "@/routes/admin";
 
 import { InfiniteScrollResponseDto } from "@/dtos/common/infinite-scroll-response.dto";
 import { AdminNutritionistApplicationListQueryDto } from "@/dtos/admin/nutritionistApplication/admin-nutritionist-application-list-query.dto";
@@ -14,7 +14,7 @@ export const adminNutritionistApplicationService = {
   > {
     const response = await clientApi.get<
       InfiniteScrollResponseDto<AdminNutritionistApplicationListItemDto>
-    >(AdminRoutes.NUTRITIONIST_APPLICATIONS, {
+    >(ADMIN_NUTRITIONIST_APPLICATION_ROUTES.APPLICATIONS, {
       params: query,
     });
 
@@ -27,7 +27,7 @@ export const adminNutritionistApplicationService = {
     rejectionReason?: string,
   ): Promise<void> {
     await clientApi.patch(
-      `${AdminRoutes.NUTRITIONIST_APPLICATIONS}/${userId}/status`,
+      ADMIN_NUTRITIONIST_APPLICATION_ROUTES.STATUS(userId),
       {
         status,
         rejectionReason,

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
+
 import { serverApi } from "@/lib/axios/serverApi";
-import { AdminRoutes } from "@/routes/admin.routes";
+import { ADMIN_NUTRITIONIST_ROUTES } from "@/routes/admin";
 
 import { AdminNutritionistListQueryDto } from "@/dtos/admin/nutritionist/admin-nutritionist-list-query.dto";
 import { AdminNutritionistListItemDto } from "@/dtos/admin/nutritionist/admin-nutritionist-list-item.dto";
@@ -14,7 +15,7 @@ export const adminNutritionistServerService = {
 
     const response = await serverApi.get<
       InfiniteScrollResponseDto<AdminNutritionistListItemDto>
-    >(AdminRoutes.NUTRITIONISTS, {
+    >(ADMIN_NUTRITIONIST_ROUTES.NUTRITIONISTS, {
       params: query,
       headers: {
         Cookie: cookieStore.toString(),

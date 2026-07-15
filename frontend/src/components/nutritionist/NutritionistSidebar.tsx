@@ -1,21 +1,62 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Home, Video, Users, FileText, Globe, Mail, 
-  DollarSign, Settings, ChevronLeft, ChevronRight, X 
+import {
+  Home,
+  Video,
+  Users,
+  FileText,
+  Globe,
+  Mail,
+  DollarSign,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
 const menu = [
-  { label: "Dashboard", href: "/nutritionist/dashboard", icon: Home },
-  { label: "Live Sessions", href: "/nutritionist/sessions", icon: Video },
-  { label: "My Clients", href: "/nutritionist/clients", icon: Users },
-  { label: "Records", href: "/nutritionist/records", icon: FileText },
-  { label: "Communities", href: "/nutritionist/communities", icon: Globe },
-  { label: "Messages", href: "/nutritionist/messages", icon: Mail, badge: 3 },
-  { label: "Earnings", href: "/nutritionist/earnings", icon: DollarSign },
-  { label: "Settings", href: "/nutritionist/settings", icon: Settings },
+  {
+    label: "Dashboard",
+    href: "/nutritionist/dashboard",
+    icon: Home,
+  },
+  {
+    label: "Live Sessions",
+    href: "/nutritionist/sessions",
+    icon: Video,
+  },
+  {
+    label: "My Clients",
+    href: "/nutritionist/clients",
+    icon: Users,
+  },
+  {
+    label: "Nutrition Plans",
+    href: "/nutritionist/plans",
+    icon: FileText,
+  },
+  {
+    label: "Communities",
+    href: "/nutritionist/communities",
+    icon: Globe,
+  },
+  {
+    label: "Messages",
+    href: "/nutritionist/messages",
+    icon: Mail,
+  },
+  {
+    label: "Earnings",
+    href: "/nutritionist/earnings",
+    icon: DollarSign,
+  },
+  {
+    label: "Settings",
+    href: "/nutritionist/settings",
+    icon: Settings,
+  },
 ];
 
 interface SidebarProps {
@@ -24,18 +65,22 @@ interface SidebarProps {
   onCollapseChange?: (collapsed: boolean) => void;
 }
 
-export default function NutritionistSidebar({ isMobileOpen, onMobileClose, onCollapseChange }: SidebarProps) {
+export default function NutritionistSidebar({
+  isMobileOpen,
+  onMobileClose,
+  onCollapseChange,
+}: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-  // auto collapse on messages page
-  if (pathname.startsWith("/nutritionist/messages")) {
-    setCollapsed(true);
-    onCollapseChange?.(true);
-  }
-}, [pathname]);
+    // auto collapse on messages page
+    if (pathname.startsWith("/nutritionist/messages")) {
+      setCollapsed(true);
+      onCollapseChange?.(true);
+    }
+  }, [pathname]);
 
   // Auto-close mobile drawer on route change
   useEffect(() => {
@@ -68,13 +113,19 @@ export default function NutritionistSidebar({ isMobileOpen, onMobileClose, onCol
             Navigation
           </span>
         )}
-        
+
         {/* Desktop Collapse / Mobile Close */}
-        <button 
+        <button
           onClick={isMobileOpen ? onMobileClose : handleCollapse}
           className="p-1.5 text-slate-400 hover:text-emerald-600 transition-colors"
         >
-          {isMobileOpen ? <X size={18} /> : collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          {isMobileOpen ? (
+            <X size={18} />
+          ) : collapsed ? (
+            <ChevronRight size={16} />
+          ) : (
+            <ChevronLeft size={16} />
+          )}
         </button>
       </div>
 
@@ -97,7 +148,15 @@ export default function NutritionistSidebar({ isMobileOpen, onMobileClose, onCol
               )}
 
               <div className="relative">
-                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600"} />
+                <Icon
+                  size={18}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={
+                    isActive
+                      ? "text-emerald-600"
+                      : "text-slate-400 group-hover:text-slate-600"
+                  }
+                />
                 {badge && (
                   <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-emerald-600 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-2 border-white">
                     {badge}
@@ -106,7 +165,9 @@ export default function NutritionistSidebar({ isMobileOpen, onMobileClose, onCol
               </div>
 
               {!collapsed && (
-                <span className={`text-[13px] tracking-tight ${isActive ? "font-semibold" : "font-medium"}`}>
+                <span
+                  className={`text-[13px] tracking-tight ${isActive ? "font-semibold" : "font-medium"}`}
+                >
                   {label}
                 </span>
               )}

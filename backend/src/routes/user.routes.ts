@@ -94,18 +94,15 @@ router.patch(
   onboardingController.completeProfile,
 );
 
-router.get("/profile", authMiddleware, profileController.getMyProfile);
-router.put("/profile", authMiddleware, profileController.updateMyProfile);
-router.post(
-  "/profile/upload-image",
+router.get("/profile", authMiddleware, profileController.getProfile);
+
+router.put("/profile", authMiddleware, profileController.updateProfile);
+
+router.patch(
+  "/profile/image",
   authMiddleware,
   upload.single("image"),
-  profileController.updateMyProfileImage,
-);
-router.get(
-  "/profile/upload-image",
-  authMiddleware,
-  profileController.getMyProfileImage,
+  profileController.updateProfileImage,
 );
 
 router.get("/nutritionists", nutritionistController.getAllNutritionists);

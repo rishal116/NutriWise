@@ -1,5 +1,5 @@
 import { clientApi } from "@/lib/axios/clientApi";
-import { AdminRoutes } from "@/routes/admin.routes";
+import { ADMIN_NUTRITIONIST_ROUTES } from "@/routes/admin";
 
 import { NutritionistLevel } from "@/enums/admin/nutritionist.enum";
 import { AdminNutritionistListQueryDto } from "@/dtos/admin/nutritionist/admin-nutritionist-list-query.dto";
@@ -14,7 +14,7 @@ export const adminNutritionistService = {
   ): Promise<InfiniteScrollResponseDto<AdminNutritionistListItemDto>> {
     const response = await clientApi.get<
       InfiniteScrollResponseDto<AdminNutritionistListItemDto>
-    >(AdminRoutes.NUTRITIONISTS, {
+    >(ADMIN_NUTRITIONIST_ROUTES.NUTRITIONISTS, {
       params: query,
     });
 
@@ -26,7 +26,7 @@ export const adminNutritionistService = {
   ): Promise<AdminNutritionistDetailsDto> {
     const response = await clientApi.get<
       ApiResponse<AdminNutritionistDetailsDto>
-    >(`${AdminRoutes.NUTRITIONISTS}/${userId}`);
+    >(ADMIN_NUTRITIONIST_ROUTES.DETAILS(userId));
 
     return response.data.data;
   },
@@ -36,7 +36,7 @@ export const adminNutritionistService = {
     coachLevel: NutritionistLevel,
   ): Promise<void> {
     await clientApi.patch(
-      `${AdminRoutes.NUTRITIONISTS}/${userId}/coach-level`,
+      ADMIN_NUTRITIONIST_ROUTES.COACH_LEVEL(userId),
       {
         coachLevel,
       },

@@ -1,5 +1,5 @@
 import { clientApi } from "@/lib/axios/clientApi";
-import { AdminRoutes } from "@/routes/admin.routes";
+import { ADMIN_USER_ROUTES } from "@/routes/admin";
 
 import { AdminUserListQueryDto } from "@/dtos/admin/user/admin-user-list-query.dto";
 import { AdminUserListItemDto } from "@/dtos/admin/user/admin-user-list-item.dto";
@@ -11,16 +11,22 @@ export const adminUserService = {
   ): Promise<InfiniteScrollResponseDto<AdminUserListItemDto>> {
     const response = await clientApi.get<
       InfiniteScrollResponseDto<AdminUserListItemDto>
-    >(AdminRoutes.USERS, {
+    >(ADMIN_USER_ROUTES.USERS, {
       params: query,
     });
 
     return response.data;
   },
 
-  async updateBlockStatus(userId: string, isBlocked: boolean): Promise<void> {
-    await clientApi.patch(`${AdminRoutes.USERS}/${userId}/block-status`, {
-      isBlocked,
-    });
+  async updateBlockStatus(
+    userId: string,
+    isBlocked: boolean,
+  ): Promise<void> {
+    await clientApi.patch(
+      ADMIN_USER_ROUTES.BLOCK_STATUS(userId),
+      {
+        isBlocked,
+      },
+    );
   },
 };

@@ -18,10 +18,8 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction,
 ): Promise<Response | void> => {
-  console.log("Auth middleware started");
   const token =
     req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
-  console.log(token);
 
   if (!token) {
     logger.warn(AUTH_MESSAGES.ACCESS_TOKEN_MISSING);
@@ -79,7 +77,6 @@ export const authMiddleware = async (
       roles: user.roles,
     };
 
-    console.log("Auth middleware passed");
     next();
   } catch (error) {
     if (error instanceof TokenExpiredError) {

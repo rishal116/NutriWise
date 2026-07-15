@@ -14,43 +14,33 @@ export class UserProfileController implements IUserProfileController {
     private _userProfileService: IUserProfileService,
   ) {}
 
-  getMyProfile = asyncHandler(async (req: Request, res: Response) => {
+  getProfile = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
-    const user = await this._userProfileService.getMyProfile(userId);
+    const user = await this._userProfileService.getProfile(userId);
     return res.status(StatusCode.OK).json({
       success: true,
       message: COMMON_MESSAGES.SUCCESS,
-      user,
+      data: user,
     });
   });
 
-  updateMyProfile = asyncHandler(async (req: Request, res: Response) => {
+  updateProfile = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
     const profileData = req.body;
-    const updatedUser = await this._userProfileService.updateMyProfile(
+    const updatedUser = await this._userProfileService.updateProfile(
       userId,
       profileData,
     );
     return res.status(StatusCode.OK).json({
       success: true,
       message: USER_MESSAGES.PROFILE_UPDATED,
-      user: updatedUser,
+      data: updatedUser,
     });
   });
 
-  getMyProfileImage = asyncHandler(async (req: Request, res: Response) => {
+  updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
-    const imageData = await this._userProfileService.getMyProfileImage(userId);
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: COMMON_MESSAGES.SUCCESS,
-      data: imageData,
-    });
-  });
-
-  updateMyProfileImage = asyncHandler(async (req: Request, res: Response) => {
-    const { userId } = req.user!;
-    const updatedProfile = await this._userProfileService.updateMyProfileImage(
+    const updatedProfile = await this._userProfileService.updateProfileImage(
       userId,
       req.file!,
     );

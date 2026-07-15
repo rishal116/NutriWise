@@ -79,6 +79,32 @@ const SECTIONS = [
 
 const currentYear = new Date().getFullYear();
 
+// Blocks 'e', 'E', '+', '-' at the keystroke level on <input type="number">.
+// Note: this is UX polish only — it does not stop paste, autofill, or
+// programmatic form submission. The Zod schema is the real gate.
+function blockInvalidNumberKeys(e: React.KeyboardEvent<HTMLInputElement>) {
+  if (["e", "E", "+", "-"].includes(e.key)) {
+    e.preventDefault();
+  }
+}
+
+function blockInvalidPaste(e: React.ClipboardEvent<HTMLInputElement>) {
+  const pastedText = e.clipboardData.getData("text");
+
+  if (!/^\d+$/.test(pastedText)) {
+    e.preventDefault();
+  }
+}
+
+function blockInvalidDecimalPaste(e: React.ClipboardEvent<HTMLInputElement>) {
+  const pastedText = e.clipboardData.getData("text").trim();
+
+  // Allows: 2, 2.5, 10.75
+  if (!/^\d+(\.\d+)?$/.test(pastedText)) {
+    e.preventDefault();
+  }
+}
+
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -134,24 +160,21 @@ export default function NutritionistApplicationFormPage() {
     null,
   );
 
-  const [existingCertUrls, setExistingCertUrls] = useState<
-    Record<number, string | undefined>
-  >({});
-
   const form = useForm({
     resolver: zodResolver(nutritionistApplicationSchema),
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
+      // NOTE: these are empty on purpose. Never seed a "real looking"
+      // default (e.g. year: currentYear) — placeholders communicate the
+      // expected format, actual values must come from the user or backend.
       qualifications: [{ degree: "", institution: "", year: "" }],
-      experiences: [{ role: "", organization: "", durationYears: 0 }],
+      experiences: [{ role: "", organization: "", durationYears: "" }],
       specializations: [],
       languages: [],
       bio: "",
 
-      // add these
       resumeUrl: "",
-
       resume: undefined,
 
       certifications: [],
@@ -186,6 +209,8 @@ export default function NutritionistApplicationFormPage() {
   const resumeFile = watch("resume")?.[0];
 
   // Prefill from a previous (rejected) application, if one exists.
+  // This is the ONLY place real values should be injected into the form —
+  // straight from the backend response, never hardcoded on the client.
   useEffect(() => {
     let cancelled = false;
 
@@ -198,11 +223,6 @@ export default function NutritionistApplicationFormPage() {
 
         setIsEditMode(true);
         setExistingResumeUrl(details.resumeUrl ?? null);
-        setExistingCertUrls(
-          Object.fromEntries(
-            details.certifications.map((c, i) => [i, c.certificateUrl]),
-          ),
-        );
 
         reset({
           qualifications: details.qualifications.length
@@ -215,7 +235,7 @@ export default function NutritionistApplicationFormPage() {
 
           experiences: details.experiences.length
             ? details.experiences
-            : [{ role: "", organization: "", durationYears: 0 }],
+            : [{ role: "", organization: "", durationYears: "" }],
 
           specializations: details.specializations,
 
@@ -223,16 +243,12 @@ export default function NutritionistApplicationFormPage() {
 
           bio: details.bio ?? "",
 
-          // ✅ VERY IMPORTANT
           resumeUrl: details.resumeUrl,
 
           certifications: details.certifications.map((c) => ({
             name: c.name,
             issuedBy: c.issuedBy,
-
-            // ✅ VERY IMPORTANT
             fileUrl: c.certificateUrl,
-
             file: undefined as unknown as FileList,
           })),
         });
@@ -278,30 +294,29 @@ export default function NutritionistApplicationFormPage() {
     // Resume validation
     if (!existingResumeUrl && !values.resume?.[0]) {
       valid = false;
-
-      setError("resume", {
-        type: "manual",
-        message: "Resume is required",
-      });
+      setError("resume", { type: "manual", message: "Resume is required" });
     }
 
     if (values.resume?.[0] && values.resume[0].size > 5 * 1024 * 1024) {
       valid = false;
-
       setError("resume", {
         type: "manual",
         message: "Resume must be less than 5 MB",
       });
     }
 
+    if (values.certifications.length === 0) {
+      valid = false;
+      toast.error("Please add at least one certification.");
+    }
+
     // Certificate validation
     values.certifications.forEach((cert, index) => {
-      const existingUrl = existingCertUrls[index];
+      const existingUrl = cert.fileUrl;
       const newFile = cert.file?.[0];
 
       if (!existingUrl && !newFile) {
         valid = false;
-
         setError(`certifications.${index}.file`, {
           type: "manual",
           message: "Certificate file is required",
@@ -310,7 +325,6 @@ export default function NutritionistApplicationFormPage() {
 
       if (newFile && newFile.size > 5 * 1024 * 1024) {
         valid = false;
-
         setError(`certifications.${index}.file`, {
           type: "manual",
           message: "Certificate must be less than 5 MB",
@@ -336,18 +350,12 @@ export default function NutritionistApplicationFormPage() {
         formData.append("resume", values.resume[0]);
       }
 
-      const certificationMeta = values.certifications.map(
-        ({ name, issuedBy }) => ({ name, issuedBy }),
-      );
+      const certificationMeta = values.certifications.map((cert) => ({
+        name: cert.name,
+        issuedBy: cert.issuedBy,
+        fileUrl: cert.fileUrl,
+      }));
       formData.append("certificationMeta", JSON.stringify(certificationMeta));
-      // Certificate validation
-
-      if (values.certifications.length === 0) {
-        valid = false;
-
-        toast.error("Please add at least one certification.");
-        return;
-      }
 
       values.certifications.forEach((cert) => {
         if (cert.file?.[0]) {
@@ -435,7 +443,7 @@ export default function NutritionistApplicationFormPage() {
                     qualificationFields.append({
                       degree: "",
                       institution: "",
-                      year: currentYear,
+                      year: "",
                     })
                   }
                   className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 transition-colors"
@@ -484,6 +492,9 @@ export default function NutritionistApplicationFormPage() {
                     <label className={labelClass}>Year *</label>
                     <input
                       type="number"
+                      inputMode="numeric"
+                      onKeyDown={blockInvalidNumberKeys}
+                      onPaste={blockInvalidPaste}
                       {...register(`qualifications.${index}.year`)}
                       className={inputClass}
                       placeholder={String(currentYear)}
@@ -529,7 +540,7 @@ export default function NutritionistApplicationFormPage() {
                     experienceFields.append({
                       role: "",
                       organization: "",
-                      durationYears: 0,
+                      durationYears: "",
                     })
                   }
                   className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50 transition-colors"
@@ -578,9 +589,13 @@ export default function NutritionistApplicationFormPage() {
                     <label className={labelClass}>Duration (years) *</label>
                     <input
                       type="number"
+                      inputMode="decimal"
                       step="0.5"
+                      onKeyDown={blockInvalidNumberKeys}
+                      onPaste={blockInvalidDecimalPaste}
                       {...register(`experiences.${index}.durationYears`)}
                       className={inputClass}
+                      placeholder="e.g. 2.5"
                     />
                     {errors.experiences?.[index]?.durationYears && (
                       <p className={errorClass}>
@@ -783,6 +798,7 @@ export default function NutritionistApplicationFormPage() {
                     certificationFields.append({
                       name: "",
                       issuedBy: "",
+                      fileUrl: "",
                       file: undefined as unknown as FileList,
                     })
                   }
@@ -796,8 +812,9 @@ export default function NutritionistApplicationFormPage() {
 
             <div className="mt-5 space-y-4">
               {certificationFields.fields.map((field, index) => {
-                const certFile = watch(`certifications.${index}.file`)?.[0];
-                const existingUrl = existingCertUrls[index];
+                const cert = watch(`certifications.${index}`);
+                const certFile = cert?.file?.[0];
+                const existingUrl = cert?.fileUrl;
                 return (
                   <div
                     key={field.id}

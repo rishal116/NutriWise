@@ -21,7 +21,7 @@ import { useDebounce } from "@/hooks/admin/debounce.hooks";
 import UserSearchBar from "./UserSearchBar";
 import { AdminUserListItemDto } from "@/dtos/admin/user/admin-user-list-item.dto";
 import { InfiniteScrollResponseDto } from "@/dtos/common/infinite-scroll-response.dto";
-import { UserRole } from "@/enums/user/userRole.enum";
+import { UserRole } from "@/enums/user/user.enum";
 
 interface UserTableProps {
   initialData: InfiniteScrollResponseDto<AdminUserListItemDto>;

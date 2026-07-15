@@ -71,6 +71,10 @@ const navSections: NavSection[] = [
   },
 ];
 
+function isItemActive(activePath: string, href: string): boolean {
+  return activePath === href || activePath.startsWith(`${href}/`);
+}
+
 export default function ProfileSidebar({
   compact = false,
   activePath,
@@ -82,7 +86,6 @@ export default function ProfileSidebar({
         compact ? "w-16" : "w-56"
       }`}
     >
-      {/* Mobile close row — only on small screens, only in full mode */}
       {!compact && (
         <div className="lg:hidden flex items-center justify-between px-4 py-4 border-b border-slate-100">
           <span className="text-sm font-semibold text-slate-900">Menu</span>
@@ -97,9 +100,9 @@ export default function ProfileSidebar({
         </div>
       )}
 
-      {/* Nav */}
       <nav
         className={`flex-1 overflow-y-auto py-4 ${compact ? "px-2" : "px-3"}`}
+        aria-label="Profile navigation"
       >
         {navSections.map((section, si) => (
           <div key={section.title} className={si !== 0 ? "mt-5" : ""}>
@@ -109,39 +112,41 @@ export default function ProfileSidebar({
               </p>
             )}
 
-            <div
+            <ul
               className={`flex flex-col gap-0.5 ${compact ? "items-center" : ""}`}
             >
               {section.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = activePath.startsWith(item.href);
+                const active = isItemActive(activePath, item.href);
 
                 return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    onClick={onClose}
-                    title={compact ? item.name : undefined}
-                    className={`flex items-center transition-all duration-150 rounded-lg ${
-                      compact
-                        ? "justify-center w-10 h-10 mx-auto"
-                        : "gap-2.5 px-3 py-2 w-full"
-                    } ${
-                      isActive
-                        ? "bg-emerald-600 text-white"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    {!compact && (
-                      <span className="text-sm font-medium truncate">
-                        {item.name}
-                      </span>
-                    )}
-                  </Link>
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      title={compact ? item.name : undefined}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center transition-all duration-150 rounded-lg ${
+                        compact
+                          ? "justify-center w-10 h-10 mx-auto"
+                          : "gap-2.5 px-3 py-2 w-full"
+                      } ${
+                        active
+                          ? "bg-emerald-600 text-white"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      {!compact && (
+                        <span className="text-sm font-medium truncate">
+                          {item.name}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </div>
         ))}
       </nav>

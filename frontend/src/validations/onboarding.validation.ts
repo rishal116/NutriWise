@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const completeProfileSchema = z.object({
-  gender: z.enum(["male", "female", "other"], {
+  gender: z.enum(["male", "female", "other","prefer_not_to_say"], {
     message: "Please select your gender.",
   }),
 

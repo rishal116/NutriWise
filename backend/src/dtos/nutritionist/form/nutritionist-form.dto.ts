@@ -37,6 +37,10 @@ export class CertificationDto {
 
   @IsString()
   issuedBy!: string;
+
+  @IsOptional()
+  @IsString()
+  fileUrl?: string;
 }
 
 export class NutritionistFormDto {

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
+
 import { serverApi } from "@/lib/axios/serverApi";
-import { AdminRoutes } from "@/routes/admin.routes";
+import { ADMIN_NUTRITIONIST_APPLICATION_ROUTES } from "@/routes/admin";
 
 import { InfiniteScrollResponseDto } from "@/dtos/common/infinite-scroll-response.dto";
 import { AdminNutritionistApplicationListQueryDto } from "@/dtos/admin/nutritionistApplication/admin-nutritionist-application-list-query.dto";
@@ -13,9 +14,10 @@ export const adminNutritionistApplicationServerService = {
     InfiniteScrollResponseDto<AdminNutritionistApplicationListItemDto>
   > {
     const cookieStore = await cookies();
+
     const response = await serverApi.get<
       InfiniteScrollResponseDto<AdminNutritionistApplicationListItemDto>
-    >(AdminRoutes.NUTRITIONIST_APPLICATIONS, {
+    >(ADMIN_NUTRITIONIST_APPLICATION_ROUTES.APPLICATIONS, {
       params: query,
       headers: {
         Cookie: cookieStore.toString(),

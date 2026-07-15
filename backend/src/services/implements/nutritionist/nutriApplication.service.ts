@@ -4,10 +4,7 @@ import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepo
 import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
 import { TYPES } from "../../../types/types";
 import { Types } from "mongoose";
-import {
-  uploadToCloudinary,
-  uploadMultipleToCloudinary,
-} from "../../../utils/cloudinaryUploads";
+import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
 import { CustomError } from "../../../utils/customError";
 import { NutritionistApplicationDetailsDto } from "../../../dtos/nutritionist/form/nutritionist-details.dto";
@@ -89,23 +86,36 @@ export class NutritionistApplicationService implements INutritionistApplicationS
     } else if (!resumeUrl) {
       throw new CustomError("Resume is required", StatusCode.BAD_REQUEST);
     }
-    if (!files?.certifications?.length) {
-      throw new CustomError(
-        "At least one certification is required",
-        StatusCode.BAD_REQUEST,
-      );
-    }
 
-    const uploadedCertificateUrls = await uploadMultipleToCloudinary(
-      files.certifications,
-      "nutritionist/certifications",
-    );
-    const mappedCertifications: ICertification[] = certifications.map(
-      (certificate, index) => ({
-        ...certificate,
-        certificateUrl: uploadedCertificateUrls[index],
-      }),
-    );
+    let uploadIndex = 0;
+
+    const mappedCertifications: ICertification[] = [];
+
+    for (const certificate of certifications) {
+      let certificateUrl = certificate.fileUrl ?? "";
+
+      if (files?.certifications?.[uploadIndex]) {
+        certificateUrl = await uploadToCloudinary(
+          files.certifications[uploadIndex],
+          "nutritionist/certifications",
+        );
+
+        uploadIndex++;
+      }
+
+      if (!certificateUrl) {
+        throw new CustomError(
+          "Certificate file is required",
+          StatusCode.BAD_REQUEST,
+        );
+      }
+
+      mappedCertifications.push({
+        name: certificate.name,
+        issuedBy: certificate.issuedBy,
+        certificateUrl,
+      });
+    }
     const profile = {
       qualifications,
       specializations,

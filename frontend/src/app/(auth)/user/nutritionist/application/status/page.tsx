@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
@@ -13,6 +12,8 @@ import {
 import { nutritionistApplicationService } from "@/services/nutritionist/nutriApplication.service";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import { useRouter } from "next/navigation";
+import { userAuthService } from "@/services/user/userAuth.service";
 
 type ApplicationStatus = "pending" | "approved" | "rejected";
 
@@ -34,8 +35,10 @@ interface StatusContent {
 
 export default function NutritionistApplicationStatusPage() {
   const [loading, setLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [status, setStatus] = useState<ApplicationStatusResponse | null>(null);
   const [fetchError, setFetchError] = useState(false);
+  const router = useRouter();
 
   const fetchStatus = async () => {
     try {
@@ -54,6 +57,25 @@ export default function NutritionistApplicationStatusPage() {
   useEffect(() => {
     fetchStatus();
   }, []);
+
+  const handleAction = async (href: string) => {
+    if (isActionLoading) return;
+
+    setIsActionLoading(true);
+    try {
+      if (status?.applicationStatus === "approved") {
+        await userAuthService.switchRole("nutritionist");
+      }
+
+      router.push(href);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+      setIsActionLoading(false);
+    }
+    // No `finally` reset here on the success path — router.push navigates
+    // away, so leaving the button in its loading state avoids a flash
+    // back to normal right before the route change.
+  };
 
   if (loading) {
     return (
@@ -177,13 +199,23 @@ export default function NutritionistApplicationStatusPage() {
         )}
 
         <div className="mt-10">
-          <Link
-            href={data.buttonHref}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-medium text-white transition hover:bg-emerald-700"
+          <button
+            onClick={() => handleAction(data.buttonHref)}
+            disabled={isActionLoading}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {data.buttonText}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+            {isActionLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Please wait...
+              </>
+            ) : (
+              <>
+                {data.buttonText}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </button>
         </div>
       </div>
     </div>

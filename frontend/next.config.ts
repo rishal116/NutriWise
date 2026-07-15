@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/user",
+        destination: "/user/dashboard",
+        permanent: false,
+      },
+    ];
+  },
+
   images: {
     remotePatterns: [
       {

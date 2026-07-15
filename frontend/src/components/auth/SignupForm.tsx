@@ -18,7 +18,6 @@ import {
 import { signupSchema } from "@/validations/auth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
-import Link from "next/link";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { SignupRequest } from "@/types/auth/auth-request.types";
 import Logo from "../common/Logo";
@@ -36,6 +35,13 @@ export default function SignupForm() {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleSignIn = () => {
+    setIsNavigating(true);
+    router.push("/login");
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -293,14 +299,18 @@ export default function SignupForm() {
           </div>
         </div>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
+        <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-emerald-600 font-semibold hover:underline"
+          <button
+            onClick={handleSignIn}
+            disabled={isNavigating}
+            className="inline-flex items-center gap-2 font-semibold text-emerald-600 hover:underline disabled:no-underline"
           >
+            {isNavigating && (
+              <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+            )}
             Sign In
-          </Link>
+          </button>
         </p>
       </div>
     </div>

@@ -10,6 +10,7 @@ export const qualificationSchema = z.object({
 
   year: z.coerce
     .number()
+    .int("Year must be a whole number")
     .min(1950, "Enter a valid year")
     .max(currentYear, "Year cannot be in the future"),
 });
@@ -19,7 +20,10 @@ export const experienceSchema = z.object({
 
   organization: z.string().trim().min(2, "Organization is required"),
 
-  durationYears: z.coerce.number().min(0, "Experience cannot be negative"),
+  durationYears: z.coerce
+    .number()
+    .min(0, "Experience cannot be negative")
+    .max(60, "Enter a realistic value"),
 });
 
 export const certificationSchema = z
