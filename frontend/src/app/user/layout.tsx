@@ -1,14 +1,7 @@
-"use client";
-
-export default function ClientLayout({
+export default function UserLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    // This is now a clean shell for both Messages and Dashboard
-    <div className="min-h-screen bg-gray-50">
-      {children}
-    </div>
-  );
+  return <div className="min-h-screen bg-slate-50">{children}</div>;
 }

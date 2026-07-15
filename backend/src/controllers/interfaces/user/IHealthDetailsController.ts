@@ -2,6 +2,6 @@
 import { Request, Response, NextFunction } from "express";
 
 export interface IHealthDetailsController {
-   getMyDetails: (req: Request, res: Response, next: NextFunction) => void;
-   saveDetails: (req: Request, res: Response, next: NextFunction) => void;
+   getHealthDetails: (req: Request, res: Response, next: NextFunction) => void;
+   saveHealthDetails: (req: Request, res: Response, next: NextFunction) => void;
 }

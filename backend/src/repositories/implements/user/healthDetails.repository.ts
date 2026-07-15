@@ -5,7 +5,7 @@ import {
   HealthDetailsModel,
   IHealthDetails,
 } from "../../../models/healthDetails.model";
-import { Types } from "mongoose";
+import { Types, UpdateQuery } from "mongoose";
 
 @injectable()
 export class HealthDetailsRepository
@@ -22,18 +22,16 @@ export class HealthDetailsRepository
 
   async upsertByUserId(
     userId: string,
-    data: Partial<IHealthDetails>,
+    data: UpdateQuery<IHealthDetails>,
   ): Promise<IHealthDetails | null> {
-    return this._model
-      .findOneAndUpdate(
-        { userId: new Types.ObjectId(userId) },
-        { $set: data },
-        {
-          new: true,
-          upsert: true,
-          runValidators: true,
-        },
-      )
-      .exec();
+    return this._model.findOneAndUpdate(
+      { userId: new Types.ObjectId(userId) },
+      { $set: data },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+      },
+    );
   }
 }

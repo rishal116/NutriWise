@@ -1,18 +1,12 @@
-import { Gender } from "../../../enums/userRole.enum";
-
+import { Gender } from "../../../enums/user.enum";
 
 export interface GetUserProfileDto {
   profileImage?: string;
 
   fullName: string;
-  username: string;
   email: string;
 
   phone?: string;
   gender?: Gender;
   birthDate?: Date;
-
-  activeRole: UserRole;
-
-  createdAt: Date;
 }

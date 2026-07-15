@@ -27,7 +27,6 @@ export const blockLoggedInUser = async (
       process.env.ACCESS_TOKEN_SECRET!,
     ) as JwtPayload;
 
-    // Query DB for dynamic blocked status
     const user = await UserModel.findById(decoded.userId).select(
       "role isBlocked",
     );

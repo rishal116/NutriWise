@@ -5,7 +5,7 @@ import {
   Language,
   Specialization,
 } from "@/types/nutritionist.types";
-import { Gender, UserRole } from "@/enums/user/userRole.enum";
+import { Gender, UserRole } from "@/enums/user/user.enum";
 
 export interface QualificationDto {
   degree: string;

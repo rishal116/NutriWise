@@ -1,6 +1,10 @@
-import { HealthDetailsRequestDTO, HealthDetailsResponseDTO } from "../../../dtos/user/healthDetails.dto";
+import { HealthDetailsRequestDto } from "../../../dtos/user/health/health-details.request.dto";
+import { HealthDetailsResponseDto } from "../../../dtos/user/health/health-details.response.dto";
 
 export interface IHealthDetailsService {
-  getHealthDetails(userId: string): Promise<HealthDetailsResponseDTO | null>;
-  saveHealthDetails(userId: string, payload: HealthDetailsRequestDTO): Promise<HealthDetailsResponseDTO>;
+  getHealthDetails(userId: string): Promise<HealthDetailsResponseDto | null>;
+  saveHealthDetails(
+    userId: string,
+    payload: HealthDetailsRequestDto,
+  ): Promise<HealthDetailsResponseDto>;
 }

@@ -6,6 +6,7 @@ import SocketProvider from "@/providers/SocketProvider";
 import { Toaster } from "sonner";
 import { ThemeProviders } from "@/providers/ThemeProvider";
 import AuthProvider from "@/providers/AuthProvider";
+import GlobalLoading from "@/components/common/GlobalLoading";
 
 export const metadata: Metadata = {
   title: {
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <AuthProvider>
             <ThemeProviders>
               <SocketProvider>
+                <GlobalLoading />
                 {children}
 
                 <Toaster

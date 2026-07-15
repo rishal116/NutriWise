@@ -25,6 +25,12 @@ export default function LoginForm() {
   const [loading, setLoading] = useState<boolean>(false);
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleSignup = () => {
+    setIsNavigating(true);
+    router.push("/signup");
+  };
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -234,14 +240,22 @@ export default function LoginForm() {
           </div>
         </div>
 
-        <p className="text-center text-sm text-gray-600 mt-6">
+        <p className="mt-6 text-center text-sm text-gray-600">
           {`Don't have an account? `}
           <button
             type="button"
-            onClick={() => router.push("/signup")}
-            className="text-emerald-600 font-semibold hover:underline"
+            onClick={handleSignup}
+            disabled={isNavigating}
+            className="inline-flex items-center gap-2 font-semibold text-emerald-600 hover:underline disabled:cursor-not-allowed"
           >
-            Sign up
+            {isNavigating ? (
+              <>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+                Loading...
+              </>
+            ) : (
+              "Sign up"
+            )}
           </button>
         </p>
       </div>

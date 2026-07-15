@@ -1,15 +1,16 @@
 import { cookies } from "next/headers";
-import { serverApi } from "@/lib/axios/serverApi";
-import { AdminRoutes } from "@/routes/admin.routes";
-import { AdminUserListQueryDto } from "@/dtos/admin/user/admin-user-list-query.dto";
 import axios from "axios";
+
+import { serverApi } from "@/lib/axios/serverApi";
+import { ADMIN_USER_ROUTES } from "@/routes/admin";
+import { AdminUserListQueryDto } from "@/dtos/admin/user/admin-user-list-query.dto";
 
 export const adminUserServerService = {
   async getUsers(query: AdminUserListQueryDto) {
     const cookieStore = await cookies();
 
     try {
-      const response = await serverApi.get(AdminRoutes.USERS, {
+      const response = await serverApi.get(ADMIN_USER_ROUTES.USERS, {
         params: query,
         headers: {
           Cookie: cookieStore.toString(),

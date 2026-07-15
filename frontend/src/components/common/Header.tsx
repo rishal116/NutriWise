@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import {
   Bell,
   LogOut,
@@ -25,6 +25,8 @@ import { logout } from "@/redux/slices/authSlice";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { RootState } from "@/redux/store";
 import Logo from "./Logo";
+import { showLoading, hideLoading } from "@/redux/slices/uiSlice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 type NutritionistCtaKey = "none" | "pending" | "rejected" | "approved";
 type Accent = "emerald" | "amber" | "rose";
@@ -130,15 +132,16 @@ const NUTRITIONIST_CTA_CONFIG: Record<
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
-  const user = useSelector((state: RootState) => state.auth.user);
+  const user = useAppSelector((state) => state.auth.user);
   const loading = useSelector((state: RootState) => state.auth.loading);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
 
@@ -201,15 +204,28 @@ export default function Header() {
           ? "rejected"
           : "none";
 
+  const handleGetStarted = () => {
+    setIsLoading(true);
+
+    router.push("/signup");
+  };
+
   const handleLogout = async () => {
     try {
+      dispatch(showLoading("Logging out..."));
+
       await userAuthService.logout();
 
       dispatch(logout());
 
-      router.push("/");
+      router.replace("/");
+
+      setTimeout(() => {
+        dispatch(hideLoading());
+      }, 300);
     } catch (err) {
-      console.error("Logout failed:", err);
+      dispatch(hideLoading());
+      console.error(err);
     }
   };
 
@@ -511,13 +527,23 @@ export default function Header() {
               </div>
             ) : (
               <div className="hidden sm:flex items-center gap-2">
-                <Link
-                  href="/signup"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm shadow-emerald-900/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                <button
+                  onClick={handleGetStarted}
+                  disabled={isLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-600 disabled:opacity-80 text-white rounded-xl shadow-sm shadow-emerald-900/10 transition-colors"
                 >
-                  Get Started
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                  {isLoading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Loading..
+                    </>
+                  ) : (
+                    <>
+                      Get Started
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
               </div>
             )}
 
