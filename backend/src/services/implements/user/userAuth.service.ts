@@ -32,7 +32,7 @@ import { GoogleAuthDto } from "../../../dtos/user/auth/google-auth.dto";
 import { ForgotPasswordDto } from "../../../dtos/user/auth/forgot-password.dto";
 import { ResetPasswordDto } from "../../../dtos/user/auth/reset-password.dto";
 import { Types } from "mongoose";
-import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
+import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutriProfileRepository";
 import { SwitchRoleDto } from "../../../dtos/user/auth/switch-role.dto";
 import { AuthProvider } from "../../../enums/user.enum";
 

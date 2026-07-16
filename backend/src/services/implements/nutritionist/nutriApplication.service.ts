@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { INutritionistApplicationService } from "../../interfaces/nutritionist/INutriApplicationService";
 import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
-import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
+import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutriProfileRepository";
 import { TYPES } from "../../../types/types";
 import { Types } from "mongoose";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";

@@ -1,11 +1,15 @@
 import { clientApi } from "@/lib/axios/clientApi";
-import { ApiResponse } from "@/types/api/apiResponse";
+
 import { NutritionistApplicationDetailsDto } from "@/dtos/nutritionist/nutritionist-application-details.dto";
 
+import { ApiResponse } from "@/types/api/apiResponse";
+
+import { NUTRITIONIST_APPLICATION_ROUTES } from "@/routes/nutritionist";
+
 export const nutritionistApplicationService = {
-  submitApplication: async (data: FormData) => {
+  async submitApplication(data: FormData) {
     const response = await clientApi.post(
-      "/nutritionist/application/submit",
+      NUTRITIONIST_APPLICATION_ROUTES.SUBMIT,
       data,
       {
         headers: {
@@ -17,17 +21,19 @@ export const nutritionistApplicationService = {
     return response.data;
   },
 
-  getApplicationDetails:
-    async (): Promise<NutritionistApplicationDetailsDto> => {
-      const response = await clientApi.get<
-        ApiResponse<NutritionistApplicationDetailsDto>
-      >("/nutritionist/application/details");
+  async getApplicationDetails(): Promise<NutritionistApplicationDetailsDto> {
+    const response = await clientApi.get<
+      ApiResponse<NutritionistApplicationDetailsDto>
+    >(NUTRITIONIST_APPLICATION_ROUTES.DETAILS);
 
-      return response.data.data;
-    },
+    return response.data.data;
+  },
 
-  getApplicationStatus: async () => {
-    const response = await clientApi.get("/nutritionist/application/status");
+  async getApplicationStatus() {
+    const response = await clientApi.get(
+      NUTRITIONIST_APPLICATION_ROUTES.STATUS,
+    );
+
     return response.data;
   },
 };

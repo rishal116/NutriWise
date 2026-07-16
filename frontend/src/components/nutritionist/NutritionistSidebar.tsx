@@ -1,6 +1,5 @@
 "use client";
-
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Home,
   Video,
@@ -72,20 +71,19 @@ export default function NutritionistSidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    // auto collapse on messages page
     if (pathname.startsWith("/nutritionist/messages")) {
       setCollapsed(true);
       onCollapseChange?.(true);
     }
-  }, [pathname]);
+  }, [pathname, onCollapseChange]);
 
-  // Auto-close mobile drawer on route change
   useEffect(() => {
-    if (onMobileClose) onMobileClose();
-  }, [pathname]);
+    onMobileClose?.();
+  }, [pathname, onMobileClose]);
 
   const handleCollapse = () => {
     const newState = !collapsed;
@@ -97,14 +95,13 @@ export default function NutritionistSidebar({
     <aside
       className={`
         fixed left-0 z-[50] lg:z-30
-        /* Adjusted top to match your global header height */
-        top-16 lg:top-20 
-        h-[calc(100vh-64px)] lg:h-[calc(100vh-80px)]
+        top-16
+        h-[calc(100vh-64px)]
         bg-white border-r border-slate-100
         transition-all duration-300 ease-in-out flex flex-col
         ${collapsed ? "w-20" : "w-64"}
         ${isMobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"}
-      `}
+        `}
     >
       {/* Sidebar Header */}
       <div className="h-14 lg:h-16 flex items-center justify-between px-6 border-b border-slate-50">
@@ -131,7 +128,7 @@ export default function NutritionistSidebar({
 
       {/* Nav Links */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
-        {menu.map(({ href, label, icon: Icon, badge }) => {
+        {menu.map(({ href, label, icon: Icon }) => {
           const isActive = pathname === href;
           return (
             <button
@@ -157,11 +154,6 @@ export default function NutritionistSidebar({
                       : "text-slate-400 group-hover:text-slate-600"
                   }
                 />
-                {badge && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-emerald-600 text-white text-[8px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                    {badge}
-                  </span>
-                )}
               </div>
 
               {!collapsed && (

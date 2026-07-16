@@ -10,7 +10,7 @@ import {
   NutritionistUserDTO,
   NutritionistPlanDTO,
 } from "../../../dtos/user/nutritionistUser.dto";
-import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanRepository";
+import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { IPlan } from "../../../models/nutritionistPlan.model";
 import { NutritionistListFilter } from "../../../dtos/user/nutritionistUser.dto";
 import { toNutritionistPlanDTO } from "../../../mapper/user/nutritionistPlan.mapper";
