@@ -1,29 +1,44 @@
 import { Schema, model, Types } from "mongoose";
+import { SPECIALIZATIONS, Specialization } from "../types/nutritionist.types";
 
 export const PLAN_STATUS = ["draft", "published", "archived"] as const;
 
-export type PlanStatus = typeof PLAN_STATUS[number];
+export const PLAN_CURRENCY = ["INR", "USD"] as const;
 
-export interface IPlan {
+export type PlanStatus = (typeof PLAN_STATUS)[number];
+export type PlanCurrency = (typeof PLAN_CURRENCY)[number];
+
+export interface INutritionistPlan {
   _id: Types.ObjectId;
+
   nutritionistId: Types.ObjectId;
+
   title: string;
-  slug: string;
-  category: string;
-  durationInDays: number;
-  price: number;
-  currency: "INR" | "USD";
+
+  specialization: Specialization;
+
   description: string;
+
+  durationDays: number;
+
+  price: number;
+
+  currency: PlanCurrency;
+
   features: string[];
-  thumbnailUrl?: string;
-  tags?: string[];
+
   status: PlanStatus;
+
   isDeleted: boolean;
+
+  deletedAt?: Date;
+
   createdAt: Date;
+
   updatedAt: Date;
 }
 
-const PlanSchema = new Schema<IPlan>(
+const NutritionistPlanSchema = new Schema<INutritionistPlan>(
   {
     nutritionistId: {
       type: Schema.Types.ObjectId,
@@ -36,24 +51,25 @@ const PlanSchema = new Schema<IPlan>(
       type: String,
       required: true,
       trim: true,
+      minlength: 5,
+      maxlength: 120,
     },
 
-    slug: {
+    specialization: {
+      type: String,
+      enum: SPECIALIZATIONS,
+      required: true,
+      index: true,
+    },
+
+    description: {
       type: String,
       required: true,
-      unique: true,
-      index: true,
-      lowercase: true,
       trim: true,
+      maxlength: 5000,
     },
 
-    category: {
-      type: String,
-      required: true,
-      index: true,
-    },
-
-    durationInDays: {
+    durationDays: {
       type: Number,
       required: true,
       min: 1,
@@ -68,26 +84,11 @@ const PlanSchema = new Schema<IPlan>(
 
     currency: {
       type: String,
-      enum: ["INR", "USD"],
+      enum: PLAN_CURRENCY,
       default: "INR",
     },
 
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
     features: {
-      type: [String],
-      default: [],
-    },
-
-    thumbnailUrl: {
-      type: String,
-    },
-
-    tags: {
       type: [String],
       default: [],
     },
@@ -104,30 +105,39 @@ const PlanSchema = new Schema<IPlan>(
       default: false,
       index: true,
     },
+
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  },
 );
 
-PlanSchema.index({
+NutritionistPlanSchema.index({
   nutritionistId: 1,
   status: 1,
   isDeleted: 1,
-  createdAt: -1,
 });
 
-PlanSchema.index(
-  { nutritionistId: 1, title: 1 },
-  { unique: true }
+NutritionistPlanSchema.index({
+  specialization: 1,
+  status: 1,
+});
+
+NutritionistPlanSchema.index(
+  {
+    nutritionistId: 1,
+    title: 1,
+  },
+  {
+    unique: true,
+  },
 );
 
-PlanSchema.pre("validate", function (next) {
-  if (this.title && !this.slug) {
-    this.slug = this.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-  }
-  next();
-});
-
-export const PlanModel = model<IPlan>("Plan", PlanSchema);
+export const NutritionistPlanModel = model<INutritionistPlan>(
+  "NutritionistPlan",
+  NutritionistPlanSchema,
+);

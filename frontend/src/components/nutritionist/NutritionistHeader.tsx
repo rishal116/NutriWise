@@ -20,6 +20,7 @@ export default function NutritionistHeader() {
   const [switching, setSwitching] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -69,10 +70,15 @@ export default function NutritionistHeader() {
   };
 
   const handleLogout = async () => {
+    if (loggingOut) return;
+    setLoggingOut(true);
     try {
       await userAuthService.logout();
+      router.push("/login"); // or wherever
     } catch (err) {
       console.error("Logout failed:", err);
+    } finally {
+      setLoggingOut(false);
     }
   };
 
@@ -210,9 +216,11 @@ export default function NutritionistHeader() {
 
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2.5 hover:bg-red-50 rounded-xl flex items-center gap-3 text-sm text-red-600 transition-colors"
+                      disabled={loggingOut}
+                      className="w-full text-left px-4 py-2.5 hover:bg-red-50 rounded-xl flex items-center gap-3 text-sm text-red-600 transition-colors disabled:opacity-50"
                     >
-                      <LogOut className="h-4 w-4" /> Log out
+                      <LogOut className="h-4 w-4" />
+                      {loggingOut ? "Logging out..." : "Log out"}
                     </button>
                   </div>
                 </div>

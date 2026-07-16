@@ -9,8 +9,7 @@ import adminRoutes from "./routes/admin";
 import { errorMiddleware } from "./middlewares/error.middleware";
 import chatRoutes from "./routes/chat.routes";
 import sessionRoutes from "./routes/session.routes";
-import nutritionistApplicationRoutes from "./routes/nutritionist-application.routes";
-import nutritionistRoutes from "./routes/nutritionist.routes";
+import nutritionistRoutes from "./routes/nutritionist";
 
 dotenv.config();
 
@@ -54,9 +53,9 @@ app.use(
 
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/nutritionists", nutritionistRoutes);
 
 app.use("/chat", chatRoutes);
-app.use("/nutritionist/application", nutritionistApplicationRoutes);
 app.use("/nutritionist", nutritionistRoutes);
 app.use("/session", sessionRoutes);
 

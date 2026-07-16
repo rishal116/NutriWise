@@ -4,7 +4,7 @@ import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
 import { CreateCheckoutSessionDTO } from "../../../dtos/user/checkout.dto";
 import { CheckoutStripeMapper } from "../../../mapper/user/checkout.mapper";
-import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanRepository";
+import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 
 @injectable()
 export class CheckoutService implements ICheckoutService {

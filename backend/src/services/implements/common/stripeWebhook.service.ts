@@ -5,7 +5,7 @@ import { stripe } from "../../../configs/stripe";
 import { IStripeWebhookService } from "../../interfaces/common/IStripeWebhookService";
 import { TYPES } from "../../../types/types";
 import { IUserPlanRepository } from "../../../repositories/interfaces/user/IUserPlanRepository";
-import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanRepository";
+import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { IWalletRepository } from "../../../repositories/interfaces/common/IWalletRepository";
 import { IPaymentRepository } from "../../../repositories/interfaces/common/IPaymentRepository";
 import { calculateCommission } from "../../../helper/paymentCalculator";

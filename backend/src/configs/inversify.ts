@@ -68,15 +68,15 @@ import { NutritionistApplicationController } from "../controllers/implementation
 import { INutritionistApplicationService } from "../services/interfaces/nutritionist/INutriApplicationService";
 import { NutritionistApplicationService } from "../services/implements/nutritionist/nutriApplication.service";
 
-import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutritionistProfileRepository";
-import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutritionistProfile.repository";
+import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutriProfileRepository";
+import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutriProfile.repository";
 
-import { INutritionistPlanController } from "../controllers/interfaces/nutritionist/INutritionistPlanController";
-import { NutritionistPlanController } from "../controllers/implementations/nutritionist/nutritionistPlan.controller";
-import { INutritionistPlanService } from "../services/interfaces/nutritionist/INutritionistPlanService";
+import { INutritionistPlanController } from "../controllers/interfaces/nutritionist/INutriPlanController";
+import { NutritionistPlanController } from "../controllers/implementations/nutritionist/nutriPlan.controller";
+import { INutritionistPlanService } from "../services/interfaces/nutritionist/INutriPlanService";
 import { NutritionistPlanService } from "../services/implements/nutritionist/nutriPlan.service";
-import { INutritionistPlanRepository } from "../repositories/interfaces/nutritionist/INutritionistPlanRepository";
-import { NutritionistPlanRepository } from "../repositories/implements/nutritionist/nutritionistPlan.repository";
+import { INutritionistPlanRepository } from "../repositories/interfaces/nutritionist/INutriPlanRepository";
+import { NutritionistPlanRepository } from "../repositories/implements/nutritionist/nutriPlan.repository";
 import { NutritionistSubscriptionController } from "../controllers/implementations/nutritionist/nutritionistSubscription.controller";
 import { INutritionistSubscriptionController } from "../controllers/interfaces/nutritionist/INutritionistSubscriptionController";
 

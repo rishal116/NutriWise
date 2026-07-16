@@ -1,28 +1,26 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
-import { INutritionistPlanService } from "../../interfaces/nutritionist/INutritionistPlanService";
-import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanRepository";
-import { IPlan } from "../../../models/nutritionistPlan.model";
-import {
-  UpdatePlanDTO,
-  CreatePlanDTO,
-  PlanDTO,
-  NutritionistPricingDTO,
-} from "../../../dtos/nutritionist/nutritionsitPlan.dto";
+import { INutritionistPlanService } from "../../interfaces/nutritionist/INutriPlanService";
+import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { Types } from "mongoose";
-import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutritionistProfileRepository";
-import { GetAllowedPlanCategoriesDTO } from "../../../dtos/nutritionist/nutritionsitPlan.dto";
-import {
-  toPlanDTO,
-  toNutritionistPricingDTO,
-} from "../../../mapper/nutritionist/nutritionistPlan.mapper";
+import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutriProfileRepository";
 import logger from "../../../utils/logger";
-import { PRICING_RULES } from "../../../constants/nutritionist/nutritionistPlan.constant";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { mapSpecializationsToCategories } from "../../../mapper/nutritionist/specializationCategory.mapper";
-import { NutritionistSpecialization } from "../../../constants";
-import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
+import { validateDto } from "../../../middlewares/validateDto.middleware";
+import {
+  toNutritionistPlanModel,
+  toNutritionistPlanUpdateModel,
+  toPlanDTO,
+} from "../../../mapper/nutritionist/plan/nutritionist-plan.mapper";
+import { CreatePlanDTO } from "../../../dtos/nutritionist/plan/create-plan.dto";
+import { PlanDTO } from "../../../dtos/nutritionist/plan/plan.dto";
+import { UpdatePlanDTO } from "../../../dtos/nutritionist/plan/update-plan.dto";
+import { MAX_PUBLISHED_PLANS } from "../../../constants/nutritionist/plan/nutritionist-plan.constant";
+import { toPlanMetadataDTO } from "../../../mapper/nutritionist/plan/plan-metadata.dto";
+import { PlanMetadataDTO } from "../../../dtos/nutritionist/plan/plan-metadata.dto";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { GetPlansDTO } from "../../../dtos/nutritionist/plan/get-plans.dto";
 
 @injectable()
 export class NutritionistPlanService implements INutritionistPlanService {
@@ -36,35 +34,15 @@ export class NutritionistPlanService implements INutritionistPlanService {
   async createPlan(
     nutritionistId: string,
     dto: CreatePlanDTO,
-  ): Promise<{ message: string }> {
+  ): Promise<PlanDTO> {
     logger.info(`Creating plan for nutritionist ${nutritionistId}`);
-    const MAX_PUBLISHED_PLANS = 3;
-
-    const parsedFeatures =
-      typeof dto.features === "string"
-        ? JSON.parse(dto.features)
-        : dto.features || [];
-
-    const parsedTags =
-      typeof dto.tags === "string" ? JSON.parse(dto.tags) : dto.tags || [];
-
-    const resultDto: CreatePlanDTO = {
-      title: dto.title,
-      category: dto.category,
-      durationInDays: Number(dto.durationInDays),
-      price: Number(dto.price),
-      description: dto.description,
-      status: dto.status,
-      features: parsedFeatures,
-      tags: parsedTags,
-    };
-
-    if (resultDto.status === "published") {
+    await validateDto(CreatePlanDTO, dto);
+    if (dto.status === "published") {
       const publishedCount = await this._nutritionistPlanRepository.count({
         nutritionistId: new Types.ObjectId(nutritionistId),
         status: "published",
+        isDeleted: false,
       });
-
       if (publishedCount >= MAX_PUBLISHED_PLANS) {
         throw new CustomError(
           `Plan limit reached. You can publish only ${MAX_PUBLISHED_PLANS} plans.`,
@@ -72,49 +50,19 @@ export class NutritionistPlanService implements INutritionistPlanService {
         );
       }
     }
-
-    const planData: Partial<IPlan> = {
-      nutritionistId: new Types.ObjectId(nutritionistId),
-      title: resultDto.title,
-      category: resultDto.category,
-      durationInDays: resultDto.durationInDays,
-      price: resultDto.price,
-      description: resultDto.description,
-      features: resultDto.features || [],
-      status: resultDto.status ?? "draft",
-      tags: resultDto.tags,
-    };
-
-    try {
-      await this._nutritionistPlanRepository.create(planData);
-      logger.info(`Plan created successfully`);
-      return { message: "Plan created successfully" };
-    } catch (err) {
-      logger.error("Failed to create plan", err);
-      throw new CustomError(
-        "Failed to create plan",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const plan = toNutritionistPlanModel(nutritionistId, dto);
+    const createdPlan = await this._nutritionistPlanRepository.create(plan);
+    logger.info(`Plan ${createdPlan._id.toString()} created successfully`);
+    return toPlanDTO(createdPlan);
   }
 
   async updatePlan(
     nutritionistId: string,
     planId: string,
-    data: UpdatePlanDTO,
-  ): Promise<IPlan> {
+    dto: UpdatePlanDTO,
+  ): Promise<PlanDTO> {
     logger.info(`Updating plan ${planId} for nutritionist ${nutritionistId}`);
-    const MAX_PUBLISHED_PLANS = 3;
-    const parsedData: UpdatePlanDTO = {
-      ...data,
-      durationInDays: Number(data.durationInDays),
-      price: Number(data.price),
-      features:
-        typeof data.features === "string"
-          ? JSON.parse(data.features)
-          : data.features,
-      tags: typeof data.tags === "string" ? JSON.parse(data.tags) : data.tags,
-    };
+    await validateDto(UpdatePlanDTO, dto);
     const plan = await this._nutritionistPlanRepository.findById(planId);
     if (!plan || plan.nutritionistId.toString() !== nutritionistId) {
       logger.warn(`Unauthorized update attempt on plan ${planId}`);
@@ -123,11 +71,11 @@ export class NutritionistPlanService implements INutritionistPlanService {
         StatusCode.NOT_FOUND,
       );
     }
-
-    if (parsedData.status === "published" && plan.status !== "published") {
+    if (dto.status === "published" && plan.status !== "published") {
       const publishedCount = await this._nutritionistPlanRepository.count({
         nutritionistId: new Types.ObjectId(nutritionistId),
         status: "published",
+        isDeleted: false,
       });
       if (publishedCount >= MAX_PUBLISHED_PLANS) {
         throw new CustomError(
@@ -136,93 +84,41 @@ export class NutritionistPlanService implements INutritionistPlanService {
         );
       }
     }
-
-    const updatePayload: Partial<IPlan> = {
-      ...parsedData,
-      features: parsedData.features || [],
-      tags: parsedData.tags || [],
-    };
-    try {
-      const updatedPlan = await this._nutritionistPlanRepository.updateById(
-        planId,
-        updatePayload,
-      );
-      logger.info(`Plan ${planId} updated successfully`);
-      return updatedPlan;
-    } catch (err) {
-      logger.error("Failed to update plan", err);
+    const updatePayload = toNutritionistPlanUpdateModel(dto);
+    const updatedPlan = await this._nutritionistPlanRepository.updateById(
+      planId,
+      updatePayload,
+    );
+    if (!updatedPlan) {
       throw new CustomError(
         "Failed to update plan",
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
+    logger.info(`Plan ${planId} updated successfully`);
+    return toPlanDTO(updatedPlan);
   }
 
-  async getPlansByNutritionist(nutritionistId: string): Promise<PlanDTO[]> {
+  async getPlansByNutritionist(
+    nutritionistId: string,
+    query: GetPlansDTO,
+  ): Promise<InfiniteScrollResponseDTO<PlanDTO>> {
     logger.info(`Fetching plans for nutritionist ${nutritionistId}`);
-    const nutritionistObjectId = new Types.ObjectId(nutritionistId);
 
-    try {
-      const plans = await this._nutritionistPlanRepository.findMany({
-        nutritionistId: nutritionistObjectId,
-      });
-      const planDTOs = plans.map(toPlanDTO);
-      logger.info(
-        `Fetched ${planDTOs.length} plans for nutritionist ${nutritionistId}`,
-      );
-      return planDTOs;
-    } catch (err) {
-      logger.error("Failed to fetch plans", err);
-      throw new CustomError(
-        "Failed to fetch plans",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
+    const result = await this._nutritionistPlanRepository.findByNutritionistId(
+      nutritionistId,
+      query,
+    );
 
-  async getAllowedPlanCategories(
-    nutritionistId: string,
-  ): Promise<GetAllowedPlanCategoriesDTO> {
-    logger.info(`Fetching allowed categories for ${nutritionistId}`);
-    const nutritionist =
-      await this._nutritionistProfileRepository.findByUserId(nutritionistId);
-    if (!nutritionist) {
-      throw new CustomError("Nutritionist not found", StatusCode.NOT_FOUND);
-    }
-    const specializations =
-      nutritionist.specializations as NutritionistSpecialization[];
+    logger.info(
+      `Fetched ${result.items.length} plans for nutritionist ${nutritionistId}`,
+    );
 
-    const allowedCategories = mapSpecializationsToCategories(specializations);
-    return allowedCategories;
-  }
-
-  async getNutritionistPricing(
-    nutritionistId: string,
-  ): Promise<NutritionistPricingDTO> {
-    logger.info(`Fetching pricing rules for nutritionist ${nutritionistId}`);
-    const profile =
-      await this._nutritionistProfileRepository.findByUserId(nutritionistId);
-
-    if (!profile) {
-      logger.warn(`Nutritionist profile not found for ${nutritionistId}`);
-      throw new CustomError(
-        "Nutritionist profile not found",
-        StatusCode.NOT_FOUND,
-      );
-    }
-
-    const status = profile.coachLevel;
-    const pricing = PRICING_RULES[status];
-
-    if (!pricing) {
-      logger.error(`Pricing rules not found for status ${status}`);
-      throw new CustomError(
-        "Invalid nutritionist status",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    return toNutritionistPricingDTO(status, pricing.minPrice, pricing.maxPrice);
+    return new InfiniteScrollResponseDTO(
+      result.items.map(toPlanDTO),
+      result.nextCursor,
+      result.hasMore,
+    );
   }
 
   async getPlanById(nutritionistId: string, planId: string): Promise<PlanDTO> {
@@ -238,5 +134,21 @@ export class NutritionistPlanService implements INutritionistPlanService {
       );
     }
     return toPlanDTO(plan);
+  }
+
+  async getPlanMetadata(nutritionistId: string): Promise<PlanMetadataDTO> {
+    logger.info(`Fetching plan metadata for nutritionist ${nutritionistId}`);
+
+    const profile =
+      await this._nutritionistProfileRepository.findByUserId(nutritionistId);
+
+    if (!profile) {
+      throw new CustomError(
+        "Nutritionist profile not found",
+        StatusCode.NOT_FOUND,
+      );
+    }
+
+    return toPlanMetadataDTO(profile);
   }
 }
