@@ -6,8 +6,14 @@ import { initializeSocket } from "./infrastructures/socket/socket.server";
 import { startPayoutCron } from "./crons/payout.cron";
 import { startPlanExpiryCron } from "./crons/planExpiry.cron";
 import { startSubscriptionCron } from "./crons/subscription.cron";
+import morgan from "morgan";
+import { loggerStream } from "./utils/logger";
 
-
+app.use(
+  morgan("combined", {
+    stream: loggerStream,
+  }),
+);
 
 dotenv.config();
 const PORT = process.env.PORT;
@@ -16,7 +22,6 @@ startPlanExpiryCron();
 connectDB();
 startPayoutCron();
 startSubscriptionCron();
-
 
 const server: HTTPServer = http.createServer(app);
 initializeSocket(server);

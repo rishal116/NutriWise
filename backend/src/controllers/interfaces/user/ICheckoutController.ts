@@ -1,5 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 
 export interface ICheckoutController {
-   createSession: (req: Request, res: Response, next: NextFunction) => void;
+  createCheckoutSession(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): void;
 }

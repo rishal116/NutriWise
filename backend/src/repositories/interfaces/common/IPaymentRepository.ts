@@ -1,15 +1,18 @@
+import { ClientSession, Types } from "mongoose";
+import { IBaseRepository } from "../common/IBaseRepository";
 import { IPayment } from "../../../models/payment.model";
-import { ClientSession } from "mongoose";
 
-export interface IPaymentRepository {
-  create(
+export interface IPaymentRepository extends IBaseRepository<IPayment> {
+  createWithSession(
     data: Partial<IPayment>,
-    session?: ClientSession
+    session: ClientSession,
   ): Promise<IPayment>;
 
-  existsBySessionId(sessionId: string): Promise<boolean>;
+  existsByCheckoutSessionId(checkoutSessionId: string): Promise<boolean>;
 
-  findByUserId(userId: string): Promise<IPayment[]>;
+  findByUserId(userId: string | Types.ObjectId): Promise<IPayment[]>;
 
-  findByNutritionistId(nutritionistId: string): Promise<IPayment[]>;
+  findBySellerId(sellerId: string | Types.ObjectId): Promise<IPayment[]>;
+
+  findByPaymentIntentId(paymentIntentId: string): Promise<IPayment | null>;
 }

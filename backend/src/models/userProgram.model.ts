@@ -1,72 +1,54 @@
 import { Schema, model, Types } from "mongoose";
 
-/* =========================
-   ENUMS
-========================= */
-
 export const PROGRAM_STATUS = [
-  "ACTIVE",
-  "PAUSED",
-  "COMPLETED",
-  "UPCOMING",
-  "CANCELLED",
+  "upcoming",
+  "active",
+  "paused",
+  "completed",
+  "cancelled",
 ] as const;
 
-export const PROGRAM_GOALS = [
-  "weight_loss",
-  "weight_gain",
-  "muscle_gain",
-  "fat_loss",
-  "maintenance",
-  "diabetes_control",
-  "pcos_management",
-  "thyroid_support",
-  "heart_health",
-  "general_wellness",
-] as const;
 
-export type ProgramStatus = typeof PROGRAM_STATUS[number];
-export type ProgramGoal = typeof PROGRAM_GOALS[number];
 
-/* =========================
-   INTERFACE
-========================= */
+export type ProgramStatus = (typeof PROGRAM_STATUS)[number];
 
 export interface IUserProgram {
   _id: Types.ObjectId;
+
   userId: Types.ObjectId;
-  planId: Types.ObjectId;
-  userPlanId: Types.ObjectId;
+
   nutritionistId: Types.ObjectId;
-  goal: string;
-  focusAreas?: string[];
-  dietType?: string;
-  activityLevel?: string;
+
+  userPlanId: Types.ObjectId;
+
+  planId: Types.ObjectId;
+
   startDate: Date;
+
   endDate: Date;
+
   durationDays: number;
+
   currentDay: number;
+
   completionPercentage: number;
+
   status: ProgramStatus;
+
   pausedAt?: Date;
-  pauseReason?: string;
+
+  resumedAt?: Date;
+
+  completedAt?: Date;
+
+  cancelledAt?: Date;
+
   notes?: string;
-  healthProfileSnapshot?: {
-    age?: number;
-    gender?: string;
-    height?: number;
-    weight?: number;
-    medicalConditions?: string[];
-    allergies?: string[];
-  };
-  planSnapshot?: {
-    title?: string;
-    price?: number;
-    currency?: string;
-    durationInDays?: number;
-  };
-  isDeleted:boolean;
+
+  isDeleted: boolean;
+
   createdAt: Date;
+
   updatedAt: Date;
 }
 
@@ -79,9 +61,9 @@ const UserProgramSchema = new Schema<IUserProgram>(
       index: true,
     },
 
-    planId: {
+    nutritionistId: {
       type: Schema.Types.ObjectId,
-      ref: "Plan",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -90,27 +72,16 @@ const UserProgramSchema = new Schema<IUserProgram>(
       type: Schema.Types.ObjectId,
       ref: "UserPlan",
       required: true,
+      unique: true,
       index: true,
     },
 
-    nutritionistId: {
+    planId: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: "NutritionistPlan",
       required: true,
       index: true,
     },
-
-    goal: {
-  type: String,
-  enum: PROGRAM_GOALS,
-  required: true
-},
-
-    focusAreas: {
-      type:[{ type: String }],
-    },
-    dietType: String,
-    activityLevel: String,
 
     startDate: {
       type: Date,
@@ -146,53 +117,64 @@ const UserProgramSchema = new Schema<IUserProgram>(
     status: {
       type: String,
       enum: PROGRAM_STATUS,
-      default: "UPCOMING",
+      default: "upcoming",
       index: true,
     },
 
-    pausedAt: Date,
-    pauseReason: String,
-
-    notes: String,
-
-    healthProfileSnapshot: {
-      age: Number,
-      gender: String,
-      height: Number,
-      weight: Number,
-      medicalConditions: [String],
-      allergies: [String],
+    pausedAt: {
+      type: Date,
+      default: null,
     },
-    planSnapshot : {
-      title: String,
-      price: Number,
-      currency: String,
-      durationInDays: Number,
+
+    resumedAt: {
+      type: Date,
+      default: null,
     },
+
+    completedAt: {
+      type: Date,
+      default: null,
+    },
+
+    cancelledAt: {
+      type: Date,
+      default: null,
+    },
+
+    notes: {
+      type: String,
+      trim: true,
+      maxlength: 2000,
+    },
+
     isDeleted: {
       type: Boolean,
       default: false,
       index: true,
-    }
+    },
   },
-
-  { timestamps: true }
-);
-
-UserProgramSchema.index(
-  { userId: 1, nutritionistId: 1, status: 1 },
   {
-    unique: true,
-    partialFilterExpression: { status: "ACTIVE" },
-  }
+    timestamps: true,
+  },
 );
 
-UserProgramSchema.index({ userId: 1, status: 1 });
-UserProgramSchema.index({ nutritionistId: 1, status: 1 });
-UserProgramSchema.index({ userId: 1, startDate: -1 });
+UserProgramSchema.index({
+  userId: 1,
+  status: 1,
+  isDeleted: 1,
+});
 
+UserProgramSchema.index({
+  nutritionistId: 1,
+  status: 1,
+  isDeleted: 1,
+});
 
+UserProgramSchema.index({
+  startDate: 1,
+  endDate: 1,
+});
 export const UserProgramModel = model<IUserProgram>(
   "UserProgram",
-  UserProgramSchema
+  UserProgramSchema,
 );

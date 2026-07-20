@@ -2,7 +2,7 @@ import { BaseRepository } from "../common/base.repository";
 import { IUserPlan, UserPlanModel } from "../../../models/userPlan.model";
 import { IUserPlanRepository } from "../../interfaces/user/IUserPlanRepository";
 import { IUserPlanPopulated } from "../../../types/userPlan.populated";
-import { Types, ClientSession } from "mongoose";
+import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 
 export class UserPlanRepository
   extends BaseRepository<IUserPlan>
@@ -12,33 +12,30 @@ export class UserPlanRepository
     super(UserPlanModel);
   }
 
-  async create(
+  async createWithSession(
     data: Partial<IUserPlan>,
-    session?: ClientSession,
+    session: ClientSession,
   ): Promise<IUserPlan> {
-    const doc = await this._model.create([data], { session });
-    return doc[0];
+    const [doc] = await this._model.create([data], { session });
+    return doc;
   }
 
   async findBySessionId(sessionId: string): Promise<IUserPlan | null> {
-    return this._model
-      .findOne({ checkoutSessionId: sessionId, isDeleted: false })
-      .exec();
+    return this._model.findOne({
+      stripeCheckoutSessionId: sessionId,
+    });
   }
 
   async findActiveByUserAndNutritionist(
     userId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
   ): Promise<IUserPlan | null> {
-    return this._model
-      .findOne({
-        userId,
-        nutritionistId,
-        status: "ACTIVE",
-        endDate: { $gt: new Date() },
-        isDeleted: false,
-      })
-      .exec();
+    return this._model.findOne({
+      userId,
+      nutritionistId,
+      subscriptionStatus: "active",
+      endDate: { $gt: new Date() },
+    });
   }
 
   async findLatestPlan(
@@ -49,23 +46,19 @@ export class UserPlanRepository
       .findOne({
         userId,
         nutritionistId,
-        status: { $in: ["ACTIVE", "UPCOMING"] },
-        isDeleted: false,
       })
-      .sort({ endDate: -1 })
-      .exec();
+      .sort({ createdAt: -1 });
   }
 
   async findByUserId(
     userId: string | Types.ObjectId,
   ): Promise<IUserPlanPopulated[]> {
     const docs = await this._model
-      .find({ userId, isDeleted: false })
-      .populate("planId")
-      .populate("nutritionistId")
+      .find({ userId })
       .populate("userId")
-      .sort({ createdAt: -1 })
-      .exec();
+      .populate("nutritionistId")
+      .populate("planId")
+      .sort({ createdAt: -1 });
 
     return docs as unknown as IUserPlanPopulated[];
   }
@@ -74,27 +67,37 @@ export class UserPlanRepository
     nutritionistId: string | Types.ObjectId,
   ): Promise<IUserPlanPopulated[]> {
     const docs = await this._model
-      .find({ nutritionistId, isDeleted: false })
+      .find({ nutritionistId })
       .populate("userId")
-      .populate("planId")
       .populate("nutritionistId")
-      .sort({ createdAt: -1 })
-      .exec();
+      .populate("planId")
+      .sort({ createdAt: -1 });
 
     return docs as unknown as IUserPlanPopulated[];
   }
 
   async findOnePopulated(
-    filter: Partial<IUserPlan>,
+    filter: FilterQuery<IUserPlan>,
   ): Promise<IUserPlanPopulated | null> {
     const doc = await this._model
-      .findOne({ ...filter, isDeleted: false })
-      .populate("planId")
-      .populate("nutritionistId")
+      .findOne(filter)
       .populate("userId")
-      .exec();
+      .populate("nutritionistId")
+      .populate("planId");
 
-    return doc as unknown as IUserPlanPopulated | null;
+    return doc as IUserPlanPopulated | null;
+  }
+
+  async activatePlan(id: string | Types.ObjectId): Promise<IUserPlan | null> {
+    return this._model.findByIdAndUpdate(
+      id,
+      {
+        subscriptionStatus: "active",
+      },
+      {
+        new: true,
+      },
+    );
   }
 
   async expireById(
@@ -104,46 +107,36 @@ export class UserPlanRepository
     await this._model.findByIdAndUpdate(
       id,
       {
-        status: "EXPIRED",
-        updatedAt: new Date(),
+        subscriptionStatus: "expired",
       },
       { session },
     );
   }
 
-  async activatePlan(id: string | Types.ObjectId): Promise<IUserPlan | null> {
-    return this._model.findByIdAndUpdate(
-      id,
-      {
-        status: "ACTIVE",
-        updatedAt: new Date(),
-      },
-      { new: true },
-    );
-  }
-
-  async activateUpcomingPlans(): Promise<any> {
+  async activateUpcomingPlans(): Promise<UpdateResult> {
     return this._model.updateMany(
       {
-        status: "UPCOMING",
+        subscriptionStatus: "pending",
         startDate: { $lte: new Date() },
-        isDeleted: false,
       },
       {
-        $set: { status: "ACTIVE" },
+        $set: {
+          subscriptionStatus: "active",
+        },
       },
     );
   }
 
-  async expireActivePlans(): Promise<any> {
+  async expireActivePlans(): Promise<UpdateResult> {
     return this._model.updateMany(
       {
-        status: "ACTIVE",
+        subscriptionStatus: "active",
         endDate: { $lt: new Date() },
-        isDeleted: false,
       },
       {
-        $set: { status: "EXPIRED" },
+        $set: {
+          subscriptionStatus: "expired",
+        },
       },
     );
   }

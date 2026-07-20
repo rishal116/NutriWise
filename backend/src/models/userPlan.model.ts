@@ -10,53 +10,53 @@ export const PAYMENT_STATUS = [
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 
 export const SUBSCRIPTION_STATUS = [
-  "PENDING",
-  "ACTIVE",
-  "UPCOMING",
-  "EXPIRED",
-  "CANCELLED",
+  "pending",
+  "active",
+  "expired",
+  "cancelled",
 ] as const;
 
-export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
+export type SubscriptionStatus =
+  (typeof SUBSCRIPTION_STATUS)[number];
 
 export interface IUserPlan {
   _id: Types.ObjectId;
 
   userId: Types.ObjectId;
-  planId: Types.ObjectId;
+
   nutritionistId: Types.ObjectId;
 
-  paymentProvider: "stripe" | "razorpay";
-  paymentId: string;
-  checkoutSessionId?: string;
+  planId: Types.ObjectId;
 
   paymentStatus: PaymentStatus;
 
+  subscriptionStatus: SubscriptionStatus;
+
+  stripeCheckoutSessionId: string;
+
+  stripePaymentIntentId?: string;
+
   amount: number;
-  currency: string;
+
+  currency: "INR" | "USD";
 
   planSnapshot: {
     title: string;
-    durationInDays: number;
+    durationDays: number;
     price: number;
-    currency: string;
+    currency: "INR" | "USD";
   };
 
-  status: SubscriptionStatus;
-
-  purchaseDate: Date;
   startDate: Date | null;
+
   endDate: Date | null;
+
+  paymentCompletedAt?: Date;
 
   userProgramId?: Types.ObjectId;
 
-  pendingPayout: number;
-  adminCommission: number;
-  isPayoutDone: boolean;
-
-  isDeleted: boolean;
-
   createdAt: Date;
+
   updatedAt: Date;
 }
 
@@ -69,12 +69,6 @@ const UserPlanSchema = new Schema<IUserPlan>(
       index: true,
     },
 
-    planId: {
-      type: Schema.Types.ObjectId,
-      ref: "Plan",
-      required: true,
-    },
-
     nutritionistId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -82,21 +76,10 @@ const UserPlanSchema = new Schema<IUserPlan>(
       index: true,
     },
 
-    paymentProvider: {
-      type: String,
-      enum: ["stripe", "razorpay"],
+    planId: {
+      type: Schema.Types.ObjectId,
+      ref: "NutritionistPlan",
       required: true,
-    },
-
-    paymentId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-
-    checkoutSessionId: {
-      type: String,
-      sparse: true,
       index: true,
     },
 
@@ -104,6 +87,27 @@ const UserPlanSchema = new Schema<IUserPlan>(
       type: String,
       enum: PAYMENT_STATUS,
       default: "pending",
+      index: true,
+    },
+
+    subscriptionStatus: {
+      type: String,
+      enum: SUBSCRIPTION_STATUS,
+      default: "pending",
+      index: true,
+    },
+
+    stripeCheckoutSessionId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    stripePaymentIntentId: {
+      type: String,
+      unique: true,
+      sparse: true,
       index: true,
     },
 
@@ -120,23 +124,26 @@ const UserPlanSchema = new Schema<IUserPlan>(
     },
 
     planSnapshot: {
-      title: { type: String, required: true },
-      durationInDays: { type: Number, required: true },
-      price: { type: Number, required: true },
-      currency: { type: String, required: true },
-    },
+      title: {
+        type: String,
+        required: true,
+      },
 
-    status: {
-      type: String,
-      enum: SUBSCRIPTION_STATUS,
-      default: "PENDING",
-      index: true,
-    },
+      durationDays: {
+        type: Number,
+        required: true,
+      },
 
-    purchaseDate: {
-      type: Date,
-      default: Date.now,
-      index: true,
+      price: {
+        type: Number,
+        required: true,
+      },
+
+      currency: {
+        type: String,
+        enum: ["INR", "USD"],
+        required: true,
+      },
     },
 
     startDate: {
@@ -151,47 +158,39 @@ const UserPlanSchema = new Schema<IUserPlan>(
       index: true,
     },
 
+    paymentCompletedAt: {
+      type: Date,
+      default: null,
+    },
+
     userProgramId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
-      index: true,
-    },
-
-    pendingPayout: {
-      type: Number,
-      default: 0,
-    },
-
-    adminCommission: {
-      type: Number,
-      default: 0,
-    },
-
-    isPayoutDone: {
-      type: Boolean,
-      default: false,
-    },
-
-    isDeleted: {
-      type: Boolean,
-      default: false,
+      default: null,
       index: true,
     },
   },
-  { timestamps: true },
-);
-
-UserPlanSchema.index(
-  { userId: 1, nutritionistId: 1, status: 1 },
   {
-    unique: true,
-    partialFilterExpression: { status: "ACTIVE" },
+    timestamps: true,
   },
 );
 
-UserPlanSchema.index({ userId: 1, nutritionistId: 1, endDate: -1 });
+UserPlanSchema.index({
+  userId: 1,
+  subscriptionStatus: 1,
+});
 
-UserPlanSchema.index({ userId: 1, status: 1, isDeleted: 1 });
-UserPlanSchema.index({ status: 1, endDate: 1 });
+UserPlanSchema.index({
+  nutritionistId: 1,
+  subscriptionStatus: 1,
+});
 
-export const UserPlanModel = model<IUserPlan>("UserPlan", UserPlanSchema);
+UserPlanSchema.index({
+  endDate: 1,
+  subscriptionStatus: 1,
+});
+
+export const UserPlanModel = model<IUserPlan>(
+  "UserPlan",
+  UserPlanSchema,
+);

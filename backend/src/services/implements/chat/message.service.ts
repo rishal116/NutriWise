@@ -15,7 +15,7 @@ import { IConversationMemberRepository } from "../../../repositories/interfaces/
 import { IMessageReceiptRepository } from "../../../repositories/interfaces/chat/IMessageReceiptRepository";
 import { ReceiptStatus } from "../../../models/messageReceipt.model";
 import { MessageType } from "../../../models/message.model";
-import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
+import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 import { RoleContext } from "../../../models/conversationMember.model";
 
 @injectable()

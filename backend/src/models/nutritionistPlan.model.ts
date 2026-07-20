@@ -10,31 +10,19 @@ export type PlanCurrency = (typeof PLAN_CURRENCY)[number];
 
 export interface INutritionistPlan {
   _id: Types.ObjectId;
-
   nutritionistId: Types.ObjectId;
-
+  slug: string;
   title: string;
-
   specialization: Specialization;
-
   description: string;
-
   durationDays: number;
-
   price: number;
-
   currency: PlanCurrency;
-
   features: string[];
-
   status: PlanStatus;
-
   isDeleted: boolean;
-
   deletedAt?: Date;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -45,6 +33,13 @@ const NutritionistPlanSchema = new Schema<INutritionistPlan>(
       ref: "User",
       required: true,
       index: true,
+    },
+
+    slug: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
     },
 
     title: {
@@ -130,7 +125,7 @@ NutritionistPlanSchema.index({
 NutritionistPlanSchema.index(
   {
     nutritionistId: 1,
-    title: 1,
+    slug: 1,
   },
   {
     unique: true,

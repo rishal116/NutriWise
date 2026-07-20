@@ -21,6 +21,7 @@ import { toPlanMetadataDTO } from "../../../mapper/nutritionist/plan/plan-metada
 import { PlanMetadataDTO } from "../../../dtos/nutritionist/plan/plan-metadata.dto";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { GetPlansDTO } from "../../../dtos/nutritionist/plan/get-plans.dto";
+import { generateUniquePlanSlug } from "../../../utils/plan-slug.util";
 
 @injectable()
 export class NutritionistPlanService implements INutritionistPlanService {
@@ -50,12 +51,16 @@ export class NutritionistPlanService implements INutritionistPlanService {
         );
       }
     }
-    const plan = toNutritionistPlanModel(nutritionistId, dto);
+    const slug = await generateUniquePlanSlug(
+      this._nutritionistPlanRepository,
+      nutritionistId,
+      dto.title,
+    );
+    const plan = toNutritionistPlanModel(nutritionistId, dto, slug);
     const createdPlan = await this._nutritionistPlanRepository.create(plan);
     logger.info(`Plan ${createdPlan._id.toString()} created successfully`);
     return toPlanDTO(createdPlan);
   }
-
   async updatePlan(
     nutritionistId: string,
     planId: string,

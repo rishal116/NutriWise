@@ -14,4 +14,6 @@ export interface IBaseRepository<T> {
   updateById(id: string, update: UpdateQuery<T>): Promise<T | null>;
 
   count(filter: FilterQuery<T>): Promise<number>;
+
+  exists(filter: FilterQuery<T>): Promise<boolean>;
 }

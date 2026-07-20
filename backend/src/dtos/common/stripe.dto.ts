@@ -1,12 +1,15 @@
 export interface StripeCheckoutInputDTO {
-  amount: number;      
+  amount: number;
+
+  currency: string;
+
   title: string;
+
   description: string;
+
   successUrl: string;
+
   cancelUrl: string;
-  metadata: {
-    userId: string;
-    planId: string;
-    nutritionistId: string;
-  };
+
+  metadata: Record<string, string>;
 }

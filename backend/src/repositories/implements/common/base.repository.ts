@@ -41,4 +41,8 @@ export class BaseRepository<T> implements IBaseRepository<T> {
   async count(filter: FilterQuery<T>): Promise<number> {
     return this._model.countDocuments(filter);
   }
+
+  async exists(filter: FilterQuery<T>): Promise<boolean> {
+    return (await this._model.exists(filter)) !== null;
+  }
 }

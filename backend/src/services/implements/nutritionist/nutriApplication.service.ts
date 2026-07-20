@@ -4,7 +4,7 @@ import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepo
 import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutriProfileRepository";
 import { TYPES } from "../../../types/types";
 import { Types } from "mongoose";
-import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
+import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
 import { CustomError } from "../../../utils/customError";
 import { NutritionistApplicationDetailsDto } from "../../../dtos/nutritionist/form/nutritionist-details.dto";
