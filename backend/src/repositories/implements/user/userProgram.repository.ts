@@ -1,5 +1,10 @@
 import { injectable } from "inversify";
-import { Types, ClientSession } from "mongoose";
+import {
+  ClientSession,
+  FilterQuery,
+  Types,
+  UpdateResult,
+} from "mongoose";
 import { BaseRepository } from "../common/base.repository";
 import { IUserProgramRepository } from "../../interfaces/user/IUserProgramRepository";
 import {
@@ -17,133 +22,173 @@ export class UserProgramRepository
     super(UserProgramModel);
   }
 
-  async create(
+  async createWithSession(
     data: Partial<IUserProgram>,
-    session?: ClientSession,
+    session: ClientSession,
   ): Promise<IUserProgram> {
-    const doc = await this._model.create([data], { session });
-    return doc[0];
+    const [doc] = await this._model.create([data], { session });
+    return doc;
   }
 
   async findActiveByUserAndNutritionist(
-    userId: Types.ObjectId,
-    nutritionistId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    nutritionistId: string | Types.ObjectId,
   ): Promise<IUserProgram | null> {
     return this._model
       .findOne({
         userId,
         nutritionistId,
-        status: "ACTIVE",
+        status: "active",
         endDate: { $gt: new Date() },
         isDeleted: false,
       })
-      .lean()
+      .lean<IUserProgram | null>()
       .exec();
   }
 
   async findLatestProgram(
-    userId: Types.ObjectId,
-    nutritionistId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    nutritionistId: string | Types.ObjectId,
   ): Promise<IUserProgram | null> {
     return this._model
       .findOne({
         userId,
         nutritionistId,
-        status: { $in: ["ACTIVE", "UPCOMING"] },
         isDeleted: false,
       })
-      .sort({ endDate: -1 })
-      .lean()
+      .sort({ createdAt: -1 })
+      .lean<IUserProgram | null>()
       .exec();
   }
 
-  async findByUser(userId: Types.ObjectId): Promise<IUserProgramPopulated[]> {
-    return this._model
-      .find({ userId, isDeleted: false })
-      .sort({ startDate: -1 })
-      .populate("nutritionistId", "fullName email")
-      .lean<IUserProgramPopulated[]>()
-      .exec();
-  }
-
-  async findByNutritionist(
-    nutritionistId: Types.ObjectId,
+  async findByUserId(
+    userId: string | Types.ObjectId,
   ): Promise<IUserProgramPopulated[]> {
     return this._model
-      .find({ nutritionistId, isDeleted: false })
-      .sort({ startDate: -1 })
-      .populate("userId", "fullName email")
+      .find({
+        userId,
+        isDeleted: false,
+      })
+      .populate("userId")
+      .populate("nutritionistId")
+      .populate("userPlanId")
+      .populate("planId")
+      .sort({ createdAt: -1 })
       .lean<IUserProgramPopulated[]>()
       .exec();
   }
 
-  async findByIdPopulated(id: string): Promise<IUserProgramPopulated | null> {
+  async findByNutritionistId(
+    nutritionistId: string | Types.ObjectId,
+  ): Promise<IUserProgramPopulated[]> {
     return this._model
-      .findById(id)
-      .populate("userId", "fullName email")
-      .populate("nutritionistId", "fullName email")
-      .lean<IUserProgramPopulated>()
+      .find({
+        nutritionistId,
+        isDeleted: false,
+      })
+      .populate("userId")
+      .populate("nutritionistId")
+      .populate("userPlanId")
+      .populate("planId")
+      .sort({ createdAt: -1 })
+      .lean<IUserProgramPopulated[]>()
+      .exec();
+  }
+
+  async findOnePopulated(
+    filter: FilterQuery<IUserProgram>,
+  ): Promise<IUserProgramPopulated | null> {
+    return this._model
+      .findOne({
+        ...filter,
+        isDeleted: false,
+      })
+      .populate("userId")
+      .populate("nutritionistId")
+      .populate("userPlanId")
+      .populate("planId")
+      .lean<IUserProgramPopulated | null>()
       .exec();
   }
 
   async findByUserAndPlan(
-    userId: Types.ObjectId,
-    planId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    planId: string | Types.ObjectId,
   ): Promise<IUserProgram[]> {
     return this._model
-      .find({ userId, planId, isDeleted: false })
-      .sort({ startDate: -1 })
-      .lean()
+      .find({
+        userId,
+        planId,
+        isDeleted: false,
+      })
+      .sort({ createdAt: -1 })
+      .lean<IUserProgram[]>()
       .exec();
   }
 
   async findByIdAndUser(
-    userId: Types.ObjectId,
-    programId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    programId: string | Types.ObjectId,
   ): Promise<IUserProgram | null> {
     return this._model
-      .findOne({ _id: programId, userId, isDeleted: false })
-      .lean()
+      .findOne({
+        _id: programId,
+        userId,
+        isDeleted: false,
+      })
+      .lean<IUserProgram | null>()
       .exec();
   }
 
   async updateProgress(
-    programId: Types.ObjectId,
+    programId: string | Types.ObjectId,
     currentDay: number,
+    completionPercentage: number,
     session?: ClientSession,
   ): Promise<IUserProgram | null> {
     return this._model
-      .findOneAndUpdate(
-        { _id: programId, isDeleted: false },
-        { currentDay },
-        { new: true, session },
+      .findByIdAndUpdate(
+        programId,
+        {
+          currentDay,
+          completionPercentage,
+        },
+        {
+          new: true,
+          session,
+        },
       )
-      .lean()
+      .lean<IUserProgram | null>()
       .exec();
   }
 
-  async activatePrograms(): Promise<any> {
+  async activateUpcomingPrograms(): Promise<UpdateResult> {
     return this._model.updateMany(
       {
-        status: "UPCOMING",
+        status: "upcoming",
         startDate: { $lte: new Date() },
         isDeleted: false,
       },
       {
-        $set: { status: "ACTIVE" },
+        $set: {
+          status: "active",
+        },
       },
     );
   }
 
-  async completePrograms(): Promise<any> {
+  async completeActivePrograms(): Promise<UpdateResult> {
     return this._model.updateMany(
       {
-        status: "ACTIVE",
+        status: "active",
         endDate: { $lt: new Date() },
         isDeleted: false,
       },
       {
-        $set: { status: "COMPLETED" },
+        $set: {
+          status: "completed",
+          completedAt: new Date(),
+        },
       },
     );
   }

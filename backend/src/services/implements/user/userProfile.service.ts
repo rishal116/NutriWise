@@ -5,7 +5,7 @@ import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepo
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
-import { uploadToCloudinary } from "../../../utils/cloudinaryUploads";
+import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 import { GetUserProfileDto } from "../../../dtos/user/profile/getUserProfile.dto";
 import {
   toUserProfileDto,

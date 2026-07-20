@@ -1,7 +1,5 @@
+import { CreateCheckoutSessionDTO } from "../../../dtos/user/checkout/create-checkout-session.dto";
+
 export interface ICheckoutService {
-  createSession(input: {
-    planId: string;
-    nutritionistId: string;
-    userId: string;
-  }): Promise<string>;
+  createCheckoutSession(dto: CreateCheckoutSessionDTO): Promise<string>;
 }

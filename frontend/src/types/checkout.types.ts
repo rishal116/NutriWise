@@ -1,13 +1,11 @@
-// types/checkout.types.ts
-
-export interface CreateCheckoutSessionPayload {
+export interface CreateCheckoutSessionRequestDTO {
   planId: string;
-  nutritionistId: string;
 }
 
-export interface CreateCheckoutSessionResponse {
+export interface CreateCheckoutSessionResponseDTO {
   success: boolean;
   message: string;
-  sessionId?: string;
-  url?: string; // Stripe redirect URL
+  data: {
+    checkoutUrl: string;
+  };
 }

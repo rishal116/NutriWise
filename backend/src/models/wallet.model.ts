@@ -1,20 +1,45 @@
 import { Schema, model, Types } from "mongoose";
 
-export type WalletOwnerType = "ADMIN" | "NUTRITIONIST" | "USER";
+export const WALLET_OWNER_TYPES = [
+  "admin",
+  "nutritionist",
+  "user",
+] as const;
+
+export const WALLET_CURRENCIES = [
+  "INR",
+  "USD",
+] as const;
+
+export type WalletOwnerType =
+  (typeof WALLET_OWNER_TYPES)[number];
+
+export type WalletCurrency =
+  (typeof WALLET_CURRENCIES)[number];
 
 export interface IWallet {
   _id: Types.ObjectId;
+
   ownerId: Types.ObjectId;
+
   ownerType: WalletOwnerType;
-  balance: number;
+
+  availableBalance: number;
+
   escrowBalance: number;
-  currency: string;
+
+  currency: WalletCurrency;
+
   isActive: boolean;
+
+  lastTransactionAt?: Date;
+
   createdAt: Date;
+
   updatedAt: Date;
 }
 
-const walletSchema = new Schema<IWallet>(
+const WalletSchema = new Schema<IWallet>(
   {
     ownerId: {
       type: Schema.Types.ObjectId,
@@ -24,25 +49,28 @@ const walletSchema = new Schema<IWallet>(
 
     ownerType: {
       type: String,
-      enum: ["ADMIN", "NUTRITIONIST", "USER"],
+      enum: WALLET_OWNER_TYPES,
       required: true,
       index: true,
     },
 
-    balance: {
+    availableBalance: {
       type: Number,
+      required: true,
       default: 0,
       min: 0,
     },
+
     escrowBalance: {
       type: Number,
+      required: true,
       default: 0,
       min: 0,
     },
 
     currency: {
       type: String,
-      enum: ["INR"],
+      enum: WALLET_CURRENCIES,
       default: "INR",
     },
 
@@ -51,17 +79,33 @@ const walletSchema = new Schema<IWallet>(
       default: true,
       index: true,
     },
+
+    lastTransactionAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  },
 );
 
-
-walletSchema.index(
-  { ownerId: 1, ownerType: 1 },
-  { unique: true }
+WalletSchema.index(
+  {
+    ownerId: 1,
+    ownerType: 1,
+  },
+  {
+    unique: true,
+  },
 );
 
+WalletSchema.index({
+  ownerType: 1,
+  isActive: 1,
+});
 
-walletSchema.index({ ownerType: 1, isActive: 1 });
-
-export const WalletModel = model<IWallet>("Wallet", walletSchema);
+export const WalletModel = model<IWallet>(
+  "Wallet",
+  WalletSchema,
+);

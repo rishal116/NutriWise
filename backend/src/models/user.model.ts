@@ -3,8 +3,6 @@ import { Gender, UserRole, AuthProvider } from "../enums/user.enum";
 
 export interface IUser extends Document {
   _id: Types.ObjectId;
-
-  // Identity
   fullName: string;
   username: string;
   email: string;
@@ -12,27 +10,16 @@ export interface IUser extends Document {
   birthDate?: Date;
   gender?: Gender;
   profileImage?: string;
-
-  // Authentication
   password?: string;
   googleId?: string;
   authProvider: AuthProvider;
   emailVerifiedAt?: Date;
-
-  // Authorization
   roles: UserRole[];
   activeRole: UserRole;
-
-  // Account Status
   isBlocked: boolean;
   isProfileCompleted: boolean;
-
-  // Activity
   lastLoginAt?: Date;
-
-  // Soft Delete
   deletedAt?: Date;
-
   createdAt: Date;
   updatedAt: Date;
 }

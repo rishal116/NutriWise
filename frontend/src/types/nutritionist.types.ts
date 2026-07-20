@@ -2,21 +2,11 @@
 // Nutritionist Domain Types
 // ================================
 
-export type AvailabilityStatus =
-  | "available"
-  | "busy"
-  | "offline";
+export type AvailabilityStatus = "available" | "busy" | "offline";
 
-export type ApplicationStatus =
-  | "pending"
-  | "approved"
-  | "rejected";
+export type ApplicationStatus = "pending" | "approved" | "rejected";
 
-export type CoachLevel =
-  | "beginner"
-  | "verified"
-  | "expert"
-  | "top_coach";
+export type CoachLevel = "beginner" | "verified" | "expert" | "top_coach";
 
 export type Specialization =
   | "weight_loss"
@@ -47,11 +37,9 @@ export type Language =
   | "bengali"
   | "urdu";
 
-export const AVAILABILITY_STATUSES = [
-  "available",
-  "busy",
-  "offline",
-] as const;
+export type NutritionistSortBy = "rating" | "experience" | "reviews" | "newest";
+
+export const AVAILABILITY_STATUSES = ["available", "busy", "offline"] as const;
 
 export const APPLICATION_STATUSES = [
   "pending",
@@ -97,17 +85,12 @@ export const LANGUAGES = [
   "urdu",
 ] as const;
 
-export type AvailabilityStatusType =
-  (typeof AVAILABILITY_STATUSES)[number];
+export type AvailabilityStatusType = (typeof AVAILABILITY_STATUSES)[number];
 
-export type ApplicationStatusType =
-  (typeof APPLICATION_STATUSES)[number];
+export type ApplicationStatusType = (typeof APPLICATION_STATUSES)[number];
 
-export type CoachLevelType =
-  (typeof COACH_LEVELS)[number];
+export type CoachLevelType = (typeof COACH_LEVELS)[number];
 
-export type SpecializationType =
-  (typeof SPECIALIZATIONS)[number];
+export type SpecializationType = (typeof SPECIALIZATIONS)[number];
 
-export type LanguageType =
-  (typeof LANGUAGES)[number];
+export type LanguageType = (typeof LANGUAGES)[number];

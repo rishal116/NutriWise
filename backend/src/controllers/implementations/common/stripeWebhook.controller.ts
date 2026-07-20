@@ -1,26 +1,38 @@
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
+
 import { TYPES } from "../../../types/types";
-import { IStripeWebhookService } from "../../../services/interfaces/common/IStripeWebhookService";
-import { IStripeWebhookController } from "../../interfaces/common/IStripeWebhookController";
 import { asyncHandler } from "../../../utils/asyncHandler";
+
+import { IStripeWebhookController } from "../../interfaces/common/IStripeWebhookController";
+import { IStripeWebhookService } from "../../../services/interfaces/common/stripe/IStripeWebhookService";
+import { StatusCode } from "../../../enums/statusCode.enum";
 
 @injectable()
 export class StripeWebhookController implements IStripeWebhookController {
   constructor(
     @inject(TYPES.IStripeWebhookService)
-    private _webhookService: IStripeWebhookService,
+    private readonly _stripeWebhookService: IStripeWebhookService,
   ) {}
 
   handle = asyncHandler(async (req: Request, res: Response) => {
-    const sig = req.headers["stripe-signature"] as string;
+    const signature = req.headers["stripe-signature"];
 
-    if (!sig) {
-      return res.status(400).json({ message: "Missing Stripe signature" });
+    if (typeof signature !== "string") {
+      res.status(400).json({
+        message: "Missing Stripe signature.",
+      });
+
+      return;
     }
 
-    await this._webhookService.process(req.body, sig);
+    await this._stripeWebhookService.handleWebhook(
+      req.body as Buffer,
+      signature,
+    );
 
-    res.json({ received: true });
+    res.status(StatusCode.OK).json({
+      received: true,
+    });
   });
 }

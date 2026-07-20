@@ -1,11 +1,13 @@
 import cron from "node-cron";
 import { container } from "../configs/inversify";
 import { TYPES } from "../types/types";
+
 import { IUserPlanRepository } from "../repositories/interfaces/user/IUserPlanRepository";
 import { IUserProgramRepository } from "../repositories/interfaces/user/IUserProgramRepository";
+
 import logger from "../utils/logger";
 
-export const startSubscriptionCron = () => {
+export const startCoachingLifecycleCron = () => {
   const userPlanRepo = container.get<IUserPlanRepository>(
     TYPES.IUserPlanRepository,
   );
@@ -14,26 +16,31 @@ export const startSubscriptionCron = () => {
     TYPES.IUserProgramRepository,
   );
 
+  // Runs at the start of every hour
   cron.schedule("0 * * * *", async () => {
-    logger.info("⏳ Subscription Cron Started");
+    logger.info("⏳ Coaching Lifecycle Cron Started");
 
     try {
-      const activatedPlans = await userPlanRepo.activateUpcomingPlans();
+      const [
+        activatedPlans,
+        expiredPlans,
+        activatedPrograms,
+        completedPrograms,
+      ] = await Promise.all([
+        userPlanRepo.activateUpcomingPlans(),
+        userPlanRepo.expireActivePlans(),
+        userProgramRepo.activateUpcomingPrograms(),
+        userProgramRepo.completeActivePrograms(),
+      ]);
 
-      const expiredPlans = await userPlanRepo.expireActivePlans();
-
-      const activatedPrograms = await userProgramRepo.activatePrograms();
-
-      const completedPrograms = await userProgramRepo.completePrograms();
-
-      logger.info("✅ Subscription Cron Completed", {
+      logger.info("✅ Coaching Lifecycle Cron Completed", {
         plansActivated: activatedPlans.modifiedCount,
         plansExpired: expiredPlans.modifiedCount,
         programsActivated: activatedPrograms.modifiedCount,
         programsCompleted: completedPrograms.modifiedCount,
       });
     } catch (error) {
-      logger.error("❌ Subscription Cron Failed", error);
+      logger.error("❌ Coaching Lifecycle Cron Failed", error);
     }
   });
 };

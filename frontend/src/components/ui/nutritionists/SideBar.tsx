@@ -1,43 +1,58 @@
 import {
-  Apple,
+  Scale,
   Dumbbell,
-  Flower2,
-  Music,
-  Timer,
+  Stethoscope,
+  Activity,
   HeartPulse,
-  Sun,
-  Star,
-  ShieldCheck,
   Heart,
-  BookOpen,
+  ShieldCheck,
+  Sprout,
+  Baby,
+  Flower2,
+  Users,
+  Leaf,
+  Flame,
+  Sun,
   X,
 } from "lucide-react";
+import { Specialization } from "@/types/nutritionist.types";
 
-export const NUTRITIONIST_SPECIALIZATIONS = [
-  { full: "Clinical Nutrition", short: "Clinical", icon: Apple },
-  { full: "Sports Nutrition", short: "Sports", icon: Dumbbell },
-  { full: "Pediatric Nutrition", short: "Pediatric", icon: Flower2 },
-  { full: "Geriatric Nutrition", short: "Geriatric", icon: Music },
-  { full: "Weight Management", short: "Weight Mgmt", icon: Timer },
-  { full: "Diabetes & Metabolic Disorders", short: "Diabetes", icon: HeartPulse },
-  { full: "Cardiac Nutrition", short: "Cardiac", icon: Heart },
-  { full: "Renal Nutrition", short: "Renal", icon: ShieldCheck },
-  { full: "Digestive / Gut Health", short: "Digestive", icon: Sun },
-  { full: "Food Allergies & Intolerances", short: "Allergies", icon: Star },
-  { full: "Plant-Based / Vegan Nutrition", short: "Plant-Based", icon: Apple },
-  { full: "Nutrition Counseling & Lifestyle Coaching", short: "Counseling", icon: BookOpen },
-  { full: "Prenatal & Maternal Nutrition", short: "Prenatal", icon: Flower2 },
-  { full: "Immunity & Wellness", short: "Immunity", icon: Dumbbell },
+interface SpecializationOption {
+  value: Specialization;
+  full: string;
+  short: string;
+  icon: typeof Scale;
+}
+
+export const NUTRITIONIST_SPECIALIZATIONS: SpecializationOption[] = [
+  { value: "weight_loss", full: "Weight Loss", short: "Weight Loss", icon: Scale },
+  { value: "weight_gain", full: "Weight Gain", short: "Weight Gain", icon: Dumbbell },
+  { value: "sports_nutrition", full: "Sports Nutrition", short: "Sports", icon: Activity },
+  { value: "clinical_nutrition", full: "Clinical Nutrition", short: "Clinical", icon: Stethoscope },
+  { value: "diabetes_management", full: "Diabetes Management", short: "Diabetes", icon: HeartPulse },
+  { value: "pcos_nutrition", full: "PCOS Nutrition", short: "PCOS", icon: Flower2 },
+  { value: "renal_nutrition", full: "Renal Nutrition", short: "Renal", icon: ShieldCheck },
+  { value: "cardiac_nutrition", full: "Cardiac Nutrition", short: "Cardiac", icon: Heart },
+  { value: "gut_health", full: "Gut Health", short: "Gut Health", icon: Sprout },
+  { value: "child_nutrition", full: "Child Nutrition", short: "Child", icon: Baby },
+  { value: "pregnancy_nutrition", full: "Pregnancy Nutrition", short: "Pregnancy", icon: Flower2 },
+  { value: "elderly_nutrition", full: "Elderly Nutrition", short: "Elderly", icon: Users },
+  { value: "vegan_nutrition", full: "Vegan Nutrition", short: "Vegan", icon: Leaf },
+  { value: "ketogenic_diet", full: "Ketogenic Diet", short: "Keto", icon: Flame },
+  { value: "general_wellness", full: "General Wellness", short: "Wellness", icon: Sun },
 ];
 
-export default function Sidebar({ selected = [], onSelect }: any) {
+interface SidebarProps {
+  selected: Specialization[];
+  onSelect: (value: Specialization | "") => void;
+}
+
+export default function Sidebar({ selected = [], onSelect }: SidebarProps) {
   return (
     <aside className="w-full lg:w-72 h-screen sticky top-0 bg-white border-r border-slate-200 shadow-sm flex flex-col">
-
-      {/* Header */}
       <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between">
         <div className="flex-1">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 tracking-tight">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
             Specializations
           </h2>
           <p className="text-xs text-slate-500 mt-1">
@@ -45,43 +60,41 @@ export default function Sidebar({ selected = [], onSelect }: any) {
           </p>
         </div>
         {selected.length > 0 && (
-          <button 
+          <button
+            type="button"
             onClick={() => onSelect("")}
-            className="text-xs sm:text-sm font-semibold text-red-500 hover:text-red-600 transition px-2 py-1 hover:bg-red-50 rounded-lg"
+            className="text-xs sm:text-sm font-semibold text-red-500 hover:text-red-600 transition-colors px-2 py-1 hover:bg-red-50 rounded-lg"
           >
             Clear
           </button>
         )}
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2">
         {NUTRITIONIST_SPECIALIZATIONS.map((spec) => {
-          const isSelected = selected.includes(spec.full);
+          const isSelected = selected.includes(spec.value);
           const Icon = spec.icon;
 
           return (
             <button
-              key={spec.full}
+              key={spec.value}
               type="button"
               title={spec.full}
-              onClick={() => onSelect(spec.full)}
-              className={`w-full flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl text-sm font-medium transition-all duration-200 border
-                ${
-                  isSelected
-                    ? "bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-700 border-emerald-300 shadow-sm"
-                    : "bg-white text-slate-600 border-transparent hover:border-slate-200 hover:bg-slate-50"
-                }
-              `}
+              onClick={() => onSelect(spec.value)}
+              className={`w-full flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl text-sm font-medium transition-colors border ${
+                isSelected
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                  : "bg-white text-slate-600 border-transparent hover:border-slate-200 hover:bg-slate-50"
+              }`}
             >
               <div
-                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl transition-all ${
-                  isSelected 
-                    ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md" 
+                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl ${
+                  isSelected
+                    ? "bg-emerald-600 text-white"
                     : "bg-slate-100 text-slate-600"
                 }`}
               >
-                {Icon && <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />}
+                <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />
               </div>
 
               <span className="flex-1 text-left truncate text-xs sm:text-sm">
@@ -96,8 +109,7 @@ export default function Sidebar({ selected = [], onSelect }: any) {
         })}
       </div>
 
-      {/* Footer hint (optional) */}
-      <div className="p-4 border-t border-slate-200 bg-gradient-to-br from-emerald-50/50 to-teal-50/50">
+      <div className="p-4 border-t border-slate-200 bg-emerald-50/50">
         <p className="text-xs text-slate-600 text-center">
           {selected.length > 0 ? (
             <span className="font-semibold text-emerald-700">

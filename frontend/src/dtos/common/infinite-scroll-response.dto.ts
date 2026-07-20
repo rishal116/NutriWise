@@ -9,3 +9,9 @@ export interface InfiniteScrollResponseDto<T> {
   limit: number;
   hasMore: boolean;
 }
+
+export interface InfiniteScrollResponseDTO<T> {
+  items: T[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}

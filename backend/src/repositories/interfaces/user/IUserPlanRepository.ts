@@ -1,9 +1,13 @@
-import { ClientSession, Types } from "mongoose";
+import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 import { IUserPlan } from "../../../models/userPlan.model";
 import { IUserPlanPopulated } from "../../../types/userPlan.populated";
+import { IBaseRepository } from "../common/IBaseRepository";
 
-export interface IUserPlanRepository {
-  create(data: Partial<IUserPlan>, session?: ClientSession): Promise<IUserPlan>;
+export interface IUserPlanRepository extends IBaseRepository<IUserPlan> {
+  createWithSession(
+    data: Partial<IUserPlan>,
+    session: ClientSession,
+  ): Promise<IUserPlan>;
 
   findBySessionId(sessionId: string): Promise<IUserPlan | null>;
 
@@ -24,17 +28,17 @@ export interface IUserPlanRepository {
   ): Promise<IUserPlanPopulated[]>;
 
   findOnePopulated(
-    filter: Partial<IUserPlan>,
+    filter: FilterQuery<IUserPlan>,
   ): Promise<IUserPlanPopulated | null>;
+
+  activatePlan(id: string | Types.ObjectId): Promise<IUserPlan | null>;
 
   expireById(
     id: string | Types.ObjectId,
     session?: ClientSession,
   ): Promise<void>;
 
-  activatePlan(id: string | Types.ObjectId): Promise<IUserPlan | null>;
+  activateUpcomingPlans(): Promise<UpdateResult>;
 
-  activateUpcomingPlans(): Promise<any>;
-
-  expireActivePlans(): Promise<any>;
+  expireActivePlans(): Promise<UpdateResult>;
 }

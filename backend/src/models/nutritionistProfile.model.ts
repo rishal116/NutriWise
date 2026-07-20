@@ -32,41 +32,23 @@ export interface ICertification {
 
 export interface INutritionistProfile extends Document {
   _id: Types.ObjectId;
-
   userId: Types.ObjectId;
-
   qualifications: IQualification[];
-
   specializations: Specialization[];
-
   experiences: IExperience[];
-
   bio?: string;
-
   languages: Language[];
-
   availabilityStatus: AvailabilityStatus;
-
   resumeUrl: string;
-
   certifications: ICertification[];
-
   totalExperienceYears: number;
-
   applicationStatus: ApplicationStatus;
-
   rejectionReason?: string;
-
   coachLevel: CoachLevel;
-
   rating: number;
-
   totalReviews: number;
-
   totalPeopleCoached: number;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -217,11 +199,8 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
 );
 
 NutritionistProfileSchema.index({ applicationStatus: 1 });
-
 NutritionistProfileSchema.index({ coachLevel: 1 });
-
 NutritionistProfileSchema.index({ rating: -1 });
-
 NutritionistProfileSchema.index({
   applicationStatus: 1,
   coachLevel: 1,

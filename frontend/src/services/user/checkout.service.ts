@@ -1,15 +1,19 @@
-import { api } from "@/lib/axios/clientApi";
-import { API_ROUTES } from "@/routes/user.routes";
+import { clientApi } from "@/lib/axios/clientApi";
+import { CHECKOUT_ROUTES } from "@/routes/user";
 import {
-  CreateCheckoutSessionPayload,
-  CreateCheckoutSessionResponse,
+  CreateCheckoutSessionRequestDTO,
+  CreateCheckoutSessionResponseDTO,
 } from "@/types/checkout.types";
 
 export const checkoutService = {
-  createSession: async (
-    payload: CreateCheckoutSessionPayload,
-  ): Promise<CreateCheckoutSessionResponse> => {
-    const res = await api.post(API_ROUTES.CHECKOUT.CREATE_SESSION, payload);
-    return res.data;
+  async createSession(
+    payload: CreateCheckoutSessionRequestDTO,
+  ): Promise<CreateCheckoutSessionResponseDTO> {
+    const { data } = await clientApi.post(
+      CHECKOUT_ROUTES.CREATE_SESSION,
+      payload,
+    );
+
+    return data;
   },
 };

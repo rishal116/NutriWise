@@ -15,6 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { nutritionistPlanService } from "@/services/nutritionist/nutriPlan.service";
+import { PLATFORM_FEATURES } from "@/constants/platform-features"; // adjust to your actual path
 import { useRouter } from "next/navigation";
 import {
   Select,
@@ -234,6 +235,29 @@ export default function CreatePlanPage() {
 
           <SectionCard icon={Sparkles} title="Deliverables">
             <div className="space-y-3">
+              {/* Platform features reminder — these are already included, don't duplicate them below */}
+              <div className="flex items-start gap-2.5 p-3.5 bg-blue-50 border border-blue-100 rounded-xl">
+                <Info
+                  size={15}
+                  className="text-blue-500 flex-shrink-0 mt-0.5"
+                />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-blue-900 mb-1.5">
+                    Already included on every plan — no need to add these below
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PLATFORM_FEATURES.map((f) => (
+                      <span
+                        key={f}
+                        className="text-[11px] font-medium text-blue-700 bg-white border border-blue-200 px-2 py-0.5 rounded-md"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               {form.features.map((f, i) => {
                 const trimmed = f.trim();
                 const isDuplicate =
@@ -243,11 +267,16 @@ export default function CreatePlanPage() {
                       other.trim().toLowerCase() === trimmed.toLowerCase(),
                   ).length > 1;
                 const isTooShort = trimmed.length > 0 && trimmed.length < 3;
+                const isPlatformFeature = PLATFORM_FEATURES.some(
+                  (pf) => pf.toLowerCase() === trimmed.toLowerCase(),
+                );
                 const fieldError = isDuplicate
                   ? "Duplicate feature"
                   : isTooShort
                     ? "Too short"
-                    : null;
+                    : isPlatformFeature
+                      ? "Already included platform-wide — no need to list it"
+                      : null;
 
                 return (
                   <div key={i}>

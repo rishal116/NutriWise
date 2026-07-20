@@ -1,49 +1,54 @@
+import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 import { IBaseRepository } from "../common/IBaseRepository";
 import { IUserProgram } from "../../../models/userProgram.model";
 import { IUserProgramPopulated } from "../../../types/userProgram.populated";
-import { Types, ClientSession } from "mongoose";
 
 export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
-  create(
+  createWithSession(
     data: Partial<IUserProgram>,
-    session?: ClientSession,
+    session: ClientSession,
   ): Promise<IUserProgram>;
 
   findActiveByUserAndNutritionist(
-    userId: Types.ObjectId,
-    nutritionistId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    nutritionistId: string | Types.ObjectId,
   ): Promise<IUserProgram | null>;
 
   findLatestProgram(
-    userId: Types.ObjectId,
-    nutritionistId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    nutritionistId: string | Types.ObjectId,
   ): Promise<IUserProgram | null>;
 
-  findByUser(userId: Types.ObjectId): Promise<IUserProgramPopulated[]>;
-
-  findByNutritionist(
-    nutritionistId: Types.ObjectId,
+  findByUserId(
+    userId: string | Types.ObjectId,
   ): Promise<IUserProgramPopulated[]>;
 
+  findByNutritionistId(
+    nutritionistId: string | Types.ObjectId,
+  ): Promise<IUserProgramPopulated[]>;
+
+  findOnePopulated(
+    filter: FilterQuery<IUserProgram>,
+  ): Promise<IUserProgramPopulated | null>;
+
   findByUserAndPlan(
-    userId: Types.ObjectId,
-    planId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    planId: string | Types.ObjectId,
   ): Promise<IUserProgram[]>;
 
   findByIdAndUser(
-    userId: Types.ObjectId,
-    programId: Types.ObjectId,
+    userId: string | Types.ObjectId,
+    programId: string | Types.ObjectId,
   ): Promise<IUserProgram | null>;
 
   updateProgress(
-    programId: Types.ObjectId,
+    programId: string | Types.ObjectId,
     currentDay: number,
+    completionPercentage: number,
     session?: ClientSession,
   ): Promise<IUserProgram | null>;
 
-  findByIdPopulated(id: string): Promise<IUserProgramPopulated | null>;
+  activateUpcomingPrograms(): Promise<UpdateResult>;
 
-  activatePrograms(): Promise<any>;
-
-  completePrograms(): Promise<any>;
+  completeActivePrograms(): Promise<UpdateResult>;
 }

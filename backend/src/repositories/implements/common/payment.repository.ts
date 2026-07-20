@@ -1,8 +1,8 @@
 import { injectable } from "inversify";
+import { ClientSession, Types } from "mongoose";
 import { BaseRepository } from "../common/base.repository";
 import { IPaymentRepository } from "../../interfaces/common/IPaymentRepository";
-import { PaymentModel, IPayment } from "../../../models/payment.model";
-import { ClientSession } from "mongoose";
+import { IPayment, PaymentModel } from "../../../models/payment.model";
 
 @injectable()
 export class PaymentRepository
@@ -13,30 +13,47 @@ export class PaymentRepository
     super(PaymentModel);
   }
 
-  async create(
+  async createWithSession(
     data: Partial<IPayment>,
-    session?: ClientSession
+    session: ClientSession,
   ): Promise<IPayment> {
-    const doc = await this._model.create([data], { session });
-    return doc[0];
+    const [payment] = await this._model.create([data], {
+      session,
+    });
+
+    return payment;
   }
 
-  async existsBySessionId(sessionId: string): Promise<boolean> {
-    const exists = await this._model.exists({ stripeSessionId: sessionId });
-    return !!exists;
+  async existsByCheckoutSessionId(checkoutSessionId: string): Promise<boolean> {
+    return (
+      (await this._model.exists({
+        checkoutSessionId,
+      })) !== null
+    );
   }
 
-  async findByUserId(userId: string): Promise<IPayment[]> {
+  async findByUserId(userId: string | Types.ObjectId): Promise<IPayment[]> {
     return this._model
       .find({ userId })
       .sort({ createdAt: -1 })
-      .lean();
+      .lean<IPayment[]>()
+      .exec();
   }
 
-  async findByNutritionistId(nutritionistId: string): Promise<IPayment[]> {
+  async findBySellerId(sellerId: string | Types.ObjectId): Promise<IPayment[]> {
     return this._model
-      .find({ nutritionistId })
+      .find({ sellerId })
       .sort({ createdAt: -1 })
-      .lean();
+      .lean<IPayment[]>()
+      .exec();
+  }
+
+  async findByPaymentIntentId(
+    paymentIntentId: string,
+  ): Promise<IPayment | null> {
+    return this._model
+      .findOne({ paymentIntentId })
+      .lean<IPayment | null>()
+      .exec();
   }
 }

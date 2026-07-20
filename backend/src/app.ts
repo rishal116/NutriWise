@@ -10,13 +10,14 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 import chatRoutes from "./routes/chat.routes";
 import sessionRoutes from "./routes/session.routes";
 import nutritionistRoutes from "./routes/nutritionist";
+import stripeRoutes from "./routes/common/stripe.routes";
 
 dotenv.config();
 
 const app = express();
 const isProduction = process.env.NODE_ENV === "production";
 
-app.use("/stripe/webhook", express.raw({ type: "application/json" }));
+app.use("/stripe", express.raw({ type: "application/json" }), stripeRoutes);
 
 app.use(cookieParser());
 app.use(express.json());

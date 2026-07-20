@@ -12,8 +12,10 @@ import { NutritionistPricingDTO } from "../../../dtos/nutritionist/plan/nutritio
 export const toNutritionistPlanModel = (
   nutritionistId: string,
   dto: CreatePlanDTO,
+  slug: string,
 ): Partial<INutritionistPlan> => ({
   nutritionistId: new Types.ObjectId(nutritionistId),
+  slug,
   title: dto.title,
   specialization: dto.specialization,
   description: dto.description,
@@ -74,4 +76,3 @@ export const toNutritionistPricingDTO = (
   minPrice,
   maxPrice,
 });
-
