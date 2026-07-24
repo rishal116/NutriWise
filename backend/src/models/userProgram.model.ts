@@ -8,8 +8,6 @@ export const PROGRAM_STATUS = [
   "cancelled",
 ] as const;
 
-
-
 export type ProgramStatus = (typeof PROGRAM_STATUS)[number];
 
 export interface IUserProgram {

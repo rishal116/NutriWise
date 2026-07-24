@@ -5,7 +5,7 @@ import connectDB from "./configs/db";
 import { initializeSocket } from "./infrastructures/socket/socket.server";
 import { startPayoutCron } from "./crons/payout.cron";
 import { startPlanExpiryCron } from "./crons/planExpiry.cron";
-import { startSubscriptionCron } from "./crons/subscription.cron";
+import { startCoachingLifecycleCron } from "./crons/subscription.cron";
 import morgan from "morgan";
 import { loggerStream } from "./utils/logger";
 
@@ -21,7 +21,7 @@ const PORT = process.env.PORT;
 startPlanExpiryCron();
 connectDB();
 startPayoutCron();
-startSubscriptionCron();
+startCoachingLifecycleCron();
 
 const server: HTTPServer = http.createServer(app);
 initializeSocket(server);

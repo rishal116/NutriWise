@@ -119,12 +119,12 @@ import { NutriMeetingsController } from "../controllers/implementations/nutritio
 import { NutriProgramController } from "../controllers/implementations/nutritionist/nutriProgram.controller";
 import { NutritionistApplicationController } from "../controllers/implementations/nutritionist/nutriApplication.controller";
 import { NutritionistPlanController } from "../controllers/implementations/nutritionist/nutriPlan.controller";
-import { NutritionistSubscriptionController } from "../controllers/implementations/nutritionist/nutritionistSubscription.controller";
+import { NutriClientController } from "../controllers/implementations/nutritionist/nutriClient.controller";
 // ---------- Services ----------
 import { NutriGroupService } from "../services/implements/nutritionist/nutriGroup.service";
 import { NutriMeetingsService } from "../services/implements/nutritionist/nutriMeetings.service";
 import { NutriProgramService } from "../services/implements/nutritionist/nutriProgram.service";
-import { NutriSubscriptionService } from "../services/implements/nutritionist/nutriSubscription.service";
+import { NutriClientService } from "../services/implements/nutritionist/nutriClient.service";
 import { NutritionistApplicationService } from "../services/implements/nutritionist/nutriApplication.service";
 import { NutritionistPlanService } from "../services/implements/nutritionist/nutriPlan.service";
 // ---------- Repositories ----------
@@ -139,14 +139,13 @@ import { INutriMeetingsRepository } from "../repositories/interfaces/nutritionis
 import { INutriMeetingsService } from "../services/interfaces/nutritionist/INutriMeetingsService";
 import { INutriProgramController } from "../controllers/interfaces/nutritionist/INutriProgramController";
 import { INutriProgramService } from "../services/interfaces/nutritionist/INutriProgramService";
-import { INutriSubscriptionService } from "../services/interfaces/nutritionist/INutriSubcriptionService";
+import { INutriClientService } from "../services/interfaces/nutritionist/INutriClientService";
 import { INutritionistApplicationController } from "../controllers/interfaces/nutritionist/INutriApplicationController";
 import { INutritionistApplicationService } from "../services/interfaces/nutritionist/INutriApplicationService";
 import { INutritionistPlanController } from "../controllers/interfaces/nutritionist/INutriPlanController";
 import { INutritionistPlanRepository } from "../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { INutritionistPlanService } from "../services/interfaces/nutritionist/INutriPlanService";
 import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutriProfileRepository";
-import { INutritionistSubscriptionController } from "../controllers/interfaces/nutritionist/INutritionistSubscriptionController";
 
 // ---------- Chat Module ----------
 // ---------- Controllers ----------
@@ -208,6 +207,19 @@ import { SocketService } from "../services/implements/socket/socket.service";
 
 // ---------- Types ----------
 import { TYPES } from "../types/types";
+import { INutriClientController } from "../controllers/interfaces/nutritionist/INutriClientController";
+import { INutriClientRepository } from "../repositories/interfaces/nutritionist/INutriClientRepository";
+import { NutriClientRepository } from "../repositories/implements/nutritionist/nutriClient.repository";
+
+// latest
+import { INutriProgramRepository } from "../repositories/interfaces/nutritionist/INutriProgramRepository";
+import { NutriProgramRepository } from "../repositories/implements/nutritionist/nutriProgram.repository";
+import { NutriProgramDayService } from "../services/implements/nutritionist/nutriProgramDay.service";
+import { INutriProgramDayService } from "../services/interfaces/nutritionist/INutriProgramDayService";
+import { INutriProgramDayController } from "../controllers/interfaces/nutritionist/INutriProgramDayController";
+import { NutriProgramDayController } from "../controllers/implementations/nutritionist/nutriProgramDay.controller";
+import { INutriProgramDayRepository } from "../repositories/interfaces/nutritionist/INutriProgramDayRepository";
+import { NutriProgramDayRepository } from "../repositories/implements/nutritionist/nutriProgramDay.repository";
 
 // ======================================================
 // CONTAINER
@@ -437,10 +449,8 @@ container
   .to(NutritionistPlanController);
 
 container
-  .bind<INutritionistSubscriptionController>(
-    TYPES.INutritionistSubscriptionController,
-  )
-  .to(NutritionistSubscriptionController);
+  .bind<INutriClientController>(TYPES.INutriClientController)
+  .to(NutriClientController);
 
 // ---------- Services ----------
 container
@@ -456,8 +466,8 @@ container
   .to(NutriProgramService);
 
 container
-  .bind<INutriSubscriptionService>(TYPES.INutriSubscriptionService)
-  .to(NutriSubscriptionService);
+  .bind<INutriClientService>(TYPES.INutriClientService)
+  .to(NutriClientService);
 
 container
   .bind<INutritionistApplicationService>(TYPES.INutritionistApplicationService)
@@ -468,6 +478,10 @@ container
   .to(NutritionistPlanService);
 
 // ---------- Repositories ----------
+
+container
+  .bind<INutriClientRepository>(TYPES.INutriClientRepository)
+  .to(NutriClientRepository);
 container
   .bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository)
   .to(NutriMeetingsRepository);
@@ -570,5 +584,21 @@ container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
 // ======================================================
 
 container.bind<ISocketService>(TYPES.ISocketService).to(SocketService);
+
+// latest
+container
+  .bind<INutriProgramRepository>(TYPES.INutriProgramRepository)
+  .to(NutriProgramRepository);
+container
+  .bind<INutriProgramDayService>(TYPES.INutriProgramDayService)
+  .to(NutriProgramDayService);
+
+container
+  .bind<INutriProgramDayController>(TYPES.INutriProgramDayController)
+  .to(NutriProgramDayController);
+
+container
+  .bind<INutriProgramDayRepository>(TYPES.INutriProgramDayRepository)
+  .to(NutriProgramDayRepository);
 
 export { container };

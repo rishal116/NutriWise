@@ -1,5 +1,5 @@
-import { ITaskLog } from "../../models/taskLog.model";
-import { IProgramDay } from "../../models/programDay.model";
+import { ITaskLog } from "../../models/userProgramTask.model";
+import { IProgramDay } from "../../models/userProgramDay.model";
 import { TaskLogResponseDTO } from "../../dtos/user/taskLog.dto";
 
 export class TaskLogMapper {

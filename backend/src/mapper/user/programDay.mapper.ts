@@ -1,4 +1,4 @@
-import { IProgramDay } from "../../models/programDay.model";
+import { IProgramDay } from "../../models/userProgramDay.model";
 import { ProgramDayResponseDTO } from "../../dtos/user/userProgram.dto"
 import { Types } from "mongoose";
 

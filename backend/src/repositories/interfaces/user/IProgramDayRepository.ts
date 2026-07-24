@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { IBaseRepository } from "../common/IBaseRepository";
-import { IProgramDay } from "../../../models/programDay.model";
+import { IProgramDay } from "../../../models/userProgramDay.model";
 
 export interface IProgramDayRepository extends IBaseRepository<IProgramDay> {
   findByUserProgram(userProgramId: Types.ObjectId): Promise<IProgramDay[]>;

@@ -31,7 +31,7 @@ export const validateDtoMiddleware = <T extends object>(
 export const validateDto = async <T extends object>(
   DtoClass: ClassConstructor<T>,
   payload: unknown,
-): Promise<void> => {
+): Promise<T> => {
   const dto = plainToInstance(DtoClass, payload);
 
   const errors = await validate(dto);
@@ -43,4 +43,6 @@ export const validateDto = async <T extends object>(
 
     throw new CustomError(messages, StatusCode.BAD_REQUEST);
   }
+
+  return dto;
 };

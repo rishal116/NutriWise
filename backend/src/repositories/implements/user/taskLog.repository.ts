@@ -1,6 +1,6 @@
 import { injectable } from "inversify";
 import { Types } from "mongoose";
-import { TaskLogModel, ITaskLog } from "../../../models/taskLog.model";
+import { TaskLogModel, ITaskLog } from "../../../models/userProgramTask.model";
 import { ITaskLogRepository } from "../../interfaces/user/ITaskLogRepository";
 import { BaseRepository } from "../common/base.repository";
 

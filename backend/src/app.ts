@@ -57,7 +57,6 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/nutritionists", nutritionistRoutes);
 
 app.use("/chat", chatRoutes);
-app.use("/nutritionist", nutritionistRoutes);
 app.use("/session", sessionRoutes);
 
 app.use(errorMiddleware);
