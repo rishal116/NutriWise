@@ -1,6 +1,6 @@
 import { clientApi } from "@/lib/axios/clientApi";
 
-import { NutritionistApplicationDetailsDto } from "@/dtos/nutritionist/nutritionist-application-details.dto";
+import { NutritionistApplicationDetailsDto } from "@/dtos/nutritionist/application/nutritionist-application-details.dto";
 
 import { ApiResponse } from "@/types/api/apiResponse";
 

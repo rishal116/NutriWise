@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  ClipboardList,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -27,12 +28,17 @@ const menu = [
     icon: Video,
   },
   {
-    label: "My Clients",
+    label: "My Clients", // <- Purchased users
     href: "/nutritionist/clients",
     icon: Users,
   },
   {
-    label: "Nutrition Plans",
+    label: "Programs", // <- Active client programs
+    href: "/nutritionist/programs",
+    icon: ClipboardList,
+  },
+  {
+    label: "Nutrition Plans", // <- Templates only
     href: "/nutritionist/plans",
     icon: FileText,
   },

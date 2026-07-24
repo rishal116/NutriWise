@@ -2,7 +2,7 @@ import {
   QualificationDto,
   ExperienceDto,
   CertificationDto,
-} from "@/dtos/nutritionist/nutritionist-application-details.dto";
+} from "@/dtos/nutritionist/application/nutritionist-application-details.dto";
 
 import {
   AvailabilityStatus,
