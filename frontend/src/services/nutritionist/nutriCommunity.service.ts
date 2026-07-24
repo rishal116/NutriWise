@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/clientApi";
+import { clientApi } from "@/lib/axios/clientApi";
 
 export const groupService = {
   createGroup: async (data: {

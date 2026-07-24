@@ -1,57 +1,49 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
-import { nutriClientService } from "@/services/nutritionist/nutriClient.service";
-import {
-  ClientSortBy,
-  ClientStatusFilter,
-  type GetClientsQueryDTO,
-} from "@/dtos/nutritionist/client/client-request.dto";
+
+import { nutriProgramService } from "@/services/nutritionist/nutriProgram.service";
 import type {
-  ClientListItemDTO,
-  ProgramStatus,
-  SubscriptionStatus,
-} from "@/dtos/nutritionist/client/client-response.dto";
+  GetProgramsQuery,
+  ProgramSortBy,
+  ProgramStatusFilter,
+} from "@/dtos/nutritionist/program/program-request.dto";
+import type { ProgramSummary } from "@/dtos/nutritionist/program/program-response.dto";
 
 const PAGE_SIZE = 12;
 const SEARCH_DEBOUNCE_MS = 400;
 
-const STATUS_TABS: { value: ClientStatusFilter; label: string }[] = [
-  { value: ClientStatusFilter.ALL, label: "All" },
-  { value: ClientStatusFilter.UPCOMING, label: "Upcoming" },
-  { value: ClientStatusFilter.ACTIVE, label: "Active" },
-  { value: ClientStatusFilter.PAUSED, label: "Paused" },
-  { value: ClientStatusFilter.COMPLETED, label: "Completed" },
-  { value: ClientStatusFilter.CANCELLED, label: "Cancelled" },
+const STATUS_TABS: { value: ProgramStatusFilter; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "upcoming", label: "Upcoming" },
+  { value: "active", label: "Active" },
+  { value: "paused", label: "Paused" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
-const SORT_OPTIONS: { value: ClientSortBy; label: string }[] = [
-  { value: ClientSortBy.LATEST, label: "Latest" },
-  { value: ClientSortBy.NAME_ASC, label: "Name (A–Z)" },
-  { value: ClientSortBy.NAME_DESC, label: "Name (Z–A)" },
-  { value: ClientSortBy.START_DATE, label: "Start date" },
-  { value: ClientSortBy.END_DATE, label: "End date" },
-  { value: ClientSortBy.PROGRESS, label: "Progress" },
+const SORT_OPTIONS: { value: ProgramSortBy; label: string }[] = [
+  { value: "latest", label: "Latest" },
+  { value: "start_date", label: "Start date" },
+  { value: "end_date", label: "End date" },
+  { value: "progress", label: "Progress" },
 ];
 
-const SUBSCRIPTION_STYLES: Record<SubscriptionStatus, string> = {
-  active: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  pending: "bg-amber-50 text-amber-700 border-amber-100",
-  expired: "bg-rose-50 text-rose-700 border-rose-100",
-  cancelled: "bg-slate-100 text-slate-500 border-slate-200",
-};
-
-const PROGRAM_STYLES: Record<ProgramStatus, string> = {
+// ProgramSummary.status is typed as a plain `string` in the current DTO, so
+// this map falls back gracefully for any value that isn't one of the known
+// statuses instead of throwing at runtime.
+const STATUS_STYLES: Record<string, string> = {
   upcoming: "bg-sky-50 text-sky-700 border-sky-100",
   active: "bg-emerald-50 text-emerald-700 border-emerald-100",
   paused: "bg-amber-50 text-amber-700 border-amber-100",
   completed: "bg-slate-100 text-slate-600 border-slate-200",
   cancelled: "bg-rose-50 text-rose-700 border-rose-100",
 };
+const DEFAULT_STATUS_STYLE = "bg-slate-100 text-slate-500 border-slate-200";
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -64,7 +56,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-function formatDate(value: Date | string): string {
+function formatDate(value: string): string {
   return new Date(value).toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -82,12 +74,12 @@ function Badge({ label, className }: { label: string; className: string }) {
   );
 }
 
-function ClientAvatar({ client }: { client: ClientListItemDTO }) {
-  if (client.profileImage) {
+function ProgramAvatar({ program }: { program: ProgramSummary }) {
+  if (program.profileImage) {
     return (
       <Image
-        src={client.profileImage}
-        alt={client.fullName}
+        src={program.profileImage}
+        alt={program.fullName}
         width={40}
         height={40}
         className="h-10 w-10 shrink-0 rounded-xl object-cover"
@@ -96,18 +88,18 @@ function ClientAvatar({ client }: { client: ClientListItemDTO }) {
   }
   return (
     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white">
-      {client.fullName.charAt(0).toUpperCase()}
+      {program.fullName.charAt(0).toUpperCase()}
     </div>
   );
 }
 
-function ProgressBar({ client }: { client: ClientListItemDTO }) {
-  const pct = Math.min(100, Math.max(0, client.completionPercentage));
+function ProgressBar({ program }: { program: ProgramSummary }) {
+  const pct = Math.min(100, Math.max(0, program.completionPercentage));
   return (
     <div className="w-full min-w-[8rem]">
       <div className="mb-1 flex justify-between text-[11px] font-semibold text-slate-500">
         <span>
-          Day {client.currentDay}/{client.durationDays}
+          Day {program.currentDay}/{program.durationDays}
         </span>
         <span>{Math.round(pct)}%</span>
       </div>
@@ -124,7 +116,7 @@ function ProgressBar({ client }: { client: ClientListItemDTO }) {
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-100 bg-white py-16 text-center shadow-sm">
-      <p className="text-sm font-bold text-slate-700">No clients found</p>
+      <p className="text-sm font-bold text-slate-700">No programs found</p>
       <p className="text-xs text-slate-400">
         Try a different search term or status filter.
       </p>
@@ -142,21 +134,20 @@ function TableSkeleton() {
   );
 }
 
-export default function NutritionistClientsPage() {
-  const [clients, setClients] = useState<ClientListItemDTO[]>([]);
-  const [status, setStatus] = useState<ClientStatusFilter>(
-    ClientStatusFilter.ALL,
-  );
-  const [sortBy, setSortBy] = useState<ClientSortBy>(ClientSortBy.LATEST);
+export default function NutritionistProgramsPage() {
+  const router = useRouter();
+
+  const [programs, setPrograms] = useState<ProgramSummary[]>([]);
+  const [status, setStatus] = useState<ProgramStatusFilter>("all");
+  const [sortBy, setSortBy] = useState<ProgramSortBy>("latest");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
-  const router = useRouter();
 
-  // Refs mirror the current filter/sort/search + pagination state so the
+  // Refs mirror current filter/sort/search + pagination state so the
   // IntersectionObserver callback and fetchMore never close over stale values.
   const statusRef = useRef(status);
   const sortByRef = useRef(sortBy);
@@ -180,7 +171,7 @@ export default function NutritionistClientsPage() {
   }, [debouncedSearch]);
 
   const buildQuery = useCallback(
-    (cursor: string | null): GetClientsQueryDTO => ({
+    (cursor: string | null): GetProgramsQuery => ({
       limit: PAGE_SIZE,
       cursor: cursor ?? undefined,
       search: searchRef.current.trim() || undefined,
@@ -198,17 +189,15 @@ export default function NutritionistClientsPage() {
 
     (async () => {
       try {
-        const res = await nutriClientService.getClients(buildQuery(null));
-        console.log(res);
-
+        const res = await nutriProgramService.getPrograms(buildQuery(null));
         if (cancelled) return;
-        setClients(res.items);
+        setPrograms(res.items);
         cursorRef.current = res.nextCursor;
-        hasMoreRef.current = res.hasNextPage;
-        setHasMore(res.hasNextPage);
+        hasMoreRef.current = res.hasMore;
+        setHasMore(res.hasMore);
       } catch {
         if (!cancelled) {
-          toast.error("Couldn't load clients. Please try again.");
+          toast.error("Couldn't load programs. Please try again.");
         }
       } finally {
         if (!cancelled) {
@@ -235,15 +224,15 @@ export default function NutritionistClientsPage() {
     setLoadingMore(true);
 
     try {
-      const res = await nutriClientService.getClients(
+      const res = await nutriProgramService.getPrograms(
         buildQuery(cursorRef.current),
       );
-      setClients((prev) => [...prev, ...res.items]);
+      setPrograms((prev) => [...prev, ...res.items]);
       cursorRef.current = res.nextCursor;
-      hasMoreRef.current = res.hasNextPage;
-      setHasMore(res.hasNextPage);
+      hasMoreRef.current = res.hasMore;
+      setHasMore(res.hasMore);
     } catch {
-      toast.error("Couldn't load more clients.");
+      toast.error("Couldn't load more programs.");
     } finally {
       fetchingMoreRef.current = false;
       setLoadingMore(false);
@@ -272,10 +261,10 @@ export default function NutritionistClientsPage() {
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div>
           <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
-            Your clients
+            Programs
           </h1>
           <p className="text-sm text-slate-500">
-            Track subscriptions, plan progress, and program status.
+            Browse and track every client program.
           </p>
         </div>
 
@@ -291,14 +280,14 @@ export default function NutritionistClientsPage() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search clients by name or username"
+                placeholder="Search programs by client name or username"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10"
               />
             </div>
 
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as ClientSortBy)}
+              onChange={(e) => setSortBy(e.target.value as ProgramSortBy)}
               className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 sm:w-48"
             >
               {SORT_OPTIONS.map((opt) => (
@@ -330,7 +319,7 @@ export default function NutritionistClientsPage() {
         {/* Content */}
         {loading ? (
           <TableSkeleton />
-        ) : clients.length === 0 ? (
+        ) : programs.length === 0 ? (
           <EmptyState />
         ) : (
           <>
@@ -357,50 +346,47 @@ export default function NutritionistClientsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {clients.map((client) => (
+                  {programs.map((program) => (
                     <tr
-                      key={client.clientId}
+                      key={program.userProgramId}
                       onClick={() =>
-                        router.push(`/nutritionist/clients/${client.clientId}`)
+                        router.push(
+                          `/nutritionist/programs/${program.userProgramId}`,
+                        )
                       }
                       className="cursor-pointer transition-colors hover:bg-slate-50"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <ClientAvatar client={client} />
+                          <ProgramAvatar program={program} />
                           <div>
                             <div className="text-sm font-bold text-slate-900">
-                              {client.fullName}
+                              {program.fullName}
                             </div>
                             <div className="text-xs text-slate-400">
-                              @{client.username}
+                              @{program.username}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm font-medium text-slate-700">
-                        {client.planTitle}
+                        {program.planTitle}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5">
-                          <Badge
-                            label={client.subscriptionStatus}
-                            className={
-                              SUBSCRIPTION_STYLES[client.subscriptionStatus]
-                            }
-                          />
-                          <Badge
-                            label={client.programStatus}
-                            className={PROGRAM_STYLES[client.programStatus]}
-                          />
-                        </div>
+                        <Badge
+                          label={program.status}
+                          className={
+                            STATUS_STYLES[program.status] ??
+                            DEFAULT_STATUS_STYLE
+                          }
+                        />
                       </td>
                       <td className="px-6 py-4">
-                        <ProgressBar client={client} />
+                        <ProgressBar program={program} />
                       </td>
                       <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                        <div>{formatDate(client.startDate)}</div>
-                        <div>{formatDate(client.endDate)}</div>
+                        <div>{formatDate(program.startDate)}</div>
+                        <div>{formatDate(program.endDate)}</div>
                       </td>
                     </tr>
                   ))}
@@ -410,48 +396,48 @@ export default function NutritionistClientsPage() {
 
             {/* Mobile cards */}
             <div className="space-y-3 md:hidden">
-              {clients.map((client) => (
+              {programs.map((program) => (
                 <div
-                  key={client.clientId}
+                  key={program.userProgramId}
                   onClick={() =>
-                    router.push(`/nutritionist/clients/${client.clientId}`)
+                    router.push(
+                      `/nutritionist/programs/${program.userProgramId}`,
+                    )
                   }
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm cursor-pointer active:bg-slate-50"
+                  className="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm active:bg-slate-50"
                 >
                   <div className="flex items-center gap-3">
-                    <ClientAvatar client={client} />
+                    <ProgramAvatar program={program} />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-bold text-slate-900">
-                        {client.fullName}
+                        {program.fullName}
                       </div>
                       <div className="truncate text-xs text-slate-400">
-                        @{client.username}
+                        @{program.username}
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap gap-1.5">
+                  <div className="mt-3">
                     <Badge
-                      label={client.subscriptionStatus}
-                      className={SUBSCRIPTION_STYLES[client.subscriptionStatus]}
-                    />
-                    <Badge
-                      label={client.programStatus}
-                      className={PROGRAM_STYLES[client.programStatus]}
+                      label={program.status}
+                      className={
+                        STATUS_STYLES[program.status] ?? DEFAULT_STATUS_STYLE
+                      }
                     />
                   </div>
 
                   <p className="mt-3 text-sm font-medium text-slate-700">
-                    {client.planTitle}
+                    {program.planTitle}
                   </p>
 
                   <div className="mt-3">
-                    <ProgressBar client={client} />
+                    <ProgressBar program={program} />
                   </div>
 
                   <div className="mt-3 flex justify-between text-xs font-medium text-slate-500">
-                    <span>{formatDate(client.startDate)}</span>
-                    <span>{formatDate(client.endDate)}</span>
+                    <span>{formatDate(program.startDate)}</span>
+                    <span>{formatDate(program.endDate)}</span>
                   </div>
                 </div>
               ))}
@@ -466,7 +452,7 @@ export default function NutritionistClientsPage() {
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-100 border-t-emerald-600" />
           </div>
         )}
-        {!hasMore && clients.length > 0 && (
+        {!hasMore && programs.length > 0 && (
           <p className="py-2 text-center text-xs font-medium text-slate-400">
             You&apos;ve reached the end of the list.
           </p>
