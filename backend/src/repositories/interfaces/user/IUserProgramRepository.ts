@@ -3,6 +3,7 @@ import { IBaseRepository } from "../common/IBaseRepository";
 import { IUserProgram } from "../../../models/userProgram.model";
 import { IUserProgramPopulated } from "../../../types/userProgram.populated";
 
+
 export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   createWithSession(
     data: Partial<IUserProgram>,

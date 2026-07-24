@@ -9,7 +9,7 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import { Types } from "mongoose";
 import logger from "../../../utils/logger";
 import { TaskLogMapper } from "../../../mapper/user/taskLog.mapper";
-import { ITaskLog } from "../../../models/taskLog.model";
+import { ITaskLog } from "../../../models/userProgramTask.model";
 import {
   TaskLogResponseDTO,
   UpdateTodayTasksPayload,

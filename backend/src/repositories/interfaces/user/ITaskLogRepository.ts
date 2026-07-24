@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { ITaskLog } from "../../../models/taskLog.model";
+import { ITaskLog } from "../../../models/userProgramTask.model";
 import { IBaseRepository } from "../common/IBaseRepository";
 
 export interface ITaskLogRepository extends IBaseRepository<ITaskLog> {

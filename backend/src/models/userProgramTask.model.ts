@@ -1,41 +1,49 @@
 import { Schema, model, Types } from "mongoose";
 
-export interface ITaskLog {
+export interface IUserProgramTaskLog {
   _id: Types.ObjectId;
 
   userId: Types.ObjectId;
+
   userProgramId: Types.ObjectId;
-  programDayId: Types.ObjectId;
+
+  userProgramDayId: Types.ObjectId;
 
   date: Date;
 
-  mealsCompleted?: {
+  meals?: {
     mealId: Types.ObjectId;
     completed: boolean;
+    completedAt?: Date;
   }[];
 
-  workoutsCompleted?: {
+  workouts?: {
     workoutId: Types.ObjectId;
     completed: boolean;
+    completedAt?: Date;
   }[];
 
-  habitsProgress?: {
+  habits?: {
     habitId: Types.ObjectId;
     title: string;
     value: number;
+    completed: boolean;
   }[];
 
   weight?: number;
+
   waterIntake?: number;
+
   sleepHours?: number;
 
   notes?: string;
 
   createdAt: Date;
+
   updatedAt: Date;
 }
 
-const TaskLogSchema = new Schema<ITaskLog>(
+const UserProgramTaskLogSchema = new Schema<IUserProgramTaskLog>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -51,9 +59,9 @@ const TaskLogSchema = new Schema<ITaskLog>(
       index: true,
     },
 
-    programDayId: {
+    userProgramDayId: {
       type: Schema.Types.ObjectId,
-      ref: "ProgramDay",
+      ref: "UserProgramDay",
       required: true,
       index: true,
     },
@@ -64,47 +72,64 @@ const TaskLogSchema = new Schema<ITaskLog>(
       index: true,
     },
 
-    mealsCompleted: [
+    meals: [
       {
         mealId: {
           type: Schema.Types.ObjectId,
           required: true,
         },
+
         completed: {
           type: Boolean,
-          default: true,
+          default: false,
+        },
+
+        completedAt: {
+          type: Date,
         },
       },
     ],
 
-    workoutsCompleted: [
+    workouts: [
       {
         workoutId: {
           type: Schema.Types.ObjectId,
           required: true,
         },
+
         completed: {
           type: Boolean,
-          default: true,
+          default: false,
+        },
+
+        completedAt: {
+          type: Date,
         },
       },
     ],
 
-    habitsProgress: [
+    habits: [
       {
         habitId: {
           type: Schema.Types.ObjectId,
           required: true,
         },
+
         title: {
           type: String,
           required: true,
           trim: true,
         },
+
         value: {
           type: Number,
-          required: true,
+          default: 0,
           min: 0,
+        },
+
+        completed: {
+          type: Boolean,
+          default: false,
         },
       },
     ],
@@ -129,15 +154,36 @@ const TaskLogSchema = new Schema<ITaskLog>(
     notes: {
       type: String,
       trim: true,
+      maxlength: 2000,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
-TaskLogSchema.index({ userId: 1, userProgramId: 1, date: 1 }, { unique: true });
+UserProgramTaskLogSchema.index(
+  {
+    userId: 1,
+    userProgramId: 1,
+    date: 1,
+  },
+  {
+    unique: true,
+  },
+);
 
-TaskLogSchema.index({ userProgramId: 1, date: -1 });
+UserProgramTaskLogSchema.index({
+  userProgramId: 1,
+  date: -1,
+});
 
-TaskLogSchema.index({ userId: 1, date: -1 });
+UserProgramTaskLogSchema.index({
+  userId: 1,
+  date: -1,
+});
 
-export const TaskLogModel = model<ITaskLog>("TaskLog", TaskLogSchema);
+export const UserProgramTaskLogModel = model<IUserProgramTaskLog>(
+  "UserProgramTaskLog",
+  UserProgramTaskLogSchema,
+);

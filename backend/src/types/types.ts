@@ -8,7 +8,6 @@ export const TYPES = {
   IStripeWebhookController: Symbol.for("IStripeWebhookController"),
   IConversationController: Symbol.for("IConversationController"),
   IMessageController: Symbol.for("IMessageController"),
-  
 
   // Services
   IStripeService: Symbol.for("IStripeService"),
@@ -17,7 +16,7 @@ export const TYPES = {
   ISocketService: Symbol.for("ISocketService"),
   IConversationService: Symbol.for("IConversationService"),
   IMessageService: Symbol.for("IMessageService"),
-  IStripeCheckoutHandlerService:Symbol.for("IStripeCheckoutHandlerService"),
+  IStripeCheckoutHandlerService: Symbol.for("IStripeCheckoutHandlerService"),
 
   // Repositories
   IWalletRepository: Symbol.for("IWalletRepository"),
@@ -131,12 +130,11 @@ export const TYPES = {
     "INutritionistApplicationController",
   ),
   INutritionistPlanController: Symbol.for("INutritionistPlanController"),
-  INutritionistSubscriptionController: Symbol.for(
-    "INutritionistSubscriptionController",
-  ),
   INutriProgramController: Symbol.for("INutriProgramController"),
   INutriMeetingsController: Symbol.for("INutriMeetingsController"),
   INutriGroupController: Symbol.for("INutriCommunityController"),
+  INutriClientController: Symbol.for("INutriClientController"),
+  INutriProgramDayController: Symbol.for("INutriProgramDayController"),
 
   // Services
   INutritionistApplicationService: Symbol.for(
@@ -144,9 +142,10 @@ export const TYPES = {
   ),
   INutritionistPlanService: Symbol.for("INutritionistPlanService"),
   INutriProgramService: Symbol.for("INutriProgramService"),
-  INutriSubscriptionService: Symbol.for("INutriSubscriptionService"),
   INutriMeetingsService: Symbol.for("INutriMeetingsService"),
   INutriGroupService: Symbol.for("INutriCommunityService"),
+  INutriClientService: Symbol.for("INutriClientService"),
+  INutriProgramDayService: Symbol.for("INutriProgramDayService"),
 
   // Repositories
   INutritionistAuthRepository: Symbol.for("INutritionistAuthRepository"),
@@ -154,4 +153,7 @@ export const TYPES = {
   INutritionistProfileRepository: Symbol.for("INutritionistProfileRepository"),
   INutritionistPlanRepository: Symbol.for("INutritionistPlanRepository"),
   INutriMeetingsRepository: Symbol.for("INutriMeetingsRepository"),
+  INutriClientRepository: Symbol.for("INutriClientRepository"),
+  INutriProgramRepository: Symbol.for("INutriProgramRepository"),
+  INutriProgramDayRepository: Symbol.for("INutriProgramDayRepository"),
 };

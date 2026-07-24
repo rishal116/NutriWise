@@ -1,43 +1,21 @@
-import { ProgramResponseDTO, CreateProgramDTO,ProgramDayResponseDTO,CreateProgramDayDTO, 
-  UpdateProgramDayDTO
- } from "../../../dtos/nutritionist/programResponse.dto";
+import {
+  GetProgramsQueryDTO,
+  GetProgramParamsDTO,
+} from "../../../dtos/nutritionist/program/program-request.dto";
 
+import {
+  ProgramBrowseResponseDTO,
+  ProgramDetailsDTO,
+} from "../../../dtos/nutritionist/program/program-response.dto";
 
 export interface INutriProgramService {
-  getPrograms(nutritionistId: string): Promise<ProgramResponseDTO[]>;
+  getPrograms(
+    nutritionistId: string,
+    query: GetProgramsQueryDTO,
+  ): Promise<ProgramBrowseResponseDTO>;
 
   getProgramDetails(
-    programId: string,
-    nutritionistId: string
-  ): Promise<ProgramResponseDTO>;
-
-  createProgram(
-    data: CreateProgramDTO
-  ): Promise<ProgramResponseDTO>;
-
-  getProgramDays(
-    programId: string,
-    nutritionistId: string
-  ): Promise<ProgramDayResponseDTO[]>;
-
-  getProgramDayDetails(
-    dayId: string,
-    nutritionistId: string
-  ): Promise<ProgramDayResponseDTO>;
-
-  createProgramDay(
-    data: CreateProgramDayDTO,
-    nutritionistId: string
-  ): Promise<ProgramDayResponseDTO>;
-
-  updateProgramDay(
-    dayId: string,
-    data: UpdateProgramDayDTO,
-    nutritionistId: string
-  ): Promise<ProgramDayResponseDTO>;
-
-  deleteProgramDay(
-    dayId: string,
-    nutritionistId: string
-  ): Promise<void>;
+    nutritionistId: string,
+    params: GetProgramParamsDTO,
+  ): Promise<ProgramDetailsDTO>;
 }

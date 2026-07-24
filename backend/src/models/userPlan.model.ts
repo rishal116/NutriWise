@@ -16,8 +16,7 @@ export const SUBSCRIPTION_STATUS = [
   "cancelled",
 ] as const;
 
-export type SubscriptionStatus =
-  (typeof SUBSCRIPTION_STATUS)[number];
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
 
 export interface IUserPlan {
   _id: Types.ObjectId;
@@ -190,7 +189,4 @@ UserPlanSchema.index({
   subscriptionStatus: 1,
 });
 
-export const UserPlanModel = model<IUserPlan>(
-  "UserPlan",
-  UserPlanSchema,
-);
+export const UserPlanModel = model<IUserPlan>("UserPlan", UserPlanSchema);

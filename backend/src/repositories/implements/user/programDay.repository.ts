@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 import { Types } from "mongoose";
 import { BaseRepository } from "../common/base.repository"; 
-import {ProgramDayModel,IProgramDay,} from "../../../models/programDay.model";
+import {ProgramDayModel,IProgramDay,} from "../../../models/userProgramDay.model";
 import { IProgramDayRepository } from "../../interfaces/user/IProgramDayRepository";
 
 @injectable()

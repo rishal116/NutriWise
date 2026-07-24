@@ -1,4 +1,4 @@
-export interface NutritionistCursor {
-  value: number | string;
+export interface CursorData {
+  value: string | number | Date;
   id: string;
 }
