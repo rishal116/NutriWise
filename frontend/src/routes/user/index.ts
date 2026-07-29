@@ -7,3 +7,5 @@ export * from "./nutri-browsing.routes";
 export * from "./nutri-plan-browsing.routes";
 
 export * from "./checkout.routes";
+
+export * from "./user-program.routes";

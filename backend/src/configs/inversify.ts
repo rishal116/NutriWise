@@ -14,14 +14,13 @@ import { NutritionistBrowsingController } from "../controllers/implementations/u
 import { NutritionistPlanBrowsingController } from "../controllers/implementations/user/nutriPlanBrowsing.controller";
 import { OnboardingController } from "../controllers/implementations/user/onboarding.controller";
 import { ReviewController } from "../controllers/implementations/user/review.controller";
-import { TaskController } from "../controllers/implementations/user/task.controller";
 import { UserAccountController } from "../controllers/implementations/user/userAccount.controller";
 import { UserAuthController } from "../controllers/implementations/user/userAuth.controller";
 import { UserGroupController } from "../controllers/implementations/user/userGroup.controller";
 import { UserMeetingsController } from "../controllers/implementations/user/userMeetings.controller";
-import { UserPlanController } from "../controllers/implementations/user/userPlan.controller";
 import { UserProfileController } from "../controllers/implementations/user/userProfile.controller";
 import { UserProgramController } from "../controllers/implementations/user/userProgram.controller";
+import { UserProgramDayController } from "../controllers/implementations/user/userProgramDay.controller";
 // ---------- Services ----------
 import { HealthDetailsService } from "../services/implements/user/healthDetails.service";
 import { HealthProgressService } from "../services/implements/user/healthProgress.service";
@@ -29,25 +28,23 @@ import { NutritionistBrowsingService } from "../services/implements/user/nutriBr
 import { NutritionistPlanBrowsingService } from "../services/implements/user/nutriPlanBrowsing.service";
 import { OnboardingService } from "../services/implements/user/onboarding.service";
 import { ReviewService } from "../services/implements/user/review.service";
-import { TaskService } from "../services/implements/user/task.service";
 import { UserAccountService } from "../services/implements/user/userAccount.service";
 import { UserAuthService } from "../services/implements/user/userAuth.service";
 import { UserGroupService } from "../services/implements/user/userGroup.service";
 import { UserMeetingsService } from "../services/implements/user/userMeetings.service";
-import { UserPlanService } from "../services/implements/user/userPlan.service";
 import { UserProfileService } from "../services/implements/user/userProfile.service";
 import { UserProgramService } from "../services/implements/user/userProgram.service";
+import { UserProgramDayService } from "../services/implements/user/userProgramDay.service";
 // ---------- Repositories ----------
 import { HealthDetailsRepository } from "../repositories/implements/user/healthDetails.repository";
 import { HealthProgressRepository } from "../repositories/implements/user/healthProgress.repository";
 import { NutritionistBrowsingRepository } from "../repositories/implements/user/nutriBrowsing.repository";
 import { NutritionistPlanBrowsingRepository } from "../repositories/implements/user/nutriPlanBrowsing.repository";
-import { ProgramDayRepository } from "../repositories/implements/user/programDay.repository";
+import { UserProgramDayRepository } from "../repositories/implements/user/userProgramDay.repository";
 import { ReviewRepository } from "../repositories/implements/user/review.repository";
-import { TaskLogRepository } from "../repositories/implements/user/taskLog.repository";
-import { UserPlanRepository } from "../repositories/implements/user/userPlan.repository";
 import { UserProgramRepository } from "../repositories/implements/user/userProgram.repository";
 import { UserRepository } from "../repositories/implements/user/user.repository";
+import { UserPlanRepository } from "../repositories/implements/user/userPlan.repository";
 // ---------- Interfaces ----------
 import { IHealthDetailsController } from "../controllers/interfaces/user/IHealthDetailsController";
 import { IHealthDetailsRepository } from "../repositories/interfaces/user/IHealthDetailsRepository";
@@ -63,13 +60,10 @@ import { INutritionistPlanBrowsingRepository } from "../repositories/interfaces/
 import { INutritionistPlanBrowsingService } from "../services/interfaces/user/INutritionistPlanBrowsingService";
 import { IOnboardingController } from "../controllers/interfaces/user/IOnboardingController";
 import { IOnboardingService } from "../services/interfaces/user/IOnboardingService";
-import { IProgramDayRepository } from "../repositories/interfaces/user/IProgramDayRepository";
+import { IUserProgramDayRepository } from "../repositories/interfaces/user/IUserProgramDayRepository";
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 import { IReviewRepository } from "../repositories/interfaces/user/IReviewRepository";
 import { IReviewService } from "../services/interfaces/user/IReviewService";
-import { ITaskController } from "../controllers/interfaces/user/ITaskController";
-import { ITaskLogRepository } from "../repositories/interfaces/user/ITaskLogRepository";
-import { ITaskService } from "../services/interfaces/user/ITaskService";
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
 import { IUserAccountService } from "../services/interfaces/user/IUserAccountService";
 import { IUserAuthController } from "../controllers/interfaces/user/IUserAuthController";
@@ -78,15 +72,15 @@ import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupC
 import { IUserGroupService } from "../services/interfaces/user/IUserGroupService";
 import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMeetingsController";
 import { IUserMeetingsService } from "../services/interfaces/user/IUserMeetingsService";
-import { IUserPlanController } from "../controllers/interfaces/user/IUserPlanController";
-import { IUserPlanRepository } from "../repositories/interfaces/user/IUserPlanRepository";
-import { IUserPlanService } from "../services/interfaces/user/IUserPlanService";
 import { IUserProfileController } from "../controllers/interfaces/user/IUserProfileController";
 import { IUserProfileService } from "../services/interfaces/user/IUserProfileService";
 import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
 import { IUserProgramRepository } from "../repositories/interfaces/user/IUserProgramRepository";
 import { IUserProgramService } from "../services/interfaces/user/IUserProgramService";
 import { IUserRepository } from "../repositories/interfaces/user/IUserRepository";
+import { IUserProgramDayController } from "../controllers/interfaces/user/IUserProgramDayController";
+import { IUserProgramDayService } from "../services/interfaces/user/IUserProgramDayService";
+import { IUserPlanRepository } from "../repositories/interfaces/user/IUserPlanRepository";
 
 // ---------- Admin Module ----------
 // ---------- Controllers ----------
@@ -256,8 +250,6 @@ container
 
 container.bind<IReviewController>(TYPES.IReviewController).to(ReviewController);
 
-container.bind<ITaskController>(TYPES.ITaskController).to(TaskController);
-
 container
   .bind<IUserAccountController>(TYPES.IUserAccountController)
   .to(UserAccountController);
@@ -273,10 +265,6 @@ container
 container
   .bind<IUserMeetingsController>(TYPES.IUserMeetingsController)
   .to(UserMeetingsController);
-
-container
-  .bind<IUserPlanController>(TYPES.IUserPlanController)
-  .to(UserPlanController);
 
 container
   .bind<IUserProfileController>(TYPES.IUserProfileController)
@@ -311,8 +299,6 @@ container
 
 container.bind<IReviewService>(TYPES.IReviewService).to(ReviewService);
 
-container.bind<ITaskService>(TYPES.ITaskService).to(TaskService);
-
 container
   .bind<IUserAccountService>(TYPES.IUserAccountService)
   .to(UserAccountService);
@@ -324,8 +310,6 @@ container.bind<IUserGroupService>(TYPES.IUserGroupService).to(UserGroupService);
 container
   .bind<IUserMeetingsService>(TYPES.IUserMeetingsService)
   .to(UserMeetingsService);
-
-container.bind<IUserPlanService>(TYPES.IUserPlanService).to(UserPlanService);
 
 container
   .bind<IUserProfileService>(TYPES.IUserProfileService)
@@ -355,25 +339,25 @@ container
   .to(NutritionistPlanBrowsingRepository);
 
 container
-  .bind<IProgramDayRepository>(TYPES.IProgramDayRepository)
-  .to(ProgramDayRepository);
+  .bind<IUserProgramDayRepository>(TYPES.IUserProgramDayRepository)
+  .to(UserProgramDayRepository);
 
 container.bind<IReviewRepository>(TYPES.IReviewRepository).to(ReviewRepository);
-
-container
-  .bind<ITaskLogRepository>(TYPES.ITaskLogRepository)
-  .to(TaskLogRepository);
-
-container
-  .bind<IUserPlanRepository>(TYPES.IUserPlanRepository)
-  .to(UserPlanRepository);
 
 container
   .bind<IUserProgramRepository>(TYPES.IUserProgramRepository)
   .to(UserProgramRepository);
 
 container.bind<IUserRepository>(TYPES.IUserRepository).to(UserRepository);
-
+container
+  .bind<IUserProgramDayController>(TYPES.IUserProgramDayController)
+  .to(UserProgramDayController);
+container
+  .bind<IUserProgramDayService>(TYPES.IUserProgramDayService)
+  .to(UserProgramDayService);
+container
+  .bind<IUserPlanRepository>(TYPES.IUserPlanRepository)
+  .to(UserPlanRepository);
 // ======================================================
 // ADMIN BINDINGS
 // ======================================================
@@ -494,6 +478,22 @@ container
   .bind<INutritionistProfileRepository>(TYPES.INutritionistProfileRepository)
   .to(NutritionistProfileRepository);
 
+// latest
+container
+  .bind<INutriProgramRepository>(TYPES.INutriProgramRepository)
+  .to(NutriProgramRepository);
+container
+  .bind<INutriProgramDayService>(TYPES.INutriProgramDayService)
+  .to(NutriProgramDayService);
+
+container
+  .bind<INutriProgramDayController>(TYPES.INutriProgramDayController)
+  .to(NutriProgramDayController);
+
+container
+  .bind<INutriProgramDayRepository>(TYPES.INutriProgramDayRepository)
+  .to(NutriProgramDayRepository);
+
 // ======================================================
 // CHAT BINDINGS
 // ======================================================
@@ -584,21 +584,5 @@ container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
 // ======================================================
 
 container.bind<ISocketService>(TYPES.ISocketService).to(SocketService);
-
-// latest
-container
-  .bind<INutriProgramRepository>(TYPES.INutriProgramRepository)
-  .to(NutriProgramRepository);
-container
-  .bind<INutriProgramDayService>(TYPES.INutriProgramDayService)
-  .to(NutriProgramDayService);
-
-container
-  .bind<INutriProgramDayController>(TYPES.INutriProgramDayController)
-  .to(NutriProgramDayController);
-
-container
-  .bind<INutriProgramDayRepository>(TYPES.INutriProgramDayRepository)
-  .to(NutriProgramDayRepository);
 
 export { container };

@@ -58,6 +58,7 @@ export const TYPES = {
   INutritionistPlanBrowsingController: Symbol.for(
     "INutritionistPlanBrowsingController",
   ),
+  IUserProgramDayController: Symbol.for("IUserProgramDayController"),
 
   // Services
   IUserAuthService: Symbol.for("IUserAuthService"),
@@ -76,13 +77,14 @@ export const TYPES = {
   INutritionistPlanBrowsingService: Symbol.for(
     "INutritionistPlanBrowsingService",
   ),
+  IUserProgramDayService: Symbol.for("IUserProgramDayService"),
 
   // Repositories
   IUserRepository: Symbol.for("IUserRepository"),
   IHealthDetailsRepository: Symbol.for("IHealthDetailsRepository"),
   IUserPlanRepository: Symbol.for("IUserPlanRepository"),
   IUserProgramRepository: Symbol.for("IUserProgramRepository"),
-  IProgramDayRepository: Symbol.for("IProgramDayRepository"),
+  IUserProgramDayRepository: Symbol.for("IUserProgramDayRepository"),
   ITaskLogRepository: Symbol.for("ITaskLogRepository"),
   IHealthProgressRepository: Symbol.for("IHealthProgressRepository"),
   IReviewRepository: Symbol.for("IReviewRepository"),
