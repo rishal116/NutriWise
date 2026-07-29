@@ -10,22 +10,15 @@ import type {
 } from "@/dtos/nutritionist/program/program-response.dto";
 
 export const nutriProgramService = {
-  async getPrograms(
-    query?: GetProgramsQuery,
-  ): Promise<ProgramBrowseResponse> {
-    const { data } = await clientApi.get(
-      NUTRITIONIST_PROGRAM_ROUTES.LIST,
-      {
-        params: query,
-      },
-    );
+  async getPrograms(query?: GetProgramsQuery): Promise<ProgramBrowseResponse> {
+    const { data } = await clientApi.get(NUTRITIONIST_PROGRAM_ROUTES.LIST, {
+      params: query,
+    });
 
     return data.data;
   },
 
-  async getProgramDetails(
-    programId: string,
-  ): Promise<ProgramSummary> {
+  async getProgramDetails(programId: string): Promise<ProgramSummary> {
     const { data } = await clientApi.get(
       NUTRITIONIST_PROGRAM_ROUTES.DETAILS(programId),
     );

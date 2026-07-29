@@ -27,7 +27,7 @@ import { LoginDto } from "../../../dtos/user/auth/login.dto";
 import { ResendOtpDto } from "../../../dtos/user/auth/resend-otp.dto";
 import { AuthResponseDto } from "../../../dtos/user/auth/auth-response.dto";
 import { IPasswordResetRepository } from "../../../repositories/interfaces/common/IPasswordResetRepository";
-import { GetMeResponseDto } from "../../../dtos/user/get-me-response.dto";
+import { GetMeResponseDto } from "../../../dtos/user/auth/get-me-response.dto";
 import { GoogleAuthDto } from "../../../dtos/user/auth/google-auth.dto";
 import { ForgotPasswordDto } from "../../../dtos/user/auth/forgot-password.dto";
 import { ResetPasswordDto } from "../../../dtos/user/auth/reset-password.dto";

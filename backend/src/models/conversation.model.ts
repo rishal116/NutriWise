@@ -1,37 +1,33 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 export type ChatType = "direct" | "group";
 
-export interface IConversation extends Document {
+export type ConversationPurpose = "coaching" | "consultation" | "group";
+
+export type ConversationStatus = "active" | "inactive" | "blocked" | "closed";
+
+export interface IConversation {
   _id: Types.ObjectId;
-
   chatType: ChatType;
-
   directKey?: string;
-
+  purpose: ConversationPurpose;
+  status: ConversationStatus;
   title?: string;
   groupAvatar?: string;
-  admins?: Types.ObjectId[];
   description?: string;
-  visibility?: "public" | "private";
-  joinRequests: {
-    userId: Types.ObjectId;
-    requestedAt: Date;
-  }[];
-
   lastMessageId?: Types.ObjectId;
-  lastMessageAt?: Date;
   lastMessagePreview?: string;
+
   lastMessageSenderId?: Types.ObjectId;
 
-  isDeleted: boolean;
-  deletedAt?: Date;
+  lastActivityAt?: Date;
 
   createdAt: Date;
+
   updatedAt: Date;
 }
 
-const conversationSchema = new Schema<IConversation>(
+const ConversationSchema = new Schema<IConversation>(
   {
     chatType: {
       type: String,
@@ -39,26 +35,40 @@ const conversationSchema = new Schema<IConversation>(
       required: true,
       index: true,
     },
+    
+    directKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+
+    purpose: {
+      type: String,
+      enum: ["coaching", "consultation", "group"],
+      required: true,
+      index: true,
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "inactive", "blocked", "closed"],
+      default: "active",
+      index: true,
+    },
 
     title: {
       type: String,
+      trim: true,
+      maxlength: 100,
       required: function () {
         return this.chatType === "group";
       },
-      trim: true,
     },
 
     groupAvatar: {
       type: String,
       default: null,
-    },
-
-    admins: {
-      type: [Schema.Types.ObjectId],
-      ref: "User",
-      required: function () {
-        return this.chatType === "group";
-      },
     },
 
     description: {
@@ -68,51 +78,15 @@ const conversationSchema = new Schema<IConversation>(
       default: "",
     },
 
-    visibility: {
-      type: String,
-      enum: ["public", "private"],
-      default: "public",
-      index: true,
-    },
-
-    directKey: {
-      type: String,
-      trim: true,
-      minlength: 3,
-      maxlength: 100,
-      required: function () {
-        return this.chatType === "direct";
-      },
-    },
-
-    joinRequests: [
-      {
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        requestedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
-
     lastMessageId: {
       type: Schema.Types.ObjectId,
       ref: "Message",
     },
 
-    lastMessageAt: {
-      type: Date,
-      index: true,
-    },
-
     lastMessagePreview: {
       type: String,
-      maxlength: 200,
       trim: true,
+      maxlength: 200,
     },
 
     lastMessageSenderId: {
@@ -120,50 +94,50 @@ const conversationSchema = new Schema<IConversation>(
       ref: "User",
     },
 
-    isDeleted: {
-      type: Boolean,
-      default: false,
+    lastActivityAt: {
+      type: Date,
       index: true,
     },
-
-    deletedAt: {
-      type: Date,
-    },
   },
-  { timestamps: true },
-);
-
-conversationSchema.index(
-  { directKey: 1 },
   {
-    unique: true,
-    partialFilterExpression: {
-      chatType: "direct",
-      isDeleted: false,
-    },
+    timestamps: true,
   },
 );
 
-conversationSchema.index(
-  { _id: 1, "joinRequests.userId": 1 },
-  { unique: true, sparse: true },
-);
+/**
+ * Chat listing optimization
+ */
+ConversationSchema.index({
+  status: 1,
+  lastActivityAt: -1,
+});
 
-conversationSchema.index({ visibility: 1, chatType: 1 });
-conversationSchema.index({ lastMessageAt: -1 });
-conversationSchema.index({ isDeleted: 1, lastMessageAt: -1 });
+/**
+ * Find conversations by purpose
+ */
+ConversationSchema.index({
+  purpose: 1,
+  status: 1,
+});
 
-conversationSchema.pre("validate", function (next) {
+/**
+ * Group / direct filtering
+ */
+ConversationSchema.index({
+  chatType: 1,
+  status: 1,
+});
+
+ConversationSchema.pre("validate", function (next) {
   if (this.chatType === "direct") {
     this.title = undefined;
+    this.groupAvatar = undefined;
     this.description = undefined;
-    this.visibility = undefined;
-    this.joinRequests = [];
   }
 
   if (this.chatType === "group") {
-    if (!this.admins || this.admins.length === 0) {
-      return next(new Error("Group must have at least one admin"));
+    if (!this.title) {
+      return next(new Error("Group conversation requires title"));
     }
   }
 
@@ -172,5 +146,5 @@ conversationSchema.pre("validate", function (next) {
 
 export const ConversationModel = model<IConversation>(
   "Conversation",
-  conversationSchema,
+  ConversationSchema,
 );

@@ -1,17 +1,17 @@
 import mongoose, { Types } from "mongoose";
 import Stripe from "stripe";
 import { inject, injectable } from "inversify";
-
 import logger from "../../../../utils/logger";
 import { TYPES } from "../../../../types/types";
-
+import { buildDirectKey } from "../../../../utils/chat.util";
 import { IStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/IStripeCheckoutHandlerService";
-
 import { IUserPlanRepository } from "../../../../repositories/interfaces/user/IUserPlanRepository";
 import { IUserProgramRepository } from "../../../../repositories/interfaces/user/IUserProgramRepository";
 import { IPaymentRepository } from "../../../../repositories/interfaces/common/IPaymentRepository";
 import { IWalletRepository } from "../../../../repositories/interfaces/common/IWalletRepository";
 import { INutritionistPlanRepository } from "../../../../repositories/interfaces/nutritionist/INutriPlanRepository";
+import { IConversationRepository } from "../../../../repositories/interfaces/chat/IConversationRepository";
+import { IConversationMemberRepository } from "../../../../repositories/interfaces/chat/IConversationMemberRepository";
 
 @injectable()
 export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerService {
@@ -30,7 +30,56 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
 
     @inject(TYPES.INutritionistPlanRepository)
     private readonly _planRepository: INutritionistPlanRepository,
+
+    @inject(TYPES.IConversationRepository)
+    private readonly _conversationRepository: IConversationRepository,
+
+    @inject(TYPES.IConversationMemberRepository)
+    private readonly _conversationMemberRepository: IConversationMemberRepository,
   ) {}
+
+  private async createConversationIfNeeded(
+    userId: Types.ObjectId,
+    nutritionistId: Types.ObjectId,
+    session: mongoose.ClientSession,
+  ): Promise<void> {
+    const directKey = buildDirectKey(userId, nutritionistId);
+
+    const existingConversation =
+      await this._conversationRepository.findByDirectKey(directKey);
+
+    if (existingConversation) {
+      return;
+    }
+
+    const conversation = await this._conversationRepository.createWithSession(
+      {
+        chatType: "direct",
+        purpose: "coaching",
+        status: "active",
+        directKey,
+      },
+      session,
+    );
+
+    await this._conversationMemberRepository.createManyWithSession(
+      [
+        {
+          conversationId: conversation._id,
+          userId,
+          role: "member",
+          status: "active",
+        },
+        {
+          conversationId: conversation._id,
+          userId: nutritionistId,
+          role: "member",
+          status: "active",
+        },
+      ],
+      session,
+    );
+  }
 
   async handle(session: Stripe.Checkout.Session): Promise<void> {
     if (
@@ -82,12 +131,10 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       if (latestPlan?.endDate && latestPlan.endDate > new Date()) {
         startDate = new Date(latestPlan.endDate);
         startDate.setDate(startDate.getDate() + 1);
-
         subscriptionStatus = "pending";
       }
 
       const endDate = new Date(startDate);
-
       endDate.setDate(endDate.getDate() + plan.durationDays);
 
       const userPlan = await this._userPlanRepository.createWithSession(
@@ -95,26 +142,20 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
           userId,
           nutritionistId,
           planId,
-
           paymentStatus: "paid",
           subscriptionStatus,
-
           stripeCheckoutSessionId: session.id,
           stripePaymentIntentId: session.payment_intent.toString(),
-
           amount: plan.price,
           currency: plan.currency,
-
           planSnapshot: {
             title: plan.title,
             durationDays: plan.durationDays,
             price: plan.price,
             currency: plan.currency,
           },
-
           startDate,
           endDate,
-
           paymentCompletedAt: new Date(),
         },
         dbSession,
@@ -126,43 +167,35 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
           nutritionistId,
           userPlanId: userPlan._id,
           planId,
-
           startDate,
           endDate,
-
           durationDays: plan.durationDays,
-
           currentDay: 1,
           completionPercentage: 0,
-
           status: subscriptionStatus === "active" ? "active" : "upcoming",
         },
         dbSession,
       );
 
+      await this.createConversationIfNeeded(userId, nutritionistId, dbSession);
+
       await this._paymentRepository.createWithSession(
         {
           userId,
           sellerId: nutritionistId,
-
           resourceType: "nutritionist_plan",
           resourceId: planId,
-
           provider: "stripe",
           status: "paid",
-
           amount: plan.price,
           currency: plan.currency,
-
           checkoutSessionId: session.id,
           paymentIntentId: session.payment_intent.toString(),
-
           itemSnapshot: {
             title: plan.title,
             price: plan.price,
             currency: plan.currency,
           },
-
           metadata: {
             userPlanId: userPlan._id.toString(),
           },
@@ -182,9 +215,13 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         dbSession,
       );
 
-      await this._userPlanRepository.updateById(userPlan._id.toString(), {
-        userProgramId: userProgram._id,
-      });
+      await this._userPlanRepository.updateByIdWithSession(
+        userPlan._id,
+        {
+          userProgramId: userProgram._id,
+        },
+        dbSession,
+      );
 
       await dbSession.commitTransaction();
 

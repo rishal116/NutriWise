@@ -50,7 +50,7 @@ const navSections: NavSection[] = [
   {
     title: "My Journey",
     items: [
-      { name: "My Plan", href: "/user/plans", icon: Calendar },
+      { name: "My Programs", href: "/user/programs", icon: Calendar },
       { name: "Meetings", href: "/user/meetings", icon: Video },
       { name: "Progress", href: "/user/progress", icon: Trophy },
     ],

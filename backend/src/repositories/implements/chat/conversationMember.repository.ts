@@ -1,6 +1,9 @@
-import { Types } from "mongoose";
+import { ClientSession, Types } from "mongoose";
+
 import { BaseRepository } from "../common/base.repository";
+
 import { IConversationMemberRepository } from "../../interfaces/chat/IConversationMemberRepository";
+
 import {
   ConversationMemberModel,
   IConversationMember,
@@ -14,18 +17,32 @@ export class ConversationMemberRepository
     super(ConversationMemberModel);
   }
 
-  private toObjectId(id: string) {
+  private toObjectId(id: string): Types.ObjectId {
     return new Types.ObjectId(id);
+  }
+
+  async createManyWithSession(
+    data: Partial<IConversationMember>[],
+    session: ClientSession,
+  ): Promise<IConversationMember[]> {
+    const docs = await this._model.insertMany(data, {
+      session,
+    });
+
+    return docs.map((doc) => doc.toObject() as IConversationMember);
   }
 
   async createMany(
     data: Partial<IConversationMember>[],
   ): Promise<IConversationMember[]> {
-    const docs = await this._model.insertMany(data, { ordered: false });
-    return docs.map((doc) => doc.toObject());
+    const docs = await this._model.insertMany(data);
+
+    return docs.map((doc) => doc.toObject() as IConversationMember);
   }
 
-  async findByConversationId(conversationId: string) {
+  async findByConversationId(
+    conversationId: string,
+  ): Promise<IConversationMember[]> {
     return this._model
       .find({
         conversationId: this.toObjectId(conversationId),
@@ -35,26 +52,29 @@ export class ConversationMemberRepository
       .exec();
   }
 
-  async findByConversationIds(conversationIds: string[]) {
-    const objectIds = conversationIds.map(this.toObjectId);
-
+  async findByConversationIds(
+    conversationIds: string[],
+  ): Promise<IConversationMember[]> {
     return this._model
       .find({
-        conversationId: { $in: objectIds },
+        conversationId: {
+          $in: conversationIds.map((id) => this.toObjectId(id)),
+        },
         status: "active",
       })
       .lean<IConversationMember[]>()
       .exec();
   }
 
-  async findByUser(userId: string, roleContext: "user" | "nutritionist") {
+  async findByUser(userId: string): Promise<IConversationMember[]> {
     return this._model
       .find({
         userId: this.toObjectId(userId),
-        roleContext,
         status: "active",
       })
-      .sort({ updatedAt: -1 })
+      .sort({
+        updatedAt: -1,
+      })
       .lean<IConversationMember[]>()
       .exec();
   }
@@ -62,139 +82,99 @@ export class ConversationMemberRepository
   async findMember(
     conversationId: string,
     userId: string,
-    roleContext: "user" | "nutritionist",
-  ) {
+  ): Promise<IConversationMember | null> {
     return this._model
       .findOne({
         conversationId: this.toObjectId(conversationId),
         userId: this.toObjectId(userId),
-        roleContext,
         status: "active",
       })
       .lean<IConversationMember | null>()
       .exec();
   }
 
-  async incrementUnread(
-    conversationId: string,
-    senderId: string,
-    senderContext: "user" | "nutritionist",
-  ) {
-    await this._model
-      .updateMany(
-        {
-          conversationId: this.toObjectId(conversationId),
-          userId: { $ne: this.toObjectId(senderId) },
-          roleContext: senderContext === "user" ? "nutritionist" : "user",
-          status: "active",
-        },
-        {
-          $inc: { unreadCount: 1 },
-        },
-      )
-      .exec();
-  }
-
-  async incrementUnreadForGroup(conversationId: string, senderId: string) {
-    await this._model
-      .updateMany(
-        {
-          conversationId: this.toObjectId(conversationId),
-          userId: { $ne: this.toObjectId(senderId) },
-          status: "active",
-        },
-        {
-          $inc: { unreadCount: 1 },
-        },
-      )
-      .exec();
-  }
-
-  async resetUnread(
-    conversationId: string,
-    userId: string,
-    roleContext: "user" | "nutritionist",
-  ) {
-    await this._model
-      .updateOne(
-        {
-          conversationId: this.toObjectId(conversationId),
-          userId: this.toObjectId(userId),
-          roleContext,
-          status: "active",
-        },
-        {
-          $set: {
-            unreadCount: 0,
-            lastReadAt: new Date(),
-          },
-        },
-      )
-      .exec();
-  }
-
-  async exists(
-    conversationId: string,
-    userId: string,
-    roleContext: "user" | "nutritionist",
-  ) {
+  async existsMember(conversationId: string, userId: string): Promise<boolean> {
     const member = await this._model.exists({
       conversationId: this.toObjectId(conversationId),
       userId: this.toObjectId(userId),
-      roleContext,
       status: "active",
     });
 
-    return !!member;
+    return member !== null;
   }
 
   async addMembers(
     conversationId: string,
     members: {
       userId: string;
-      roleContext: "user" | "nutritionist";
       role?: "member" | "admin" | "owner";
     }[],
   ): Promise<void> {
-    const docs = members.map((m) => ({
+    const docs = members.map((member) => ({
       conversationId: this.toObjectId(conversationId),
-      userId: this.toObjectId(m.userId),
-      role: m.role ?? "member",
-      roleContext: m.roleContext,
+      userId: this.toObjectId(member.userId),
+      role: member.role ?? "member",
       status: "active",
       joinedAt: new Date(),
     }));
 
-    try {
-      await this._model.insertMany(docs, { ordered: false });
-    } catch (err: unknown) {
-      if (typeof err === "object" && err !== null && "writeErrors" in err) {
-        return;
-      }
-      throw err;
-    }
+    await this._model.insertMany(docs, {
+      ordered: false,
+    });
   }
 
   async leaveConversation(
     conversationId: string,
     userId: string,
-    roleContext: "user" | "nutritionist",
-  ) {
-    await this._model
-      .updateOne(
-        {
-          conversationId: this.toObjectId(conversationId),
-          userId: this.toObjectId(userId),
-          roleContext,
-          status: "active",
+  ): Promise<void> {
+    await this._model.updateOne(
+      {
+        conversationId: this.toObjectId(conversationId),
+        userId: this.toObjectId(userId),
+        status: "active",
+      },
+      {
+        $set: {
+          status: "left",
+          leftAt: new Date(),
         },
-        {
-          $set: {
-            status: "left",
-            leftAt: new Date(),
-          },
+      },
+    );
+  }
+
+  async incrementUnread(
+    conversationId: string,
+    senderId: string,
+  ): Promise<void> {
+    await this._model.updateMany(
+      {
+        conversationId: this.toObjectId(conversationId),
+        userId: {
+          $ne: this.toObjectId(senderId),
         },
-      )
-      .exec();
+        status: "active",
+      },
+      {
+        $inc: {
+          unreadCount: 1,
+        },
+      },
+    );
+  }
+
+  async resetUnread(conversationId: string, userId: string): Promise<void> {
+    await this._model.updateOne(
+      {
+        conversationId: this.toObjectId(conversationId),
+        userId: this.toObjectId(userId),
+        status: "active",
+      },
+      {
+        $set: {
+          unreadCount: 0,
+          lastReadAt: new Date(),
+        },
+      },
+    );
   }
 }

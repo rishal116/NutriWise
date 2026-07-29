@@ -2,7 +2,9 @@ import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 import { IBaseRepository } from "../common/IBaseRepository";
 import { IUserProgram } from "../../../models/userProgram.model";
 import { IUserProgramPopulated } from "../../../types/userProgram.populated";
-
+import { UserProgramBrowseResult } from "../../../types/userProgram.card";
+import { UserProgramListQueryDTO } from "../../../dtos/user/program/user-Program-list-query.dto";
+import { IUserProgramDetailsProjection } from "../../../types/user/program/user-program-details.projection";
 
 export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   createWithSession(
@@ -52,4 +54,14 @@ export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   activateUpcomingPrograms(): Promise<UpdateResult>;
 
   completeActivePrograms(): Promise<UpdateResult>;
+
+  browsePrograms(
+    userId: string | Types.ObjectId,
+    query: UserProgramListQueryDTO,
+  ): Promise<UserProgramBrowseResult>;
+
+  findProgramDetails(
+    userId: string | Types.ObjectId,
+    programId: string | Types.ObjectId,
+  ): Promise<IUserProgramDetailsProjection | null>;
 }

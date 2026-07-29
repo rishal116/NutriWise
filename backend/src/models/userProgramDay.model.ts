@@ -1,62 +1,41 @@
 import { Schema, model, Types } from "mongoose";
 
 export const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
-
 export type MealType = (typeof MEAL_TYPES)[number];
 
 export interface IUserProgramMeal {
   _id: Types.ObjectId;
-
   mealType: MealType;
-
   title: string;
-
   description?: string;
-
   calories?: number;
-
   order: number;
 }
 
 export interface IUserProgramWorkout {
   _id: Types.ObjectId;
-
   title: string;
-
   duration: number;
-
   instructions?: string;
-
   order: number;
 }
 
 export interface IUserProgramHabit {
   _id: Types.ObjectId;
-
   title: string;
-
   targetValue?: number;
-
   unit?: string;
-
   order: number;
 }
 
 export interface IUserProgramDay {
   _id: Types.ObjectId;
-
   userProgramId: Types.ObjectId;
-
   dayNumber: number;
-
   meals: IUserProgramMeal[];
-
   workouts: IUserProgramWorkout[];
-
   habits: IUserProgramHabit[];
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -66,29 +45,24 @@ const MealSchema = new Schema<IUserProgramMeal>(
       type: Schema.Types.ObjectId,
       auto: true,
     },
-
     mealType: {
       type: String,
       enum: MEAL_TYPES,
       required: true,
     },
-
     title: {
       type: String,
       required: true,
       trim: true,
     },
-
     description: {
       type: String,
       trim: true,
     },
-
     calories: {
       type: Number,
       min: 0,
     },
-
     order: {
       type: Number,
       default: 0,
@@ -106,24 +80,20 @@ const WorkoutSchema = new Schema<IUserProgramWorkout>(
       type: Schema.Types.ObjectId,
       auto: true,
     },
-
     title: {
       type: String,
       required: true,
       trim: true,
     },
-
     duration: {
       type: Number,
       required: true,
       min: 1,
     },
-
     instructions: {
       type: String,
       trim: true,
     },
-
     order: {
       type: Number,
       default: 0,
@@ -141,23 +111,19 @@ const HabitSchema = new Schema<IUserProgramHabit>(
       type: Schema.Types.ObjectId,
       auto: true,
     },
-
     title: {
       type: String,
       required: true,
       trim: true,
     },
-
     targetValue: {
       type: Number,
       min: 0,
     },
-
     unit: {
       type: String,
       trim: true,
     },
-
     order: {
       type: Number,
       default: 0,
@@ -177,23 +143,19 @@ const UserProgramDaySchema = new Schema<IUserProgramDay>(
       required: true,
       index: true,
     },
-
     dayNumber: {
       type: Number,
       required: true,
       min: 1,
     },
-
     meals: {
       type: [MealSchema],
       default: [],
     },
-
     workouts: {
       type: [WorkoutSchema],
       default: [],
     },
-
     habits: {
       type: [HabitSchema],
       default: [],

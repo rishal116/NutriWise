@@ -2,7 +2,13 @@ import { BaseRepository } from "../common/base.repository";
 import { IUserPlan, UserPlanModel } from "../../../models/userPlan.model";
 import { IUserPlanRepository } from "../../interfaces/user/IUserPlanRepository";
 import { IUserPlanPopulated } from "../../../types/userPlan.populated";
-import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
+import {
+  ClientSession,
+  FilterQuery,
+  Types,
+  UpdateQuery,
+  UpdateResult,
+} from "mongoose";
 
 export class UserPlanRepository
   extends BaseRepository<IUserPlan>
@@ -18,6 +24,29 @@ export class UserPlanRepository
   ): Promise<IUserPlan> {
     const [doc] = await this._model.create([data], { session });
     return doc;
+  }
+
+  async updateByIdWithSession(
+    id: string | Types.ObjectId,
+    update: UpdateQuery<IUserPlan>,
+    session: ClientSession,
+  ): Promise<IUserPlan | null> {
+    return this._model.findByIdAndUpdate(id, update, {
+      new: true,
+      session,
+    });
+  }
+
+  async updateOneWithSession(
+    filter: FilterQuery<IUserPlan>,
+    update: UpdateQuery<IUserPlan>,
+    session: ClientSession,
+  ): Promise<number> {
+    const result = await this._model.updateOne(filter, update, {
+      session,
+    });
+
+    return result.modifiedCount;
   }
 
   async findBySessionId(sessionId: string): Promise<IUserPlan | null> {
