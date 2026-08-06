@@ -1,23 +1,20 @@
 import {
-  AvailabilityStatus,
-  CoachLevel,
-  Language,
-  NutritionistSortBy,
   Specialization,
-} from "@/types/nutritionist.types";
+  Language,
+  CoachLevel,
+  NutritionistSortBy,
+} from "../../../types/nutritionist.types";
+import { Gender } from "../../../enums/user/user.enum";
 
 export interface NutritionistListQueryDTO {
   search?: string;
-
-  specializations?: Specialization[];
+  specialization?: Specialization;
   languages?: Language[];
-  coachLevels?: CoachLevel[];
-  availabilityStatuses?: AvailabilityStatus[];
-
+  coachLevel?: CoachLevel;
+  gender?: Gender;
   minRating?: number;
-
+  availableOnly?: boolean;
   sortBy?: NutritionistSortBy;
-
   cursor?: string;
   limit?: number;
 }

@@ -1,81 +1,46 @@
-export class MealResponseDTO {
-  id!: string;
+import { Types } from "mongoose";
 
-  mealType!: string;
+import {
+  ActivityValueType,
+  ProgramActivityCategory,
+} from "../../../models/userProgramDay.model";
 
-  title!: string;
+export interface ProgramActivityResponseDTO {
+  _id: Types.ObjectId;
+
+  category: ProgramActivityCategory;
+
+  title: string;
 
   description?: string;
 
-  calories?: number;
-
-  order!: number;
-}
-
-export class WorkoutResponseDTO {
-  id!: string;
-
-  title!: string;
-
-  duration!: number;
-
   instructions?: string;
 
-  order!: number;
-}
-
-export class HabitResponseDTO {
-  id!: string;
-
-  title!: string;
+  valueType: ActivityValueType;
 
   targetValue?: number;
 
   unit?: string;
 
-  order!: number;
+  estimatedDurationMinutes?: number;
+
+  isRequired: boolean;
+
+  configuration?: Record<string, unknown>;
+
+  order: number;
 }
 
-export class ProgramDaySummaryDTO {
-  id!: string;
+export interface ProgramDayResponseDTO {
+  userProgramDayId: Types.ObjectId;
 
-  userProgramId!: string;
+  userProgramId: Types.ObjectId;
 
-  dayNumber!: number;
+  dayNumber: number;
 
-  mealCount!: number;
+  activities: ProgramActivityResponseDTO[];
 
-  workoutCount!: number;
+  createdAt: Date;
 
-  habitCount!: number;
-
-  createdAt!: Date;
-
-  updatedAt!: Date;
-}
-
-export class ProgramDayDetailsDTO {
-  id!: string;
-
-  userProgramId!: string;
-
-  dayNumber!: number;
-
-  meals!: MealResponseDTO[];
-
-  workouts!: WorkoutResponseDTO[];
-
-  habits!: HabitResponseDTO[];
-
-  createdAt!: Date;
-
-  updatedAt!: Date;
-}
-
-export class ProgramDayBrowseResponseDTO {
-  items!: ProgramDaySummaryDTO[];
-
-  nextCursor!: string | null;
-
-  hasMore!: boolean;
+  updatedAt: Date;
 }

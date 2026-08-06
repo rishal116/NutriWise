@@ -5,7 +5,7 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import { COMMON_MESSAGES } from "../../../constants";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { INutritionistBrowsingController } from "../../interfaces/user/INutriBrowsingController";
-import { INutritionistBrowsingService } from "../../../services/interfaces/user/INutriBrowsingService";
+import { INutritionistBrowsingService } from "../../../services/interfaces/user/discovery/INutriBrowsingService";
 import { toNutritionistListQueryDTO } from "../../../mapper/user/nutri-browsing/nutri-list-query.mapper";
 
 @injectable()
@@ -23,7 +23,7 @@ export class NutritionistBrowsingController implements INutritionistBrowsingCont
 
     res.status(StatusCode.OK).json({
       success: true,
-      message: COMMON_MESSAGES.SUCCESS,
+      message: "Nutritionists fetched successfully",
       data: result,
     });
   });

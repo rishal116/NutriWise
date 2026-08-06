@@ -1,4 +1,11 @@
-import { FilterQuery, Model, UpdateQuery } from "mongoose";
+import {
+  ClientSession,
+  FilterQuery,
+  Model,
+  Types,
+  UpdateQuery,
+} from "mongoose";
+
 import { IBaseRepository } from "../../interfaces/common/IBaseRepository";
 
 export class BaseRepository<T> implements IBaseRepository<T> {
@@ -12,11 +19,20 @@ export class BaseRepository<T> implements IBaseRepository<T> {
     return this._model.create(data);
   }
 
+  async createWithSession(
+    data: Partial<T>,
+    session: ClientSession,
+  ): Promise<T> {
+    const [document] = await this._model.create([data], { session });
+
+    return document;
+  }
+
   async findOne(filter: FilterQuery<T>): Promise<T | null> {
     return this._model.findOne(filter).lean<T | null>();
   }
 
-  async findById(id: string): Promise<T | null> {
+  async findById(id: string | Types.ObjectId): Promise<T | null> {
     return this._model.findById(id).lean<T | null>();
   }
 
@@ -29,13 +45,25 @@ export class BaseRepository<T> implements IBaseRepository<T> {
     update: UpdateQuery<T>,
   ): Promise<number> {
     const result = await this._model.updateOne(filter, update);
+
     return result.modifiedCount;
   }
 
-  async updateById(id: string, update: UpdateQuery<T>): Promise<T | null> {
+  async updateById(
+    id: string | Types.ObjectId,
+    update: UpdateQuery<T>,
+  ): Promise<T | null> {
     return this._model
-      .findByIdAndUpdate(id, update, { new: true })
+      .findByIdAndUpdate(id, update, {
+        new: true,
+      })
       .lean<T | null>();
+  }
+
+  async deleteOne(filter: FilterQuery<T>): Promise<boolean> {
+    const result = await this._model.deleteOne(filter);
+
+    return result.deletedCount > 0;
   }
 
   async count(filter: FilterQuery<T>): Promise<number> {

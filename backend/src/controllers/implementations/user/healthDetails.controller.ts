@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
 import { IHealthDetailsController } from "../../interfaces/user/IHealthDetailsController";
-import { IHealthDetailsService } from "../../../services/interfaces/user/IHealthDetailsService";
+import { IHealthDetailsService } from "../../../services/interfaces/user/account/IHealthDetailsService";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { COMMON_MESSAGES, USER_MESSAGES } from "../../../constants";

@@ -7,7 +7,7 @@ import { IUserMealTrackingRepository } from "../../../repositories/interfaces/us
 import { IUserWorkoutTrackingRepository } from "../../../repositories/interfaces/user/IUserWorkoutTrackingRepository";
 import { IUserHabitTrackingRepository } from "../../../repositories/interfaces/user/IUserHabitTrackingRepository";
 
-import { IUserDayTrackingService } from "../../interfaces/user/IUserDayTrackingService";
+import { IUserDayTrackingService } from "../../interfaces/user/tracking/IUserDayTrackingService";
 
 @injectable()
 export class UserDayTrackingService implements IUserDayTrackingService {

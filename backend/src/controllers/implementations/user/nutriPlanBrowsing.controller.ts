@@ -1,14 +1,11 @@
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
-
 import { TYPES } from "../../../types/types";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { COMMON_MESSAGES } from "../../../constants";
-
 import { asyncHandler } from "../../../utils/asyncHandler";
-
 import { INutritionistPlanBrowsingController } from "../../interfaces/user/INutritionistPlanBrowsingController";
-import { INutritionistPlanBrowsingService } from "../../../services/interfaces/user/INutritionistPlanBrowsingService";
+import { INutritionistPlanBrowsingService } from "../../../services/interfaces/user/discovery/INutritionistPlanBrowsingService";
 
 @injectable()
 export class NutritionistPlanBrowsingController implements INutritionistPlanBrowsingController {

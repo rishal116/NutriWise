@@ -1,10 +1,7 @@
-import {
-  AvailabilityStatus,
-  CoachLevel,
-  Specialization,
-} from "../../../types/nutritionist.types";
+import { CoachLevel, Specialization } from "../../../types/nutritionist.types";
 
 export interface NutritionistCardDTO {
+  id: string;
   username: string;
   fullName: string;
   profileImage?: string;
@@ -13,5 +10,4 @@ export interface NutritionistCardDTO {
   rating: number;
   totalReviews: number;
   totalExperienceYears: number;
-  availabilityStatus: AvailabilityStatus;
 }

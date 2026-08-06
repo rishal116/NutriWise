@@ -10,39 +10,24 @@ export enum UserDayTrackingStatus {
 
 export interface IUserDayTracking {
   _id: Types.ObjectId;
-
   userId: Types.ObjectId;
-
   userProgramId: Types.ObjectId;
-
   userProgramDayId: Types.ObjectId;
-
   dayNumber: number;
-
-  trackingDate: Date;
-
+  date: Date;
   status: UserDayTrackingStatus;
-
   startedAt?: Date;
-
   completedAt?: Date;
-
-  mealCompletionPercentage: number;
-
-  workoutCompletionPercentage: number;
-
-  habitCompletionPercentage: number;
-
+  lastActivityAt?: Date;
+  totalActivities: number;
+  completedActivities: number;
+  skippedActivities: number;
   overallCompletionPercentage: number;
-
   adherenceScore: number;
-
+  isLocked: boolean;
   userNotes?: string;
-
   nutritionistNotes?: string;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -75,9 +60,10 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
       min: 1,
     },
 
-    trackingDate: {
+    date: {
       type: Date,
       required: true,
+      index: true,
     },
 
     status: {
@@ -89,31 +75,35 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
 
     startedAt: {
       type: Date,
+      default: null,
     },
 
     completedAt: {
       type: Date,
+      default: null,
     },
 
-    mealCompletionPercentage: {
+    lastActivityAt: {
+      type: Date,
+      default: null,
+    },
+
+    totalActivities: {
       type: Number,
       default: 0,
       min: 0,
-      max: 100,
     },
 
-    workoutCompletionPercentage: {
+    completedActivities: {
       type: Number,
       default: 0,
       min: 0,
-      max: 100,
     },
 
-    habitCompletionPercentage: {
+    skippedActivities: {
       type: Number,
       default: 0,
       min: 0,
-      max: 100,
     },
 
     overallCompletionPercentage: {
@@ -128,6 +118,11 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
       default: 0,
       min: 0,
       max: 100,
+    },
+
+    isLocked: {
+      type: Boolean,
+      default: false,
     },
 
     userNotes: {
@@ -147,9 +142,6 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
   },
 );
 
-/**
- * One tracking document per user per program day.
- */
 UserDayTrackingSchema.index(
   {
     userProgramId: 1,
@@ -159,29 +151,22 @@ UserDayTrackingSchema.index(
     unique: true,
   },
 );
-
-/**
- * User dashboard.
- */
+UserDayTrackingSchema.index({
+  userId: 1,
+  userProgramId: 1,
+  dayNumber: 1,
+});
 UserDayTrackingSchema.index({
   userId: 1,
   status: 1,
 });
-
-/**
- * Program progress.
- */
 UserDayTrackingSchema.index({
   userProgramId: 1,
-  trackingDate: 1,
+  date: 1,
 });
-
-/**
- * Calendar view.
- */
 UserDayTrackingSchema.index({
   userId: 1,
-  trackingDate: -1,
+  date: -1,
 });
 
 export const UserDayTrackingModel = model<IUserDayTracking>(

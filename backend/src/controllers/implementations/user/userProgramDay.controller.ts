@@ -4,7 +4,7 @@ import { TYPES } from "../../../types/types";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IUserProgramDayController } from "../../interfaces/user/IUserProgramDayController";
-import { IUserProgramDayService } from "../../../services/interfaces/user/IUserProgramDayService";
+import { IUserProgramDayService } from "../../../services/interfaces/user/program/IUserProgramDayService";
 
 @injectable()
 export class UserProgramDayController implements IUserProgramDayController {

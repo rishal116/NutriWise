@@ -1,7 +1,7 @@
-import { Document, Schema, Types, model } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 import { Gender, UserRole, AuthProvider } from "../enums/user.enum";
 
-export interface IUser extends Document {
+export interface IUser {
   _id: Types.ObjectId;
   fullName: string;
   username: string;

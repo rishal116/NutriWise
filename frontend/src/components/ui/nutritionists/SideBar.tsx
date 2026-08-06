@@ -14,6 +14,7 @@ import {
   Flame,
   Sun,
   X,
+  Check,
 } from "lucide-react";
 import { Specialization } from "@/types/nutritionist.types";
 
@@ -43,36 +44,55 @@ export const NUTRITIONIST_SPECIALIZATIONS: SpecializationOption[] = [
 ];
 
 interface SidebarProps {
-  selected: Specialization[];
+  selected?: Specialization | Specialization[];
   onSelect: (value: Specialization | "") => void;
+  onCloseMobile?: () => void;
 }
 
-export default function Sidebar({ selected = [], onSelect }: SidebarProps) {
+export default function Sidebar({ selected, onSelect, onCloseMobile }: SidebarProps) {
+  const isSelected = (value: Specialization): boolean => {
+    if (!selected) return false;
+    if (Array.isArray(selected)) return selected.includes(value);
+    return selected === value;
+  };
+
+  const hasSelection = Array.isArray(selected) ? selected.length > 0 : !!selected;
+
   return (
-    <aside className="w-full lg:w-72 h-screen sticky top-0 bg-white border-r border-slate-200 shadow-sm flex flex-col">
-      <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between">
+    <aside className="w-full lg:w-72 h-full min-h-screen sticky top-0 bg-white border-r border-slate-200/80 shadow-sm flex flex-col font-sans">
+      <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
         <div className="flex-1">
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
             Specializations
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Filter by expertise area
+          <p className="text-xs text-slate-500 mt-0.5">
+            Filter coaches by domain
           </p>
         </div>
-        {selected.length > 0 && (
+        {hasSelection && (
           <button
             type="button"
             onClick={() => onSelect("")}
-            className="text-xs sm:text-sm font-semibold text-red-500 hover:text-red-600 transition-colors px-2 py-1 hover:bg-red-50 rounded-lg"
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors px-2.5 py-1 hover:bg-rose-50 rounded-lg"
           >
             Clear
           </button>
         )}
+        {onCloseMobile && (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="lg:hidden ml-2 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+            aria-label="Close sidebar"
+          >
+            <X size={18} />
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-200">
         {NUTRITIONIST_SPECIALIZATIONS.map((spec) => {
-          const isSelected = selected.includes(spec.value);
+          const selectedState = isSelected(spec.value);
           const Icon = spec.icon;
 
           return (
@@ -80,40 +100,40 @@ export default function Sidebar({ selected = [], onSelect }: SidebarProps) {
               key={spec.value}
               type="button"
               title={spec.full}
-              onClick={() => onSelect(spec.value)}
-              className={`w-full flex items-center gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl text-sm font-medium transition-colors border ${
-                isSelected
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-300"
-                  : "bg-white text-slate-600 border-transparent hover:border-slate-200 hover:bg-slate-50"
+              onClick={() => onSelect(selectedState ? "" : spec.value)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border ${
+                selectedState
+                  ? "bg-emerald-50/90 text-emerald-900 border-emerald-300/80 shadow-sm font-semibold"
+                  : "bg-white text-slate-700 border-transparent hover:border-slate-200 hover:bg-slate-50"
               }`}
             >
               <div
-                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl ${
-                  isSelected
-                    ? "bg-emerald-600 text-white"
-                    : "bg-slate-100 text-slate-600"
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0 ${
+                  selectedState
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-500 group-hover:bg-emerald-100 group-hover:text-emerald-700"
                 }`}
               >
-                <Icon size={16} className="sm:w-[18px] sm:h-[18px]" />
+                <Icon size={16} />
               </div>
 
               <span className="flex-1 text-left truncate text-xs sm:text-sm">
-                {spec.short}
+                {spec.full}
               </span>
 
-              {isSelected && (
-                <X size={16} className="text-emerald-700 shrink-0" />
+              {selectedState && (
+                <Check size={16} className="text-emerald-600 shrink-0 stroke-[2.5]" />
               )}
             </button>
           );
         })}
       </div>
 
-      <div className="p-4 border-t border-slate-200 bg-emerald-50/50">
-        <p className="text-xs text-slate-600 text-center">
-          {selected.length > 0 ? (
+      <div className="p-4 border-t border-slate-100 bg-slate-50/50">
+        <p className="text-xs text-slate-500 text-center">
+          {hasSelection ? (
             <span className="font-semibold text-emerald-700">
-              {selected.length} filter active
+              Filtered by specialization
             </span>
           ) : (
             "Select a specialization to filter"

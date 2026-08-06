@@ -1,11 +1,10 @@
 import { Types } from "mongoose";
 import { IUserProgram } from "../models/userProgram.model";
 
-export interface IUserProgramPopulated
-  extends Omit<
-    IUserProgram,
-    "userId" | "nutritionistId" | "userPlanId" | "planId"
-  > {
+export interface IUserProgramPopulated extends Omit<
+  IUserProgram,
+  "userId" | "nutritionistId" | "userPlanId" | "planId"
+> {
   userId: {
     _id: Types.ObjectId;
     fullName: string;

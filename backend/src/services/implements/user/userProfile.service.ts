@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
 import { IUserProfileService } from "../../interfaces/user/IUserProfileService";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";

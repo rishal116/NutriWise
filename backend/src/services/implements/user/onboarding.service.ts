@@ -1,8 +1,8 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
 import { IOnboardingService } from "../../interfaces/user/IOnboardingService";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
-import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
+import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/account/IHealthDetailsRepository";
 import { CompleteProfileDto } from "../../../dtos/user/onboarding/complete-profile.dto";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import logger from "../../../utils/logger";

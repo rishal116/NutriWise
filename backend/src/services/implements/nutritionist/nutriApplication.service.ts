@@ -1,6 +1,6 @@
 import { inject, injectable } from "inversify";
 import { INutritionistApplicationService } from "../../interfaces/nutritionist/INutriApplicationService";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutriProfileRepository";
 import { TYPES } from "../../../types/types";
 import { Types } from "mongoose";

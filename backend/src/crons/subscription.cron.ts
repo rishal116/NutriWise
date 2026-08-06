@@ -2,8 +2,8 @@ import cron from "node-cron";
 import { container } from "../configs/inversify";
 import { TYPES } from "../types/types";
 
-import { IUserPlanRepository } from "../repositories/interfaces/user/IUserPlanRepository";
-import { IUserProgramRepository } from "../repositories/interfaces/user/IUserProgramRepository";
+import { IUserPlanRepository } from "../repositories/interfaces/user/program/IUserPlanRepository";
+import { IUserProgramRepository } from "../repositories/interfaces/user/program/IUserProgramRepository";
 
 import logger from "../utils/logger";
 

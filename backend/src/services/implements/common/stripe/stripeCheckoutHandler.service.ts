@@ -5,13 +5,14 @@ import logger from "../../../../utils/logger";
 import { TYPES } from "../../../../types/types";
 import { buildDirectKey } from "../../../../utils/chat.util";
 import { IStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/IStripeCheckoutHandlerService";
-import { IUserPlanRepository } from "../../../../repositories/interfaces/user/IUserPlanRepository";
-import { IUserProgramRepository } from "../../../../repositories/interfaces/user/IUserProgramRepository";
+import { IUserPlanRepository } from "../../../../repositories/interfaces/user/program/IUserPlanRepository";
+import { IUserProgramRepository } from "../../../../repositories/interfaces/user/program/IUserProgramRepository";
 import { IPaymentRepository } from "../../../../repositories/interfaces/common/IPaymentRepository";
 import { IWalletRepository } from "../../../../repositories/interfaces/common/IWalletRepository";
 import { INutritionistPlanRepository } from "../../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { IConversationRepository } from "../../../../repositories/interfaces/chat/IConversationRepository";
 import { IConversationMemberRepository } from "../../../../repositories/interfaces/chat/IConversationMemberRepository";
+import { IUserProgramProgressRepository } from "../../../../repositories/interfaces/user/tracking/IUserProgramProgressRepository";
 
 @injectable()
 export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerService {
@@ -36,6 +37,9 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
 
     @inject(TYPES.IConversationMemberRepository)
     private readonly _conversationMemberRepository: IConversationMemberRepository,
+
+    @inject(TYPES.IUserProgramProgressRepository)
+    private readonly _userProgramProgressRepository: IUserProgramProgressRepository,
   ) {}
 
   private async createConversationIfNeeded(
@@ -144,19 +148,24 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
           planId,
           paymentStatus: "paid",
           subscriptionStatus,
-          stripeCheckoutSessionId: session.id,
-          stripePaymentIntentId: session.payment_intent.toString(),
           amount: plan.price,
           currency: plan.currency,
+          payment: {
+            provider: "stripe",
+            sessionId: session.id,
+            transactionId: session.payment_intent.toString(),
+            completedAt: new Date(),
+          },
           planSnapshot: {
             title: plan.title,
+            description: plan.description,
+            specialization: plan.specialization,
             durationDays: plan.durationDays,
             price: plan.price,
             currency: plan.currency,
           },
           startDate,
           endDate,
-          paymentCompletedAt: new Date(),
         },
         dbSession,
       );
@@ -170,9 +179,16 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
           startDate,
           endDate,
           durationDays: plan.durationDays,
-          currentDay: 1,
-          completionPercentage: 0,
           status: subscriptionStatus === "active" ? "active" : "upcoming",
+        },
+        dbSession,
+      );
+
+      await this._userProgramProgressRepository.createWithSession(
+        {
+          userId,
+          userProgramId: userProgram._id,
+          totalDays: plan.durationDays,
         },
         dbSession,
       );
@@ -212,14 +228,6 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       await this._walletRepository.creditEscrow(
         adminWallet._id.toString(),
         plan.price,
-        dbSession,
-      );
-
-      await this._userPlanRepository.updateByIdWithSession(
-        userPlan._id,
-        {
-          userProgramId: userProgram._id,
-        },
         dbSession,
       );
 

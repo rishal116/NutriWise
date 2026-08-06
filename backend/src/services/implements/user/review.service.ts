@@ -1,7 +1,7 @@
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
 import { IReviewService } from "../../interfaces/user/IReviewService";
-import { IReviewRepository } from "../../../repositories/interfaces/user/IReviewRepository";
+import { IReviewRepository } from "../../../repositories/interfaces/user/discovery/IReviewRepository";
 import {
   SubmitReviewDTO,
   ReviewResponseDTO,

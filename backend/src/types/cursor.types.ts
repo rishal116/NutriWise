@@ -1,4 +1,5 @@
 export interface CursorData {
-  value: string | number | Date;
+  value: string | number;
   id: string;
+  sortKey?: string;
 }

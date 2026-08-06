@@ -1,67 +1,48 @@
 import { Types } from "mongoose";
 
-import { MealType } from "../models/userProgramDay.model";
+import {
+  ProgramActivityCategory,
+  ActivityValueType,
+} from "../models/userProgramDay.model";
 
-export interface IMealProjection {
+
+export interface IProgramActivityProjection {
   _id: Types.ObjectId;
 
-  mealType: MealType;
+  category: ProgramActivityCategory;
 
   title: string;
 
   description?: string;
 
-  calories?: number;
-
-  order: number;
-}
-
-export interface IWorkoutProjection {
-  _id: Types.ObjectId;
-
-  title: string;
-
-  duration: number;
-
   instructions?: string;
 
-  order: number;
-}
-
-export interface IHabitProjection {
-  _id: Types.ObjectId;
-
-  title: string;
+  valueType: ActivityValueType;
 
   targetValue?: number;
 
   unit?: string;
 
+  estimatedDurationMinutes?: number;
+
+  isRequired: boolean;
+
+  configuration?: Record<string, unknown>;
+
   order: number;
 }
 
+
 export interface IProgramDayProjection {
-  userProgramDayId: Types.ObjectId;
+  _id: Types.ObjectId;
 
   userProgramId: Types.ObjectId;
 
   dayNumber: number;
 
-  meals: IMealProjection[];
-
-  workouts: IWorkoutProjection[];
-
-  habits: IHabitProjection[];
+  activities: IProgramActivityProjection[];
 
   createdAt: Date;
 
   updatedAt: Date;
-}
-
-export interface ProgramDayBrowseResult {
-  items: IProgramDayProjection[];
-
-  nextCursor: string | null;
-
-  hasMore: boolean;
 }

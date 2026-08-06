@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { ThemeProviders } from "@/providers/ThemeProvider";
 import AuthProvider from "@/providers/AuthProvider";
 import GlobalLoading from "@/components/common/GlobalLoading";
+import QueryProvider from "@/providers/QueryProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -27,21 +28,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <ReduxProvider>
-          <AuthProvider>
-            <ThemeProviders>
-              <SocketProvider>
-                <GlobalLoading />
-                {children}
-
-                <Toaster
-                  position="top-right"
-                  richColors
-                  closeButton
-                  duration={3000}
-                />
-              </SocketProvider>
-            </ThemeProviders>
-          </AuthProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <ThemeProviders>
+                <SocketProvider>
+                  <GlobalLoading />
+                  {children}
+                  <Toaster
+                    position="top-right"
+                    richColors
+                    closeButton
+                    duration={3000}
+                  />
+                </SocketProvider>
+              </ThemeProviders>
+            </AuthProvider>
+          </QueryProvider>
         </ReduxProvider>
       </body>
     </html>

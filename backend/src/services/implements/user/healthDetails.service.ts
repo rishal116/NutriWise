@@ -1,6 +1,6 @@
 import { injectable, inject } from "inversify";
-import { IHealthDetailsService } from "../../interfaces/user/IHealthDetailsService";
-import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/IHealthDetailsRepository";
+import { IHealthDetailsService } from "../../interfaces/user/account/IHealthDetailsService";
+import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/account/IHealthDetailsRepository";
 import { TYPES } from "../../../types/types";
 import { HealthDetailsResponseDto } from "../../../dtos/user/health/health-details.response.dto";
 import { HealthDetailsMapper } from "../../../mapper/user/health/health-details.mapper";
@@ -8,7 +8,7 @@ import { HealthDetailsValidator } from "../../../validations/user/health/healthD
 import logger from "../../../utils/logger";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { IHealthProgressRepository } from "../../../repositories/interfaces/user/IHealthProgressRepository";
+import { IHealthProgressRepository } from "../../../repositories/interfaces/user/account/IHealthProgressRepository";
 import { HealthDetailsRequestDto } from "../../../dtos/user/health/health-details.request.dto";
 import { HealthCalculatorHelper } from "../../../helper/user/health/health-calculator.helper";
 

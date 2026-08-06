@@ -3,7 +3,7 @@ import { IHealthProgressController } from "../../interfaces/user/IHealthProgress
 import { TYPES } from "../../../types/types";
 import { Request, Response } from "express";
 import { asyncHandler } from "../../../utils/asyncHandler";
-import { IHealthProgressService } from "../../../services/interfaces/user/IHealthProgress.Service";
+import { IHealthProgressService } from "../../../services/interfaces/user/account/IHealthProgress.Service";
 import { StatusCode } from "../../../enums/statusCode.enum";
 
 @injectable()

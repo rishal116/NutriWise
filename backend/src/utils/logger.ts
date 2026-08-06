@@ -7,7 +7,6 @@ import DailyRotateFile from "winston-daily-rotate-file";
 const { combine, timestamp, errors, printf, colorize } = format;
 
 // CONFIG
-
 const isProduction = process.env.NODE_ENV === "production";
 
 const logDirectory = path.join(process.cwd(), "logs");
@@ -19,7 +18,6 @@ if (!fs.existsSync(logDirectory)) {
 const logRetention = isProduction ? "14d" : "3d";
 
 // FORMATS
-
 const logFormatter = printf(
   ({ timestamp, level, message, stack, service, ...meta }) => {
     const metadata =
@@ -53,18 +51,13 @@ const consoleFormat = combine(
 );
 
 // LOGGER
-
 const logger = createLogger({
   level: isProduction ? "info" : "debug",
-
   defaultMeta: {
     service: "nutriwise-backend",
   },
-
   format: fileFormat,
-
   exitOnError: false,
-
   transports: [
     new DailyRotateFile({
       filename: path.join(logDirectory, "app-%DATE%.log"),
@@ -105,7 +98,6 @@ const logger = createLogger({
 });
 
 // DEVELOPMENT CONSOLE
-
 if (!isProduction) {
   logger.add(
     new transports.Console({
@@ -115,7 +107,6 @@ if (!isProduction) {
 }
 
 // MORGAN STREAM (OPTIONAL)
-
 export const loggerStream = {
   write: (message: string): void => {
     logger.info(message.trim());

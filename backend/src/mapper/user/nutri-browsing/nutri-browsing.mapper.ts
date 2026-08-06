@@ -1,37 +1,28 @@
-import { NutritionistBrowseResult } from "../../../types/nutri-browsing.types";
-
 import { NutritionistCardDTO } from "../../../dtos/user/nutri-browsing/nutri-card.dto";
-
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 
-export function toNutritionistCardListDTO(
-  result: NutritionistBrowseResult,
+export function toNutritionistBrowseResponseDTO(
+  result: CursorPaginationResult<NutritionistCardDTO>,
 ): InfiniteScrollResponseDTO<NutritionistCardDTO> {
-  const cards: NutritionistCardDTO[] = result.items.map((item) => ({
-    username: item.username,
+  const items = result.items.map((item) => ({
+    id: item.id,
+    username:item.username,
     fullName: item.fullName,
     profileImage: item.profileImage,
-
     specializations: item.specializations,
-
     coachLevel: item.coachLevel,
-
     rating: item.rating,
-
     totalReviews: item.totalReviews,
-
     totalExperienceYears: item.totalExperienceYears,
-
-    availabilityStatus: item.availabilityStatus,
   }));
 
   return new InfiniteScrollResponseDTO(
-    cards,
+    items,
     result.nextCursor,
     result.hasMore,
   );
 }
-
 import { NutritionistDetailDTO } from "../../../dtos/user/nutri-browsing/nutri-profile.dto";
 import { NutritionistDetailResult } from "../../../types/nutri-browsing.types";
 

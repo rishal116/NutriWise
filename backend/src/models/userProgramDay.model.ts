@@ -1,30 +1,43 @@
 import { Schema, model, Types } from "mongoose";
 
-export const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
-export type MealType = (typeof MEAL_TYPES)[number];
+export const PROGRAM_ACTIVITY_CATEGORIES = [
+  "meal",
+  "exercise",
+  "habit",
+  "water",
+  "supplement",
+  "meditation",
+  "sleep",
+  "reading",
+  "appointment",
+  "measurement",
+  "task",
+  "custom",
+] as const;
+export type ProgramActivityCategory =
+  (typeof PROGRAM_ACTIVITY_CATEGORIES)[number];
 
-export interface IUserProgramMeal {
+export const ACTIVITY_VALUE_TYPES = [
+  "boolean",
+  "number",
+  "duration",
+  "photo",
+  "text",
+] as const;
+export type ActivityValueType = (typeof ACTIVITY_VALUE_TYPES)[number];
+
+export interface IUserProgramActivity {
   _id: Types.ObjectId;
-  mealType: MealType;
+  category: ProgramActivityCategory;
   title: string;
   description?: string;
-  calories?: number;
-  order: number;
-}
-
-export interface IUserProgramWorkout {
-  _id: Types.ObjectId;
-  title: string;
-  duration: number;
   instructions?: string;
-  order: number;
-}
-
-export interface IUserProgramHabit {
-  _id: Types.ObjectId;
-  title: string;
+  valueType: ActivityValueType;
   targetValue?: number;
   unit?: string;
+  estimatedDurationMinutes?: number;
+  isRequired: boolean;
+  configuration?: Record<string, unknown>;
   order: number;
 }
 
@@ -32,98 +45,75 @@ export interface IUserProgramDay {
   _id: Types.ObjectId;
   userProgramId: Types.ObjectId;
   dayNumber: number;
-  meals: IUserProgramMeal[];
-  workouts: IUserProgramWorkout[];
-  habits: IUserProgramHabit[];
+  activities: IUserProgramActivity[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-const MealSchema = new Schema<IUserProgramMeal>(
+const ActivitySchema = new Schema<IUserProgramActivity>(
   {
     _id: {
       type: Schema.Types.ObjectId,
       auto: true,
     },
-    mealType: {
+
+    category: {
       type: String,
-      enum: MEAL_TYPES,
+      enum: PROGRAM_ACTIVITY_CATEGORIES,
       required: true,
     },
+
     title: {
       type: String,
       required: true,
       trim: true,
+      maxlength: 150,
     },
+
     description: {
       type: String,
       trim: true,
+      maxlength: 2000,
     },
-    calories: {
-      type: Number,
-      min: 0,
-    },
-    order: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-  },
-  {
-    _id: false,
-  },
-);
 
-const WorkoutSchema = new Schema<IUserProgramWorkout>(
-  {
-    _id: {
-      type: Schema.Types.ObjectId,
-      auto: true,
-    },
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    duration: {
-      type: Number,
-      required: true,
-      min: 1,
-    },
     instructions: {
       type: String,
       trim: true,
+      maxlength: 5000,
     },
-    order: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-  },
-  {
-    _id: false,
-  },
-);
 
-const HabitSchema = new Schema<IUserProgramHabit>(
-  {
-    _id: {
-      type: Schema.Types.ObjectId,
-      auto: true,
-    },
-    title: {
+    valueType: {
       type: String,
+      enum: ACTIVITY_VALUE_TYPES,
       required: true,
-      trim: true,
     },
+
     targetValue: {
       type: Number,
       min: 0,
     },
+
     unit: {
       type: String,
       trim: true,
+      maxlength: 30,
     },
+
+    estimatedDurationMinutes: {
+      type: Number,
+      min: 0,
+    },
+
+    isRequired: {
+      type: Boolean,
+      default: true,
+    },
+
+    configuration: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
+
     order: {
       type: Number,
       default: 0,
@@ -143,21 +133,15 @@ const UserProgramDaySchema = new Schema<IUserProgramDay>(
       required: true,
       index: true,
     },
+
     dayNumber: {
       type: Number,
       required: true,
       min: 1,
     },
-    meals: {
-      type: [MealSchema],
-      default: [],
-    },
-    workouts: {
-      type: [WorkoutSchema],
-      default: [],
-    },
-    habits: {
-      type: [HabitSchema],
+
+    activities: {
+      type: [ActivitySchema],
       default: [],
     },
   },
