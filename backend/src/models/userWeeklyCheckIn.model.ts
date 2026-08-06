@@ -1,66 +1,67 @@
 import { Schema, model, Types } from "mongoose";
 
+export enum MeasurementUnit {
+  KG = "kg",
+  CM = "cm",
+  PERCENT = "%",
+  ML = "ml",
+}
+
+export interface IUserMeasurement {
+  _id: Types.ObjectId;
+  name: string;
+  value: number;
+  unit: MeasurementUnit;
+}
+
 export interface IUserWeeklyCheckIn {
   _id: Types.ObjectId;
-
   userId: Types.ObjectId;
-
   userProgramId: Types.ObjectId;
-
   weekNumber: number;
-
   startDate: Date;
-
   endDate: Date;
-
-  weightKg?: number;
-
-  bodyFatPercentage?: number;
-
-  muscleMassKg?: number;
-
-  chestCm?: number;
-
-  waistCm?: number;
-
-  hipCm?: number;
-
-  leftArmCm?: number;
-
-  rightArmCm?: number;
-
-  leftThighCm?: number;
-
-  rightThighCm?: number;
-
+  measurements: IUserMeasurement[];
   progressPhotos: string[];
-
-  averageSleepHours?: number;
-
-  averageWaterIntakeMl?: number;
-
-  averageMood?: number;
-
-  averageEnergy?: number;
-
-  averageStress?: number;
-
   overallRating?: number;
-
-  achievements?: string[];
-
-  challenges?: string[];
-
+  achievements: string[];
+  challenges: string[];
   userNotes?: string;
-
   nutritionistFeedback?: string;
-
   nextWeekFocus?: string;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
+
+const MeasurementSchema = new Schema<IUserMeasurement>(
+  {
+    _id: {
+      type: Schema.Types.ObjectId,
+      auto: true,
+    },
+
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+
+    value: {
+      type: Number,
+      required: true,
+    },
+
+    unit: {
+      type: String,
+      enum: Object.values(MeasurementUnit),
+      required: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
 
 const UserWeeklyCheckInSchema = new Schema<IUserWeeklyCheckIn>(
   {
@@ -92,97 +93,33 @@ const UserWeeklyCheckInSchema = new Schema<IUserWeeklyCheckIn>(
     endDate: {
       type: Date,
       required: true,
+      validate: {
+        validator(this: IUserWeeklyCheckIn, value: Date) {
+          return value >= this.startDate;
+        },
+        message: "End date must be greater than or equal to start date.",
+      },
     },
 
-    weightKg: {
-      type: Number,
-      min: 0,
-    },
-
-    bodyFatPercentage: {
-      type: Number,
-      min: 0,
-      max: 100,
-    },
-
-    muscleMassKg: {
-      type: Number,
-      min: 0,
-    },
-
-    chestCm: {
-      type: Number,
-      min: 0,
-    },
-
-    waistCm: {
-      type: Number,
-      min: 0,
-    },
-
-    hipCm: {
-      type: Number,
-      min: 0,
-    },
-
-    leftArmCm: {
-      type: Number,
-      min: 0,
-    },
-
-    rightArmCm: {
-      type: Number,
-      min: 0,
-    },
-
-    leftThighCm: {
-      type: Number,
-      min: 0,
-    },
-
-    rightThighCm: {
-      type: Number,
-      min: 0,
+    measurements: {
+      type: [MeasurementSchema],
+      default: [],
     },
 
     progressPhotos: {
       type: [String],
       default: [],
-    },
-
-    averageSleepHours: {
-      type: Number,
-      min: 0,
-      max: 24,
-    },
-
-    averageWaterIntakeMl: {
-      type: Number,
-      min: 0,
-    },
-
-    averageMood: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
-
-    averageEnergy: {
-      type: Number,
-      min: 1,
-      max: 5,
-    },
-
-    averageStress: {
-      type: Number,
-      min: 1,
-      max: 5,
+      validate: {
+        validator: (photos: string[]) => photos.length <= 10,
+        message: "Maximum 10 progress photos are allowed.",
+      },
     },
 
     overallRating: {
       type: Number,
       min: 1,
       max: 5,
+      index: true,
     },
 
     achievements: {
@@ -199,18 +136,21 @@ const UserWeeklyCheckInSchema = new Schema<IUserWeeklyCheckIn>(
       type: String,
       trim: true,
       maxlength: 3000,
+      default: null,
     },
 
     nutritionistFeedback: {
       type: String,
       trim: true,
       maxlength: 3000,
+      default: null,
     },
 
     nextWeekFocus: {
       type: String,
       trim: true,
       maxlength: 1000,
+      default: null,
     },
   },
   {
@@ -227,12 +167,10 @@ UserWeeklyCheckInSchema.index(
     unique: true,
   },
 );
-
 UserWeeklyCheckInSchema.index({
   userId: 1,
   startDate: -1,
 });
-
 UserWeeklyCheckInSchema.index({
   userProgramId: 1,
   startDate: -1,

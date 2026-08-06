@@ -18,7 +18,7 @@ export class NutriProgramDayController implements INutriProgramDayController {
   ) {}
 
   getProgramDays = asyncHandler(async (req: Request, res: Response) => {
-    const nutritionistId = req.user!.userId;
+    const { userId: nutritionistId } = req.user!;
     const { programId } = req.params;
 
     const result = await this._programDayService.getProgramDays(
@@ -28,12 +28,13 @@ export class NutriProgramDayController implements INutriProgramDayController {
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Program days retrieved successfully",
       data: result,
     });
   });
 
   getProgramDayDetails = asyncHandler(async (req: Request, res: Response) => {
-    const nutritionistId = req.user!.userId;
+    const { userId: nutritionistId } = req.user!;
     const { dayId } = req.params;
 
     const result = await this._programDayService.getProgramDayDetails(
@@ -43,12 +44,13 @@ export class NutriProgramDayController implements INutriProgramDayController {
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Program day details retrieved successfully",
       data: result,
     });
   });
 
   createProgramDay = asyncHandler(async (req: Request, res: Response) => {
-    const nutritionistId = req.user!.userId;
+    const { userId: nutritionistId } = req.user!;
     const { programId } = req.params;
 
     const result = await this._programDayService.createProgramDay(
@@ -59,12 +61,13 @@ export class NutriProgramDayController implements INutriProgramDayController {
 
     res.status(StatusCode.CREATED).json({
       success: true,
+      message: "Program day created successfully",
       data: result,
     });
   });
 
   updateProgramDay = asyncHandler(async (req: Request, res: Response) => {
-    const nutritionistId = req.user!.userId;
+    const { userId: nutritionistId } = req.user!;
     const { dayId } = req.params;
 
     const result = await this._programDayService.updateProgramDay(
@@ -75,12 +78,13 @@ export class NutriProgramDayController implements INutriProgramDayController {
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Program day updated successfully",
       data: result,
     });
   });
 
   deleteProgramDay = asyncHandler(async (req: Request, res: Response) => {
-    const nutritionistId = req.user!.userId;
+    const { userId: nutritionistId } = req.user!;
     const { dayId } = req.params;
 
     await this._programDayService.deleteProgramDay(nutritionistId, dayId);

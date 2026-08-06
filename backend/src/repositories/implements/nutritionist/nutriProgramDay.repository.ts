@@ -1,24 +1,18 @@
 import { injectable } from "inversify";
 import { Types } from "mongoose";
-
 import { BaseRepository } from "../common/base.repository";
-
 import {
   IUserProgramDay,
   UserProgramDayModel,
 } from "../../../models/userProgramDay.model";
-
 import { INutriProgramDayRepository } from "../../interfaces/nutritionist/INutriProgramDayRepository";
-
 import {
   CreateProgramDayDTO,
   UpdateProgramDayDTO,
 } from "../../../dtos/nutritionist/program/program-day-request.dto";
-
-import {
-  IProgramDayProjection,
-  ProgramDayBrowseResult,
-} from "../../../types/userProgramDay.projection";
+import { IProgramDayProjection } from "../../../types/nutritionist/program/program-day.projection";
+import { IProgramDayCardProjection } from "../../../types/nutritionist/program/program-day-card.projection";
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 
 @injectable()
 export class NutriProgramDayRepository
@@ -31,44 +25,35 @@ export class NutriProgramDayRepository
 
   async findProgramDays(
     userProgramId: string | Types.ObjectId,
-  ): Promise<ProgramDayBrowseResult> {
+  ): Promise<CursorPaginationResult<IProgramDayCardProjection>> {
     const programId =
       typeof userProgramId === "string"
         ? new Types.ObjectId(userProgramId)
         : userProgramId;
 
     const days = await this._model
-      .find({
-        userProgramId: programId,
-      })
+      .find(
+        {
+          userProgramId: programId,
+        },
+        {
+          _id: 1,
+          userProgramId: 1,
+          dayNumber: 1,
+          activities: 1,
+        },
+      )
       .sort({
         dayNumber: 1,
       })
-      .lean();
+      .lean<IUserProgramDay[]>();
 
     return {
       items: days.map((day) => ({
         userProgramDayId: day._id,
         userProgramId: day.userProgramId,
         dayNumber: day.dayNumber,
-
-        meals: day.meals.map((meal) => ({
-          ...meal,
-          _id: meal._id!,
-        })),
-
-        workouts: day.workouts.map((workout) => ({
-          ...workout,
-          _id: workout._id!,
-        })),
-
-        habits: day.habits.map((habit) => ({
-          ...habit,
-          _id: habit._id!,
-        })),
-
-        createdAt: day.createdAt,
-        updatedAt: day.updatedAt,
+        activityCount: day.activities.length,
       })),
       nextCursor: null,
       hasMore: false,
@@ -80,35 +65,7 @@ export class NutriProgramDayRepository
   ): Promise<IProgramDayProjection | null> {
     const id = typeof dayId === "string" ? new Types.ObjectId(dayId) : dayId;
 
-    const day = await this._model.findById(id).lean();
-
-    if (!day) {
-      return null;
-    }
-
-    return {
-      userProgramDayId: day._id,
-      userProgramId: day.userProgramId,
-      dayNumber: day.dayNumber,
-
-      meals: day.meals.map((meal) => ({
-        ...meal,
-        _id: meal._id!,
-      })),
-
-      workouts: day.workouts.map((workout) => ({
-        ...workout,
-        _id: workout._id!,
-      })),
-
-      habits: day.habits.map((habit) => ({
-        ...habit,
-        _id: habit._id!,
-      })),
-
-      createdAt: day.createdAt,
-      updatedAt: day.updatedAt,
-    };
+    return this._model.findById(id).lean<IProgramDayProjection | null>();
   }
 
   async createProgramDay(
@@ -120,36 +77,10 @@ export class NutriProgramDayRepository
         ? new Types.ObjectId(userProgramId)
         : userProgramId;
 
-    const day = await this._model.create({
+    return this._model.create({
       ...dto,
       userProgramId: programId,
     });
-
-    const programDay = day.toObject();
-
-    return {
-      userProgramDayId: programDay._id,
-      userProgramId: programDay.userProgramId,
-      dayNumber: programDay.dayNumber,
-
-      meals: programDay.meals.map((meal) => ({
-        ...meal,
-        _id: meal._id!,
-      })),
-
-      workouts: programDay.workouts.map((workout) => ({
-        ...workout,
-        _id: workout._id!,
-      })),
-
-      habits: programDay.habits.map((habit) => ({
-        ...habit,
-        _id: habit._id!,
-      })),
-
-      createdAt: programDay.createdAt,
-      updatedAt: programDay.updatedAt,
-    };
   }
 
   async updateProgramDay(
@@ -158,40 +89,12 @@ export class NutriProgramDayRepository
   ): Promise<IProgramDayProjection | null> {
     const id = typeof dayId === "string" ? new Types.ObjectId(dayId) : dayId;
 
-    const day = await this._model
+    return this._model
       .findByIdAndUpdate(id, dto, {
         new: true,
         runValidators: true,
       })
-      .lean();
-
-    if (!day) {
-      return null;
-    }
-
-    return {
-      userProgramDayId: day._id,
-      userProgramId: day.userProgramId,
-      dayNumber: day.dayNumber,
-
-      meals: day.meals.map((meal) => ({
-        ...meal,
-        _id: meal._id!,
-      })),
-
-      workouts: day.workouts.map((workout) => ({
-        ...workout,
-        _id: workout._id!,
-      })),
-
-      habits: day.habits.map((habit) => ({
-        ...habit,
-        _id: habit._id!,
-      })),
-
-      createdAt: day.createdAt,
-      updatedAt: day.updatedAt,
-    };
+      .lean<IProgramDayProjection | null>();
   }
 
   async deleteProgramDay(dayId: string | Types.ObjectId): Promise<boolean> {
@@ -213,21 +116,21 @@ export class NutriProgramDayRepository
         ? new Types.ObjectId(userProgramId)
         : userProgramId;
 
-    const exists = await this._model.exists({
-      userProgramId: programId,
-      dayNumber,
-    });
-
-    return exists !== null;
+    return (
+      (await this._model.exists({
+        userProgramId: programId,
+        dayNumber,
+      })) !== null
+    );
   }
 
   async existsById(dayId: string | Types.ObjectId): Promise<boolean> {
     const id = typeof dayId === "string" ? new Types.ObjectId(dayId) : dayId;
 
-    const exists = await this._model.exists({
-      _id: id,
-    });
-
-    return exists !== null;
+    return (
+      (await this._model.exists({
+        _id: id,
+      })) !== null
+    );
   }
 }

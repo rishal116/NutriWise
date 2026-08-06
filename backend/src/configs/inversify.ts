@@ -24,8 +24,8 @@ import { UserProgramDayController } from "../controllers/implementations/user/us
 // ---------- Services ----------
 import { HealthDetailsService } from "../services/implements/user/healthDetails.service";
 import { HealthProgressService } from "../services/implements/user/healthProgress.service";
-import { NutritionistBrowsingService } from "../services/implements/user/nutriBrowsing.service";
-import { NutritionistPlanBrowsingService } from "../services/implements/user/nutriPlanBrowsing.service";
+import { NutritionistBrowsingService } from "../services/implements/user/discovery/nutriBrowsing.service";
+import { NutritionistPlanBrowsingService } from "../services/implements/user/discovery/nutriPlanBrowsing.service";
 import { OnboardingService } from "../services/implements/user/onboarding.service";
 import { ReviewService } from "../services/implements/user/review.service";
 import { UserAccountService } from "../services/implements/user/userAccount.service";
@@ -33,36 +33,36 @@ import { UserAuthService } from "../services/implements/user/userAuth.service";
 import { UserGroupService } from "../services/implements/user/userGroup.service";
 import { UserMeetingsService } from "../services/implements/user/userMeetings.service";
 import { UserProfileService } from "../services/implements/user/userProfile.service";
-import { UserProgramService } from "../services/implements/user/userProgram.service";
-import { UserProgramDayService } from "../services/implements/user/userProgramDay.service";
+import { UserProgramService } from "../services/implements/user/program/userProgram.service";
+import { UserProgramDayService } from "../services/implements/user/program/userProgramDay.service";
 // ---------- Repositories ----------
-import { HealthDetailsRepository } from "../repositories/implements/user/healthDetails.repository";
-import { HealthProgressRepository } from "../repositories/implements/user/healthProgress.repository";
-import { NutritionistBrowsingRepository } from "../repositories/implements/user/nutriBrowsing.repository";
-import { NutritionistPlanBrowsingRepository } from "../repositories/implements/user/nutriPlanBrowsing.repository";
-import { UserProgramDayRepository } from "../repositories/implements/user/userProgramDay.repository";
-import { ReviewRepository } from "../repositories/implements/user/review.repository";
-import { UserProgramRepository } from "../repositories/implements/user/userProgram.repository";
-import { UserRepository } from "../repositories/implements/user/user.repository";
-import { UserPlanRepository } from "../repositories/implements/user/userPlan.repository";
+import { HealthDetailsRepository } from "../repositories/implements/user/account/healthDetails.repository";
+import { HealthProgressRepository } from "../repositories/implements/user/account/healthProgress.repository";
+import { NutritionistBrowsingRepository } from "../repositories/implements/user/discovery/nutriBrowsing.repository";
+import { NutritionistPlanBrowsingRepository } from "../repositories/implements/user/discovery/nutriPlanBrowsing.repository";
+import { UserProgramDayRepository } from "../repositories/implements/user/program/userProgramDay.repository";
+import { ReviewRepository } from "../repositories/implements/user/discovery/review.repository";
+import { UserProgramRepository } from "../repositories/implements/user/program/userProgram.repository";
+import { UserRepository } from "../repositories/implements/user/account/user.repository";
+import { UserPlanRepository } from "../repositories/implements/user/program/userPlan.repository";
 // ---------- Interfaces ----------
 import { IHealthDetailsController } from "../controllers/interfaces/user/IHealthDetailsController";
-import { IHealthDetailsRepository } from "../repositories/interfaces/user/IHealthDetailsRepository";
-import { IHealthDetailsService } from "../services/interfaces/user/IHealthDetailsService";
+import { IHealthDetailsRepository } from "../repositories/interfaces/user/account/IHealthDetailsRepository";
+import { IHealthDetailsService } from "../services/interfaces/user/account/IHealthDetailsService";
 import { IHealthProgressController } from "../controllers/interfaces/user/IHealthProgressController";
-import { IHealthProgressRepository } from "../repositories/interfaces/user/IHealthProgressRepository";
-import { IHealthProgressService } from "../services/interfaces/user/IHealthProgress.Service";
+import { IHealthProgressRepository } from "../repositories/interfaces/user/account/IHealthProgressRepository";
+import { IHealthProgressService } from "../services/interfaces/user/account/IHealthProgress.Service";
 import { INutritionistBrowsingController } from "../controllers/interfaces/user/INutriBrowsingController";
-import { INutritionistBrowsingRepository } from "../repositories/interfaces/user/INutriBrowsingRepository";
-import { INutritionistBrowsingService } from "../services/interfaces/user/INutriBrowsingService";
+import { INutritionistBrowsingRepository } from "../repositories/interfaces/user/discovery/INutriBrowsingRepository";
+import { INutritionistBrowsingService } from "../services/interfaces/user/discovery/INutriBrowsingService";
 import { INutritionistPlanBrowsingController } from "../controllers/interfaces/user/INutritionistPlanBrowsingController";
-import { INutritionistPlanBrowsingRepository } from "../repositories/interfaces/user/INutriPlanBrowsingRepository";
-import { INutritionistPlanBrowsingService } from "../services/interfaces/user/INutritionistPlanBrowsingService";
+import { INutritionistPlanBrowsingRepository } from "../repositories/interfaces/user/discovery/INutriPlanBrowsingRepository";
+import { INutritionistPlanBrowsingService } from "../services/interfaces/user/discovery/INutritionistPlanBrowsingService";
 import { IOnboardingController } from "../controllers/interfaces/user/IOnboardingController";
 import { IOnboardingService } from "../services/interfaces/user/IOnboardingService";
-import { IUserProgramDayRepository } from "../repositories/interfaces/user/IUserProgramDayRepository";
+import { IUserProgramDayRepository } from "../repositories/interfaces/user/program/IUserProgramDayRepository";
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
-import { IReviewRepository } from "../repositories/interfaces/user/IReviewRepository";
+import { IReviewRepository } from "../repositories/interfaces/user/discovery/IReviewRepository";
 import { IReviewService } from "../services/interfaces/user/IReviewService";
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
 import { IUserAccountService } from "../services/interfaces/user/IUserAccountService";
@@ -75,12 +75,12 @@ import { IUserMeetingsService } from "../services/interfaces/user/IUserMeetingsS
 import { IUserProfileController } from "../controllers/interfaces/user/IUserProfileController";
 import { IUserProfileService } from "../services/interfaces/user/IUserProfileService";
 import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
-import { IUserProgramRepository } from "../repositories/interfaces/user/IUserProgramRepository";
-import { IUserProgramService } from "../services/interfaces/user/IUserProgramService";
-import { IUserRepository } from "../repositories/interfaces/user/IUserRepository";
+import { IUserProgramRepository } from "../repositories/interfaces/user/program/IUserProgramRepository";
+import { IUserProgramService } from "../services/interfaces/user/program/IUserProgramService";
+import { IUserRepository } from "../repositories/interfaces/user/account/IUserRepository";
 import { IUserProgramDayController } from "../controllers/interfaces/user/IUserProgramDayController";
-import { IUserProgramDayService } from "../services/interfaces/user/IUserProgramDayService";
-import { IUserPlanRepository } from "../repositories/interfaces/user/IUserPlanRepository";
+import { IUserProgramDayService } from "../services/interfaces/user/program/IUserProgramDayService";
+import { IUserPlanRepository } from "../repositories/interfaces/user/program/IUserPlanRepository";
 
 // ---------- Admin Module ----------
 // ---------- Controllers ----------
@@ -214,6 +214,10 @@ import { INutriProgramDayController } from "../controllers/interfaces/nutritioni
 import { NutriProgramDayController } from "../controllers/implementations/nutritionist/nutriProgramDay.controller";
 import { INutriProgramDayRepository } from "../repositories/interfaces/nutritionist/INutriProgramDayRepository";
 import { NutriProgramDayRepository } from "../repositories/implements/nutritionist/nutriProgramDay.repository";
+import { IUserProgramBrowseRepository } from "../repositories/interfaces/user/program/IUserProgramBrowseRepository";
+import { UserProgramBrowseRepository } from "../repositories/implements/user/program/userProgramBrowse.repository";
+import { IUserProgramProgressRepository } from "../repositories/interfaces/user/tracking/IUserProgramProgressRepository";
+import { UserProgramProgressRepository } from "../repositories/implements/user/tracking/userProgramProgress.repository";
 
 // ======================================================
 // CONTAINER
@@ -226,6 +230,21 @@ const container = new Container();
 // ======================================================
 
 // ---------- Controllers ----------
+container
+  .bind<IUserProgramController>(TYPES.IUserProgramController)
+  .to(UserProgramController);
+container
+  .bind<IUserProgramService>(TYPES.IUserProgramService)
+  .to(UserProgramService);
+container
+  .bind<IUserProgramBrowseRepository>(TYPES.IUserProgramBrowseRepository)
+  .to(UserProgramBrowseRepository);
+container
+  .bind<IUserProgramRepository>(TYPES.IUserProgramRepository)
+  .to(UserProgramRepository);
+container
+  .bind<IUserProgramProgressRepository>(TYPES.IUserProgramProgressRepository)
+  .to(UserProgramProgressRepository);
 container
   .bind<IHealthDetailsController>(TYPES.IHealthDetailsController)
   .to(HealthDetailsController);
@@ -270,10 +289,6 @@ container
   .bind<IUserProfileController>(TYPES.IUserProfileController)
   .to(UserProfileController);
 
-container
-  .bind<IUserProgramController>(TYPES.IUserProgramController)
-  .to(UserProgramController);
-
 // ---------- Services ----------
 container
   .bind<IHealthDetailsService>(TYPES.IHealthDetailsService)
@@ -315,10 +330,6 @@ container
   .bind<IUserProfileService>(TYPES.IUserProfileService)
   .to(UserProfileService);
 
-container
-  .bind<IUserProgramService>(TYPES.IUserProgramService)
-  .to(UserProgramService);
-
 // ---------- Repositories ----------
 container
   .bind<IHealthDetailsRepository>(TYPES.IHealthDetailsRepository)
@@ -343,10 +354,6 @@ container
   .to(UserProgramDayRepository);
 
 container.bind<IReviewRepository>(TYPES.IReviewRepository).to(ReviewRepository);
-
-container
-  .bind<IUserProgramRepository>(TYPES.IUserProgramRepository)
-  .to(UserProgramRepository);
 
 container.bind<IUserRepository>(TYPES.IUserRepository).to(UserRepository);
 container

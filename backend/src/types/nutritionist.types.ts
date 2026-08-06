@@ -1,41 +1,6 @@
-export type AvailabilityStatus = "available" | "busy" | "offline";
-
-export type ApplicationStatus = "pending" | "approved" | "rejected";
-
-export type CoachLevel = "beginner" | "verified" | "expert" | "top_coach";
-
-export type Specialization =
-  | "weight_loss"
-  | "weight_gain"
-  | "sports_nutrition"
-  | "clinical_nutrition"
-  | "diabetes_management"
-  | "pcos_nutrition"
-  | "renal_nutrition"
-  | "cardiac_nutrition"
-  | "gut_health"
-  | "child_nutrition"
-  | "pregnancy_nutrition"
-  | "elderly_nutrition"
-  | "vegan_nutrition"
-  | "ketogenic_diet"
-  | "general_wellness";
-
-export type Language =
-  | "english"
-  | "hindi"
-  | "malayalam"
-  | "tamil"
-  | "kannada"
-  | "telugu"
-  | "marathi"
-  | "gujarati"
-  | "bengali"
-  | "urdu";
-
-export type NutritionistSortBy = "rating" | "experience" | "reviews" | "newest";
-
 export const AVAILABILITY_STATUSES = ["available", "busy", "offline"] as const;
+
+export type AvailabilityStatus = (typeof AVAILABILITY_STATUSES)[number];
 
 export const APPLICATION_STATUSES = [
   "pending",
@@ -43,12 +8,16 @@ export const APPLICATION_STATUSES = [
   "rejected",
 ] as const;
 
+export type ApplicationStatus = (typeof APPLICATION_STATUSES)[number];
+
 export const COACH_LEVELS = [
   "beginner",
   "verified",
   "expert",
   "top_coach",
 ] as const;
+
+export type CoachLevel = (typeof COACH_LEVELS)[number];
 
 export const SPECIALIZATIONS = [
   "weight_loss",
@@ -68,6 +37,8 @@ export const SPECIALIZATIONS = [
   "general_wellness",
 ] as const;
 
+export type Specialization = (typeof SPECIALIZATIONS)[number];
+
 export const LANGUAGES = [
   "english",
   "hindi",
@@ -81,12 +52,13 @@ export const LANGUAGES = [
   "urdu",
 ] as const;
 
-export type AvailabilityStatusType = (typeof AVAILABILITY_STATUSES)[number];
+export type Language = (typeof LANGUAGES)[number];
 
-export type ApplicationStatusType = (typeof APPLICATION_STATUSES)[number];
+export const NUTRITIONIST_SORT_OPTIONS = [
+  "highest_rating",
+  "most_experienced",
+  "most_reviewed",
+  "newest",
+] as const;
 
-export type CoachLevelType = (typeof COACH_LEVELS)[number];
-
-export type SpecializationType = (typeof SPECIALIZATIONS)[number];
-
-export type LanguageType = (typeof LANGUAGES)[number];
+export type NutritionistSortBy = (typeof NUTRITIONIST_SORT_OPTIONS)[number];

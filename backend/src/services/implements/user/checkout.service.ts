@@ -7,7 +7,7 @@ import { CheckoutStripeMapper } from "../../../mapper/user/checkout/checkout-str
 import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 
 @injectable()
 export class CheckoutService implements ICheckoutService {

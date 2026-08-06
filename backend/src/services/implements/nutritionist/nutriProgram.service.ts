@@ -1,26 +1,20 @@
 import { injectable, inject } from "inversify";
-
 import { TYPES } from "../../../types/types";
-
 import { INutriProgramService } from "../../interfaces/nutritionist/INutriProgramService";
 import { INutriProgramRepository } from "../../../repositories/interfaces/nutritionist/INutriProgramRepository";
-
 import {
   GetProgramsQueryDTO,
   GetProgramParamsDTO,
 } from "../../../dtos/nutritionist/program/program-request.dto";
-
-import {
-  ProgramBrowseResponseDTO,
-  ProgramDetailsDTO,
-} from "../../../dtos/nutritionist/program/program-response.dto";
-
-import { NutriProgramMapper } from "../../../mapper/nutritionist/program/nutriProgram.mapper";
-
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { UserProgramCardResponseDTO } from "../../../dtos/nutritionist/program/program-card-response.dto";
+import { ProgramCardMapper } from "../../../mapper/nutritionist/program/program-card.mapper";
+import { ProgramDetailsMapper } from "../../../mapper/nutritionist/program/program-details.mapper";
+import { UserProgramDetailsResponseDTO } from "../../../dtos/nutritionist/program/program-details-response.dto";
 
 @injectable()
 export class NutriProgramService implements INutriProgramService {
@@ -32,36 +26,34 @@ export class NutriProgramService implements INutriProgramService {
   async getPrograms(
     nutritionistId: string,
     query: GetProgramsQueryDTO,
-  ): Promise<ProgramBrowseResponseDTO> {
-    const querydto =  await validateDto(GetProgramsQueryDTO, query);
-    logger.debug(
-      "Fetching nutritionist programs. nutritionistId=%s",
+  ): Promise<InfiniteScrollResponseDTO<UserProgramCardResponseDTO>> {
+    const queryDto = await validateDto(GetProgramsQueryDTO, query);
+
+    logger.info("Fetching nutritionist programs", {
       nutritionistId,
-    );
+    });
 
     const result = await this._programRepository.findPrograms(
       nutritionistId,
-      querydto,
+      queryDto,
     );
 
-    logger.info(
-      "Fetched %d programs for nutritionistId=%s",
-      result.items.length,
+    logger.info("Nutritionist programs fetched successfully", {
       nutritionistId,
-    );
+      count: result.items.length,
+    });
 
-    return NutriProgramMapper.toProgramBrowseResponseDTO(result);
+    return ProgramCardMapper.toInfiniteScrollResponse(result);
   }
 
   async getProgramDetails(
     nutritionistId: string,
     params: GetProgramParamsDTO,
-  ): Promise<ProgramDetailsDTO> {
-    logger.debug(
-      "Fetching nutritionist program details. nutritionistId=%s programId=%s",
+  ): Promise<UserProgramDetailsResponseDTO> {
+    logger.info("Fetching program details", {
       nutritionistId,
-      params.programId,
-    );
+      programId: params.programId,
+    });
 
     const program = await this._programRepository.findProgramById(
       params.programId,
@@ -72,12 +64,11 @@ export class NutriProgramService implements INutriProgramService {
       throw new CustomError("Program not found", StatusCode.NOT_FOUND);
     }
 
-    logger.info(
-      "Fetched program details. nutritionistId=%s programId=%s",
+    logger.info("Program details fetched successfully", {
       nutritionistId,
-      params.programId,
-    );
+      programId: params.programId,
+    });
 
-    return NutriProgramMapper.toProgramDetailsDTO(program);
+    return ProgramDetailsMapper.toDTO(program);
   }
 }

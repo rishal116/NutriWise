@@ -1,9 +1,11 @@
 import { Type } from "class-transformer";
 import {
   IsArray,
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   MaxLength,
@@ -11,67 +13,68 @@ import {
   ValidateNested,
 } from "class-validator";
 
-import { MealType, MEAL_TYPES } from "../../../models/userProgramDay.model";
+import {
+  PROGRAM_ACTIVITY_CATEGORIES,
+  ACTIVITY_VALUE_TYPES,
+  ProgramActivityCategory,
+  ActivityValueType,
+} from "../../../models/userProgramDay.model";
 
-export class MealDTO {
-  @IsEnum(MEAL_TYPES)
-  mealType!: MealType;
+
+export class ProgramActivityDTO {
+
+  @IsEnum(PROGRAM_ACTIVITY_CATEGORIES)
+  category!: ProgramActivityCategory;
+
 
   @IsString()
   @MaxLength(150)
   title!: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(1000)
-  description?: string;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  calories?: number;
-
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  order!: number;
-}
-
-export class WorkoutDTO {
-  @IsString()
-  @MaxLength(150)
-  title!: string;
-
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  duration!: number;
 
   @IsOptional()
   @IsString()
   @MaxLength(2000)
+  description?: string;
+
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(5000)
   instructions?: string;
 
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  order!: number;
-}
 
-export class HabitDTO {
-  @IsString()
-  @MaxLength(150)
-  title!: string;
+  @IsEnum(ACTIVITY_VALUE_TYPES)
+  valueType!: ActivityValueType;
+
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   targetValue?: number;
 
+
   @IsOptional()
   @IsString()
-  @MaxLength(50)
+  @MaxLength(30)
   unit?: string;
+
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  estimatedDurationMinutes?: number;
+
+
+  @IsOptional()
+  @IsBoolean()
+  isRequired?: boolean = true;
+
+
+  @IsOptional()
+  @IsObject()
+  configuration?: Record<string, unknown>;
+
 
   @Type(() => Number)
   @IsInt()
@@ -79,47 +82,30 @@ export class HabitDTO {
   order!: number;
 }
 
+
+
 export class CreateProgramDayDTO {
+
   @Type(() => Number)
   @IsInt()
   @Min(1)
   dayNumber!: number;
 
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => MealDTO)
-  meals?: MealDTO[];
 
-  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => WorkoutDTO)
-  workouts?: WorkoutDTO[];
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HabitDTO)
-  habits?: HabitDTO[];
+  @Type(() => ProgramActivityDTO)
+  activities!: ProgramActivityDTO[];
 }
 
+
+
 export class UpdateProgramDayDTO {
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => MealDTO)
-  meals?: MealDTO[];
+
 
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => WorkoutDTO)
-  workouts?: WorkoutDTO[];
-
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => HabitDTO)
-  habits?: HabitDTO[];
+  @Type(() => ProgramActivityDTO)
+  activities?: ProgramActivityDTO[];
 }

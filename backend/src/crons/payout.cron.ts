@@ -1,6 +1,5 @@
 import cron from "node-cron";
 import mongoose from "mongoose";
-import { Types } from "mongoose";
 import { UserPlanModel } from "../models/userPlan.model";
 import { WalletModel } from "../models/wallet.model";
 import { calculateCommission } from "../helper/paymentCalculator";

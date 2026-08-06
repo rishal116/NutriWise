@@ -3,7 +3,7 @@ import { Request } from "express";
 import bcrypt from "bcryptjs";
 import { TYPES } from "../../../types/types";
 import { IUserAuthService } from "../../interfaces/user/IUserAuthService";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import { IOTPService } from "../../interfaces/common/IOtpService";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";

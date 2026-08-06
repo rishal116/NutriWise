@@ -5,7 +5,7 @@ import { IConversationRepository } from "../../../repositories/interfaces/chat/I
 import { CreateDirectConversationDTO } from "../../../dtos/chat/createConversation.dto";
 import { ConversationResponseDTO } from "../../../dtos/chat/conversationResponse.dto";
 import { Types } from "mongoose";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import { IConversationMemberRepository } from "../../../repositories/interfaces/chat/IConversationMemberRepository";
 import logger from "../../../utils/logger";
 import { ConversationMapper } from "../../../mapper/chat/conversation.mapper";

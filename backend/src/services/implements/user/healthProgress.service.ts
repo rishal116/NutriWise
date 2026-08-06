@@ -1,10 +1,10 @@
 import { injectable, inject } from "inversify";
-import { IHealthProgressService } from "../../interfaces/user/IHealthProgress.Service";
+import { IHealthProgressService } from "../../interfaces/user/account/IHealthProgress.Service";
 import { TYPES } from "../../../types/types";
 import logger from "../../../utils/logger";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { IHealthProgressRepository } from "../../../repositories/interfaces/user/IHealthProgressRepository";
+import { IHealthProgressRepository } from "../../../repositories/interfaces/user/account/IHealthProgressRepository";
 import {
   HealthProgressResponseDTO,
   IHealthProgressData,

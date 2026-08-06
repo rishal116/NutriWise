@@ -1,10 +1,7 @@
 import { Request, Response } from "express";
 import { inject, injectable } from "inversify";
-
 import { TYPES } from "../../../types/types";
-
 import { asyncHandler } from "../../../utils/asyncHandler";
-
 import { StatusCode } from "../../../enums/statusCode.enum";
 
 import { INutriProgramController } from "../../interfaces/nutritionist/INutriProgramController";
@@ -25,7 +22,7 @@ export class NutriProgramController implements INutriProgramController {
       nutritionistId,
       req.query as unknown as GetProgramsQueryDTO,
     );
-    
+
     res.status(StatusCode.OK).json({
       success: true,
       data: programs,

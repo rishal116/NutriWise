@@ -4,7 +4,7 @@ import { TYPES } from "../../../types/types";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IUserAccountService } from "../../../services/interfaces/user/IUserAccountService";
-import { IUserRepository } from "../../../repositories/interfaces/user/IUserRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import logger from "../../../utils/logger";
 
 @injectable()

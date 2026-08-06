@@ -40,6 +40,7 @@ export const TYPES = {
   // ======================================================
 
   // Controllers
+  IUserProgramBrowseRepository: Symbol.for("IUserProgramBrowseRepository"),
   IUserAuthController: Symbol.for("IUserAuthController"),
   IUserProfileController: Symbol.for("IUserProfileController"),
   IHealthDetailsController: Symbol.for("IHealthDetailsController"),
@@ -94,6 +95,7 @@ export const TYPES = {
   INutritionistPlanBrowsingRepository: Symbol.for(
     "INutritionistPlanBrowsingRepository",
   ),
+  IUserProgramProgressRepository: Symbol.for("IUserProgramProgressRepository"),
 
   // ======================================================
   // ADMIN MODULE
