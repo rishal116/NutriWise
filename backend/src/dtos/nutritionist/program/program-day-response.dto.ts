@@ -23,6 +23,7 @@ export interface ProgramActivityResponseDTO {
   unit?: string;
 
   estimatedDurationMinutes?: number;
+  scheduledTime?: string;
 
   isRequired: boolean;
 

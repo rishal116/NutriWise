@@ -16,7 +16,6 @@ export enum ClientSortBy {
   NAME_DESC = "name_desc",
   START_DATE = "start_date",
   END_DATE = "end_date",
-  PROGRESS = "progress",
 }
 
 export class GetClientsQueryDTO {
@@ -29,7 +28,7 @@ export class GetClientsQueryDTO {
   @IsInt()
   @Min(1)
   @Max(50)
-  limit?: number = 10;
+  limit: number = 10;
 
   @IsOptional()
   @IsString()
@@ -37,11 +36,11 @@ export class GetClientsQueryDTO {
 
   @IsOptional()
   @IsEnum(ClientStatusFilter)
-  status?: ClientStatusFilter = ClientStatusFilter.ALL;
+  status: ClientStatusFilter = ClientStatusFilter.ALL;
 
   @IsOptional()
   @IsEnum(ClientSortBy)
-  sortBy?: ClientSortBy = ClientSortBy.LATEST;
+  sortBy: ClientSortBy = ClientSortBy.LATEST;
 }
 
 export class GetClientParamsDTO {

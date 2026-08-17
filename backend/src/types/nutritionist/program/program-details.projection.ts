@@ -24,6 +24,8 @@ export interface IUserProgramDetailsProjection {
   endDate: Date;
   durationDays: number;
 
+  currentDay: number;
+
   completionPercentage: number;
   adherenceScore: number;
 

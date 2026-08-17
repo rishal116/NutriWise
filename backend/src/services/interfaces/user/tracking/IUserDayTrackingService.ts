@@ -1,44 +1,11 @@
-import {
-  UserDayTrackingDTO,
-  UserDayTrackingDetailsDTO,
-  UpdateUserDayTrackingDTO,
-} from "../../../../dtos/user/tracking/userDayTracking.dto";
+import { Types } from "mongoose";
+import { UserDayTrackingDetailsDTO } from "../../../../dtos/user/tracking/user-day-tracking-details.dto";
 
 export interface IUserDayTrackingService {
   initializeDayTracking(
-    userId: string,
-    userProgramId: string,
+    programId: string | Types.ObjectId,
+    programDayId: string | Types.ObjectId,
     dayNumber: number,
+    totalActivities: number,
   ): Promise<UserDayTrackingDetailsDTO>;
-
-  getDayTracking(
-    userId: string,
-    userProgramId: string,
-    dayNumber: number,
-  ): Promise<UserDayTrackingDetailsDTO>;
-
-  getProgramTracking(
-    userId: string,
-    userProgramId: string,
-  ): Promise<UserDayTrackingDTO[]>;
-
-  updateDayTracking(
-    userId: string,
-    trackingId: string,
-    dto: UpdateUserDayTrackingDTO,
-  ): Promise<UserDayTrackingDTO>;
-
-  recalculateDayProgress(
-    trackingId: string,
-  ): Promise<void>;
-
-  completeDay(
-    userId: string,
-    trackingId: string,
-  ): Promise<void>;
-
-  reopenDay(
-    userId: string,
-    trackingId: string,
-  ): Promise<void>;
 }

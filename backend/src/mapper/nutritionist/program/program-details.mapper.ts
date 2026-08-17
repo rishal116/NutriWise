@@ -25,6 +25,7 @@ export class ProgramDetailsMapper {
       startDate: program.startDate,
       endDate: program.endDate,
       durationDays: program.durationDays,
+      currentDay: program.currentDay,
 
       completionPercentage: program.completionPercentage,
       adherenceScore: program.adherenceScore,

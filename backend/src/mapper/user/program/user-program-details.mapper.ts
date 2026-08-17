@@ -16,7 +16,7 @@ export class UserProgramDetailsMapper {
         profileImage: program.nutritionist.profileImage,
       },
 
-      programStatus: program.programStatus,
+      status: program.status,
       subscriptionStatus: program.subscriptionStatus,
 
       currentDay: program.currentDay,

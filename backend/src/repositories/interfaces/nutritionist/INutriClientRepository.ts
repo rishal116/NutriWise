@@ -1,14 +1,15 @@
 import { Types } from "mongoose";
 
 import { GetClientsQueryDTO } from "../../../dtos/nutritionist/client/client-request.dto";
-import { ClientBrowseResult } from "../../../types/nutriClientList.projection";
+import { IClientListProjection } from "../../../types/nutriClientList.projection";
 import { IClientDetailsProjection } from "../../../types/nutriClientDetails.projection";
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 
 export interface INutriClientRepository {
   findClients(
     nutritionistId: string | Types.ObjectId,
     query: GetClientsQueryDTO,
-  ): Promise<ClientBrowseResult>;
+  ): Promise<CursorPaginationResult<IClientListProjection>>;
 
   findClientDetails(
     clientId: string | Types.ObjectId,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { UserProgramCardDTO } from "@/dtos/user/program/user-program-card.dto";
+import type { UserProgramCardDTO } from "@/dtos/user/program/user-program-card.dto";
 import {
   ProgramStatusBadge,
   SubscriptionStatusBadge,
@@ -41,22 +41,20 @@ function NutritionistAvatar({
     .toUpperCase();
 
   return (
-    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100/80 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
       {initials}
     </div>
   );
 }
 
 export function ProgramCard({ program }: { program: UserProgramCardDTO }) {
-
-
   return (
     <Link
       href={`/user/programs/${program._id}`}
-      className="group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+      className="group block rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg"
     >
       <div className="flex items-start justify-between gap-3">
-        <h2 className="line-clamp-2 text-base font-semibold text-slate-900 group-hover:text-emerald-700">
+        <h2 className="line-clamp-2 text-base font-bold tracking-tight text-slate-900 transition-colors duration-150 group-hover:text-emerald-700">
           {program.title}
         </h2>
       </div>
@@ -67,8 +65,10 @@ export function ProgramCard({ program }: { program: UserProgramCardDTO }) {
           fullName={program.nutritionist.fullName}
         />
         <div className="min-w-0">
-          <p className="text-xs text-slate-500">Nutritionist</p>
-          <p className="truncate text-sm font-medium text-slate-800">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Nutritionist
+          </p>
+          <p className="truncate text-sm font-semibold text-slate-800">
             {program.nutritionist.fullName}
           </p>
         </div>
@@ -80,23 +80,23 @@ export function ProgramCard({ program }: { program: UserProgramCardDTO }) {
       </div>
 
       <div className="mt-4">
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex items-center justify-between text-xs font-medium">
           <span className="text-slate-500">Progress</span>
-          <span className="font-medium text-slate-800">
+          <span className="font-bold text-emerald-700">
             {program.completionPercentage}%
           </span>
         </div>
         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-emerald-600 transition-all"
+            className="h-full rounded-full bg-emerald-600 transition-all duration-300"
             style={{ width: `${program.completionPercentage}%` }}
           />
         </div>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+      <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1.5 rounded-xl bg-slate-50 p-3 text-xs font-medium">
         <dt className="text-slate-500">Day</dt>
-        <dd className="text-right font-medium text-slate-800">
+        <dd className="text-right font-semibold text-slate-800">
           {program.currentDay} / {program.durationDays}
         </dd>
 

@@ -4,6 +4,11 @@ import {
   ProgramActivityCategory,
 } from "./userProgramDay.model";
 
+export type CreateUserActivityTrackingData = Omit<
+  IUserActivityTracking,
+  "_id" | "createdAt" | "updatedAt"
+>;
+
 export enum UserActivityTrackingStatus {
   NOT_STARTED = "not_started",
   IN_PROGRESS = "in_progress",
@@ -80,7 +85,6 @@ const UserActivityTrackingSchema = new Schema<IUserActivityTracking>(
       type: Schema.Types.ObjectId,
       ref: "UserDayTracking",
       required: true,
-      index: true,
     },
 
     activityId: {

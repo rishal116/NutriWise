@@ -8,6 +8,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
   ValidateNested,
@@ -20,61 +21,54 @@ import {
   ActivityValueType,
 } from "../../../models/userProgramDay.model";
 
-
 export class ProgramActivityDTO {
-
   @IsEnum(PROGRAM_ACTIVITY_CATEGORIES)
   category!: ProgramActivityCategory;
-
 
   @IsString()
   @MaxLength(150)
   title!: string;
-
 
   @IsOptional()
   @IsString()
   @MaxLength(2000)
   description?: string;
 
-
   @IsOptional()
   @IsString()
   @MaxLength(5000)
   instructions?: string;
 
-
   @IsEnum(ACTIVITY_VALUE_TYPES)
   valueType!: ActivityValueType;
-
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   targetValue?: number;
 
-
   @IsOptional()
   @IsString()
   @MaxLength(30)
   unit?: string;
-
 
   @IsOptional()
   @IsNumber()
   @Min(0)
   estimatedDurationMinutes?: number;
 
+  @IsOptional()
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+  scheduledTime?: string;
 
   @IsOptional()
   @IsBoolean()
   isRequired?: boolean = true;
 
-
   @IsOptional()
   @IsObject()
   configuration?: Record<string, unknown>;
-
 
   @Type(() => Number)
   @IsInt()
@@ -82,15 +76,11 @@ export class ProgramActivityDTO {
   order!: number;
 }
 
-
-
 export class CreateProgramDayDTO {
-
   @Type(() => Number)
   @IsInt()
   @Min(1)
   dayNumber!: number;
-
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -98,11 +88,7 @@ export class CreateProgramDayDTO {
   activities!: ProgramActivityDTO[];
 }
 
-
-
 export class UpdateProgramDayDTO {
-
-
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })

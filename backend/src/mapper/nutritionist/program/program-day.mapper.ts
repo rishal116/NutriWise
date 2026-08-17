@@ -19,6 +19,7 @@ export class ProgramDayMapper {
         targetValue: activity.targetValue,
         unit: activity.unit,
         estimatedDurationMinutes: activity.estimatedDurationMinutes,
+        scheduledTime: activity.scheduledTime,
         isRequired: activity.isRequired,
         configuration: activity.configuration,
         order: activity.order,

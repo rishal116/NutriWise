@@ -26,6 +26,5 @@ export interface IUserProgramDetailsProjection {
   paymentStatus: PaymentStatus;
   subscriptionStatus: SubscriptionStatus;
 
-  // Optional but useful
   purchasedAt: Date;
 }

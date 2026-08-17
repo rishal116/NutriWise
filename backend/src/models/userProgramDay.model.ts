@@ -36,6 +36,7 @@ export interface IUserProgramActivity {
   targetValue?: number;
   unit?: string;
   estimatedDurationMinutes?: number;
+  scheduledTime?: string;
   isRequired: boolean;
   configuration?: Record<string, unknown>;
   order: number;
@@ -102,6 +103,12 @@ const ActivitySchema = new Schema<IUserProgramActivity>(
     estimatedDurationMinutes: {
       type: Number,
       min: 0,
+    },
+
+    scheduledTime: {
+      type: String,
+      trim: true,
+      match: /^([01]\d|2[0-3]):([0-5]\d)$/,
     },
 
     isRequired: {

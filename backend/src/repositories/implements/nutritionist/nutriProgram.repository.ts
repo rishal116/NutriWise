@@ -142,6 +142,9 @@ export class NutriProgramRepository
           currentStreak: {
             $ifNull: ["$progress.currentStreak", 0],
           },
+          currentDay: {
+            $ifNull: ["$progress.currentDay", 1],
+          },
           lastActivityAt: "$progress.lastActivityAt",
         },
       },
@@ -271,6 +274,8 @@ export class NutriProgramRepository
           startDate: 1,
           endDate: 1,
           durationDays: 1,
+
+          currentDay: 1,
 
           completionPercentage: 1,
           adherenceScore: 1,
@@ -404,6 +409,10 @@ export class NutriProgramRepository
 
             adherenceScore: {
               $ifNull: ["$progress.adherenceScore", 0],
+            },
+
+            currentDay: {
+              $ifNull: ["$progress.currentDay", 1],
             },
 
             completedDays: {

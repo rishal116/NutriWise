@@ -25,6 +25,8 @@ export class ProgramCardMapper {
       endDate: program.endDate,
       durationDays: program.durationDays,
 
+      currentDay:program.currentDay,
+
       completionPercentage: program.completionPercentage,
       adherenceScore: program.adherenceScore,
       currentStreak: program.currentStreak,

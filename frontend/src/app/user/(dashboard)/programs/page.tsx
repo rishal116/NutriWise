@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { ClipboardList, Search } from "lucide-react";
 import { userProgramService } from "@/services/user/userProgram.service";
 import {
   ProgramStatus,
@@ -11,7 +12,7 @@ import {
 } from "@/dtos/user/program/user-program-request.dto";
 import { useDebounce } from "@/hooks/common/debounce.hooks";
 import { ProgramCard } from "@/components/user/programs/ProgramCard";
-import { ProgramCardSkeleton } from "@/components/user/programs/rogramCardSkeleton";
+import { ProgramCardSkeleton } from "@/components/user/programs/ProgramCardSkeleton";
 import { ProgramFilters } from "@/components/user/programs/ProgramFilters";
 
 const PAGE_LIMIT = 12;
@@ -104,7 +105,12 @@ export default function ProgramsPage() {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <h1 className="mb-6 text-3xl font-bold text-slate-900">My Programs</h1>
+      <div className="mb-6 flex items-center gap-2">
+        <span className="h-6 w-1 rounded-full bg-emerald-600" />
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          My Programs
+        </h1>
+      </div>
 
       <ProgramFilters
         search={search}
@@ -127,22 +133,32 @@ export default function ProgramsPage() {
             ))}
           </div>
         ) : isError ? (
-          <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">
+          <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/40 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100">
+              <ClipboardList className="h-6 w-6 text-rose-700" />
+            </div>
+            <h2 className="mt-4 text-lg font-bold tracking-tight text-slate-900">
               Couldn&apos;t load your programs
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-1 text-xs font-medium text-slate-500">
               Something went wrong. Please try again.
             </p>
           </div>
         ) : programs.length === 0 ? (
-          <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">
+          <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-300 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+              {hasActiveFilters ? (
+                <Search className="h-6 w-6 text-emerald-600" />
+              ) : (
+                <ClipboardList className="h-6 w-6 text-emerald-600" />
+              )}
+            </div>
+            <h2 className="mt-4 text-lg font-bold tracking-tight text-slate-900">
               {hasActiveFilters
                 ? "No programs match your filters"
                 : "No purchased programs"}
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-1 text-xs font-medium text-slate-500">
               {hasActiveFilters
                 ? "Try adjusting your search or filters."
                 : "Purchase a nutrition program to begin your journey."}
@@ -167,8 +183,8 @@ export default function ProgramsPage() {
             )}
 
             {!hasNextPage && programs.length > 0 && (
-              <p className="pt-8 text-center text-sm text-slate-400">
-                You&apos;ve reached the end.
+              <p className="pt-8 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                You&apos;ve reached the end
               </p>
             )}
           </>

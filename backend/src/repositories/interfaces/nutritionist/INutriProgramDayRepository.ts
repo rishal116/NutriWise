@@ -6,10 +6,12 @@ import {
 import { IProgramDayProjection } from "../../../types/nutritionist/program/program-day.projection";
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 import { IProgramDayCardProjection } from "../../../types/nutritionist/program/program-day-card.projection";
+import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/program-day-list-query.dto";
 
 export interface INutriProgramDayRepository {
   findProgramDays(
     userProgramId: string | Types.ObjectId,
+    query: ProgramDayListQueryDTO,
   ): Promise<CursorPaginationResult<IProgramDayCardProjection>>;
 
   findProgramDayById(

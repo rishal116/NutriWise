@@ -218,6 +218,16 @@ import { IUserProgramBrowseRepository } from "../repositories/interfaces/user/pr
 import { UserProgramBrowseRepository } from "../repositories/implements/user/program/userProgramBrowse.repository";
 import { IUserProgramProgressRepository } from "../repositories/interfaces/user/tracking/IUserProgramProgressRepository";
 import { UserProgramProgressRepository } from "../repositories/implements/user/tracking/userProgramProgress.repository";
+import { IUserDayTrackingRepository } from "../repositories/interfaces/user/tracking/IUserDayTrackingRepository";
+import { IUserDayTrackingService } from "../services/interfaces/user/tracking/IUserDayTrackingService";
+import { UserDayTrackingService } from "../services/implements/user/tracking/userDayTracking.service";
+import { UserDayTrackingRepository } from "../repositories/implements/user/tracking/userDayTracking.repository";
+import { IUserActivityTrackingController } from "../controllers/interfaces/user/IUserActivityTrackingController";
+import { UserActivityTrackingController } from "../controllers/implementations/user/userActivityTracking.controller";
+import { IUserActivityTrackingService } from "../services/interfaces/user/tracking/IUserActivityTrackingService";
+import { UserActivityTrackingService } from "../services/implements/user/tracking/userActivityTracking.service";
+import { IUserActivityTrackingRepository } from "../repositories/interfaces/user/tracking/IUserActivityTrackingRepository";
+import { UserActivityTrackingRepository } from "../repositories/implements/user/tracking/userActivityTracking.repository";
 
 // ======================================================
 // CONTAINER
@@ -288,6 +298,9 @@ container
 container
   .bind<IUserProfileController>(TYPES.IUserProfileController)
   .to(UserProfileController);
+container
+  .bind<IUserActivityTrackingController>(TYPES.IUserActivityTrackingController)
+  .to(UserActivityTrackingController);
 
 // ---------- Services ----------
 container
@@ -329,6 +342,13 @@ container
 container
   .bind<IUserProfileService>(TYPES.IUserProfileService)
   .to(UserProfileService);
+container
+  .bind<IUserDayTrackingService>(TYPES.IUserDayTrackingService)
+  .to(UserDayTrackingService);
+
+container
+  .bind<IUserActivityTrackingService>(TYPES.IUserActivityTrackingService)
+  .to(UserActivityTrackingService);
 
 // ---------- Repositories ----------
 container
@@ -365,6 +385,12 @@ container
 container
   .bind<IUserPlanRepository>(TYPES.IUserPlanRepository)
   .to(UserPlanRepository);
+container
+  .bind<IUserDayTrackingRepository>(TYPES.IUserDayTrackingRepository)
+  .to(UserDayTrackingRepository);
+container
+  .bind<IUserActivityTrackingRepository>(TYPES.IUserActivityTrackingRepository)
+  .to(UserActivityTrackingRepository);
 // ======================================================
 // ADMIN BINDINGS
 // ======================================================

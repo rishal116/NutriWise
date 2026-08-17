@@ -6,6 +6,7 @@ export interface IUserProgramProgress {
   userProgramId: Types.ObjectId;
   totalDays: number;
   completedDays: number;
+  currentDay: number;
   totalActivities: number;
   completedActivities: number;
   skippedActivities: number;
@@ -48,6 +49,12 @@ const UserProgramProgressSchema = new Schema<IUserProgramProgress>(
       min: 0,
     },
 
+    currentDay: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    
     totalActivities: {
       type: Number,
       default: 0,

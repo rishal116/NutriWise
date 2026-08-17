@@ -1,171 +1,792 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { useRouter, useParams } from "next/navigation";
+import {
+  useForm,
+  useFieldArray,
+  Controller,
+  type Control,
+} from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
-
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  GripVertical,
+} from "lucide-react";
 import { nutriProgramDayService } from "@/services/nutritionist/nutriProgramDay.service";
-import type {
-  CreateProgramDayDTO,
-  HabitDTO,
-  MealDTO,
-  WorkoutDTO,
-} from "@/dtos/nutritionist/program/program-day-request.dto";
+import {
+  PROGRAM_ACTIVITY_CATEGORIES,
+  ACTIVITY_VALUE_TYPES,
+  type ProgramActivityCategory,
+  type ActivityValueType,
+} from "@/dtos/nutritionist/program/program-day-response.dto";
+import type { CreateProgramDayDTO } from "@/dtos/nutritionist/program/program-day-request.dto";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
-// The DTOs have no client-side id to key React lists on, so each draft row
-// carries a local `_key` that is stripped before the payload is sent.
-type DraftMeal = MealDTO & { _key: string };
-type DraftWorkout = WorkoutDTO & { _key: string };
-type DraftHabit = HabitDTO & { _key: string };
+const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-const MEAL_TYPES: MealDTO["mealType"][] = [
-  "breakfast",
-  "lunch",
-  "dinner",
-  "snack",
-];
+const optionalPositiveNumber = z.preprocess((value) => {
+  if (value === "" || value === undefined || value === null) return undefined;
+  return Number(value);
+}, z.number().positive().optional());
 
-function useLocalKey(): () => string {
-  const counter = useRef(0);
-  return () => {
-    counter.current += 1;
-    return `key-${counter.current}`;
+const optionalPositiveInteger = z.preprocess((value) => {
+  if (value === "" || value === undefined || value === null) return undefined;
+  return z.number().int().positive().parse(Number(value));
+}, z.number().int().positive().optional());
+
+const optionalTime = z.preprocess((value) => {
+  if (value === "" || value === undefined || value === null) return undefined;
+  return value;
+}, z.string().regex(TIME_REGEX, "Use HH:mm format").optional());
+
+const activitySchema = z.object({
+  category: z.enum(PROGRAM_ACTIVITY_CATEGORIES, {
+    message: "Select a category",
+  }),
+  valueType: z.enum(ACTIVITY_VALUE_TYPES, { message: "Select a value type" }),
+  title: z.string().trim().min(1, "Title is required").max(120),
+  description: z.string().trim().max(500).optional(),
+  instructions: z.string().trim().max(1000).optional(),
+  targetValue: optionalPositiveNumber,
+  unit: z.string().trim().max(30).optional(),
+  estimatedDurationMinutes: optionalPositiveInteger,
+  scheduledTime: optionalTime,
+  isRequired: z.boolean(),
+  configuration: z.record(z.string(), z.unknown()).default({}),
+});
+
+const formSchema = z.object({
+  dayNumber: z.coerce.number().int().min(1, "Day number must be at least 1"),
+  activities: z
+    .array(activitySchema)
+    .min(1, "Add at least one activity for this day"),
+});
+
+type FormInput = z.input<typeof formSchema>;
+type FormValues = z.output<typeof formSchema>;
+type ActivityInput = FormInput["activities"][number];
+
+const NEEDS_TARGET_AND_UNIT: ActivityValueType[] = ["number", "duration"];
+const NEEDS_ESTIMATED_DURATION: ActivityValueType[] = ["boolean", "duration"];
+
+const CATEGORY_DEFAULT_VALUE_TYPE: Record<
+  ProgramActivityCategory,
+  ActivityValueType
+> = {
+  meal: "boolean",
+  exercise: "duration",
+  habit: "boolean",
+  water: "number",
+  supplement: "boolean",
+  meditation: "duration",
+  sleep: "duration",
+  reading: "boolean",
+  appointment: "boolean",
+  measurement: "number",
+  task: "boolean",
+  custom: "boolean",
+};
+
+const CATEGORY_VALUE_TYPE_OPTIONS: Record<
+  ProgramActivityCategory,
+  ActivityValueType[]
+> = {
+  meal: ["boolean", "text"],
+  exercise: ["boolean", "duration", "number"],
+  habit: ["boolean", "text"],
+  water: ["number"],
+  supplement: ["boolean", "number"],
+  meditation: ["boolean", "duration"],
+  sleep: ["boolean", "duration", "number"],
+  reading: ["boolean", "duration"],
+  appointment: ["boolean", "text"],
+  measurement: ["number", "text"],
+  task: ["boolean", "text"],
+  custom: ["boolean", "number", "duration", "photo", "text"],
+};
+
+const CATEGORY_LABELS: Record<ProgramActivityCategory, string> = {
+  meal: "Meal",
+  exercise: "Exercise",
+  habit: "Habit",
+  water: "Water",
+  supplement: "Supplement",
+  meditation: "Meditation",
+  sleep: "Sleep",
+  reading: "Reading",
+  appointment: "Appointment",
+  measurement: "Measurement",
+  task: "Task",
+  custom: "Custom",
+};
+
+const VALUE_TYPE_LABELS: Record<ActivityValueType, string> = {
+  boolean: "Yes / No",
+  number: "Number",
+  duration: "Duration",
+  photo: "Photo",
+  text: "Text",
+};
+
+const CATEGORY_CONFIG_TITLES: Partial<Record<ProgramActivityCategory, string>> =
+  {
+    water: "Water settings",
+    exercise: "Exercise settings",
+    habit: "Habit settings",
+    meal: "Meal settings",
+    meditation: "Meditation settings",
+    sleep: "Sleep settings",
+    measurement: "Measurement settings",
+  };
+
+const inputClass =
+  "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20";
+
+const labelClass =
+  "text-[11px] font-semibold uppercase tracking-wider text-slate-500";
+
+const errorClass = "mt-1 text-[11px] font-medium text-rose-600";
+
+function emptyActivity(): ActivityInput {
+  return {
+    category: "meal",
+    title: "",
+    description: "",
+    instructions: "",
+    valueType: CATEGORY_DEFAULT_VALUE_TYPE.meal,
+    targetValue: undefined,
+    unit: "",
+    estimatedDurationMinutes: undefined,
+    scheduledTime: "",
+    isRequired: false,
+    configuration: {},
   };
 }
 
-function emptyMeal(key: string): DraftMeal {
-  return { _key: key, mealType: "breakfast", title: "", order: 0 };
+/* ------------------------------------------------------------------ */
+/* Category-specific configuration                                    */
+/* ------------------------------------------------------------------ */
+
+type ConfigurationProps = {
+  control: Control<FormInput, unknown, FormValues>;
+  index: number;
+};
+
+interface WaterConfigValue {
+  trackingMethod?: "daily_total" | "per_serving";
+  reminderIntervalMinutes?: number;
 }
 
-function emptyWorkout(key: string): DraftWorkout {
-  return { _key: key, title: "", duration: 30, order: 0 };
-}
-
-function emptyHabit(key: string): DraftHabit {
-  return { _key: key, title: "", order: 0 };
-}
-
-function SectionHeader({
-  title,
-  onAdd,
-  addLabel,
-}: {
-  title: string;
-  onAdd: () => void;
-  addLabel: string;
-}) {
+function WaterConfiguration({ control, index }: ConfigurationProps) {
   return (
-    <div className="flex items-center justify-between">
-      <h2 className="text-sm font-bold text-slate-900">{title}</h2>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 transition-colors hover:bg-emerald-100"
-      >
-        <Plus size={13} />
-        {addLabel}
-      </button>
+    <Controller
+      control={control}
+      name={`activities.${index}.configuration`}
+      render={({ field }) => {
+        const config = (field.value ?? {}) as WaterConfigValue;
+        return (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Tracking method</label>
+              <select
+                value={config.trackingMethod ?? "daily_total"}
+                onChange={(e) =>
+                  field.onChange({
+                    ...config,
+                    trackingMethod: e.target.value as
+                      | "daily_total"
+                      | "per_serving",
+                  })
+                }
+                className={`${inputClass} mt-1`}
+              >
+                <option value="daily_total">Daily total</option>
+                <option value="per_serving">Per serving</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>
+                Reminder interval (min, optional)
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={
+                  typeof config.reminderIntervalMinutes === "number"
+                    ? config.reminderIntervalMinutes
+                    : ""
+                }
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const next = { ...config };
+                  if (raw === "") {
+                    delete next.reminderIntervalMinutes;
+                  } else {
+                    next.reminderIntervalMinutes = Number(raw);
+                  }
+                  field.onChange(next);
+                }}
+                placeholder="60"
+                className={`${inputClass} mt-1`}
+              />
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+interface ExerciseConfigValue {
+  exerciseType?: string;
+  intensity?: string;
+}
+
+const EXERCISE_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "walking", label: "Walking" },
+  { value: "running", label: "Running" },
+  { value: "cycling", label: "Cycling" },
+  { value: "strength", label: "Strength" },
+  { value: "stretching", label: "Stretching" },
+  { value: "other", label: "Other" },
+];
+
+const INTENSITY_OPTIONS: { value: string; label: string }[] = [
+  { value: "light", label: "Light" },
+  { value: "moderate", label: "Moderate" },
+  { value: "high", label: "High" },
+];
+
+function ExerciseConfiguration({ control, index }: ConfigurationProps) {
+  return (
+    <Controller
+      control={control}
+      name={`activities.${index}.configuration`}
+      render={({ field }) => {
+        const config = (field.value ?? {}) as ExerciseConfigValue;
+        return (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Exercise type</label>
+              <select
+                value={config.exerciseType ?? "walking"}
+                onChange={(e) =>
+                  field.onChange({ ...config, exerciseType: e.target.value })
+                }
+                className={`${inputClass} mt-1`}
+              >
+                {EXERCISE_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Intensity</label>
+              <select
+                value={config.intensity ?? "moderate"}
+                onChange={(e) =>
+                  field.onChange({ ...config, intensity: e.target.value })
+                }
+                className={`${inputClass} mt-1`}
+              >
+                {INTENSITY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+interface HabitConfigValue {
+  prompts?: string[];
+}
+
+function HabitConfiguration({ control, index }: ConfigurationProps) {
+  return (
+    <Controller
+      control={control}
+      name={`activities.${index}.configuration`}
+      render={({ field }) => {
+        const config = (field.value ?? {}) as HabitConfigValue;
+        const prompts = config.prompts ?? [];
+
+        const updatePrompts = (next: string[]) => {
+          field.onChange({ ...config, prompts: next });
+        };
+
+        return (
+          <div className="space-y-2">
+            <label className={labelClass}>Reflection prompts (optional)</label>
+            <div className="space-y-2">
+              {prompts.map((prompt, promptIndex) => (
+                <div key={promptIndex} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={prompt}
+                    onChange={(e) => {
+                      const next = [...prompts];
+                      next[promptIndex] = e.target.value;
+                      updatePrompts(next);
+                    }}
+                    placeholder="What went well today?"
+                    className={inputClass}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updatePrompts(
+                        prompts.filter((_, pi) => pi !== promptIndex),
+                      )
+                    }
+                    className="rounded-lg p-1.5 text-slate-300 transition-colors duration-150 hover:bg-rose-50 hover:text-rose-600"
+                    aria-label="Remove prompt"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => updatePrompts([...prompts, ""])}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors duration-150 hover:bg-emerald-100"
+            >
+              <Plus size={13} />
+              Add prompt
+            </button>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+interface MealConfigValue {
+  mealType?: "breakfast" | "lunch" | "dinner" | "snack";
+  caloriesTarget?: number;
+  proteinTarget?: number;
+}
+
+function MealConfiguration({ control, index }: ConfigurationProps) {
+  return (
+    <Controller
+      control={control}
+      name={`activities.${index}.configuration`}
+      render={({ field }) => {
+        const config = (field.value ?? {}) as MealConfigValue;
+        return (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label className={labelClass}>Meal type</label>
+              <select
+                value={config.mealType ?? "breakfast"}
+                onChange={(e) =>
+                  field.onChange({
+                    ...config,
+                    mealType: e.target.value as MealConfigValue["mealType"],
+                  })
+                }
+                className={`${inputClass} mt-1`}
+              >
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Calories target (optional)</label>
+              <input
+                type="number"
+                min={0}
+                value={
+                  typeof config.caloriesTarget === "number"
+                    ? config.caloriesTarget
+                    : ""
+                }
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const next = { ...config };
+                  if (raw === "") {
+                    delete next.caloriesTarget;
+                  } else {
+                    next.caloriesTarget = Number(raw);
+                  }
+                  field.onChange(next);
+                }}
+                placeholder="600"
+                className={`${inputClass} mt-1`}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Protein target (optional)</label>
+              <input
+                type="number"
+                min={0}
+                value={
+                  typeof config.proteinTarget === "number"
+                    ? config.proteinTarget
+                    : ""
+                }
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const next = { ...config };
+                  if (raw === "") {
+                    delete next.proteinTarget;
+                  } else {
+                    next.proteinTarget = Number(raw);
+                  }
+                  field.onChange(next);
+                }}
+                placeholder="30"
+                className={`${inputClass} mt-1`}
+              />
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+interface MeditationConfigValue {
+  technique?: string;
+  guided?: boolean;
+}
+
+const MEDITATION_TECHNIQUE_OPTIONS: { value: string; label: string }[] = [
+  { value: "breathing", label: "Breathing" },
+  { value: "body_scan", label: "Body scan" },
+  { value: "mindfulness", label: "Mindfulness" },
+  { value: "guided", label: "Guided" },
+];
+
+function MeditationConfiguration({ control, index }: ConfigurationProps) {
+  return (
+    <Controller
+      control={control}
+      name={`activities.${index}.configuration`}
+      render={({ field }) => {
+        const config = (field.value ?? {}) as MeditationConfigValue;
+        return (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Technique</label>
+              <select
+                value={config.technique ?? "breathing"}
+                onChange={(e) =>
+                  field.onChange({ ...config, technique: e.target.value })
+                }
+                className={`${inputClass} mt-1`}
+              >
+                {MEDITATION_TECHNIQUE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end pb-0.5">
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                <input
+                  type="checkbox"
+                  checked={config.guided ?? false}
+                  onChange={(e) =>
+                    field.onChange({ ...config, guided: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
+                />
+                Guided
+              </label>
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+interface SleepConfigValue {
+  bedtime?: string;
+  wakeTime?: string;
+}
+
+function SleepConfiguration({ control, index }: ConfigurationProps) {
+  return (
+    <Controller
+      control={control}
+      name={`activities.${index}.configuration`}
+      render={({ field }) => {
+        const config = (field.value ?? {}) as SleepConfigValue;
+        return (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Bedtime (optional)</label>
+              <input
+                type="time"
+                value={config.bedtime ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const next = { ...config };
+                  if (raw === "") {
+                    delete next.bedtime;
+                  } else {
+                    next.bedtime = raw;
+                  }
+                  field.onChange(next);
+                }}
+                className={`${inputClass} mt-1`}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Wake time (optional)</label>
+              <input
+                type="time"
+                value={config.wakeTime ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const next = { ...config };
+                  if (raw === "") {
+                    delete next.wakeTime;
+                  } else {
+                    next.wakeTime = raw;
+                  }
+                  field.onChange(next);
+                }}
+                className={`${inputClass} mt-1`}
+              />
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+interface MeasurementConfigValue {
+  measurementType?: string;
+}
+
+const MEASUREMENT_TYPE_OPTIONS: { value: string; label: string }[] = [
+  { value: "weight", label: "Weight" },
+  { value: "waist", label: "Waist" },
+  { value: "blood_pressure", label: "Blood pressure" },
+  { value: "custom", label: "Custom" },
+];
+
+function MeasurementConfiguration({ control, index }: ConfigurationProps) {
+  return (
+    <Controller
+      control={control}
+      name={`activities.${index}.configuration`}
+      render={({ field }) => {
+        const config = (field.value ?? {}) as MeasurementConfigValue;
+        return (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>Measurement type</label>
+              <select
+                value={config.measurementType ?? "weight"}
+                onChange={(e) =>
+                  field.onChange({
+                    ...config,
+                    measurementType: e.target.value,
+                  })
+                }
+                className={`${inputClass} mt-1`}
+              >
+                {MEASUREMENT_TYPE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+      }}
+    />
+  );
+}
+
+function ActivityConfiguration({
+  category,
+  control,
+  index,
+}: { category: ProgramActivityCategory } & ConfigurationProps) {
+  const body = (() => {
+    switch (category) {
+      case "water":
+        return <WaterConfiguration control={control} index={index} />;
+      case "exercise":
+        return <ExerciseConfiguration control={control} index={index} />;
+      case "habit":
+        return <HabitConfiguration control={control} index={index} />;
+      case "meal":
+        return <MealConfiguration control={control} index={index} />;
+      case "meditation":
+        return <MeditationConfiguration control={control} index={index} />;
+      case "sleep":
+        return <SleepConfiguration control={control} index={index} />;
+      case "measurement":
+        return <MeasurementConfiguration control={control} index={index} />;
+      default:
+        return null;
+    }
+  })();
+
+  if (!body) return null;
+
+  return (
+    <div className="space-y-2 border-t border-slate-200/80 pt-3">
+      <h3 className={labelClass}>{CATEGORY_CONFIG_TITLES[category]}</h3>
+      {body}
     </div>
   );
 }
 
-function RemoveButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-500"
-      aria-label="Remove"
-    >
-      <Trash2 size={15} />
-    </button>
-  );
+/* ------------------------------------------------------------------ */
+/* Submit payload helpers                                             */
+/* ------------------------------------------------------------------ */
+
+function cleanConfiguration(
+  configuration: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (!configuration) return {};
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(configuration)) {
+    if (value === undefined || value === null) continue;
+    if (typeof value === "string" && value.trim() === "") continue;
+    if (Array.isArray(value)) {
+      const filtered = value.filter(
+        (item) => !(typeof item === "string" && item.trim() === ""),
+      );
+      if (filtered.length === 0) continue;
+      cleaned[key] = filtered;
+      continue;
+    }
+    cleaned[key] = value;
+  }
+  return cleaned;
 }
 
-const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10";
-const labelClass = "text-xs font-semibold text-slate-500";
+type ActivityPayload = CreateProgramDayDTO["activities"][number] & {
+  configuration: Record<string, unknown>;
+};
+
+type ProgramDayPayload = Omit<CreateProgramDayDTO, "activities"> & {
+  activities: ActivityPayload[];
+};
 
 export default function CreateProgramDayPage() {
   const { programId } = useParams<{ programId: string }>();
   const router = useRouter();
-  const nextKey = useLocalKey();
 
-  const [dayNumber, setDayNumber] = useState(1);
-  const [meals, setMeals] = useState<DraftMeal[]>([]);
-  const [workouts, setWorkouts] = useState<DraftWorkout[]>([]);
-  const [habits, setHabits] = useState<DraftHabit[]>([]);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormInput, unknown, FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      dayNumber: 1,
+      activities: [],
+    },
+  });
 
-  const addMeal = () => setMeals((prev) => [...prev, emptyMeal(nextKey())]);
-  const addWorkout = () =>
-    setWorkouts((prev) => [...prev, emptyWorkout(nextKey())]);
-  const addHabit = () => setHabits((prev) => [...prev, emptyHabit(nextKey())]);
+  const { fields, append, remove, move } = useFieldArray({
+    control,
+    name: "activities",
+  });
 
-  const updateMeal = (key: string, patch: Partial<MealDTO>) =>
-    setMeals((prev) =>
-      prev.map((m) => (m._key === key ? { ...m, ...patch } : m)),
-    );
-  const updateWorkout = (key: string, patch: Partial<WorkoutDTO>) =>
-    setWorkouts((prev) =>
-      prev.map((w) => (w._key === key ? { ...w, ...patch } : w)),
-    );
-  const updateHabit = (key: string, patch: Partial<HabitDTO>) =>
-    setHabits((prev) =>
-      prev.map((h) => (h._key === key ? { ...h, ...patch } : h)),
-    );
+  const goBack = () => {
+    router.push(`/nutritionist/programs/${programId}/days`);
+  };
 
-  const removeMeal = (key: string) =>
-    setMeals((prev) => prev.filter((m) => m._key !== key));
-  const removeWorkout = (key: string) =>
-    setWorkouts((prev) => prev.filter((w) => w._key !== key));
-  const removeHabit = (key: string) =>
-    setHabits((prev) => prev.filter((h) => h._key !== key));
-
-  const handleSubmit = async () => {
-    if (dayNumber < 1) {
-      toast.error("Day number must be at least 1.");
-      return;
+  const applyValueTypeChange = (
+    index: number,
+    valueType: ActivityValueType,
+  ) => {
+    if (!NEEDS_TARGET_AND_UNIT.includes(valueType)) {
+      setValue(`activities.${index}.targetValue`, undefined);
+      setValue(`activities.${index}.unit`, "");
     }
-    if (meals.some((m) => !m.title.trim())) {
-      toast.error("Every meal needs a title.");
-      return;
+    if (!NEEDS_ESTIMATED_DURATION.includes(valueType)) {
+      setValue(`activities.${index}.estimatedDurationMinutes`, undefined);
     }
-    if (workouts.some((w) => !w.title.trim())) {
-      toast.error("Every workout needs a title.");
-      return;
-    }
-    if (habits.some((h) => !h.title.trim())) {
-      toast.error("Every habit needs a title.");
-      return;
-    }
+  };
 
-    // `order` reflects final position in each list (1-based) — this is an
-    // assumption pending confirmation of what the backend expects it to mean.
-    const payload: CreateProgramDayDTO = {
-      dayNumber,
-      meals: meals.map(({ _key, ...meal }, i) => ({ ...meal, order: i + 1 })),
-      workouts: workouts.map(({ _key, ...workout }, i) => ({
-        ...workout,
-        order: i + 1,
-      })),
-      habits: habits.map(({ _key, ...habit }, i) => ({
-        ...habit,
-        order: i + 1,
-      })),
+  const applyCategoryChange = (
+    index: number,
+    category: ProgramActivityCategory,
+  ) => {
+    const defaultValueType = CATEGORY_DEFAULT_VALUE_TYPE[category];
+    setValue(`activities.${index}.valueType`, defaultValueType);
+    applyValueTypeChange(index, defaultValueType);
+    setValue(`activities.${index}.configuration`, {});
+  };
+
+  const onSubmit = async (values: FormValues) => {
+    const payload: ProgramDayPayload = {
+      dayNumber: values.dayNumber,
+      activities: values.activities.map((activity, index) => {
+        const showTargetAndUnit = NEEDS_TARGET_AND_UNIT.includes(
+          activity.valueType,
+        );
+        const showEstimatedDuration = NEEDS_ESTIMATED_DURATION.includes(
+          activity.valueType,
+        );
+
+        return {
+          category: activity.category,
+          title: activity.title.trim(),
+          description: activity.description?.trim() || undefined,
+          instructions: activity.instructions?.trim() || undefined,
+          valueType: activity.valueType,
+          targetValue: showTargetAndUnit ? activity.targetValue : undefined,
+          unit: showTargetAndUnit
+            ? activity.unit?.trim() || undefined
+            : undefined,
+          estimatedDurationMinutes: showEstimatedDuration
+            ? activity.estimatedDurationMinutes
+            : undefined,
+          scheduledTime: activity.scheduledTime || undefined,
+          isRequired: activity.isRequired,
+          order: index,
+          configuration: cleanConfiguration(activity.configuration),
+        };
+      }),
     };
-
-    setSubmitting(true);
     try {
       await nutriProgramDayService.createProgramDay(programId, payload);
-      toast.success(`Day ${dayNumber} created.`);
+      toast.success(`Day ${values.dayNumber} created.`);
       router.push(`/nutritionist/programs/${programId}/days`);
-    } catch {
-      toast.error("Couldn't create this day. Please try again.");
-    } finally {
-      setSubmitting(false);
+    } catch (error) {
+      const message = getErrorMessage(error);
+      console.error("Failed to create program day:", message);
+      toast.error(message || "Couldn't create this day. Please try again.");
     }
+  };
+
+  const onInvalid = (formErrors: typeof errors) => {
+    console.error("Program day validation failed:", formErrors);
   };
 
   return (
@@ -173,257 +794,316 @@ export default function CreateProgramDayPage() {
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <button
           type="button"
-          onClick={() =>
-            router.push(`/nutritionist/program/${programId}/days`)
-          }
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-emerald-600"
+          onClick={goBack}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 transition-colors duration-150 hover:text-emerald-600"
         >
           <ArrowLeft size={16} />
           Back to days
         </button>
 
         <div>
-          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             Add a program day
           </h1>
-          <p className="text-sm text-slate-500">
-            Set up the meals, workouts, and habits for this day.
+          <p className="text-sm font-medium text-slate-500">
+            Build the list of activities scheduled for this day.
           </p>
         </div>
 
-        {/* Day number */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <label className={labelClass}>Day number</label>
-          <input
-            type="number"
-            min={1}
-            value={dayNumber}
-            onChange={(e) => setDayNumber(Number(e.target.value))}
-            className={`${inputClass} mt-1.5 sm:w-40`}
-          />
-        </div>
+        <form
+          onSubmit={handleSubmit(onSubmit, onInvalid)}
+          className="space-y-6"
+        >
+          {/* Day number */}
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+            <label className={labelClass}>Day number</label>
+            <input
+              type="number"
+              min={1}
+              {...register("dayNumber")}
+              className={`${inputClass} mt-1.5 sm:w-40`}
+            />
+            {errors.dayNumber && (
+              <p className={errorClass}>{errors.dayNumber.message}</p>
+            )}
+          </div>
 
-        {/* Meals */}
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <SectionHeader title="Meals" onAdd={addMeal} addLabel="Add meal" />
-          {meals.length === 0 && (
-            <p className="text-xs text-slate-400">No meals added yet.</p>
-          )}
-          {meals.map((meal) => (
-            <div
-              key={meal._key}
-              className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className={labelClass}>Type</label>
-                    <select
-                      value={meal.mealType}
-                      onChange={(e) =>
-                        updateMeal(meal._key, {
-                          mealType: e.target.value as MealDTO["mealType"],
-                        })
-                      }
-                      className={`${inputClass} mt-1`}
-                    >
-                      {MEAL_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-span-2 sm:col-span-2">
-                    <label className={labelClass}>Title</label>
-                    <input
-                      type="text"
-                      value={meal.title}
-                      onChange={(e) =>
-                        updateMeal(meal._key, { title: e.target.value })
-                      }
-                      placeholder="Grilled chicken salad"
-                      className={`${inputClass} mt-1`}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Calories</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={meal.calories ?? ""}
-                      onChange={(e) =>
-                        updateMeal(meal._key, {
-                          calories: e.target.value
-                            ? Number(e.target.value)
-                            : undefined,
-                        })
-                      }
-                      className={`${inputClass} mt-1`}
-                    />
-                  </div>
-                </div>
-                <RemoveButton onClick={() => removeMeal(meal._key)} />
-              </div>
-              <div>
-                <label className={labelClass}>Description (optional)</label>
-                <textarea
-                  value={meal.description ?? ""}
-                  onChange={(e) =>
-                    updateMeal(meal._key, { description: e.target.value })
-                  }
-                  rows={2}
-                  className={`${inputClass} mt-1`}
-                />
-              </div>
+          {/* Activities */}
+          <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold tracking-tight text-slate-900">
+                Activities
+              </h2>
+              <button
+                type="button"
+                onClick={() => append(emptyActivity())}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors duration-150 hover:bg-emerald-100"
+              >
+                <Plus size={13} />
+                Add activity
+              </button>
             </div>
-          ))}
-        </div>
 
-        {/* Workouts */}
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <SectionHeader
-            title="Workouts"
-            onAdd={addWorkout}
-            addLabel="Add workout"
-          />
-          {workouts.length === 0 && (
-            <p className="text-xs text-slate-400">No workouts added yet.</p>
-          )}
-          {workouts.map((workout) => (
-            <div
-              key={workout._key}
-              className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3">
-                  <div className="col-span-2">
-                    <label className={labelClass}>Title</label>
-                    <input
-                      type="text"
-                      value={workout.title}
-                      onChange={(e) =>
-                        updateWorkout(workout._key, { title: e.target.value })
-                      }
-                      placeholder="Full body strength"
-                      className={`${inputClass} mt-1`}
-                    />
-                  </div>
-                  <div>
-                    <label className={labelClass}>Duration (min)</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={workout.duration}
-                      onChange={(e) =>
-                        updateWorkout(workout._key, {
-                          duration: Number(e.target.value),
-                        })
-                      }
-                      className={`${inputClass} mt-1`}
-                    />
-                  </div>
-                </div>
-                <RemoveButton onClick={() => removeWorkout(workout._key)} />
-              </div>
-              <div>
-                <label className={labelClass}>Instructions (optional)</label>
-                <textarea
-                  value={workout.instructions ?? ""}
-                  onChange={(e) =>
-                    updateWorkout(workout._key, {
-                      instructions: e.target.value,
-                    })
-                  }
-                  rows={2}
-                  className={`${inputClass} mt-1`}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+            {errors.activities?.root && (
+              <p className={errorClass}>{errors.activities.root.message}</p>
+            )}
+            {errors.activities?.message && (
+              <p className={errorClass}>{errors.activities.message}</p>
+            )}
 
-        {/* Habits */}
-        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <SectionHeader
-            title="Habits"
-            onAdd={addHabit}
-            addLabel="Add habit"
-          />
-          {habits.length === 0 && (
-            <p className="text-xs text-slate-400">No habits added yet.</p>
-          )}
-          {habits.map((habit) => (
-            <div
-              key={habit._key}
-              className="flex items-start justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
-            >
-              <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="col-span-2 sm:col-span-2">
-                  <label className={labelClass}>Title</label>
-                  <input
-                    type="text"
-                    value={habit.title}
-                    onChange={(e) =>
-                      updateHabit(habit._key, { title: e.target.value })
-                    }
-                    placeholder="Drink water"
-                    className={`${inputClass} mt-1`}
+            {fields.length === 0 && (
+              <div className="rounded-2xl border-2 border-dashed border-slate-300 p-6 text-center">
+                <p className="text-xs font-medium text-slate-400">
+                  No activities added yet.
+                </p>
+              </div>
+            )}
+
+            {fields.map((field, index) => {
+              const category = watch(`activities.${index}.category`);
+              const valueType = watch(`activities.${index}.valueType`);
+              const showTargetAndUnit =
+                NEEDS_TARGET_AND_UNIT.includes(valueType);
+              const showEstimatedDuration =
+                NEEDS_ESTIMATED_DURATION.includes(valueType);
+              const valueTypeOptions = CATEGORY_VALUE_TYPE_OPTIONS[category];
+              const activityErrors = errors.activities?.[index];
+
+              return (
+                <div
+                  key={field.id}
+                  className="space-y-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex flex-col items-center gap-1 pt-1.5 text-slate-300">
+                      <GripVertical size={14} />
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {index + 1}
+                      </span>
+                    </div>
+
+                    <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className={labelClass}>Category</label>
+                        <Controller
+                          control={control}
+                          name={`activities.${index}.category`}
+                          render={({ field: f }) => (
+                            <select
+                              {...f}
+                              onChange={(e) => {
+                                const category = e.target
+                                  .value as ProgramActivityCategory;
+                                f.onChange(category);
+                                applyCategoryChange(index, category);
+                              }}
+                              className={`${inputClass} mt-1`}
+                            >
+                              {PROGRAM_ACTIVITY_CATEGORIES.map((c) => (
+                                <option key={c} value={c}>
+                                  {CATEGORY_LABELS[c]}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        />
+                      </div>
+
+                      <div className="col-span-2 sm:col-span-2">
+                        <label className={labelClass}>Title</label>
+                        <input
+                          type="text"
+                          {...register(`activities.${index}.title`)}
+                          placeholder="Grilled chicken salad"
+                          className={`${inputClass} mt-1`}
+                        />
+                        {activityErrors?.title && (
+                          <p className={errorClass}>
+                            {activityErrors.title.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className={labelClass}>Response type</label>
+                        <Controller
+                          control={control}
+                          name={`activities.${index}.valueType`}
+                          render={({ field: f }) => (
+                            <select
+                              {...f}
+                              onChange={(e) => {
+                                const nextValueType = e.target
+                                  .value as ActivityValueType;
+                                f.onChange(nextValueType);
+                                applyValueTypeChange(index, nextValueType);
+                              }}
+                              className={`${inputClass} mt-1`}
+                            >
+                              {valueTypeOptions.map((v) => (
+                                <option key={v} value={v}>
+                                  {VALUE_TYPE_LABELS[v]}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        />
+                      </div>
+
+                      {showTargetAndUnit && (
+                        <>
+                          <div>
+                            <label className={labelClass}>Target value</label>
+                            <input
+                              type="number"
+                              min={0}
+                              {...register(`activities.${index}.targetValue`)}
+                              placeholder="30"
+                              className={`${inputClass} mt-1`}
+                            />
+                            {activityErrors?.targetValue && (
+                              <p className={errorClass}>
+                                {activityErrors.targetValue.message}
+                              </p>
+                            )}
+                          </div>
+                          <div>
+                            <label className={labelClass}>Unit</label>
+                            <input
+                              type="text"
+                              {...register(`activities.${index}.unit`)}
+                              placeholder="mins, ml, reps..."
+                              className={`${inputClass} mt-1`}
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      {showEstimatedDuration && (
+                        <div>
+                          <label className={labelClass}>
+                            Est. duration (min)
+                          </label>
+                          <input
+                            type="number"
+                            min={0}
+                            {...register(
+                              `activities.${index}.estimatedDurationMinutes`,
+                            )}
+                            placeholder="Optional"
+                            className={`${inputClass} mt-1`}
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className={labelClass}>Scheduled time</label>
+                        <input
+                          type="time"
+                          {...register(`activities.${index}.scheduledTime`)}
+                          className={`${inputClass} mt-1`}
+                        />
+                        {activityErrors?.scheduledTime && (
+                          <p className={errorClass}>
+                            {activityErrors.scheduledTime.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="col-span-2 flex items-end gap-2 pb-0.5 sm:col-span-1">
+                        <label className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                          <input
+                            type="checkbox"
+                            {...register(`activities.${index}.isRequired`)}
+                            className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
+                          />
+                          Required
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => index > 0 && move(index, index - 1)}
+                        disabled={index === 0}
+                        className="rounded-lg p-1 text-slate-300 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Move up"
+                      >
+                        <ChevronUp size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          index < fields.length - 1 && move(index, index + 1)
+                        }
+                        disabled={index === fields.length - 1}
+                        className="rounded-lg p-1 text-slate-300 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Move down"
+                      >
+                        <ChevronDown size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="rounded-lg p-1.5 text-slate-300 transition-colors duration-150 hover:bg-rose-50 hover:text-rose-600"
+                        aria-label="Remove activity"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className={labelClass}>
+                        Description (optional)
+                      </label>
+                      <textarea
+                        {...register(`activities.${index}.description`)}
+                        rows={2}
+                        className={`${inputClass} mt-1`}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClass}>
+                        Instructions (optional)
+                      </label>
+                      <textarea
+                        {...register(`activities.${index}.instructions`)}
+                        rows={2}
+                        className={`${inputClass} mt-1`}
+                      />
+                    </div>
+                  </div>
+
+                  <ActivityConfiguration
+                    category={category}
+                    control={control}
+                    index={index}
                   />
                 </div>
-                <div>
-                  <label className={labelClass}>Target (optional)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={habit.targetValue ?? ""}
-                    onChange={(e) =>
-                      updateHabit(habit._key, {
-                        targetValue: e.target.value
-                          ? Number(e.target.value)
-                          : undefined,
-                      })
-                    }
-                    className={`${inputClass} mt-1`}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Unit (optional)</label>
-                  <input
-                    type="text"
-                    value={habit.unit ?? ""}
-                    onChange={(e) =>
-                      updateHabit(habit._key, { unit: e.target.value })
-                    }
-                    placeholder="litres"
-                    className={`${inputClass} mt-1`}
-                  />
-                </div>
-              </div>
-              <RemoveButton onClick={() => removeHabit(habit._key)} />
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
 
-        <div className="flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={() =>
-              router.push(`/nutritionist/program/${programId}/days`)
-            }
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? "Creating…" : "Create day"}
-          </button>
-        </div>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={goBack}
+              className="rounded-xl border border-slate-200/80 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-150 hover:bg-slate-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+            >
+              {isSubmitting ? "Creating…" : "Create day"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

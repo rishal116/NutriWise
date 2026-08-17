@@ -13,6 +13,7 @@ import {
 } from "@/dtos/nutritionist/client/client-request.dto";
 import type {
   ClientListItemDTO,
+  ClientProgramSummaryDTO,
   ProgramStatus,
   SubscriptionStatus,
 } from "@/dtos/nutritionist/client/client-response.dto";
@@ -52,6 +53,28 @@ const PROGRAM_STYLES: Record<ProgramStatus, string> = {
   completed: "bg-slate-100 text-slate-600 border-slate-200",
   cancelled: "bg-rose-50 text-rose-700 border-rose-100",
 };
+
+// A client can have several programs now — pick the one most relevant to
+// surface in the list row. Active takes priority, then upcoming, etc.
+const PROGRAM_PRIORITY: ProgramStatus[] = [
+  "active",
+  "upcoming",
+  "paused",
+  "completed",
+  "cancelled",
+];
+
+function getPrimaryProgram(
+  programs: ClientProgramSummaryDTO[],
+): ClientProgramSummaryDTO | null {
+  if (programs.length === 0) return null;
+
+  for (const status of PROGRAM_PRIORITY) {
+    const match = programs.find((p) => p.programStatus === status);
+    if (match) return match;
+  }
+  return programs[0];
+}
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -101,13 +124,13 @@ function ClientAvatar({ client }: { client: ClientListItemDTO }) {
   );
 }
 
-function ProgressBar({ client }: { client: ClientListItemDTO }) {
-  const pct = Math.min(100, Math.max(0, client.completionPercentage));
+function ProgressBar({ program }: { program: ClientProgramSummaryDTO }) {
+  const pct = Math.min(100, Math.max(0, program.completionPercentage));
   return (
     <div className="w-full min-w-[8rem]">
       <div className="mb-1 flex justify-between text-[11px] font-semibold text-slate-500">
         <span>
-          Day {client.currentDay}/{client.durationDays}
+          Day {program.currentDay}/{program.durationDays}
         </span>
         <span>{Math.round(pct)}%</span>
       </div>
@@ -199,13 +222,12 @@ export default function NutritionistClientsPage() {
     (async () => {
       try {
         const res = await nutriClientService.getClients(buildQuery(null));
-        console.log(res);
 
         if (cancelled) return;
         setClients(res.items);
         cursorRef.current = res.nextCursor;
-        hasMoreRef.current = res.hasNextPage;
-        setHasMore(res.hasNextPage);
+        hasMoreRef.current = res.hasMore;
+        setHasMore(res.hasMore);
       } catch {
         if (!cancelled) {
           toast.error("Couldn't load clients. Please try again.");
@@ -240,8 +262,8 @@ export default function NutritionistClientsPage() {
       );
       setClients((prev) => [...prev, ...res.items]);
       cursorRef.current = res.nextCursor;
-      hasMoreRef.current = res.hasNextPage;
-      setHasMore(res.hasNextPage);
+      hasMoreRef.current = res.hasMore;
+      setHasMore(res.hasMore);
     } catch {
       toast.error("Couldn't load more clients.");
     } finally {
@@ -357,104 +379,154 @@ export default function NutritionistClientsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {clients.map((client) => (
-                    <tr
-                      key={client.clientId}
-                      onClick={() =>
-                        router.push(`/nutritionist/clients/${client.clientId}`)
-                      }
-                      className="cursor-pointer transition-colors hover:bg-slate-50"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <ClientAvatar client={client} />
-                          <div>
-                            <div className="text-sm font-bold text-slate-900">
-                              {client.fullName}
-                            </div>
-                            <div className="text-xs text-slate-400">
-                              @{client.username}
+                  {clients.map((client) => {
+                    const primary = getPrimaryProgram(client.programs);
+                    const extraCount = client.programs.length - 1;
+
+                    return (
+                      <tr
+                        key={client.clientId}
+                        onClick={() =>
+                          router.push(
+                            `/nutritionist/clients/${client.clientId}`,
+                          )
+                        }
+                        className="cursor-pointer transition-colors hover:bg-slate-50"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <ClientAvatar client={client} />
+                            <div>
+                              <div className="text-sm font-bold text-slate-900">
+                                {client.fullName}
+                              </div>
+                              <div className="text-xs text-slate-400">
+                                @{client.username}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-700">
-                        {client.planTitle}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-col gap-1.5">
-                          <Badge
-                            label={client.subscriptionStatus}
-                            className={
-                              SUBSCRIPTION_STYLES[client.subscriptionStatus]
-                            }
-                          />
-                          <Badge
-                            label={client.programStatus}
-                            className={PROGRAM_STYLES[client.programStatus]}
-                          />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <ProgressBar client={client} />
-                      </td>
-                      <td className="px-6 py-4 text-xs font-medium text-slate-500">
-                        <div>{formatDate(client.startDate)}</div>
-                        <div>{formatDate(client.endDate)}</div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+
+                        {!primary ? (
+                          <td
+                            colSpan={4}
+                            className="px-6 py-4 text-xs font-medium text-slate-400"
+                          >
+                            No program assigned yet.
+                          </td>
+                        ) : (
+                          <>
+                            <td className="px-6 py-4 text-sm font-medium text-slate-700">
+                              <div className="flex items-center gap-1.5">
+                                {primary.planTitle}
+                                {extraCount > 0 && (
+                                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                                    +{extraCount} more
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col gap-1.5">
+                                <Badge
+                                  label={primary.subscriptionStatus}
+                                  className={
+                                    SUBSCRIPTION_STYLES[
+                                      primary.subscriptionStatus
+                                    ]
+                                  }
+                                />
+                                <Badge
+                                  label={primary.programStatus}
+                                  className={
+                                    PROGRAM_STYLES[primary.programStatus]
+                                  }
+                                />
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <ProgressBar program={primary} />
+                            </td>
+                            <td className="px-6 py-4 text-xs font-medium text-slate-500">
+                              <div>{formatDate(primary.startDate)}</div>
+                              <div>{formatDate(primary.endDate)}</div>
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile cards */}
             <div className="space-y-3 md:hidden">
-              {clients.map((client) => (
-                <div
-                  key={client.clientId}
-                  onClick={() =>
-                    router.push(`/nutritionist/clients/${client.clientId}`)
-                  }
-                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm cursor-pointer active:bg-slate-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <ClientAvatar client={client} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-bold text-slate-900">
-                        {client.fullName}
-                      </div>
-                      <div className="truncate text-xs text-slate-400">
-                        @{client.username}
+              {clients.map((client) => {
+                const primary = getPrimaryProgram(client.programs);
+                const extraCount = client.programs.length - 1;
+
+                return (
+                  <div
+                    key={client.clientId}
+                    onClick={() =>
+                      router.push(`/nutritionist/clients/${client.clientId}`)
+                    }
+                    className="cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm active:bg-slate-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <ClientAvatar client={client} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-bold text-slate-900">
+                          {client.fullName}
+                        </div>
+                        <div className="truncate text-xs text-slate-400">
+                          @{client.username}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    <Badge
-                      label={client.subscriptionStatus}
-                      className={SUBSCRIPTION_STYLES[client.subscriptionStatus]}
-                    />
-                    <Badge
-                      label={client.programStatus}
-                      className={PROGRAM_STYLES[client.programStatus]}
-                    />
-                  </div>
+                    {!primary ? (
+                      <p className="mt-3 text-xs font-medium text-slate-400">
+                        No program assigned yet.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          <Badge
+                            label={primary.subscriptionStatus}
+                            className={
+                              SUBSCRIPTION_STYLES[primary.subscriptionStatus]
+                            }
+                          />
+                          <Badge
+                            label={primary.programStatus}
+                            className={PROGRAM_STYLES[primary.programStatus]}
+                          />
+                          {extraCount > 0 && (
+                            <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
+                              +{extraCount} more
+                            </span>
+                          )}
+                        </div>
 
-                  <p className="mt-3 text-sm font-medium text-slate-700">
-                    {client.planTitle}
-                  </p>
+                        <p className="mt-3 text-sm font-medium text-slate-700">
+                          {primary.planTitle}
+                        </p>
 
-                  <div className="mt-3">
-                    <ProgressBar client={client} />
-                  </div>
+                        <div className="mt-3">
+                          <ProgressBar program={primary} />
+                        </div>
 
-                  <div className="mt-3 flex justify-between text-xs font-medium text-slate-500">
-                    <span>{formatDate(client.startDate)}</span>
-                    <span>{formatDate(client.endDate)}</span>
+                        <div className="mt-3 flex justify-between text-xs font-medium text-slate-500">
+                          <span>{formatDate(primary.startDate)}</span>
+                          <span>{formatDate(primary.endDate)}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </>
         )}

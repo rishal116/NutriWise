@@ -22,6 +22,7 @@ export interface IProgramActivityProjection {
   unit?: string;
 
   estimatedDurationMinutes?: number;
+  scheduledTime?: string;
 
   isRequired: boolean;
 

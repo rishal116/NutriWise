@@ -1,38 +1,35 @@
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { ProgramDayCardResponseDTO } from "../../../dtos/nutritionist/program/program-day-card-response.dto";
+import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/program-day-list-query.dto";
 import {
   CreateProgramDayDTO,
   UpdateProgramDayDTO,
 } from "../../../dtos/nutritionist/program/program-day-request.dto";
-
-import {
-  ProgramDayBrowseResponseDTO,
-  ProgramDayDetailsDTO,
-} from "../../../dtos/nutritionist/program/program-day-response.dto";
+import { ProgramDayResponseDTO } from "../../../dtos/nutritionist/program/program-day-response.dto";
 
 export interface INutriProgramDayService {
   getProgramDays(
     nutritionistId: string,
     programId: string,
-  ): Promise<ProgramDayBrowseResponseDTO>;
+    query: ProgramDayListQueryDTO,
+  ): Promise<InfiniteScrollResponseDTO<ProgramDayCardResponseDTO>>;
 
   getProgramDayDetails(
     nutritionistId: string,
     dayId: string,
-  ): Promise<ProgramDayDetailsDTO>;
+  ): Promise<ProgramDayResponseDTO>;
 
   createProgramDay(
     nutritionistId: string,
     programId: string,
     dto: CreateProgramDayDTO,
-  ): Promise<ProgramDayDetailsDTO>;
+  ): Promise<ProgramDayResponseDTO>;
 
   updateProgramDay(
     nutritionistId: string,
     dayId: string,
     dto: UpdateProgramDayDTO,
-  ): Promise<ProgramDayDetailsDTO>;
+  ): Promise<ProgramDayResponseDTO>;
 
-  deleteProgramDay(
-    nutritionistId: string,
-    dayId: string,
-  ): Promise<void>;
+  deleteProgramDay(nutritionistId: string, dayId: string): Promise<void>;
 }

@@ -16,9 +16,9 @@ export interface IUserDayTracking {
   dayNumber: number;
   date: Date;
   status: UserDayTrackingStatus;
-  startedAt?: Date;
-  completedAt?: Date;
-  lastActivityAt?: Date;
+  startedAt?: Date | null;
+  completedAt?: Date | null;
+  lastActivityAt?: Date | null;
   totalActivities: number;
   completedActivities: number;
   skippedActivities: number;
