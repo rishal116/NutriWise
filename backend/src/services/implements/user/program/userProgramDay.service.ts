@@ -2,12 +2,15 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "../../../../types/types";
 import { IUserProgramDayService } from "../../../interfaces/user/program/IUserProgramDayService";
 import { IUserProgramDayRepository } from "../../../../repositories/interfaces/user/program/IUserProgramDayRepository";
-import { UserProgramDayResponseDTO } from "../../../../dtos/user/program/user-program-day-response.dto";
-import { UserProgramDayDetailsResponseDTO } from "../../../../dtos/user/program/user-program-day-details-response.dto";
-import { UserProgramDayMapper } from "../../../../mapper/user/program/user-program-day.mapper";
+import { UserProgramDayListResponseDTO } from "../../../../dtos/user/program/user-program-day-list-response.dto";
 import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 import logger from "../../../../utils/logger";
+import { InfiniteScrollResponseDTO } from "../../../../dtos/common/infinite-scroll-response.dto";
+import { UserProgramDayListQueryDTO } from "../../../../dtos/user/program/user-program-day-list-query.dto";
+import { UserProgramDayListMapper } from "../../../../mapper/user/program/user-program-day-list.mapper";
+import { UserProgramDayDetailsResponseDTO } from "../../../../dtos/user/program/user-program-day-details-response.dto";
+import { UserProgramDayDetailsMapper } from "../../../../mapper/user/program/user-program-day-details.mapper";
 
 @injectable()
 export class UserProgramDayService implements IUserProgramDayService {
@@ -19,25 +22,33 @@ export class UserProgramDayService implements IUserProgramDayService {
   async browseProgramDays(
     userId: string,
     programId: string,
-  ): Promise<UserProgramDayResponseDTO[]> {
+    query: UserProgramDayListQueryDTO,
+  ): Promise<InfiniteScrollResponseDTO<UserProgramDayListResponseDTO>> {
     logger.debug(
       "Browsing program days for userId: %s, programId: %s",
       userId,
       programId,
     );
 
-    const days = await this._userProgramDayRepository.browseProgramDays(
+    const result = await this._userProgramDayRepository.browseProgramDays(
       userId,
       programId,
+      query,
     );
 
     logger.info(
       "Retrieved %d program days for programId: %s",
-      days.length,
+      result.items.length,
       programId,
     );
 
-    return UserProgramDayMapper.toResponseDTOList(days);
+    const items = UserProgramDayListMapper.toResponseDTOList(result.items);
+
+    return new InfiniteScrollResponseDTO(
+      items,
+      result.nextCursor,
+      result.hasMore,
+    );
   }
 
   async getDayDetails(
@@ -65,17 +76,11 @@ export class UserProgramDayService implements IUserProgramDayService {
         programId,
       );
 
-      throw new CustomError(
-        "Program day not found",
-        StatusCode.NOT_FOUND,
-      );
+      throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
     }
 
-    logger.info(
-      "Program day %d retrieved successfully",
-      dayNumber,
-    );
+    logger.info("Program day %d retrieved successfully", dayNumber);
 
-    return UserProgramDayMapper.toDetailsResponseDTO(day);
+    return UserProgramDayDetailsMapper.toResponseDTO(day);
   }
 }

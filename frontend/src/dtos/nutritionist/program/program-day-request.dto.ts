@@ -1,49 +1,51 @@
-export interface MealDTO {
-  mealType: "breakfast" | "lunch" | "dinner" | "snack";
+export const PROGRAM_ACTIVITY_CATEGORIES = [
+  "meal",
+  "exercise",
+  "habit",
+  "water",
+  "supplement",
+  "meditation",
+  "sleep",
+  "reading",
+  "appointment",
+  "measurement",
+  "task",
+  "custom",
+] as const;
 
+export type ProgramActivityCategory =
+  (typeof PROGRAM_ACTIVITY_CATEGORIES)[number];
+
+export const ACTIVITY_VALUE_TYPES = [
+  "boolean",
+  "number",
+  "duration",
+  "photo",
+  "text",
+] as const;
+
+export type ActivityValueType = (typeof ACTIVITY_VALUE_TYPES)[number];
+
+export interface ProgramActivityDTO {
+  category: ProgramActivityCategory;
   title: string;
-
   description?: string;
-
-  calories?: number;
-
-  order: number;
-}
-
-export interface WorkoutDTO {
-  title: string;
-
-  duration: number;
-
   instructions?: string;
-
-  order: number;
-}
-
-export interface HabitDTO {
-  title: string;
-
+  valueType: ActivityValueType;
   targetValue?: number;
-
   unit?: string;
-
+  estimatedDurationMinutes?: number;
+  scheduledTime?: string;
+  isRequired?: boolean;
+  configuration?: Record<string, unknown>;
   order: number;
 }
 
 export interface CreateProgramDayDTO {
   dayNumber: number;
-
-  meals?: MealDTO[];
-
-  workouts?: WorkoutDTO[];
-
-  habits?: HabitDTO[];
+  activities: ProgramActivityDTO[];
 }
 
 export interface UpdateProgramDayDTO {
-  meals?: MealDTO[];
-
-  workouts?: WorkoutDTO[];
-
-  habits?: HabitDTO[];
+  activities?: ProgramActivityDTO[];
 }

@@ -2,6 +2,7 @@ import { injectable } from "inversify";
 import { Types } from "mongoose";
 import { BaseRepository } from "../../common/base.repository";
 import {
+  CreateUserActivityTrackingData,
   IUserActivityTracking,
   UserActivityTrackingModel,
   UserActivityTrackingStatus,
@@ -38,17 +39,16 @@ export class UserActivityTrackingRepository
       .find({
         userProgramId,
       })
-      .sort({
-        completedAt: -1,
-      })
       .lean<IUserActivityTracking[]>();
   }
 
-  async findByActivity(
+  async findByDayAndActivity(
+    userProgramDayId: string | Types.ObjectId,
     activityId: string | Types.ObjectId,
   ): Promise<IUserActivityTracking | null> {
     return this._model
       .findOne({
+        userProgramDayId,
         activityId,
       })
       .lean<IUserActivityTracking | null>();
@@ -84,15 +84,9 @@ export class UserActivityTrackingRepository
       .lean<IUserActivityTracking[]>();
   }
 
-  async updateActivity(
-    id: string | Types.ObjectId,
-    update: Partial<IUserActivityTracking>,
-  ): Promise<IUserActivityTracking | null> {
-    return this._model
-      .findByIdAndUpdate(id, update, {
-        new: true,
-        runValidators: true,
-      })
-      .lean<IUserActivityTracking | null>();
+  async initializeForDay(
+    activities: CreateUserActivityTrackingData[],
+  ): Promise<IUserActivityTracking[]> {
+    return this._model.insertMany(activities);
   }
 }

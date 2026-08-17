@@ -65,10 +65,15 @@ export class UserProgramBrowseRepository
       sort = UserProgramSort.NEWEST,
       cursor,
     } = query;
+
     const searchText = search?.trim();
     const cursorData = decodeCursor(cursor);
 
+    const userObjectId =
+      typeof userId === "string" ? new Types.ObjectId(userId) : userId;
+
     const { field, order } = USER_PROGRAM_SORT_FIELD_MAP[sort];
+
     if (cursorData?.sortKey && cursorData.sortKey !== sort) {
       throw new Error("Invalid cursor");
     }
@@ -76,11 +81,14 @@ export class UserProgramBrowseRepository
     const pipeline: PipelineStage[] = [
       {
         $match: {
-          userId: new Types.ObjectId(userId),
+          userId: userObjectId,
           isDeleted: false,
-          ...(programStatus && { status: programStatus }),
+          ...(programStatus && {
+            status: programStatus,
+          }),
         },
       },
+
       {
         $lookup: {
           from: "userplans",
@@ -89,8 +97,25 @@ export class UserProgramBrowseRepository
           as: "userPlan",
         },
       },
+
       {
         $unwind: "$userPlan",
+      },
+
+      {
+        $lookup: {
+          from: "userprogramprogresses",
+          localField: "_id",
+          foreignField: "userProgramId",
+          as: "progress",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$progress",
+          preserveNullAndEmptyArrays: true,
+        },
       },
     ];
 
@@ -111,6 +136,7 @@ export class UserProgramBrowseRepository
           as: "nutritionist",
         },
       },
+
       {
         $unwind: "$nutritionist",
       },
@@ -174,15 +200,19 @@ export class UserProgramBrowseRepository
           _id: order,
         },
       },
+
       {
         $limit: limit + 1,
       },
+
       {
         $project: {
           _id: {
             $toString: "$_id",
           },
+
           title: "$userPlan.planSnapshot.title",
+
           nutritionist: {
             _id: {
               $toString: "$nutritionist._id",
@@ -190,13 +220,24 @@ export class UserProgramBrowseRepository
             fullName: "$nutritionist.fullName",
             profileImage: "$nutritionist.profileImage",
           },
+
           subscriptionStatus: "$userPlan.subscriptionStatus",
+
           programStatus: "$status",
-          currentDay: 1,
-          durationDays: 1,
-          completionPercentage: 1,
-          startDate: 1,
-          endDate: 1,
+
+          currentDay: {
+            $ifNull: ["$progress.currentDay", 1],
+          },
+
+          durationDays: "$durationDays",
+
+          completionPercentage: {
+            $ifNull: ["$progress.completionPercentage", 0],
+          },
+
+          startDate: "$startDate",
+          endDate: "$endDate",
+
           cursorId: "$_id",
           cursorValue: `$${field}`,
         },
@@ -204,6 +245,7 @@ export class UserProgramBrowseRepository
     );
 
     const result = await this._model.aggregate<ProgramCardWithCursor>(pipeline);
+
     const hasMore = result.length > limit;
 
     const items = hasMore ? result.slice(0, limit) : result;
@@ -237,14 +279,21 @@ export class UserProgramBrowseRepository
     userId: string | Types.ObjectId,
     programId: string | Types.ObjectId,
   ): Promise<IUserProgramDetailsProjection | null> {
+    const userObjectId =
+      typeof userId === "string" ? new Types.ObjectId(userId) : userId;
+
+    const programObjectId =
+      typeof programId === "string" ? new Types.ObjectId(programId) : programId;
+
     const pipeline: PipelineStage[] = [
       {
         $match: {
-          _id: new Types.ObjectId(programId),
-          userId: new Types.ObjectId(userId),
+          _id: programObjectId,
+          userId: userObjectId,
           isDeleted: false,
         },
       },
+
       {
         $lookup: {
           from: "userplans",
@@ -253,9 +302,27 @@ export class UserProgramBrowseRepository
           as: "userPlan",
         },
       },
+
       {
         $unwind: "$userPlan",
       },
+
+      {
+        $lookup: {
+          from: "userprogramprogresses",
+          localField: "_id",
+          foreignField: "userProgramId",
+          as: "progress",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$progress",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
       {
         $lookup: {
           from: "users",
@@ -264,9 +331,11 @@ export class UserProgramBrowseRepository
           as: "nutritionist",
         },
       },
+
       {
         $unwind: "$nutritionist",
       },
+
       {
         $project: {
           _id: 1,
@@ -281,16 +350,20 @@ export class UserProgramBrowseRepository
           },
 
           status: 1,
-          currentDay: 1,
           durationDays: 1,
-          completionPercentage: 1,
-
           startDate: 1,
           endDate: 1,
 
+          currentDay: {
+            $ifNull: ["$progress.currentDay", 1],
+          },
+
+          completionPercentage: {
+            $ifNull: ["$progress.completionPercentage", 0],
+          },
+
           paymentStatus: "$userPlan.paymentStatus",
           subscriptionStatus: "$userPlan.subscriptionStatus",
-
           purchasedAt: "$userPlan.createdAt",
         },
       },

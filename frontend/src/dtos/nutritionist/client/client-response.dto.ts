@@ -11,15 +11,10 @@ export type ProgramStatus =
   | "completed"
   | "cancelled";
 
-export interface ClientListItemDTO {
-  clientId: string;
+export interface ClientProgramSummaryDTO {
   userProgramId: string;
   userPlanId: string;
-  planId: string;
-
-  fullName: string;
-  username: string;
-  profileImage?: string;
+  nutritionistPlanId: string;
 
   planTitle: string;
 
@@ -34,10 +29,14 @@ export interface ClientListItemDTO {
   endDate: Date;
 }
 
-export interface ClientListResponseDTO {
-  items: ClientListItemDTO[];
-  nextCursor: string | null;
-  hasNextPage: boolean;
+export interface ClientListItemDTO {
+  clientId: string;
+
+  fullName: string;
+  username: string;
+  profileImage?: string;a
+
+  programs: ClientProgramSummaryDTO[];
 }
 
 export interface ClientHealthDetailsDTO {
@@ -51,23 +50,6 @@ export interface ClientHealthDetailsDTO {
   targetWeightKg?: number;
 
   preferredTimeline: string;
-}
-
-export interface ClientProgramSummaryDTO {
-  userProgramId: string;
-  userPlanId: string;
-  nutritionistPlanId: string;
-
-  title: string;
-
-  durationDays: number;
-  currentDay: number;
-  completionPercentage: number;
-
-  status: ProgramStatus;
-
-  startDate: Date;
-  endDate: Date;
 }
 
 export interface ClientDetailsResponseDTO {
@@ -84,5 +66,5 @@ export interface ClientDetailsResponseDTO {
 
   health: ClientHealthDetailsDTO;
 
-  program: ClientProgramSummaryDTO;
+  programs: ClientProgramSummaryDTO[];
 }

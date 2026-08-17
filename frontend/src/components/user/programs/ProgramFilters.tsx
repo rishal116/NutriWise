@@ -1,3 +1,5 @@
+import { Search, X } from "lucide-react";
+
 import {
   PROGRAM_STATUS,
   ProgramStatus,
@@ -27,7 +29,7 @@ interface ProgramFiltersProps {
 }
 
 const selectClassName =
-  "rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500";
+  "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition-colors duration-150 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
 
 export function ProgramFilters({
   search,
@@ -42,14 +44,15 @@ export function ProgramFilters({
   hasActiveFilters,
 }: ProgramFiltersProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs md:flex-row md:items-center md:justify-between">
       <div className="relative w-full md:max-w-xs">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
         <input
           type="text"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search programs..."
-          className="w-full rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-3 text-sm text-slate-700 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-xs font-medium text-slate-700 transition-colors duration-150 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
         />
       </div>
 
@@ -102,8 +105,9 @@ export function ProgramFilters({
           <button
             type="button"
             onClick={onReset}
-            className="rounded-xl px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+            className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-700"
           >
+            <X className="h-3.5 w-3.5" />
             Reset
           </button>
         )}

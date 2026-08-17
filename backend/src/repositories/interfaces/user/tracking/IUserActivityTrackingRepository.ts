@@ -15,7 +15,8 @@ export interface IUserActivityTrackingRepository extends IBaseRepository<IUserAc
     userProgramId: string | Types.ObjectId,
   ): Promise<IUserActivityTracking[]>;
 
-  findByActivity(
+  findByDayAndActivity(
+    userProgramDayId: string | Types.ObjectId,
     activityId: string | Types.ObjectId,
   ): Promise<IUserActivityTracking | null>;
 
@@ -29,8 +30,7 @@ export interface IUserActivityTrackingRepository extends IBaseRepository<IUserAc
     category: ProgramActivityCategory,
   ): Promise<IUserActivityTracking[]>;
 
-  updateActivity(
-    id: string | Types.ObjectId,
-    update: Partial<IUserActivityTracking>,
-  ): Promise<IUserActivityTracking | null>;
+  initializeForDay(
+    activities: Partial<IUserActivityTracking>[],
+  ): Promise<IUserActivityTracking[]>;
 }

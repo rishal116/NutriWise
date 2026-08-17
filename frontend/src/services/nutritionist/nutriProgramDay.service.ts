@@ -2,56 +2,63 @@ import { clientApi } from "@/lib/axios/clientApi";
 
 import { NUTRITIONIST_PROGRAM_DAY_ROUTES } from "@/routes/nutritionist";
 
+import type { ApiResponseDTO } from "@/dtos/common/api-response.dto";
+
+import type { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
+
+import type { ProgramDayListQueryDTO } from "@/dtos/nutritionist/program/program-day-list-query.dto";
+
+import type { ProgramDayCardResponseDTO } from "@/dtos/nutritionist/program/program-day-card-response.dto";
+
+import type { ProgramDayResponseDTO } from "@/dtos/nutritionist/program/program-day-response.dto";
+
 import type {
   CreateProgramDayDTO,
   UpdateProgramDayDTO,
 } from "@/dtos/nutritionist/program/program-day-request.dto";
 
-import type {
-  ProgramDayBrowseResponseDTO,
-  ProgramDayDetailsDTO,
-} from "@/dtos/nutritionist/program/program-day-response.dto";
-
 export const nutriProgramDayService = {
   async getProgramDays(
     programId: string,
-  ): Promise<ProgramDayBrowseResponseDTO> {
-    const { data } = await clientApi.get(
-      NUTRITIONIST_PROGRAM_DAY_ROUTES.LIST(programId),
-    );
-    return data.data;
+    query?: ProgramDayListQueryDTO,
+  ): Promise<InfiniteScrollResponseDTO<ProgramDayCardResponseDTO>> {
+    const response = await clientApi.get<
+      ApiResponseDTO<InfiniteScrollResponseDTO<ProgramDayCardResponseDTO>>
+    >(NUTRITIONIST_PROGRAM_DAY_ROUTES.LIST(programId), {
+      params: query,
+    });
+
+    return response.data.data;
   },
 
-  async getProgramDayDetails(dayId: string): Promise<ProgramDayDetailsDTO> {
-    const { data } = await clientApi.get(
+  async getProgramDayDetails(dayId: string): Promise<ProgramDayResponseDTO> {
+    const response = await clientApi.get<ApiResponseDTO<ProgramDayResponseDTO>>(
       NUTRITIONIST_PROGRAM_DAY_ROUTES.DETAILS(dayId),
     );
 
-    return data.data;
+    return response.data.data;
   },
 
   async createProgramDay(
     programId: string,
     payload: CreateProgramDayDTO,
-  ): Promise<ProgramDayDetailsDTO> {
-    const { data } = await clientApi.post(
-      NUTRITIONIST_PROGRAM_DAY_ROUTES.CREATE(programId),
-      payload,
-    );
+  ): Promise<ProgramDayResponseDTO> {
+    const response = await clientApi.post<
+      ApiResponseDTO<ProgramDayResponseDTO>
+    >(NUTRITIONIST_PROGRAM_DAY_ROUTES.CREATE(programId), payload);
 
-    return data.data;
+    return response.data.data;
   },
 
   async updateProgramDay(
     dayId: string,
     payload: UpdateProgramDayDTO,
-  ): Promise<ProgramDayDetailsDTO> {
-    const { data } = await clientApi.patch(
-      NUTRITIONIST_PROGRAM_DAY_ROUTES.UPDATE(dayId),
-      payload,
-    );
+  ): Promise<ProgramDayResponseDTO> {
+    const response = await clientApi.patch<
+      ApiResponseDTO<ProgramDayResponseDTO>
+    >(NUTRITIONIST_PROGRAM_DAY_ROUTES.UPDATE(dayId), payload);
 
-    return data.data;
+    return response.data.data;
   },
 
   async deleteProgramDay(dayId: string): Promise<void> {

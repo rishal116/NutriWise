@@ -9,6 +9,7 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 
 import { INutriProgramDayController } from "../../interfaces/nutritionist/INutriProgramDayController";
 import { INutriProgramDayService } from "../../../services/interfaces/nutritionist/INutriProgramDayService";
+import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/program-day-list-query.dto";
 
 @injectable()
 export class NutriProgramDayController implements INutriProgramDayController {
@@ -24,6 +25,7 @@ export class NutriProgramDayController implements INutriProgramDayController {
     const result = await this._programDayService.getProgramDays(
       nutritionistId,
       programId,
+      req.query as unknown as ProgramDayListQueryDTO,
     );
 
     res.status(StatusCode.OK).json({

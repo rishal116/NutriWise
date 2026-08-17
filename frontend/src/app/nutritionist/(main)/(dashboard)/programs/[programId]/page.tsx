@@ -2,25 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 import { nutriProgramService } from "@/services/nutritionist/nutriProgram.service";
-import type { ProgramSummary } from "@/dtos/nutritionist/program/program-response.dto";
-
-// Same fallback-safe map as the programs list page — status is typed as a
-// plain `string` on ProgramSummary, so anything unrecognized still renders
-// instead of throwing. Worth lifting both this and the list page's copy into
-// a shared `/constants/program-status.ts` once a third place needs it.
-const STATUS_STYLES: Record<string, string> = {
-  upcoming: "bg-sky-50 text-sky-700 border-sky-100",
-  active: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  paused: "bg-amber-50 text-amber-700 border-amber-100",
-  completed: "bg-slate-100 text-slate-600 border-slate-200",
-  cancelled: "bg-rose-50 text-rose-700 border-rose-100",
-};
-const DEFAULT_STATUS_STYLE = "bg-slate-100 text-slate-500 border-slate-200";
+import type { UserProgramDetailsResponseDTO } from "@/dtos/nutritionist/program/program-details-response.dto";
+import { ProgramAvatar } from "@/components/nutritionist/programs/ProgramAvatar";
+import {
+  ProgramStatusBadge,
+  SubscriptionStatusBadge,
+} from "@/components/nutritionist/programs/StatusBadges";
+import { StatCard } from "@/components/nutritionist/programs/StatCard";
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleDateString("en-IN", {
@@ -35,17 +27,12 @@ function DetailSkeleton() {
     <div className="space-y-4">
       <div className="h-24 animate-pulse rounded-2xl bg-slate-100" />
       <div className="h-40 animate-pulse rounded-2xl bg-slate-100" />
+      <div className="h-32 animate-pulse rounded-2xl bg-slate-100" />
     </div>
   );
 }
 
-function InfoRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | number;
-}) {
+function InfoRow({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:justify-between sm:gap-4">
       <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -60,7 +47,9 @@ export default function ProgramDetailsPage() {
   const { programId } = useParams<{ programId: string }>();
   const router = useRouter();
 
-  const [program, setProgram] = useState<ProgramSummary | null>(null);
+  const [program, setProgram] = useState<UserProgramDetailsResponseDTO | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -117,43 +106,38 @@ export default function ProgramDetailsPage() {
             {/* Header */}
             <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
-                {program.profileImage ? (
-                  <Image
-                    src={program.profileImage}
-                    alt={program.fullName}
-                    width={64}
-                    height={64}
-                    className="h-16 w-16 shrink-0 rounded-2xl object-cover"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-xl font-bold text-white">
-                    {program.fullName.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <ProgramAvatar
+                  userProfileImage={program.userProfileImage}
+                  userFullName={program.userFullName}
+                />
                 <div>
                   <h1 className="text-lg font-bold text-slate-900">
-                    {program.fullName}
+                    {program.userFullName}
                   </h1>
                   <p className="text-sm text-slate-400">
-                    @{program.username}
+                    {program.specialization}
                   </p>
                 </div>
               </div>
-              <span
-                className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                  STATUS_STYLES[program.status] ?? DEFAULT_STATUS_STYLE
-                }`}
-              >
-                {program.status}
-              </span>
+              <div className="flex flex-wrap gap-1.5">
+                <ProgramStatusBadge status={program.programStatus} />
+                <SubscriptionStatusBadge status={program.subscriptionStatus} />
+              </div>
             </div>
 
-            {/* Program info */}
+            {/* Plan + progress */}
             <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-slate-900">
-                  {program.planTitle}
-                </h2>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">
+                    {program.planTitle}
+                  </h2>
+                  {program.planDescription && (
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {program.planDescription}
+                    </p>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() =>
@@ -161,9 +145,9 @@ export default function ProgramDetailsPage() {
                       `/nutritionist/programs/${program.userProgramId}/days`,
                     )
                   }
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-emerald-700"
                 >
-                  View day-by-day plan
+                  Day-by-day plan
                   <ArrowRight size={14} />
                 </button>
               </div>
@@ -190,12 +174,51 @@ export default function ProgramDetailsPage() {
                   label="Start date"
                   value={formatDate(program.startDate)}
                 />
-                <InfoRow
-                  label="End date"
-                  value={formatDate(program.endDate)}
+                <InfoRow label="End date" value={formatDate(program.endDate)} />
+                <InfoRow label="Payment status" value={program.paymentStatus} />
+              </div>
+            </div>
+
+            {/* Stats grid */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-sm font-bold text-slate-900">
+                Progress stats
+              </h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <StatCard
+                  label="Adherence"
+                  value={`${program.adherenceScore}%`}
+                />
+                <StatCard
+                  label="Current streak"
+                  value={`${program.currentStreak}d`}
+                />
+                <StatCard
+                  label="Longest streak"
+                  value={`${program.longestStreak}d`}
+                />
+                <StatCard
+                  label="Days completed"
+                  value={`${program.completedDays}/${program.totalDays}`}
+                />
+                <StatCard
+                  label="Activities done"
+                  value={`${program.completedActivities}/${program.totalActivities}`}
+                />
+                <StatCard
+                  label="Skipped activities"
+                  value={program.skippedActivities}
                 />
               </div>
             </div>
+
+            {/* Notes */}
+            {program.programNotes && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="mb-2 text-sm font-bold text-slate-900">Notes</h2>
+                <p className="text-sm text-slate-600">{program.programNotes}</p>
+              </div>
+            )}
           </>
         )}
       </div>

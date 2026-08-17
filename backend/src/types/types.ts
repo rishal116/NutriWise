@@ -60,6 +60,7 @@ export const TYPES = {
     "INutritionistPlanBrowsingController",
   ),
   IUserProgramDayController: Symbol.for("IUserProgramDayController"),
+  IUserActivityTrackingController:Symbol.for("IUserActivityTrackingController"),
 
   // Services
   IUserAuthService: Symbol.for("IUserAuthService"),
@@ -79,6 +80,8 @@ export const TYPES = {
     "INutritionistPlanBrowsingService",
   ),
   IUserProgramDayService: Symbol.for("IUserProgramDayService"),
+  IUserDayTrackingService:Symbol.for("IUserDayTrackingService"),
+  IUserActivityTrackingService:Symbol.for("IUserActivityTrackingService"),
 
   // Repositories
   IUserRepository: Symbol.for("IUserRepository"),
@@ -96,6 +99,8 @@ export const TYPES = {
     "INutritionistPlanBrowsingRepository",
   ),
   IUserProgramProgressRepository: Symbol.for("IUserProgramProgressRepository"),
+  IUserDayTrackingRepository:Symbol.for("IUserDayTrackingRepository"),
+  IUserActivityTrackingRepository:Symbol.for("IUserActivityTrackingRepository"),
 
   // ======================================================
   // ADMIN MODULE

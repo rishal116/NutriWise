@@ -8,12 +8,10 @@ import {
   ClientSortBy,
   ClientStatusFilter,
 } from "../../../dtos/nutritionist/client/client-request.dto";
-import {
-  ClientBrowseResult,
-  IClientListProjection,
-} from "../../../types/nutriClientList.projection";
+import { IClientListProjection } from "../../../types/nutriClientList.projection";
 import { IClientDetailsProjection } from "../../../types/nutriClientDetails.projection";
 import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 
 interface ClientProjectionWithCursor extends IClientListProjection {
   cursorId: Types.ObjectId;
@@ -25,7 +23,7 @@ export class NutriClientRepository implements INutriClientRepository {
   async findClients(
     nutritionistId: string | Types.ObjectId,
     query: GetClientsQueryDTO,
-  ): Promise<ClientBrowseResult> {
+  ): Promise<CursorPaginationResult<IClientListProjection>> {
     const {
       search,
       status = ClientStatusFilter.ALL,
@@ -33,47 +31,12 @@ export class NutriClientRepository implements INutriClientRepository {
       cursor,
       limit = 10,
     } = query;
-
     const nutritionistObjectId =
       typeof nutritionistId === "string"
         ? new Types.ObjectId(nutritionistId)
         : nutritionistId;
 
     const cursorData = decodeCursor(cursor);
-
-    let sortField = "createdAt";
-    let sortDirection: 1 | -1 = -1;
-
-    switch (sortBy) {
-      case ClientSortBy.NAME_ASC:
-        sortField = "user.fullName";
-        sortDirection = 1;
-        break;
-
-      case ClientSortBy.NAME_DESC:
-        sortField = "user.fullName";
-        sortDirection = -1;
-        break;
-
-      case ClientSortBy.START_DATE:
-        sortField = "startDate";
-        sortDirection = -1;
-        break;
-
-      case ClientSortBy.END_DATE:
-        sortField = "endDate";
-        sortDirection = -1;
-        break;
-
-      case ClientSortBy.PROGRESS:
-        sortField = "completionPercentage";
-        sortDirection = -1;
-        break;
-
-      default:
-        sortField = "createdAt";
-        sortDirection = -1;
-    }
 
     const pipeline: PipelineStage[] = [
       {
@@ -106,19 +69,6 @@ export class NutriClientRepository implements INutriClientRepository {
 
       {
         $lookup: {
-          from: "nutritionistplans",
-          localField: "planId",
-          foreignField: "_id",
-          as: "plan",
-        },
-      },
-
-      {
-        $unwind: "$plan",
-      },
-
-      {
-        $lookup: {
           from: "userplans",
           localField: "userPlanId",
           foreignField: "_id",
@@ -128,6 +78,38 @@ export class NutriClientRepository implements INutriClientRepository {
 
       {
         $unwind: "$userPlan",
+      },
+
+      {
+        $lookup: {
+          from: "userprogramprogresses",
+          localField: "_id",
+          foreignField: "userProgramId",
+          as: "progress",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$progress",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      {
+        $lookup: {
+          from: "nutritionistplans",
+          localField: "planId",
+          foreignField: "_id",
+          as: "plan",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$plan",
+          preserveNullAndEmptyArrays: true,
+        },
       },
     ];
 
@@ -152,15 +134,128 @@ export class NutriClientRepository implements INutriClientRepository {
       });
     }
 
+    pipeline.push({
+      $project: {
+        clientId: "$user._id",
+
+        fullName: "$user.fullName",
+        username: "$user.username",
+        profileImage: "$user.profileImage",
+
+        program: {
+          userProgramId: "$_id",
+          userPlanId: "$userPlan._id",
+          planId: "$planId",
+
+          planTitle: "$userPlan.planSnapshot.title",
+
+          subscriptionStatus: "$userPlan.subscriptionStatus",
+          programStatus: "$status",
+
+          currentDay: {
+            $ifNull: ["$progress.currentDay", 1],
+          },
+
+          durationDays: "$durationDays",
+
+          completionPercentage: {
+            $ifNull: ["$progress.completionPercentage", 0],
+          },
+
+          startDate: "$startDate",
+          endDate: "$endDate",
+        },
+
+        programCreatedAt: "$createdAt",
+      },
+    });
+
     if (status !== ClientStatusFilter.ALL) {
       pipeline.push({
         $match: {
-          status,
+          "program.programStatus": status,
         },
       });
     }
 
+    pipeline.push({
+      $group: {
+        _id: "$clientId",
+
+        fullName: {
+          $first: "$fullName",
+        },
+
+        username: {
+          $first: "$username",
+        },
+
+        profileImage: {
+          $first: "$profileImage",
+        },
+
+        programs: {
+          $push: "$program",
+        },
+
+        latestProgramDate: {
+          $max: "$programCreatedAt",
+        },
+
+        earliestStartDate: {
+          $min: "$program.startDate",
+        },
+
+        latestEndDate: {
+          $max: "$program.endDate",
+        },
+      },
+    });
+
+    let sortStage: Record<string, 1 | -1>;
+
+    switch (sortBy) {
+      case ClientSortBy.NAME_ASC:
+        sortStage = {
+          fullName: 1,
+          _id: 1,
+        };
+        break;
+
+      case ClientSortBy.NAME_DESC:
+        sortStage = {
+          fullName: -1,
+          _id: -1,
+        };
+        break;
+
+      case ClientSortBy.START_DATE:
+        sortStage = {
+          earliestStartDate: -1,
+          _id: -1,
+        };
+        break;
+
+      case ClientSortBy.END_DATE:
+        sortStage = {
+          latestEndDate: -1,
+          _id: -1,
+        };
+        break;
+
+      case ClientSortBy.LATEST:
+      default:
+        sortStage = {
+          latestProgramDate: -1,
+          _id: -1,
+        };
+        break;
+    }
+
     if (cursorData) {
+      const sortField = Object.keys(sortStage)[0];
+      const sortDirection = sortStage[sortField];
+
       const comparison =
         sortDirection === -1
           ? {
@@ -200,10 +295,7 @@ export class NutriClientRepository implements INutriClientRepository {
     }
 
     pipeline.push({
-      $sort: {
-        [sortField]: sortDirection,
-        _id: sortDirection,
-      },
+      $sort: sortStage,
     });
 
     pipeline.push({
@@ -214,29 +306,24 @@ export class NutriClientRepository implements INutriClientRepository {
       $project: {
         _id: 0,
 
-        clientId: "$user._id",
-        userProgramId: "$_id",
-        userPlanId: "$userPlan._id",
-        planId: "$plan._id",
+        clientId: "$_id",
 
-        fullName: "$user.fullName",
-        username: "$user.username",
-        profileImage: "$user.profileImage",
+        fullName: 1,
+        username: 1,
+        profileImage: 1,
 
-        planTitle: "$plan.title",
-
-        subscriptionStatus: "$userPlan.subscriptionStatus",
-        programStatus: "$status",
-
-        currentDay: "$currentDay",
-        durationDays: "$durationDays",
-        completionPercentage: "$completionPercentage",
-
-        startDate: "$startDate",
-        endDate: "$endDate",
+        programs: 1,
 
         cursorId: "$_id",
-        cursorValue: `$${sortField}`,
+
+        cursorValue:
+          sortBy === ClientSortBy.NAME_ASC || sortBy === ClientSortBy.NAME_DESC
+            ? "$fullName"
+            : sortBy === ClientSortBy.START_DATE
+              ? "$earliestStartDate"
+              : sortBy === ClientSortBy.END_DATE
+                ? "$latestEndDate"
+                : "$latestProgramDate",
       },
     });
 
@@ -270,9 +357,7 @@ export class NutriClientRepository implements INutriClientRepository {
     nutritionistId: string | Types.ObjectId,
   ): Promise<IClientDetailsProjection | null> {
     const clientObjectId =
-      typeof clientId === "string"
-        ? new Types.ObjectId(clientId)
-        : clientId;
+      typeof clientId === "string" ? new Types.ObjectId(clientId) : clientId;
 
     const nutritionistObjectId =
       typeof nutritionistId === "string"
@@ -286,16 +371,6 @@ export class NutriClientRepository implements INutriClientRepository {
           nutritionistId: nutritionistObjectId,
           isDeleted: false,
         },
-      },
-
-      {
-        $sort: {
-          createdAt: -1,
-        },
-      },
-
-      {
-        $limit: 1,
       },
 
       {
@@ -339,6 +414,22 @@ export class NutriClientRepository implements INutriClientRepository {
 
       {
         $lookup: {
+          from: "userprogramprogresses",
+          localField: "_id",
+          foreignField: "userProgramId",
+          as: "progress",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$progress",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      {
+        $lookup: {
           from: "healthdetails",
           localField: "userId",
           foreignField: "userId",
@@ -367,22 +458,6 @@ export class NutriClientRepository implements INutriClientRepository {
           gender: "$user.gender",
           profileImage: "$user.profileImage",
 
-          userProgramId: "$_id",
-          userPlanId: "$userPlan._id",
-          planId: "$plan._id",
-
-          planTitle: "$plan.title",
-
-          subscriptionStatus: "$userPlan.subscriptionStatus",
-          programStatus: "$status",
-
-          currentDay: "$currentDay",
-          durationDays: "$durationDays",
-          completionPercentage: "$completionPercentage",
-
-          startDate: "$startDate",
-          endDate: "$endDate",
-
           health: {
             heightCm: "$health.heightCm",
             weightKg: "$health.weightKg",
@@ -392,6 +467,92 @@ export class NutriClientRepository implements INutriClientRepository {
             targetWeightKg: "$health.targetWeightKg",
             preferredTimeline: "$health.preferredTimeline",
           },
+
+          program: {
+            userProgramId: "$_id",
+            userPlanId: "$userPlan._id",
+            planId: "$plan._id",
+
+            planTitle: "$plan.title",
+
+            subscriptionStatus: "$userPlan.subscriptionStatus",
+            programStatus: "$status",
+
+            currentDay: {
+              $ifNull: ["$progress.currentDay", 1],
+            },
+
+            durationDays: "$durationDays",
+
+            completionPercentage: {
+              $ifNull: ["$progress.completionPercentage", 0],
+            },
+
+            startDate: "$startDate",
+            endDate: "$endDate",
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: "$clientId",
+
+          clientId: {
+            $first: "$clientId",
+          },
+
+          fullName: {
+            $first: "$fullName",
+          },
+
+          username: {
+            $first: "$username",
+          },
+
+          email: {
+            $first: "$email",
+          },
+
+          phone: {
+            $first: "$phone",
+          },
+
+          birthDate: {
+            $first: "$birthDate",
+          },
+
+          gender: {
+            $first: "$gender",
+          },
+
+          profileImage: {
+            $first: "$profileImage",
+          },
+
+          health: {
+            $first: "$health",
+          },
+
+          programs: {
+            $push: "$program",
+          },
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          clientId: 1,
+          fullName: 1,
+          username: 1,
+          email: 1,
+          phone: 1,
+          birthDate: 1,
+          gender: 1,
+          profileImage: 1,
+          health: 1,
+          programs: 1,
         },
       },
     ]);

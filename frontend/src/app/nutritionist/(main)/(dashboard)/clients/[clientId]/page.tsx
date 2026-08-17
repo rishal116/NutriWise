@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import { nutriClientService } from "@/services/nutritionist/nutriClient.service";
 import type {
   ClientDetailsResponseDTO,
+  ClientProgramSummaryDTO,
   ProgramStatus,
+  SubscriptionStatus,
 } from "@/dtos/nutritionist/client/client-response.dto";
 
 const PROGRAM_STYLES: Record<ProgramStatus, string> = {
@@ -18,6 +20,13 @@ const PROGRAM_STYLES: Record<ProgramStatus, string> = {
   paused: "bg-amber-50 text-amber-700 border-amber-100",
   completed: "bg-slate-100 text-slate-600 border-slate-200",
   cancelled: "bg-rose-50 text-rose-700 border-rose-100",
+};
+
+const SUBSCRIPTION_STYLES: Record<SubscriptionStatus, string> = {
+  active: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  pending: "bg-amber-50 text-amber-700 border-amber-100",
+  expired: "bg-rose-50 text-rose-700 border-rose-100",
+  cancelled: "bg-slate-100 text-slate-500 border-slate-200",
 };
 
 function formatDate(value?: Date | string): string {
@@ -52,6 +61,60 @@ function InfoRow({
         {label}
       </span>
       <span className="text-sm font-medium text-slate-800">{value}</span>
+    </div>
+  );
+}
+
+function Badge({ label, className }: { label: string; className: string }) {
+  return (
+    <span
+      className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${className}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function ProgramCard({ program }: { program: ClientProgramSummaryDTO }) {
+  const pct = Math.min(100, Math.max(0, program.completionPercentage));
+
+  return (
+    <div className="space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h3 className="text-sm font-bold text-slate-900">
+          {program.planTitle}
+        </h3>
+        <div className="flex gap-1.5">
+          <Badge
+            label={program.subscriptionStatus}
+            className={SUBSCRIPTION_STYLES[program.subscriptionStatus]}
+          />
+          <Badge
+            label={program.programStatus}
+            className={PROGRAM_STYLES[program.programStatus]}
+          />
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-1 flex justify-between text-xs font-semibold text-slate-500">
+          <span>
+            Day {program.currentDay}/{program.durationDays}
+          </span>
+          <span>{Math.round(pct)}%</span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-emerald-600 transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 pt-1">
+        <InfoRow label="Start date" value={formatDate(program.startDate)} />
+        <InfoRow label="End date" value={formatDate(program.endDate)} />
+      </div>
     </div>
   );
 }
@@ -137,10 +200,9 @@ export default function ClientDetailsPage() {
                   <p className="text-sm text-slate-400">@{client.username}</p>
                 </div>
               </div>
-              <span
-                className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${PROGRAM_STYLES[client.program.status]}`}
-              >
-                {client.program.status}
+              <span className="text-xs font-semibold text-slate-400">
+                {client.programs.length}{" "}
+                {client.programs.length === 1 ? "program" : "programs"}
               </span>
             </div>
 
@@ -191,40 +253,23 @@ export default function ClientDetailsPage() {
               </div>
             </div>
 
-            {/* Program */}
+            {/* Programs */}
             <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-sm font-bold text-slate-900">
-                {client.program.title}
-              </h2>
-              <div>
-                <div className="mb-1 flex justify-between text-xs font-semibold text-slate-500">
-                  <span>
-                    Day {client.program.currentDay}/
-                    {client.program.durationDays}
-                  </span>
-                  <span>
-                    {Math.round(client.program.completionPercentage)}%
-                  </span>
+              <h2 className="text-sm font-bold text-slate-900">Programs</h2>
+              {client.programs.length === 0 ? (
+                <p className="text-xs text-slate-400">
+                  No programs assigned yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {client.programs.map((program) => (
+                    <ProgramCard
+                      key={program.userProgramId}
+                      program={program}
+                    />
+                  ))}
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-emerald-600"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, client.program.completionPercentage))}%`,
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2.5 pt-2">
-                <InfoRow
-                  label="Start date"
-                  value={formatDate(client.program.startDate)}
-                />
-                <InfoRow
-                  label="End date"
-                  value={formatDate(client.program.endDate)}
-                />
-              </div>
+              )}
             </div>
           </>
         )}

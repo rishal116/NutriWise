@@ -1,25 +1,22 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
-
 import { INutriClientService } from "../../interfaces/nutritionist/INutriClientService";
 import { INutriClientRepository } from "../../../repositories/interfaces/nutritionist/INutriClientRepository";
-
 import {
   GetClientsQueryDTO,
   GetClientParamsDTO,
 } from "../../../dtos/nutritionist/client/client-request.dto";
-
 import {
-  ClientListResponseDTO,
+  ClientListItemDTO,
   ClientDetailsResponseDTO,
 } from "../../../dtos/nutritionist/client/client-response.dto";
-
-import { NutriClientMapper } from "../../../mapper/nutritionist/client/nutriClient.mapper";
-
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { NutriClientListMapper } from "../../../mapper/nutritionist/client/nutri-client-list.mapper";
+import { NutriClientDetailsMapper } from "../../../mapper/nutritionist/client/nutri-client-details.mapper";
 
 @injectable()
 export class NutriClientService implements INutriClientService {
@@ -31,7 +28,7 @@ export class NutriClientService implements INutriClientService {
   async getClients(
     nutritionistId: string,
     query: GetClientsQueryDTO,
-  ): Promise<ClientListResponseDTO> {
+  ): Promise<InfiniteScrollResponseDTO<ClientListItemDTO>> {
     logger.debug(
       "Fetching nutritionist clients. nutritionistId=%s",
       nutritionistId,
@@ -49,7 +46,13 @@ export class NutriClientService implements INutriClientService {
       nutritionistId,
     );
 
-    return NutriClientMapper.toClientListResponseDTO(result);
+    return new InfiniteScrollResponseDTO(
+      result.items.map((item) =>
+        NutriClientListMapper.toClientListItemDTO(item),
+      ),
+      result.nextCursor,
+      result.hasMore,
+    );
   }
 
   async getClientDetails(
@@ -79,6 +82,6 @@ export class NutriClientService implements INutriClientService {
 
     logger.info("Client details retrieved. clientId=%s", params.clientId);
 
-    return NutriClientMapper.toClientDetailsResponseDTO(result);
+    return NutriClientDetailsMapper.toClientDetailsResponseDTO(result);
   }
 }

@@ -9,3 +9,4 @@ export * from "./nutri-plan-browsing.routes";
 export * from "./checkout.routes";
 
 export * from "./user-program.routes";
+export * from "./user-activity-track.routes";
