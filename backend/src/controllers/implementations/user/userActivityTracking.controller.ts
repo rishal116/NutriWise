@@ -16,13 +16,17 @@ export class UserActivityTrackingController implements IUserActivityTrackingCont
 
   startActivity = asyncHandler(async (req: Request, res: Response) => {
     const { programId, dayId, activityId } = req.params;
+    console.log("Params: ",req.params);
+
     const userId = req.user!.userId;
+
     const tracking = await this._userActivityTrackingService.startActivity(
       userId,
       programId,
       dayId,
       activityId,
     );
+
     res.status(StatusCode.OK).json({
       success: true,
       data: tracking,

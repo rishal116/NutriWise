@@ -24,20 +24,34 @@ export class MessageReceiptRepository
       .exec();
   }
 
-  async findByUser(userId: string): Promise<IMessageReceipt[]> {
-    return this._model
-      .find({
-        userId: new Types.ObjectId(userId),
-      })
-      .lean<IMessageReceipt[]>()
-      .exec();
-  }
-
   async updateStatus(
     messageId: string,
+    conversationId: string,
     userId: string,
     status: ReceiptStatus,
   ): Promise<void> {
+    const messageObjectId = new Types.ObjectId(messageId);
+    const conversationObjectId = new Types.ObjectId(conversationId);
+    const userObjectId = new Types.ObjectId(userId);
+
+    const statusOrder: Record<ReceiptStatus, number> = {
+      [ReceiptStatus.SENT]: 1,
+      [ReceiptStatus.DELIVERED]: 2,
+      [ReceiptStatus.SEEN]: 3,
+    };
+
+    const existingReceipt = await this._model.findOne({
+      messageId: messageObjectId,
+      userId: userObjectId,
+    });
+
+    if (
+      existingReceipt &&
+      statusOrder[status] <= statusOrder[existingReceipt.status]
+    ) {
+      return;
+    }
+
     const update: UpdateQuery<IMessageReceipt> = {
       status,
     };
@@ -48,19 +62,47 @@ export class MessageReceiptRepository
 
     if (status === ReceiptStatus.SEEN) {
       update.seenAt = new Date();
+
+      if (!existingReceipt?.deliveredAt) {
+        update.deliveredAt = new Date();
+      }
     }
 
+    await this._model.updateOne(
+      {
+        messageId: messageObjectId,
+        userId: userObjectId,
+      },
+      {
+        $set: update,
+        $setOnInsert: {
+          conversationId: conversationObjectId,
+        },
+      },
+      {
+        upsert: true,
+      },
+    );
+  }
+
+  async markConversationAsSeen(
+    conversationId: string,
+    userId: string,
+  ): Promise<void> {
     await this._model
-      .updateOne(
+      .updateMany(
         {
-          messageId: new Types.ObjectId(messageId),
+          conversationId: new Types.ObjectId(conversationId),
           userId: new Types.ObjectId(userId),
+          status: {
+            $ne: ReceiptStatus.SEEN,
+          },
         },
         {
-          $set: update,
-        },
-        {
-          upsert: true,
+          $set: {
+            status: ReceiptStatus.SEEN,
+            seenAt: new Date(),
+          },
         },
       )
       .exec();

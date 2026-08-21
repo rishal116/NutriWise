@@ -9,7 +9,10 @@ import {
   ClientStatusFilter,
 } from "../../../dtos/nutritionist/client/client-request.dto";
 import { IClientListProjection } from "../../../types/nutriClientList.projection";
-import { IClientDetailsProjection } from "../../../types/nutriClientDetails.projection";
+import {
+  IClientDetailsProjection,
+  IMeetingClientOption,
+} from "../../../types/nutriClientDetails.projection";
 import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 
@@ -558,5 +561,109 @@ export class NutriClientRepository implements INutriClientRepository {
     ]);
 
     return result[0] ?? null;
+  }
+
+  async findMeetingEligibleClients(
+    nutritionistId: string | Types.ObjectId,
+  ): Promise<IMeetingClientOption[]> {
+    const nutritionistObjectId =
+      typeof nutritionistId === "string"
+        ? new Types.ObjectId(nutritionistId)
+        : nutritionistId;
+
+    return UserProgramModel.aggregate<IMeetingClientOption>([
+      {
+        $match: {
+          nutritionistId: nutritionistObjectId,
+          isDeleted: false,
+
+          status: "active",
+        },
+      },
+
+      {
+        $lookup: {
+          from: "userplans",
+          localField: "userPlanId",
+          foreignField: "_id",
+          as: "userPlan",
+        },
+      },
+
+      {
+        $unwind: "$userPlan",
+      },
+
+      {
+        $match: {
+          "userPlan.subscriptionStatus": "active",
+        },
+      },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+
+      {
+        $unwind: "$user",
+      },
+
+      {
+        $match: {
+          "user.roles": UserRole.USER,
+          "user.isBlocked": false,
+          "user.deletedAt": null,
+        },
+      },
+
+      {
+        $group: {
+          _id: "$user._id",
+
+          clientId: {
+            $first: "$user._id",
+          },
+
+          fullName: {
+            $first: "$user.fullName",
+          },
+
+          username: {
+            $first: "$user.username",
+          },
+
+          email: {
+            $first: "$user.email",
+          },
+
+          profileImage: {
+            $first: "$user.profileImage",
+          },
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          clientId: 1,
+          fullName: 1,
+          username: 1,
+          email: 1,
+          profileImage: 1,
+        },
+      },
+
+      {
+        $sort: {
+          fullName: 1,
+          clientId: 1,
+        },
+      },
+    ]);
   }
 }

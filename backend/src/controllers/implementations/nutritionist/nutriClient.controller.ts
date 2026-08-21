@@ -13,7 +13,6 @@ import {
   GetClientsQueryDTO,
 } from "../../../dtos/nutritionist/client/client-request.dto";
 
-
 @injectable()
 export class NutriClientController implements INutriClientController {
   constructor(
@@ -57,4 +56,20 @@ export class NutriClientController implements INutriClientController {
       data: client,
     });
   });
+
+  getMeetingEligibleClients = asyncHandler(
+    async (req: Request, res: Response) => {
+      const nutritionistId = req.user!.userId;
+
+      const clients =
+        await this._nutriClientService.getMeetingEligibleClients(
+          nutritionistId,
+        );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: clients,
+      });
+    },
+  );
 }

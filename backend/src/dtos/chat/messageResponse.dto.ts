@@ -1,25 +1,30 @@
-import { MessageType } from "../../models/message.model";
+import { MessageType, MessageStatus } from "../../models/message.model";
 
 export interface AttachmentDTO {
   url: string;
-  fileName: string;
+  fileName?: string;
+  size?: number;
+  mimeType?: string;
 }
 
 export interface MessageResponseDTO {
-
   id: string;
   conversationId: string;
   senderId: string;
 
-  content?: string;
-
-  isEdited: boolean;
+  text?: string;
 
   attachments?: AttachmentDTO[];
 
-  type: MessageType;
-  editedAt?:Date;
+  messageType: MessageType;
+
+  replyTo?: string;
+
+  status: MessageStatus;
+
+  editedAt?: Date;
+  deletedAt?: Date;
 
   createdAt: Date;
-
+  updatedAt: Date;
 }

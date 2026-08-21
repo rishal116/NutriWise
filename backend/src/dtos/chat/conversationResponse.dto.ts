@@ -1,17 +1,29 @@
+export interface ConversationParticipantDTO {
+  id: string;
+  name: string;
+  profileImage?: string;
+}
+
 export interface ConversationResponseDTO {
   id: string;
 
   chatType: "direct" | "group";
-
-  otherUserName?: string | null;
-  otherUserProfile?: string | null;
+  purpose: "coaching" | "consultation" | "group_coaching";
+  status: "active" | "inactive" | "blocked" | "closed";
 
   title?: string;
   groupAvatar?: string;
-  adminId?: string;
+  description?: string;
 
-  lastMessageId?: string;
-  lastMessageAt?: Date;
+  participant?: ConversationParticipantDTO;
 
-  lastMessage?: string | null;   // ✅ ADD THIS
+  lastMessage?: string;
+  lastActivityAt?: Date;
+
+  unreadCount: number;
+  isMuted: boolean;
+  isArchived: boolean;
+
+  createdAt: Date;
+  updatedAt: Date;
 }

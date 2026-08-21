@@ -175,6 +175,7 @@ export class NutriProgramDayService implements INutriProgramDayService {
 
     return ProgramDayMapper.toProgramDayDTO(day);
   }
+  
   async updateProgramDay(
     nutritionistId: string,
     dayId: string,

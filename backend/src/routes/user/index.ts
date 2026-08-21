@@ -12,6 +12,9 @@ import checkoutRoutes from "./checkout.route";
 import userProgramRoutes from "./user-program.route";
 import userProgramDayRoutes from "./user-program-day.route";
 import userActivityTrackingRoutes from "./user-activity-track.route";
+import userMeetingRoutes from "./user-meeting.route";
+
+
 
 const router = express.Router();
 
@@ -28,5 +31,8 @@ router.use("/checkout", checkoutRoutes);
 router.use("/programs", userProgramRoutes);
 router.use("/programs/:programId/days", userProgramDayRoutes);
 router.use("/programs/:programId/days", userActivityTrackingRoutes);
+
+router.use("/meetings", userMeetingRoutes);
+
 
 export default router;

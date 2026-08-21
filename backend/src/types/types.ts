@@ -3,13 +3,15 @@ export const TYPES = {
   // COMMON
   // ======================================================
 
-  // Controllers
+  // -------------------- Controllers ---------------------
+
   ICheckoutController: Symbol.for("ICheckoutController"),
   IStripeWebhookController: Symbol.for("IStripeWebhookController"),
   IConversationController: Symbol.for("IConversationController"),
   IMessageController: Symbol.for("IMessageController"),
 
-  // Services
+  // -------------------- Services ------------------------
+
   IStripeService: Symbol.for("IStripeService"),
   ICheckoutService: Symbol.for("ICheckoutService"),
   IStripeWebhookService: Symbol.for("IStripeWebhookService"),
@@ -18,7 +20,8 @@ export const TYPES = {
   IMessageService: Symbol.for("IMessageService"),
   IStripeCheckoutHandlerService: Symbol.for("IStripeCheckoutHandlerService"),
 
-  // Repositories
+  // -------------------- Repositories --------------------
+
   IWalletRepository: Symbol.for("IWalletRepository"),
   IPaymentRepository: Symbol.for("IPaymentRepository"),
   IConversationRepository: Symbol.for("IConversationRepository"),
@@ -27,11 +30,13 @@ export const TYPES = {
   IMessageReceiptRepository: Symbol.for("IMessageReceiptRepository"),
   INotificationRepository: Symbol.for("INotificationRepository"),
 
-  // Shared Services
+  // -------------------- Shared Services -----------------
+
   INotificationService: Symbol.for("INotificationService"),
   IOTPService: Symbol.for("IOTPService"),
 
-  // Shared Repositories
+  // -------------------- Shared Repositories -------------
+
   IOtpRepository: Symbol.for("IOtpRepository"),
   IPasswordResetRepository: Symbol.for("IPasswordResetRepository"),
 
@@ -39,14 +44,13 @@ export const TYPES = {
   // USER MODULE
   // ======================================================
 
-  // Controllers
-  IUserProgramBrowseRepository: Symbol.for("IUserProgramBrowseRepository"),
+  // -------------------- Controllers ---------------------
+
   IUserAuthController: Symbol.for("IUserAuthController"),
   IUserProfileController: Symbol.for("IUserProfileController"),
   IHealthDetailsController: Symbol.for("IHealthDetailsController"),
   IUserPlanController: Symbol.for("IUserPlanController"),
   IUserAccountController: Symbol.for("IUserAccountController"),
-  IUserMeetingsController: Symbol.for("IUserMeetingsController"),
   IUserProgramController: Symbol.for("IUserProgramController"),
   ITaskController: Symbol.for("ITaskController"),
   IHealthProgressController: Symbol.for("IHealthProgressController"),
@@ -60,15 +64,19 @@ export const TYPES = {
     "INutritionistPlanBrowsingController",
   ),
   IUserProgramDayController: Symbol.for("IUserProgramDayController"),
-  IUserActivityTrackingController:Symbol.for("IUserActivityTrackingController"),
+  IUserActivityTrackingController: Symbol.for(
+    "IUserActivityTrackingController",
+  ),
+  IUserMeetingController: Symbol.for("IUserMeetingController"),
+  IPublicResourceController: Symbol.for("IPublicResourceController"),
 
-  // Services
+  // -------------------- Services ------------------------
+
   IUserAuthService: Symbol.for("IUserAuthService"),
   IUserProfileService: Symbol.for("IUserProfileService"),
   IHealthDetailsService: Symbol.for("IHealthDetailsService"),
   IUserPlanService: Symbol.for("IUserPlanService"),
   IUserAccountService: Symbol.for("IUserAccountService"),
-  IUserMeetingsService: Symbol.for("IUserMeetingsService"),
   IUserProgramService: Symbol.for("IUserProgramService"),
   ITaskService: Symbol.for("ITaskService"),
   IHealthProgressService: Symbol.for("IHealthProgressService"),
@@ -80,10 +88,13 @@ export const TYPES = {
     "INutritionistPlanBrowsingService",
   ),
   IUserProgramDayService: Symbol.for("IUserProgramDayService"),
-  IUserDayTrackingService:Symbol.for("IUserDayTrackingService"),
-  IUserActivityTrackingService:Symbol.for("IUserActivityTrackingService"),
+  IUserDayTrackingService: Symbol.for("IUserDayTrackingService"),
+  IUserActivityTrackingService: Symbol.for("IUserActivityTrackingService"),
+  IUserMeetingService: Symbol.for("IUserMeetingService"),
+  IPublicResourceService: Symbol.for("IPublicResourceService"),
 
-  // Repositories
+  // -------------------- Repositories --------------------
+
   IUserRepository: Symbol.for("IUserRepository"),
   IHealthDetailsRepository: Symbol.for("IHealthDetailsRepository"),
   IUserPlanRepository: Symbol.for("IUserPlanRepository"),
@@ -99,14 +110,20 @@ export const TYPES = {
     "INutritionistPlanBrowsingRepository",
   ),
   IUserProgramProgressRepository: Symbol.for("IUserProgramProgressRepository"),
-  IUserDayTrackingRepository:Symbol.for("IUserDayTrackingRepository"),
-  IUserActivityTrackingRepository:Symbol.for("IUserActivityTrackingRepository"),
+  IUserDayTrackingRepository: Symbol.for("IUserDayTrackingRepository"),
+  IUserActivityTrackingRepository: Symbol.for(
+    "IUserActivityTrackingRepository",
+  ),
+  IUserProgramBrowseRepository: Symbol.for("IUserProgramBrowseRepository"),
+  IUserMeetingRepository: Symbol.for("IUserMeetingRepository"),
+  IResourceRepository: Symbol.for("IResourceRepository"),
 
   // ======================================================
   // ADMIN MODULE
   // ======================================================
 
-  // Controllers
+  // -------------------- Controllers ---------------------
+
   IAdminUserController: Symbol.for("IAdminUserController"),
   IAdminNutritionistController: Symbol.for("IAdminNutritionistController"),
   IAdminNutritionistApplicationController: Symbol.for(
@@ -115,7 +132,8 @@ export const TYPES = {
   IAdminNotificationController: Symbol.for("IAdminNotificationController"),
   IAdminPlanController: Symbol.for("IAdminPlanController"),
 
-  // Services
+  // -------------------- Services ------------------------
+
   IAdminUserService: Symbol.for("IAdminUserService"),
   IAdminNutritionistService: Symbol.for("IAdminNutritionistService"),
   IAdminNutritionistApplicationService: Symbol.for(
@@ -123,7 +141,8 @@ export const TYPES = {
   ),
   IAdminPlanService: Symbol.for("IAdminPlanService"),
 
-  // Repositories
+  // -------------------- Repositories --------------------
+
   IAdminUserRepository: Symbol.for("IAdminUserRepository"),
   IAdminNutritionistRepository: Symbol.for("IAdminNutritionistRepository"),
   IAdminNutritionistApplicationRepository: Symbol.for(
@@ -134,35 +153,41 @@ export const TYPES = {
   // NUTRITIONIST MODULE
   // ======================================================
 
-  // Controllers
+  // -------------------- Controllers ---------------------
+
   INutritionistApplicationController: Symbol.for(
     "INutritionistApplicationController",
   ),
   INutritionistPlanController: Symbol.for("INutritionistPlanController"),
   INutriProgramController: Symbol.for("INutriProgramController"),
-  INutriMeetingsController: Symbol.for("INutriMeetingsController"),
-  INutriGroupController: Symbol.for("INutriCommunityController"),
+  INutriMeetingController: Symbol.for("INutriMeetingController"),
+  INutriGroupController: Symbol.for("INutriGroupController"),
   INutriClientController: Symbol.for("INutriClientController"),
   INutriProgramDayController: Symbol.for("INutriProgramDayController"),
+  INutriResourceController: Symbol.for("INutriResourceController"),
 
-  // Services
+  // -------------------- Services ------------------------
+
   INutritionistApplicationService: Symbol.for(
     "INutritionistApplicationService",
   ),
   INutritionistPlanService: Symbol.for("INutritionistPlanService"),
   INutriProgramService: Symbol.for("INutriProgramService"),
-  INutriMeetingsService: Symbol.for("INutriMeetingsService"),
-  INutriGroupService: Symbol.for("INutriCommunityService"),
+  INutriMeetingService: Symbol.for("INutriMeetingService"),
+  INutriGroupService: Symbol.for("INutriGroupService"),
   INutriClientService: Symbol.for("INutriClientService"),
   INutriProgramDayService: Symbol.for("INutriProgramDayService"),
+  INutriResourceService: Symbol.for("INutriResourceService"),
 
-  // Repositories
+  // -------------------- Repositories --------------------
+
   INutritionistAuthRepository: Symbol.for("INutritionistAuthRepository"),
   INutritionistDetailsRepository: Symbol.for("INutritionistDetailsRepository"),
   INutritionistProfileRepository: Symbol.for("INutritionistProfileRepository"),
   INutritionistPlanRepository: Symbol.for("INutritionistPlanRepository"),
-  INutriMeetingsRepository: Symbol.for("INutriMeetingsRepository"),
+  INutriMeetingRepository: Symbol.for("INutriMeetingRepository"),
   INutriClientRepository: Symbol.for("INutriClientRepository"),
   INutriProgramRepository: Symbol.for("INutriProgramRepository"),
   INutriProgramDayRepository: Symbol.for("INutriProgramDayRepository"),
-};
+  INutriResourceRepository: Symbol.for("INutriResourceRepository"),
+} as const;

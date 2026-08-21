@@ -10,3 +10,4 @@ export * from "./checkout.routes";
 
 export * from "./user-program.routes";
 export * from "./user-activity-track.routes";
+export * from "./user-meeting.routes";

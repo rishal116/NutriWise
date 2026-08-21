@@ -57,3 +57,10 @@ export class ClientDetailsResponseDTO {
 
   programs!: ClientProgramSummaryDTO[];
 }
+
+export interface MeetingClientOptionDTO {
+  id: string;
+  fullName: string;
+  email: string;
+  profileImage?: string;
+}

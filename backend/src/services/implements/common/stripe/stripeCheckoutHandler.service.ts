@@ -3,7 +3,6 @@ import Stripe from "stripe";
 import { inject, injectable } from "inversify";
 import logger from "../../../../utils/logger";
 import { TYPES } from "../../../../types/types";
-import { buildDirectKey } from "../../../../utils/chat.util";
 import { IStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/IStripeCheckoutHandlerService";
 import { IUserPlanRepository } from "../../../../repositories/interfaces/user/program/IUserPlanRepository";
 import { IUserProgramRepository } from "../../../../repositories/interfaces/user/program/IUserProgramRepository";
@@ -13,6 +12,7 @@ import { INutritionistPlanRepository } from "../../../../repositories/interfaces
 import { IConversationRepository } from "../../../../repositories/interfaces/chat/IConversationRepository";
 import { IConversationMemberRepository } from "../../../../repositories/interfaces/chat/IConversationMemberRepository";
 import { IUserProgramProgressRepository } from "../../../../repositories/interfaces/user/tracking/IUserProgramProgressRepository";
+import { IConversationService } from "../../../interfaces/chat/IConversationService";
 
 @injectable()
 export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerService {
@@ -40,50 +40,10 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
 
     @inject(TYPES.IUserProgramProgressRepository)
     private readonly _userProgramProgressRepository: IUserProgramProgressRepository,
+
+    @inject(TYPES.IConversationService)
+    private readonly _conversationService: IConversationService,
   ) {}
-
-  private async createConversationIfNeeded(
-    userId: Types.ObjectId,
-    nutritionistId: Types.ObjectId,
-    session: mongoose.ClientSession,
-  ): Promise<void> {
-    const directKey = buildDirectKey(userId, nutritionistId);
-
-    const existingConversation =
-      await this._conversationRepository.findByDirectKey(directKey);
-
-    if (existingConversation) {
-      return;
-    }
-
-    const conversation = await this._conversationRepository.createWithSession(
-      {
-        chatType: "direct",
-        purpose: "coaching",
-        status: "active",
-        directKey,
-      },
-      session,
-    );
-
-    await this._conversationMemberRepository.createManyWithSession(
-      [
-        {
-          conversationId: conversation._id,
-          userId,
-          role: "member",
-          status: "active",
-        },
-        {
-          conversationId: conversation._id,
-          userId: nutritionistId,
-          role: "member",
-          status: "active",
-        },
-      ],
-      session,
-    );
-  }
 
   async handle(session: Stripe.Checkout.Session): Promise<void> {
     if (
@@ -193,7 +153,13 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         dbSession,
       );
 
-      await this.createConversationIfNeeded(userId, nutritionistId, dbSession);
+      await this._conversationService.createDirectConversationWithSession(
+        {
+          currentUserId: userId.toString(),
+          otherUserId: nutritionistId.toString(),
+        },
+        dbSession,
+      );
 
       await this._paymentRepository.createWithSession(
         {

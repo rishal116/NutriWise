@@ -1,5 +1,7 @@
 "use client";
+
 import { useState, useEffect } from "react";
+
 import {
   Home,
   Video,
@@ -13,7 +15,10 @@ import {
   ChevronRight,
   X,
   ClipboardList,
+  CalendarDays,
+  BookOpen,
 } from "lucide-react";
+
 import { useRouter, usePathname } from "next/navigation";
 
 const menu = [
@@ -28,19 +33,29 @@ const menu = [
     icon: Video,
   },
   {
-    label: "My Clients", // <- Purchased users
+    label: "Meetings",
+    href: "/nutritionist/meetings",
+    icon: CalendarDays,
+  },
+  {
+    label: "My Clients",
     href: "/nutritionist/clients",
     icon: Users,
   },
   {
-    label: "Programs", // <- Active client programs
+    label: "Programs",
     href: "/nutritionist/programs",
     icon: ClipboardList,
   },
   {
-    label: "Nutrition Plans", // <- Templates only
+    label: "Nutrition Plans",
     href: "/nutritionist/plans",
     icon: FileText,
+  },
+  {
+    label: "Resources",
+    href: "/nutritionist/resources",
+    icon: BookOpen,
   },
   {
     label: "Communities",
@@ -93,6 +108,7 @@ export default function NutritionistSidebar({
 
   const handleCollapse = () => {
     const newState = !collapsed;
+
     setCollapsed(newState);
     onCollapseChange?.(newState);
   };
@@ -104,10 +120,15 @@ export default function NutritionistSidebar({
         top-16
         h-[calc(100vh-64px)]
         bg-white border-r border-slate-100
-        transition-all duration-300 ease-in-out flex flex-col
+        transition-all duration-300 ease-in-out
+        flex flex-col
         ${collapsed ? "w-20" : "w-64"}
-        ${isMobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"}
-        `}
+        ${
+          isMobileOpen
+            ? "translate-x-0 shadow-2xl"
+            : "-translate-x-full lg:translate-x-0"
+        }
+      `}
     >
       {/* Sidebar Header */}
       <div className="h-14 lg:h-16 flex items-center justify-between px-6 border-b border-slate-50">
@@ -117,7 +138,6 @@ export default function NutritionistSidebar({
           </span>
         )}
 
-        {/* Desktop Collapse / Mobile Close */}
         <button
           onClick={isMobileOpen ? onMobileClose : handleCollapse}
           className="p-1.5 text-slate-400 hover:text-emerald-600 transition-colors"
@@ -135,15 +155,21 @@ export default function NutritionistSidebar({
       {/* Nav Links */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
         {menu.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href;
+          const isActive = pathname === href || pathname.startsWith(`${href}/`);
+
           return (
             <button
               key={href}
               onClick={() => router.push(href)}
               className={`
-                group relative flex items-center py-2.5 w-full rounded-xl transition-all
+                group relative flex items-center py-2.5 w-full rounded-xl
+                transition-all
                 ${collapsed ? "justify-center" : "px-4 gap-3.5"}
-                ${isActive ? "text-emerald-700 bg-emerald-50/50" : "text-slate-500 hover:bg-slate-50"}
+                ${
+                  isActive
+                    ? "text-emerald-700 bg-emerald-50/50"
+                    : "text-slate-500 hover:bg-slate-50"
+                }
               `}
             >
               {isActive && (
@@ -164,7 +190,9 @@ export default function NutritionistSidebar({
 
               {!collapsed && (
                 <span
-                  className={`text-[13px] tracking-tight ${isActive ? "font-semibold" : "font-medium"}`}
+                  className={`text-[13px] tracking-tight ${
+                    isActive ? "font-semibold" : "font-medium"
+                  }`}
                 >
                   {label}
                 </span>

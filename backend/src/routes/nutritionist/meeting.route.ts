@@ -1,19 +1,24 @@
-import { Router } from "express";
+import express from "express";
+
 import { container } from "../../configs/inversify";
+import { INutriMeetingController } from "../../controllers/interfaces/nutritionist/INutriMeetingController";
 import { TYPES } from "../../types/types";
 
-import { INutriMeetingsController } from "../../controllers/interfaces/nutritionist/INutriMeetingsController";
+const router = express.Router();
 
-const router = Router();
-
-const controller = container.get<INutriMeetingsController>(
-  TYPES.INutriMeetingsController,
+const nutritionistMeetingController = container.get<INutriMeetingController>(
+  TYPES.INutriMeetingController,
 );
 
-router.get("/", controller.getMeetings);
+router.get("/", nutritionistMeetingController.getMeetings);
 
-router.post("/", controller.createMeeting);
+router.get("/:meetingId", nutritionistMeetingController.getMeetingDetails);
 
-router.patch("/status/:roomId", controller.updateMeetingStatus);
+router.post("/", nutritionistMeetingController.createMeeting);
+
+router.patch(
+  "/status/:roomId",
+  nutritionistMeetingController.updateMeetingStatus,
+);
 
 export default router;

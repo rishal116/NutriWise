@@ -4,7 +4,7 @@ import { TYPES } from "../../types/types";
 import { IUserActivityTrackingController } from "../../controllers/interfaces/user/IUserActivityTrackingController";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 const userActivityTrackingController =
   container.get<IUserActivityTrackingController>(

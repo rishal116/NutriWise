@@ -17,7 +17,7 @@ import { ReviewController } from "../controllers/implementations/user/review.con
 import { UserAccountController } from "../controllers/implementations/user/userAccount.controller";
 import { UserAuthController } from "../controllers/implementations/user/userAuth.controller";
 import { UserGroupController } from "../controllers/implementations/user/userGroup.controller";
-import { UserMeetingsController } from "../controllers/implementations/user/userMeetings.controller";
+import { UserMeetingController } from "../controllers/implementations/user/userMeeting.controller";
 import { UserProfileController } from "../controllers/implementations/user/userProfile.controller";
 import { UserProgramController } from "../controllers/implementations/user/userProgram.controller";
 import { UserProgramDayController } from "../controllers/implementations/user/userProgramDay.controller";
@@ -31,7 +31,7 @@ import { ReviewService } from "../services/implements/user/review.service";
 import { UserAccountService } from "../services/implements/user/userAccount.service";
 import { UserAuthService } from "../services/implements/user/userAuth.service";
 import { UserGroupService } from "../services/implements/user/userGroup.service";
-import { UserMeetingsService } from "../services/implements/user/userMeetings.service";
+import { UserMeetingService } from "../services/implements/user/meeting/userMeeting.service";
 import { UserProfileService } from "../services/implements/user/userProfile.service";
 import { UserProgramService } from "../services/implements/user/program/userProgram.service";
 import { UserProgramDayService } from "../services/implements/user/program/userProgramDay.service";
@@ -70,8 +70,8 @@ import { IUserAuthController } from "../controllers/interfaces/user/IUserAuthCon
 import { IUserAuthService } from "../services/interfaces/user/IUserAuthService";
 import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupController";
 import { IUserGroupService } from "../services/interfaces/user/IUserGroupService";
-import { IUserMeetingsController } from "../controllers/interfaces/user/IUserMeetingsController";
-import { IUserMeetingsService } from "../services/interfaces/user/IUserMeetingsService";
+import { IUserMeetingController } from "../controllers/interfaces/user/IUserMeetingController";
+import { IUserMeetingService } from "../services/interfaces/user/IUserMeetingService";
 import { IUserProfileController } from "../controllers/interfaces/user/IUserProfileController";
 import { IUserProfileService } from "../services/interfaces/user/IUserProfileService";
 import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
@@ -109,28 +109,28 @@ import { IAdminUserService } from "../services/interfaces/admin/IAdminUserServic
 // ---------- Nutritionist Module ----------
 // ---------- Controllers ----------
 import { NutriGroupController } from "../controllers/implementations/nutritionist/nutriGroup.controller";
-import { NutriMeetingsController } from "../controllers/implementations/nutritionist/nutriMeetings.controller";
+import { NutriMeetingController } from "../controllers/implementations/nutritionist/nutriMeeting.controller";
 import { NutriProgramController } from "../controllers/implementations/nutritionist/nutriProgram.controller";
 import { NutritionistApplicationController } from "../controllers/implementations/nutritionist/nutriApplication.controller";
 import { NutritionistPlanController } from "../controllers/implementations/nutritionist/nutriPlan.controller";
 import { NutriClientController } from "../controllers/implementations/nutritionist/nutriClient.controller";
 // ---------- Services ----------
 import { NutriGroupService } from "../services/implements/nutritionist/nutriGroup.service";
-import { NutriMeetingsService } from "../services/implements/nutritionist/nutriMeetings.service";
+import { NutriMeetingService } from "../services/implements/nutritionist/nutriMeeting.service";
 import { NutriProgramService } from "../services/implements/nutritionist/nutriProgram.service";
 import { NutriClientService } from "../services/implements/nutritionist/nutriClient.service";
 import { NutritionistApplicationService } from "../services/implements/nutritionist/nutriApplication.service";
 import { NutritionistPlanService } from "../services/implements/nutritionist/nutriPlan.service";
 // ---------- Repositories ----------
-import { NutriMeetingsRepository } from "../repositories/implements/nutritionist/nutriMeetings.repository";
+import { NutriMeetingRepository } from "../repositories/implements/nutritionist/nutriMeeting.repository";
 import { NutritionistPlanRepository } from "../repositories/implements/nutritionist/nutriPlan.repository";
 import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutriProfile.repository";
 // ---------- Interfaces ----------
 import { INutriGroupController } from "../controllers/interfaces/nutritionist/INutriGroupController";
 import { INutriGroupService } from "../services/interfaces/nutritionist/INutriGroupService";
-import { INutriMeetingsController } from "../controllers/interfaces/nutritionist/INutriMeetingsController";
-import { INutriMeetingsRepository } from "../repositories/interfaces/nutritionist/INutriMeetingsRepository";
-import { INutriMeetingsService } from "../services/interfaces/nutritionist/INutriMeetingsService";
+import { INutriMeetingController } from "../controllers/interfaces/nutritionist/INutriMeetingController";
+import { INutriMeetingRepository } from "../repositories/interfaces/nutritionist/INutriMeetingRepository";
+import { INutriMeetingService } from "../services/interfaces/nutritionist/INutriMeetingService";
 import { INutriProgramController } from "../controllers/interfaces/nutritionist/INutriProgramController";
 import { INutriProgramService } from "../services/interfaces/nutritionist/INutriProgramService";
 import { INutriClientService } from "../services/interfaces/nutritionist/INutriClientService";
@@ -228,6 +228,20 @@ import { IUserActivityTrackingService } from "../services/interfaces/user/tracki
 import { UserActivityTrackingService } from "../services/implements/user/tracking/userActivityTracking.service";
 import { IUserActivityTrackingRepository } from "../repositories/interfaces/user/tracking/IUserActivityTrackingRepository";
 import { UserActivityTrackingRepository } from "../repositories/implements/user/tracking/userActivityTracking.repository";
+import { IUserMeetingRepository } from "../repositories/interfaces/user/meeting/IUserMeetingRepository";
+import { UserMeetingRepository } from "../repositories/implements/user/meeting/userMeeting.repository";
+import { INutriResourceController } from "../controllers/interfaces/nutritionist/INutriResourceController";
+import { NutriResourceController } from "../controllers/implementations/nutritionist/nutriResource.controller";
+import { INutriResourceService } from "../services/interfaces/nutritionist/INutriResourceService";
+import { NutriResourceService } from "../services/implements/nutritionist/nutriResource.service";
+import { INutriResourceRepository } from "../repositories/interfaces/nutritionist/INutriResourceRepository";
+import { NutriResourceRepository } from "../repositories/implements/nutritionist/nutriResource.repository";
+import { IPublicResourceController } from "../controllers/interfaces/public/IPublicResourceController";
+import { PublicResourceController } from "../controllers/implementations/public/publicResource.controller";
+import { IPublicResourceService } from "../services/interfaces/public/IPublicResourceService";
+import { PublicResourceService } from "../services/implements/public/publicResource.service";
+import { IResourceRepository } from "../repositories/interfaces/public/IResourceRepository";
+import { ResourceRepository } from "../repositories/implements/public/resource.repository";
 
 // ======================================================
 // CONTAINER
@@ -292,15 +306,19 @@ container
   .to(UserGroupController);
 
 container
-  .bind<IUserMeetingsController>(TYPES.IUserMeetingsController)
-  .to(UserMeetingsController);
-
-container
   .bind<IUserProfileController>(TYPES.IUserProfileController)
   .to(UserProfileController);
 container
   .bind<IUserActivityTrackingController>(TYPES.IUserActivityTrackingController)
   .to(UserActivityTrackingController);
+
+container
+  .bind<IUserMeetingController>(TYPES.IUserMeetingController)
+  .to(UserMeetingController);
+
+container
+  .bind<IPublicResourceController>(TYPES.IPublicResourceController)
+  .to(PublicResourceController);
 
 // ---------- Services ----------
 container
@@ -336,8 +354,8 @@ container.bind<IUserAuthService>(TYPES.IUserAuthService).to(UserAuthService);
 container.bind<IUserGroupService>(TYPES.IUserGroupService).to(UserGroupService);
 
 container
-  .bind<IUserMeetingsService>(TYPES.IUserMeetingsService)
-  .to(UserMeetingsService);
+  .bind<IUserMeetingService>(TYPES.IUserMeetingService)
+  .to(UserMeetingService);
 
 container
   .bind<IUserProfileService>(TYPES.IUserProfileService)
@@ -349,6 +367,10 @@ container
 container
   .bind<IUserActivityTrackingService>(TYPES.IUserActivityTrackingService)
   .to(UserActivityTrackingService);
+
+container
+  .bind<IPublicResourceService>(TYPES.IPublicResourceService)
+  .to(PublicResourceService);
 
 // ---------- Repositories ----------
 container
@@ -391,6 +413,14 @@ container
 container
   .bind<IUserActivityTrackingRepository>(TYPES.IUserActivityTrackingRepository)
   .to(UserActivityTrackingRepository);
+container
+  .bind<IUserMeetingRepository>(TYPES.IUserMeetingRepository)
+  .to(UserMeetingRepository);
+
+container
+  .bind<IResourceRepository>(TYPES.IResourceRepository)
+  .to(ResourceRepository);
+
 // ======================================================
 // ADMIN BINDINGS
 // ======================================================
@@ -448,8 +478,8 @@ container
   .to(NutriGroupController);
 
 container
-  .bind<INutriMeetingsController>(TYPES.INutriMeetingsController)
-  .to(NutriMeetingsController);
+  .bind<INutriMeetingController>(TYPES.INutriMeetingController)
+  .to(NutriMeetingController);
 
 container
   .bind<INutriProgramController>(TYPES.INutriProgramController)
@@ -468,15 +498,17 @@ container
 container
   .bind<INutriClientController>(TYPES.INutriClientController)
   .to(NutriClientController);
-
+container
+  .bind<INutriResourceController>(TYPES.INutriResourceController)
+  .to(NutriResourceController);
 // ---------- Services ----------
 container
   .bind<INutriGroupService>(TYPES.INutriGroupService)
   .to(NutriGroupService);
 
 container
-  .bind<INutriMeetingsService>(TYPES.INutriMeetingsService)
-  .to(NutriMeetingsService);
+  .bind<INutriMeetingService>(TYPES.INutriMeetingService)
+  .to(NutriMeetingService);
 
 container
   .bind<INutriProgramService>(TYPES.INutriProgramService)
@@ -493,6 +525,9 @@ container
 container
   .bind<INutritionistPlanService>(TYPES.INutritionistPlanService)
   .to(NutritionistPlanService);
+container
+  .bind<INutriResourceService>(TYPES.INutriResourceService)
+  .to(NutriResourceService);
 
 // ---------- Repositories ----------
 
@@ -500,8 +535,8 @@ container
   .bind<INutriClientRepository>(TYPES.INutriClientRepository)
   .to(NutriClientRepository);
 container
-  .bind<INutriMeetingsRepository>(TYPES.INutriMeetingsRepository)
-  .to(NutriMeetingsRepository);
+  .bind<INutriMeetingRepository>(TYPES.INutriMeetingRepository)
+  .to(NutriMeetingRepository);
 
 container
   .bind<INutritionistPlanRepository>(TYPES.INutritionistPlanRepository)
@@ -526,6 +561,9 @@ container
 container
   .bind<INutriProgramDayRepository>(TYPES.INutriProgramDayRepository)
   .to(NutriProgramDayRepository);
+container
+  .bind<INutriResourceRepository>(TYPES.INutriResourceRepository)
+  .to(NutriResourceRepository);
 
 // ======================================================
 // CHAT BINDINGS

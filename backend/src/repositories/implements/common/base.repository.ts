@@ -5,7 +5,6 @@ import {
   Types,
   UpdateQuery,
 } from "mongoose";
-
 import { IBaseRepository } from "../../interfaces/common/IBaseRepository";
 
 export class BaseRepository<T> implements IBaseRepository<T> {
@@ -34,6 +33,17 @@ export class BaseRepository<T> implements IBaseRepository<T> {
 
   async findById(id: string | Types.ObjectId): Promise<T | null> {
     return this._model.findById(id).lean<T | null>();
+  }
+
+  async findByIds(ids: string[] | Types.ObjectId[]): Promise<T[]> {
+    return this._model
+      .find({
+        _id: {
+          $in: ids,
+        },
+      })
+      .lean<T[]>()
+      .exec();
   }
 
   async find(filter: FilterQuery<T>): Promise<T[]> {

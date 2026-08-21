@@ -3,25 +3,42 @@ import { ConversationResponseDTO } from "../../dtos/chat/conversationResponse.dt
 import { IUser } from "../../models/user.model";
 
 export class ConversationMapper {
-
   static toResponseDTO(
     conversation: IConversation,
-    otherUser?: IUser | null,
-    lastMessage?: string | null
+    participant?: IUser | null,
+    unreadCount = 0,
+    isMuted = false,
+    isArchived = false,
   ): ConversationResponseDTO {
-
     return {
       id: conversation._id.toString(),
+
       chatType: conversation.chatType,
+      purpose: conversation.purpose,
+      status: conversation.status,
+
       title: conversation.title,
       groupAvatar: conversation.groupAvatar,
-      adminId: conversation.adminId?.toString(),
-      lastMessageId: conversation.lastMessageId?.toString(),
-      lastMessageAt: conversation.lastMessageAt,
+      description: conversation.description,
 
-      otherUserName: otherUser?.fullName || null,
-      otherUserProfile: otherUser?.profileImage || null,
-      lastMessage: lastMessage || null ,
+      participant: participant
+        ? {
+            id: participant._id.toString(),
+            name: participant.fullName,
+            profileImage: participant.profileImage,
+          }
+        : undefined,
+
+      lastMessage: conversation.lastMessagePreview,
+
+      lastActivityAt: conversation.lastActivityAt,
+
+      unreadCount,
+      isMuted,
+      isArchived,
+
+      createdAt: conversation.createdAt,
+      updatedAt: conversation.updatedAt,
     };
   }
 }

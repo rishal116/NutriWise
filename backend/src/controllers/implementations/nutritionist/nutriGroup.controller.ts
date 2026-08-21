@@ -32,13 +32,12 @@ export class NutriGroupController implements INutriGroupController {
   });
 
   getMyGroups = asyncHandler(async (req: Request, res: Response) => {
-    const { userId, role } = req.user!;
+    const { userId } = req.user!;
 
     const { limit = 10, skip = 0 } = req.query;
 
     const groups = await this._groupService.getMyGroups(
       userId,
-      role,
       Number(limit),
       Number(skip),
     );

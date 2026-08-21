@@ -10,8 +10,6 @@ import { IUserPlanPopulated } from "../../../../types/userPlan.populated";
 import { IBaseRepository } from "../../common/IBaseRepository";
 
 export interface IUserPlanRepository extends IBaseRepository<IUserPlan> {
-
-
   updateByIdWithSession(
     id: string | Types.ObjectId,
     update: UpdateQuery<IUserPlan>,

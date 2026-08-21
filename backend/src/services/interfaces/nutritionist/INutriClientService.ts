@@ -7,6 +7,7 @@ import {
 import {
   ClientListItemDTO,
   ClientDetailsResponseDTO,
+  MeetingClientOptionDTO,
 } from "../../../dtos/nutritionist/client/client-response.dto";
 
 export interface INutriClientService {
@@ -19,4 +20,8 @@ export interface INutriClientService {
     nutritionistId: string,
     params: GetClientParamsDTO,
   ): Promise<ClientDetailsResponseDTO>;
+
+  getMeetingEligibleClients(
+    nutritionistId: string,
+  ): Promise<MeetingClientOptionDTO[]>;
 }

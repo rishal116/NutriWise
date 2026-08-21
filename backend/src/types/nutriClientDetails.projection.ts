@@ -48,3 +48,11 @@ export interface IClientDetailsProjection {
   // Purchased programs
   programs: IClientProgramDetailsProjection[];
 }
+
+export interface IMeetingClientOption {
+  clientId: Types.ObjectId;
+  fullName: string;
+  username: string;
+  email: string;
+  profileImage?: string;
+}
