@@ -15,7 +15,6 @@ import {
   Clock,
   Droplet,
   Dumbbell,
-  Link as LinkIcon,
   ListChecks,
   Loader2,
   Lock,
@@ -32,17 +31,19 @@ import {
 } from "lucide-react";
 
 import { userProgramDayService } from "@/services/user/userProgramDay.service";
+import { userActivityTrackingService } from "@/services/user/userActivityTracking.service";
 import type {
   UserProgramDayActivityResponseDTO,
   UserProgramDayDetailsResponseDTO,
 } from "@/dtos/user/program/user-program-day-details.dto";
+import type { UpdateActivityTrackingDTO } from "@/dtos/user/tracking/update-activity-tracking.dto";
 import {
   ProgramActivityCategory,
   UserActivityTrackingStatus,
   UserDayTrackingStatus,
 } from "@/types/user/program/user-program-day.types";
-import { userActivityTrackingService } from "@/services/user/userActivtiyTracking.service";
-import { UpdateActivityTrackingDTO } from "@/dtos/user/tracking/update-activity-tracking.dto";
+
+import EvidenceImageUploader from "@/components/user/tracking/EvidenceImageUploader";
 
 interface ProgramDayDetailsPageProps {
   params: Promise<{
@@ -51,10 +52,9 @@ interface ProgramDayDetailsPageProps {
   }>;
 }
 
-async function uploadEvidencePhoto(file: File): Promise<string> {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-  return URL.createObjectURL(file);
-}
+/* -------------------------------------------------------------------------- */
+/* Status maps                                                                */
+/* -------------------------------------------------------------------------- */
 
 const DAY_STATUS_STYLES: Record<UserDayTrackingStatus, string> = {
   [UserDayTrackingStatus.NOT_STARTED]:
@@ -109,6 +109,10 @@ const CATEGORY_ICONS: Record<ProgramActivityCategory, ReactNode> = {
   custom: <Sparkles className="h-4 w-4" />,
 };
 
+/* -------------------------------------------------------------------------- */
+/* Action contract                                                            */
+/* -------------------------------------------------------------------------- */
+
 type ActivityAction =
   | { type: "start" }
   | {
@@ -118,15 +122,11 @@ type ActivityAction =
       notes?: string;
       evidence?: string[];
     }
-  | { type: "skip"; skippedReason?: string };
+  | { type: "skip"; skippedReason: string };
 
-async function submitActivityTracking(
-  _programId: string,
-  _dayNumber: number,
-  _activityId: string,
-  _action: ActivityAction,
-): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 400));
+async function uploadEvidencePhotoStub(file: File): Promise<{ url: string }> {
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  return { url: URL.createObjectURL(file) };
 }
 
 export default function ProgramDayDetailsPage({
@@ -251,10 +251,11 @@ export default function ProgramDayDetailsPage({
             programId,
             dayId,
             activity._id,
-            action.skippedReason ?? "",
+            action.skippedReason,
           );
         }
 
+        // Resync accurate aggregates (adherence, completion %, etc).
         await loadDay(programId, dayNumber);
       } catch (err) {
         console.error(err);
@@ -497,31 +498,11 @@ function ActivityCard({
   const [evidenceDraft, setEvidenceDraft] = useState<string[]>(
     tracking.evidence,
   );
-  const [evidenceUrlInput, setEvidenceUrlInput] = useState("");
-
-  const [uploadingCount, setUploadingCount] = useState(0);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  const handleFilesSelected = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setUploadError(null);
-    const fileArray = Array.from(files);
-    setUploadingCount((n) => n + fileArray.length);
-
-    try {
-      const uploaded = await Promise.all(
-        fileArray.map((file) => uploadEvidencePhoto(file)),
-      );
-      setEvidenceDraft((prev) => [...prev, ...uploaded]);
-    } catch (err) {
-      console.error(err);
-      setUploadError("Upload failed. Please try again.");
-    } finally {
-      setUploadingCount((n) => n - fileArray.length);
-    }
-  };
+  const [isUploaderOpen, setIsUploaderOpen] = useState(false);
 
   const isEditable = !isDayLocked && (!isTerminal || forceEdit);
+  const isStarting =
+    isPending && tracking.status === UserActivityTrackingStatus.NOT_STARTED;
 
   const canComplete = (() => {
     switch (activity.valueType) {
@@ -534,76 +515,13 @@ function ActivityCard({
       case "text":
         return textDraft.trim().length > 0;
       case "photo":
-        return (
-          <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-              Evidence photos
-            </label>
-
-            <label
-              htmlFor={`evidence-upload-${activity._id}`}
-              className="mt-1.5 flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-xs font-semibold text-slate-500 transition-colors duration-150 hover:border-emerald-300 hover:bg-emerald-50/40 hover:text-emerald-700"
-            >
-              <Camera className="h-4 w-4" />
-              {uploadingCount > 0 ? "Uploading…" : "Tap to add a photo"}
-              <input
-                id={`evidence-upload-${activity._id}`}
-                type="file"
-                accept="image/*"
-                multiple
-                capture="environment"
-                className="hidden"
-                onChange={(e) => {
-                  void handleFilesSelected(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </label>
-
-            {uploadError && (
-              <p className="mt-1.5 text-[11px] font-semibold text-rose-600">
-                {uploadError}
-              </p>
-            )}
-
-            {evidenceDraft.length > 0 && (
-              <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {evidenceDraft.map((url) => (
-                  <div
-                    key={url}
-                    className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200/80"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={url}
-                      alt="Evidence"
-                      className="h-full w-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveEvidence(url)}
-                      aria-label="Remove evidence"
-                      className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        );
+        return evidenceDraft.length > 0;
       default:
         return true;
     }
   })();
 
-  const handleAddEvidence = () => {
-    const url = evidenceUrlInput.trim();
-    if (!url) return;
-    setEvidenceDraft((prev) => [...prev, url]);
-    setEvidenceUrlInput("");
-  };
+  const canSkip = skipReasonDraft.trim().length > 0;
 
   const handleRemoveEvidence = (url: string) => {
     setEvidenceDraft((prev) => prev.filter((e) => e !== url));
@@ -622,10 +540,8 @@ function ActivityCard({
   };
 
   const handleSkipConfirm = () => {
-    onAction({
-      type: "skip",
-      skippedReason: skipReasonDraft.trim() || undefined,
-    });
+    if (!canSkip) return;
+    onAction({ type: "skip", skippedReason: skipReasonDraft.trim() });
     setShowSkipInput(false);
   };
 
@@ -734,6 +650,13 @@ function ActivityCard({
         </div>
       ) : isEditable ? (
         <div className="mt-4 space-y-3 rounded-xl border border-slate-200/80 p-4">
+          {tracking.status === UserActivityTrackingStatus.NOT_STARTED &&
+            !forceEdit && (
+              <p className="text-xs font-medium text-slate-500">
+                Start this activity to begin tracking, or complete it directly.
+              </p>
+            )}
+
           <ActivityValueInput
             activity={activity}
             numberDraft={numberDraft}
@@ -743,16 +666,14 @@ function ActivityCard({
             textDraft={textDraft}
             onTextChange={setTextDraft}
             evidenceDraft={evidenceDraft}
-            evidenceUrlInput={evidenceUrlInput}
-            onEvidenceUrlInputChange={setEvidenceUrlInput}
-            onAddEvidence={handleAddEvidence}
+            onOpenUploader={() => setIsUploaderOpen(true)}
             onRemoveEvidence={handleRemoveEvidence}
           />
 
           {showSkipInput ? (
             <div className="rounded-xl bg-rose-50/60 p-3">
               <label className="text-[10px] font-semibold uppercase tracking-wider text-rose-700">
-                Reason for skipping (optional)
+                Reason for skipping
               </label>
               <textarea
                 value={skipReasonDraft}
@@ -765,8 +686,8 @@ function ActivityCard({
                 <button
                   type="button"
                   onClick={handleSkipConfirm}
-                  disabled={isPending}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-xs transition-colors duration-150 hover:bg-rose-700 disabled:opacity-60"
+                  disabled={isPending || !canSkip}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-xs transition-colors duration-150 hover:bg-rose-700 disabled:opacity-50"
                 >
                   {isPending ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -794,7 +715,7 @@ function ActivityCard({
                   disabled={isPending}
                   className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 transition-colors duration-150 hover:bg-emerald-100 disabled:opacity-60"
                 >
-                  {isPending ? (
+                  {isStarting ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <Play className="h-3.5 w-3.5" />
@@ -809,7 +730,7 @@ function ActivityCard({
                 disabled={isPending || !canComplete}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-1.5 text-[11px] font-semibold text-white shadow-xs transition-colors duration-150 hover:bg-emerald-800 disabled:opacity-50"
               >
-                {isPending ? (
+                {isPending && !isStarting ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Check className="h-3.5 w-3.5" />
@@ -855,6 +776,17 @@ function ActivityCard({
           </p>
         </div>
       )}
+
+      {isUploaderOpen && (
+        <EvidenceImageUploader
+          onClose={() => setIsUploaderOpen(false)}
+          onUploadSuccess={(url) => {
+            setEvidenceDraft((prev) => [...prev, url]);
+            setIsUploaderOpen(false);
+          }}
+          uploadImage={uploadEvidencePhotoStub}
+        />
+      )}
     </div>
   );
 }
@@ -872,9 +804,7 @@ interface ActivityValueInputProps {
   textDraft: string;
   onTextChange: (value: string) => void;
   evidenceDraft: string[];
-  evidenceUrlInput: string;
-  onEvidenceUrlInputChange: (value: string) => void;
-  onAddEvidence: () => void;
+  onOpenUploader: () => void;
   onRemoveEvidence: (url: string) => void;
 }
 
@@ -887,9 +817,7 @@ function ActivityValueInput({
   textDraft,
   onTextChange,
   evidenceDraft,
-  evidenceUrlInput,
-  onEvidenceUrlInputChange,
-  onAddEvidence,
+  onOpenUploader,
   onRemoveEvidence,
 }: ActivityValueInputProps) {
   switch (activity.valueType) {
@@ -968,43 +896,40 @@ function ActivityValueInput({
       return (
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Evidence
+            Evidence photos
           </label>
-          <div className="mt-1.5 flex gap-2">
-            <input
-              type="url"
-              value={evidenceUrlInput}
-              onChange={(e) => onEvidenceUrlInputChange(e.target.value)}
-              className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              placeholder="Paste photo URL"
-            />
-            <button
-              type="button"
-              onClick={onAddEvidence}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-[11px] font-semibold text-slate-600 transition-colors duration-150 hover:bg-slate-50"
-            >
-              <Camera className="h-3.5 w-3.5" />
-              Add
-            </button>
-          </div>
+
+          <button
+            type="button"
+            onClick={onOpenUploader}
+            className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-xs font-semibold text-slate-500 transition-colors duration-150 hover:border-emerald-300 hover:bg-emerald-50/40 hover:text-emerald-700"
+          >
+            <Camera className="h-4 w-4" />
+            Add a photo
+          </button>
+
           {evidenceDraft.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
               {evidenceDraft.map((url) => (
-                <span
+                <div
                   key={url}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200/80 px-2.5 py-1 text-[11px] font-semibold text-emerald-700"
+                  className="group relative aspect-square overflow-hidden rounded-xl border border-slate-200/80"
                 >
-                  <LinkIcon className="h-3 w-3" />
-                  {url.length > 24 ? `${url.slice(0, 24)}…` : url}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt="Evidence"
+                    className="h-full w-full object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => onRemoveEvidence(url)}
                     aria-label="Remove evidence"
-                    className="text-slate-400 hover:text-rose-600"
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100"
                   >
                     <X className="h-3 w-3" />
                   </button>
-                </span>
+                </div>
               ))}
             </div>
           )}
@@ -1015,10 +940,6 @@ function ActivityValueInput({
       return null;
   }
 }
-
-/* -------------------------------------------------------------------------- */
-/* Read-only summary (completed / skipped, not being edited)                  */
-/* -------------------------------------------------------------------------- */
 
 function ReadOnlySummary({
   activity,

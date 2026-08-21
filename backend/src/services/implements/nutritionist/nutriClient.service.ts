@@ -9,6 +9,7 @@ import {
 import {
   ClientListItemDTO,
   ClientDetailsResponseDTO,
+  MeetingClientOptionDTO,
 } from "../../../dtos/nutritionist/client/client-response.dto";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
@@ -17,6 +18,7 @@ import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { NutriClientListMapper } from "../../../mapper/nutritionist/client/nutri-client-list.mapper";
 import { NutriClientDetailsMapper } from "../../../mapper/nutritionist/client/nutri-client-details.mapper";
+import { MeetingClientOptionMapper } from "../../../mapper/nutritionist/client/meeting-client-option.mapper";
 
 @injectable()
 export class NutriClientService implements INutriClientService {
@@ -33,6 +35,7 @@ export class NutriClientService implements INutriClientService {
       "Fetching nutritionist clients. nutritionistId=%s",
       nutritionistId,
     );
+
     const validatedQuery = await validateDto(GetClientsQueryDTO, query);
 
     const result = await this._nutriClientRepository.findClients(
@@ -83,5 +86,27 @@ export class NutriClientService implements INutriClientService {
     logger.info("Client details retrieved. clientId=%s", params.clientId);
 
     return NutriClientDetailsMapper.toClientDetailsResponseDTO(result);
+  }
+
+  async getMeetingEligibleClients(
+    nutritionistId: string,
+  ): Promise<MeetingClientOptionDTO[]> {
+    logger.debug(
+      "Fetching meeting eligible clients. nutritionistId=%s",
+      nutritionistId,
+    );
+
+    const clients =
+      await this._nutriClientRepository.findMeetingEligibleClients(
+        nutritionistId,
+      );
+
+    logger.info(
+      "Fetched %d meeting eligible clients for nutritionistId=%s",
+      clients.length,
+      nutritionistId,
+    );
+
+    return MeetingClientOptionMapper.toDTOList(clients);
   }
 }

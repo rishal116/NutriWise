@@ -15,4 +15,6 @@ export interface IUserRepository extends IBaseRepository<IUser> {
   getProfileImageById(
     userId: string,
   ): Promise<Pick<IUser, "profileImage"> | null>;
+
+  
 }

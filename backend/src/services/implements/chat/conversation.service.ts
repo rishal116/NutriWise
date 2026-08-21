@@ -1,181 +1,252 @@
-import { injectable, inject } from "inversify";
+import { ClientSession, Types } from "mongoose";
+import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import { IConversationService } from "../../interfaces/chat/IConversationService";
 import { IConversationRepository } from "../../../repositories/interfaces/chat/IConversationRepository";
+import { IConversationMemberRepository } from "../../../repositories/interfaces/chat/IConversationMemberRepository";
+import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
+import { IUserPlanRepository } from "../../../repositories/interfaces/user/program/IUserPlanRepository";
 import { CreateDirectConversationDTO } from "../../../dtos/chat/createConversation.dto";
 import { ConversationResponseDTO } from "../../../dtos/chat/conversationResponse.dto";
-import { Types } from "mongoose";
-import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
-import { IConversationMemberRepository } from "../../../repositories/interfaces/chat/IConversationMemberRepository";
-import logger from "../../../utils/logger";
 import { ConversationMapper } from "../../../mapper/chat/conversation.mapper";
-import { IMessageRepository } from "../../../repositories/interfaces/chat/IMessageRepository";
-import { IConversationMember } from "../../../models/conversationMember.model";
+import { decodeCursor } from "../../../utils/cursor.util";
+import { buildDirectKey } from "../../../utils/chat.util";
+import logger from "../../../utils/logger";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { CustomError } from "../../../utils/customError";
+import { StatusCode } from "../../../enums/statusCode.enum";
 
 @injectable()
 export class ConversationService implements IConversationService {
   constructor(
     @inject(TYPES.IConversationRepository)
-    private _conversationRepo: IConversationRepository,
+    private readonly _conversationRepository: IConversationRepository,
 
     @inject(TYPES.IConversationMemberRepository)
-    private _conversationMemberRepo: IConversationMemberRepository,
+    private readonly _conversationMemberRepository: IConversationMemberRepository,
 
     @inject(TYPES.IUserRepository)
-    private _userRepo: IUserRepository,
+    private readonly _userRepository: IUserRepository,
 
-    @inject(TYPES.IMessageRepository)
-    private _messageRepo: IMessageRepository,
+    @inject(TYPES.IUserPlanRepository)
+    private readonly _userPlanRepository: IUserPlanRepository,
   ) {}
 
-  private generateDirectKey(user1: string, user2: string): string {
-    return [user1, user2].sort().join("_");
-  }
   async createDirectConversation(
     dto: CreateDirectConversationDTO,
   ): Promise<ConversationResponseDTO> {
-    logger.info("Create direct conversation requested", {
-      currentUserId: dto.currentUserId,
-      otherUserId: dto.otherUserId,
-      context: dto.context,
-    });
+    return this.createDirectConversationInternal(dto);
+  }
 
+  async createDirectConversationWithSession(
+    dto: CreateDirectConversationDTO,
+    session: ClientSession,
+  ): Promise<ConversationResponseDTO> {
+    return this.createDirectConversationInternal(dto, session);
+  }
+
+  private async createDirectConversationInternal(
+    dto: CreateDirectConversationDTO,
+    session?: ClientSession,
+  ): Promise<ConversationResponseDTO> {
     if (dto.currentUserId === dto.otherUserId) {
-      throw new Error("Cannot create chat with yourself");
+      throw new Error("Cannot create a conversation with yourself.");
     }
 
-    const directKey = this.generateDirectKey(
-      dto.currentUserId,
-      dto.otherUserId,
-    );
+    const currentUserId = new Types.ObjectId(dto.currentUserId);
+    const otherUserId = new Types.ObjectId(dto.otherUserId);
 
-    let conversation = await this._conversationRepo.findByDirectKey(directKey);
+    const directKey = buildDirectKey(currentUserId, otherUserId);
 
-    const currentContext = dto.context;
-    const otherContext = currentContext === "user" ? "nutritionist" : "user";
+    let conversation =
+      await this._conversationRepository.findByDirectKey(directKey);
 
     if (!conversation) {
-      logger.debug("No existing conversation found. Creating new one", {
-        directKey,
-      });
-
-      conversation = await this._conversationRepo.create({
-        chatType: "direct",
-        directKey,
-      });
-
-      console.log(currentContext);
-      
-      await this._conversationMemberRepo.createMany([
-        {
-          conversationId: conversation._id,
-          userId: new Types.ObjectId(dto.currentUserId),
-          role: "member",
-          roleContext: currentContext,
-        },
-        {
-          conversationId: conversation._id,
-          userId: new Types.ObjectId(dto.otherUserId),
-          role: "member",
-          roleContext: otherContext,
-        },
-      ]);
-    } else {
-      const existingMembers =
-        await this._conversationMemberRepo.findByConversationId(
-          conversation._id.toString(),
+      const activePlan1 =
+        await this._userPlanRepository.findActiveByUserAndNutritionist(
+          dto.currentUserId,
+          dto.otherUserId,
         );
-      const currentExists = existingMembers.find(
-        (m) => m.userId.toString() === dto.currentUserId,
-      );
+      const activePlan2 =
+        await this._userPlanRepository.findActiveByUserAndNutritionist(
+          dto.otherUserId,
+          dto.currentUserId,
+        );
 
-      const otherExists = existingMembers.find(
-        (m) => m.userId.toString() === dto.otherUserId,
-      );
-
-      const membersToCreate: Partial<IConversationMember>[] = [];
-
-      if (!currentExists) {
-        membersToCreate.push({
-          conversationId: conversation._id,
-          userId: new Types.ObjectId(dto.currentUserId),
-          role: "member",
-          roleContext: currentContext,
-        });
+      if (!activePlan1 && !activePlan2) {
+        throw new CustomError(
+          "Cannot create coaching conversation without an active plan.",
+          StatusCode.FORBIDDEN,
+        );
       }
 
-      if (!otherExists) {
-        membersToCreate.push({
-          conversationId: conversation._id,
-          userId: new Types.ObjectId(dto.otherUserId),
-          role: "member",
-          roleContext: otherContext,
+      if (session) {
+        conversation = await this._conversationRepository.createWithSession(
+          {
+            chatType: "direct",
+            directKey,
+            purpose: "coaching",
+            status: "active",
+          },
+          session,
+        );
+
+        await this._conversationMemberRepository.createManyWithSession(
+          [
+            {
+              conversationId: conversation._id,
+              userId: currentUserId,
+              role: "member",
+              status: "active",
+            },
+            {
+              conversationId: conversation._id,
+              userId: otherUserId,
+              role: "member",
+              status: "active",
+            },
+          ],
+          session,
+        );
+      } else {
+        conversation = await this._conversationRepository.create({
+          chatType: "direct",
+          directKey,
+          purpose: "coaching",
+          status: "active",
         });
+
+        await this._conversationMemberRepository.createMany([
+          {
+            conversationId: conversation._id,
+            userId: currentUserId,
+            role: "member",
+            status: "active",
+          },
+          {
+            conversationId: conversation._id,
+            userId: otherUserId,
+            role: "member",
+            status: "active",
+          },
+        ]);
       }
 
-      if (membersToCreate.length > 0) {
-        logger.debug("Adding missing conversation members", {
-          count: membersToCreate.length,
-        });
-
-        await this._conversationMemberRepo.createMany(membersToCreate);
-      }
+      logger.info("Direct conversation created", {
+        conversationId: conversation._id.toString(),
+      });
     }
 
-    const otherUser = await this._userRepo.findById(dto.otherUserId);
+    const otherUser = await this._userRepository.findById(dto.otherUserId);
 
-    return ConversationMapper.toResponseDTO(conversation, otherUser);
+    if (!otherUser) {
+      throw new Error("Conversation participant not found.");
+    }
+
+    return ConversationMapper.toResponseDTO(
+      conversation,
+      otherUser,
+      0,
+      false,
+      false,
+    );
   }
 
   async getUserConversations(
     userId: string,
-    context: "user" | "nutritionist",
-  ): Promise<ConversationResponseDTO[]> {
-    logger.debug("Fetching user conversations", { userId });
-    const members = await this._conversationMemberRepo.findByUser(
+    limit: number,
+    cursor?: string,
+  ): Promise<InfiniteScrollResponseDTO<ConversationResponseDTO>> {
+    logger.debug("Fetching user conversations", {
       userId,
-      context,
+      limit,
+      hasCursor: Boolean(cursor),
+    });
+
+    const members = await this._conversationMemberRepository.findByUser(userId);
+
+    if (members.length === 0) {
+      return new InfiniteScrollResponseDTO([], null, false);
+    }
+
+    const decodedCursor = decodeCursor(cursor);
+
+    const conversationResult =
+      await this._conversationRepository.findUserConversations(
+        userId,
+        limit,
+        decodedCursor ?? undefined,
+      );
+
+    if (conversationResult.items.length === 0) {
+      return new InfiniteScrollResponseDTO([], null, false);
+    }
+
+    const conversations = conversationResult.items;
+
+    const conversationIds = conversations.map((conversation) =>
+      conversation._id.toString(),
     );
-    const conversationIds = members.map((m) => m.conversationId.toString());
-    const conversations =
-      await this._conversationRepo.findByIds(conversationIds);
+
     const conversationMembers =
-      await this._conversationMemberRepo.findByConversationIds(conversationIds);
-    const otherMemberIds = conversationMembers
-      .filter((m) => m.userId.toString() !== userId)
-      .map((m) => m.userId.toString());
-    const users = await this._userRepo.findByIds(otherMemberIds);
-    const userMap = new Map(users.map((u) => [u._id.toString(), u]));
-    const lastMessageIds = conversations
-      .map((c) => c.lastMessageId?.toString())
-      .filter((id): id is string => Boolean(id));
-    const messages = await this._messageRepo.findByIds(lastMessageIds);
-    const messageMap = new Map(messages.map((m) => [m._id.toString(), m]));
-    const result = conversations.map((conversation) => {
+      await this._conversationMemberRepository.findByConversationIds(
+        conversationIds,
+      );
+
+    const otherUserIds = conversationMembers
+      .filter(
+        (member) =>
+          member.userId.toString() !== userId && member.status === "active",
+      )
+      .map((member) => member.userId.toString());
+
+    const users = await this._userRepository.findByIds(otherUserIds);
+
+    const userMap = new Map(users.map((user) => [user._id.toString(), user]));
+
+    const currentMemberMap = new Map(
+      members.map((member) => [member.conversationId.toString(), member]),
+    );
+
+    const items = conversations.map((conversation) => {
+      const conversationId = conversation._id.toString();
+
+      const currentMember = currentMemberMap.get(conversationId);
+
       let otherUser = null;
+
       if (conversation.chatType === "direct") {
-        const member = conversationMembers.find(
-          (m) =>
-            m.conversationId.toString() === conversation._id.toString() &&
-            m.userId.toString() !== userId,
+        const otherMember = conversationMembers.find(
+          (member) =>
+            member.conversationId.toString() === conversationId &&
+            member.userId.toString() !== userId &&
+            member.status === "active",
         );
-        otherUser = member ? userMap.get(member.userId.toString()) : null;
+
+        if (otherMember) {
+          otherUser = userMap.get(otherMember.userId.toString()) ?? null;
+        }
       }
-      const lastMsg = conversation.lastMessageId
-        ? messageMap.get(conversation.lastMessageId.toString())
-        : null;
-      const lastMessageText =
-        lastMsg?.text ||
-        (lastMsg?.messageType === "file"
-          ? `📎 ${lastMsg.attachments?.[0]?.fileName || "Attachment"}`
-          : null);
+
       return ConversationMapper.toResponseDTO(
         conversation,
         otherUser,
-        lastMessageText,
+        currentMember?.unreadCount ?? 0,
+        currentMember?.isMuted ?? false,
+        currentMember?.isArchived ?? false,
       );
     });
-    logger.info("User conversations loaded", { userId, count: result.length });
-    return result;
+
+    logger.info("User conversations loaded", {
+      userId,
+      count: items.length,
+      hasMore: conversationResult.hasMore,
+    });
+
+    return new InfiniteScrollResponseDTO(
+      items,
+      conversationResult.nextCursor,
+      conversationResult.hasMore,
+    );
   }
 }

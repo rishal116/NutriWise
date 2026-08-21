@@ -18,7 +18,6 @@ export class UserPlanRepository
     super(UserPlanModel);
   }
 
-
   async updateByIdWithSession(
     id: string | Types.ObjectId,
     update: UpdateQuery<IUserPlan>,

@@ -1,4 +1,4 @@
-import { Schema, model, Types, Document } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 export enum MeetingStatus {
   SCHEDULED = "scheduled",
@@ -12,23 +12,33 @@ export enum MeetingType {
   AUDIO = "audio",
 }
 
-export interface IMeeting extends Document {
+export interface IMeeting {
   _id: Types.ObjectId;
+
   title: string;
+
   nutritionistId: Types.ObjectId;
   userId: Types.ObjectId;
+
   roomId: string;
+
   scheduledAt: Date;
   durationInMinutes: number;
+
   status: MeetingStatus;
   type: MeetingType;
+
   startedAt?: Date;
   endedAt?: Date;
+
   nutritionistJoinedAt?: Date;
   userJoinedAt?: Date;
+
   isCancelledByUser: boolean;
   isCancelledByNutritionist: boolean;
+
   isDeleted: boolean;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +49,7 @@ const meetingSchema = new Schema<IMeeting>(
       type: String,
       required: true,
       trim: true,
+      maxlength: 200,
     },
 
     nutritionistId: {
@@ -59,6 +70,7 @@ const meetingSchema = new Schema<IMeeting>(
       type: String,
       required: true,
       unique: true,
+      immutable: true,
       trim: true,
     },
 
@@ -72,11 +84,13 @@ const meetingSchema = new Schema<IMeeting>(
       type: Number,
       required: true,
       min: 1,
+      max: 480,
     },
 
     status: {
       type: String,
       enum: Object.values(MeetingStatus),
+      required: true,
       default: MeetingStatus.SCHEDULED,
       index: true,
     },
@@ -84,12 +98,25 @@ const meetingSchema = new Schema<IMeeting>(
     type: {
       type: String,
       enum: Object.values(MeetingType),
+      required: true,
       default: MeetingType.VIDEO,
     },
-    startedAt: Date,
-    endedAt: Date,
-    nutritionistJoinedAt: Date,
-    userJoinedAt: Date,
+
+    startedAt: {
+      type: Date,
+    },
+
+    endedAt: {
+      type: Date,
+    },
+
+    nutritionistJoinedAt: {
+      type: Date,
+    },
+
+    userJoinedAt: {
+      type: Date,
+    },
 
     isCancelledByUser: {
       type: Boolean,
@@ -100,7 +127,7 @@ const meetingSchema = new Schema<IMeeting>(
       type: Boolean,
       default: false,
     },
-    
+
     isDeleted: {
       type: Boolean,
       default: false,
@@ -109,7 +136,28 @@ const meetingSchema = new Schema<IMeeting>(
   },
   {
     timestamps: true,
-  }
+  },
 );
+
+/**
+ * Common query indexes
+ */
+meetingSchema.index({
+  nutritionistId: 1,
+  scheduledAt: 1,
+  status: 1,
+});
+
+meetingSchema.index({
+  userId: 1,
+  scheduledAt: 1,
+  status: 1,
+});
+
+meetingSchema.index({
+  nutritionistId: 1,
+  userId: 1,
+  scheduledAt: 1,
+});
 
 export const MeetingModel = model<IMeeting>("Meeting", meetingSchema);

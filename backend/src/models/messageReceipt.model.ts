@@ -1,4 +1,4 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
 
 export enum ReceiptStatus {
   SENT = "sent",
@@ -6,7 +6,7 @@ export enum ReceiptStatus {
   SEEN = "seen",
 }
 
-export interface IMessageReceipt extends Document {
+export interface IMessageReceipt {
   _id: Types.ObjectId;
 
   messageId: Types.ObjectId;
@@ -59,7 +59,7 @@ const messageReceiptSchema = new Schema<IMessageReceipt>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 messageReceiptSchema.pre("validate", function (next) {
@@ -74,10 +74,7 @@ messageReceiptSchema.pre("validate", function (next) {
   next();
 });
 
-messageReceiptSchema.index(
-  { messageId: 1, userId: 1 },
-  { unique: true }
-);
+messageReceiptSchema.index({ messageId: 1, userId: 1 }, { unique: true });
 
 messageReceiptSchema.index({
   conversationId: 1,
@@ -92,10 +89,10 @@ messageReceiptSchema.index({
 
 messageReceiptSchema.index(
   { createdAt: 1 },
-  { expireAfterSeconds: 60 * 60 * 24 * 30 }
+  { expireAfterSeconds: 60 * 60 * 24 * 30 },
 );
 
 export const MessageReceiptModel = model<IMessageReceipt>(
   "MessageReceipt",
-  messageReceiptSchema
+  messageReceiptSchema,
 );

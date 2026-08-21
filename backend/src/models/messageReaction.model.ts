@@ -1,10 +1,9 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
-export interface IMessageReaction extends Document {
+export interface IMessageReaction {
   _id: Types.ObjectId;
 
   messageId: Types.ObjectId;
-  conversationId: Types.ObjectId;
   userId: Types.ObjectId;
 
   emoji: string;
@@ -13,19 +12,12 @@ export interface IMessageReaction extends Document {
   updatedAt: Date;
 }
 
-const messageReactionSchema = new Schema<IMessageReaction>(
+const MessageReactionSchema = new Schema<IMessageReaction>(
   {
     messageId: {
       type: Schema.Types.ObjectId,
       ref: "Message",
       required: true,
-    },
-
-    conversationId: {
-      type: Schema.Types.ObjectId,
-      ref: "Conversation",
-      required: true,
-      index: true,
     },
 
     userId: {
@@ -37,6 +29,8 @@ const messageReactionSchema = new Schema<IMessageReaction>(
     emoji: {
       type: String,
       required: true,
+      trim: true,
+      maxlength: 10,
     },
   },
   {
@@ -44,17 +38,17 @@ const messageReactionSchema = new Schema<IMessageReaction>(
   },
 );
 
-messageReactionSchema.index({ messageId: 1, userId: 1 }, { unique: true });
-
-messageReactionSchema.index({
-  messageId: 1,
-});
-
-messageReactionSchema.index({
-  conversationId: 1,
-});
+MessageReactionSchema.index(
+  {
+    messageId: 1,
+    userId: 1,
+  },
+  {
+    unique: true,
+  },
+);
 
 export const MessageReactionModel = model<IMessageReaction>(
   "MessageReaction",
-  messageReactionSchema,
+  MessageReactionSchema,
 );

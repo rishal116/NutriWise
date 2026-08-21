@@ -4,23 +4,28 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+
 import userRoutes from "./routes/user";
 import adminRoutes from "./routes/admin";
-import { errorMiddleware } from "./middlewares/error.middleware";
-import chatRoutes from "./routes/chat.routes";
-import sessionRoutes from "./routes/session.routes";
 import nutritionistRoutes from "./routes/nutritionist";
+import chatRoutes from "./routes/chat";
+import publicRoutes from "./routes/public";
+
+import { errorMiddleware } from "./middlewares/error.middleware";
 import stripeRoutes from "./routes/common/stripe.routes";
 
 dotenv.config();
 
 const app = express();
+
 const isProduction = process.env.NODE_ENV === "production";
 
 app.use("/stripe", express.raw({ type: "application/json" }), stripeRoutes);
 
 app.use(cookieParser());
+
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -52,12 +57,15 @@ app.use(
   }),
 );
 
+app.use("/api/public", publicRoutes);
+
 app.use("/api/users", userRoutes);
+
 app.use("/api/admin", adminRoutes);
+
 app.use("/api/nutritionists", nutritionistRoutes);
 
-app.use("/chat", chatRoutes);
-app.use("/session", sessionRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.use(errorMiddleware);
 

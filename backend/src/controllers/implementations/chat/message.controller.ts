@@ -14,42 +14,66 @@ export class MessageController implements IMessageController {
   ) {}
 
   sendMessage = asyncHandler(async (req: Request, res: Response) => {
-    const { conversationId, text, messageType, context } = req.body;
+    const { conversationId, text, messageType, attachments } = req.body;
+
     const message = await this._messageService.sendMessage({
       conversationId,
       senderId: req.user?.userId as string,
-      context,
       text,
+      attachments,
       messageType,
     });
-    res.status(StatusCode.CREATED).json({ success: true, data: message });
+
+    res.status(StatusCode.CREATED).json({
+      success: true,
+      data: message,
+    });
   });
 
   getMessages = asyncHandler(async (req: Request, res: Response) => {
+    const { conversationId } = req.params;
+
+    const limit = Number(req.query.limit) || 30;
+
+    const cursor =
+      typeof req.query.cursor === "string" ? req.query.cursor : undefined;
+
     const messages = await this._messageService.getMessages(
-      req.params.conversationId,
+      conversationId,
+      req.user?.userId as string,
+      limit,
+      cursor,
     );
-    res.status(StatusCode.OK).json({ success: true, data: messages });
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: messages,
+    });
   });
 
   sendFile = asyncHandler(async (req: Request, res: Response) => {
     const message = await this._messageService.sendFile({
       conversationId: req.body.conversationId,
       senderId: req.user?.userId as string,
-      context: req.body.context,
       file: req.file,
     });
-    res.status(StatusCode.CREATED).json(message);
+
+    res.status(StatusCode.CREATED).json({
+      success: true,
+      data: message,
+    });
   });
 
   markAsRead = asyncHandler(async (req: Request, res: Response) => {
     const { conversationId } = req.params;
+
     await this._messageService.markAsRead(
       conversationId,
       req.user?.userId as string,
     );
 
     res.status(StatusCode.OK).json({
+      success: true,
       message: "Messages marked as read",
     });
   });
@@ -63,6 +87,7 @@ export class MessageController implements IMessageController {
     );
 
     res.status(StatusCode.OK).json({
+      success: true,
       message: "Message deleted",
     });
   });
@@ -77,6 +102,9 @@ export class MessageController implements IMessageController {
       req.user?.userId as string,
     );
 
-    res.status(StatusCode.OK).json(updatedMessage);
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: updatedMessage,
+    });
   });
 }

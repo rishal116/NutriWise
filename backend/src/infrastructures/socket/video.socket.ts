@@ -1,11 +1,11 @@
 import { Server, Socket } from "socket.io";
-import { MeetingStatus } from "../../models/meeting.model"; // adjust path
+import { MeetingStatus } from "../../models/meeting.model"; 
 import { container } from "../../configs/inversify";
 import { TYPES } from "../../types/types";
-import { INutriMeetingsService } from "../../services/interfaces/nutritionist/INutriMeetingsService";
+import { INutriMeetingService } from "../../services/interfaces/nutritionist/INutriMeetingService";
 
 export const registerVideoSocket = (io: Server, socket: Socket) => {
-  const meetingService = container.get<INutriMeetingsService>(TYPES.INutriMeetingsService);
+  const meetingService = container.get<INutriMeetingService>(TYPES.INutriMeetingService);
   
   const handleLeave = async (roomId: string) => {
     const socketRoomId = `video:${roomId}`;

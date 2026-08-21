@@ -4,6 +4,7 @@ import { NUTRITIONIST_CLIENT_ROUTES } from "@/routes/nutritionist/client.routes"
 import type {
   ClientDetailsResponseDTO,
   ClientListItemDTO,
+  MeetingClientOptionDTO,
 } from "@/dtos/nutritionist/client/client-response.dto";
 
 import type { GetClientsQueryDTO } from "@/dtos/nutritionist/client/client-request.dto";
@@ -21,6 +22,14 @@ export const nutriClientService = {
     >(NUTRITIONIST_CLIENT_ROUTES.LIST, {
       params: query,
     });
+
+    return res.data.data;
+  },
+
+  async getMeetingEligibleClients(): Promise<MeetingClientOptionDTO[]> {
+    const res = await clientApi.get<ApiResponse<MeetingClientOptionDTO[]>>(
+      NUTRITIONIST_CLIENT_ROUTES.MEETING_ELIGIBLE,
+    );
 
     return res.data.data;
   },

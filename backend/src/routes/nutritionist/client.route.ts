@@ -11,6 +11,8 @@ const controller = container.get<INutriClientController>(
 
 router.get("/", controller.getClients);
 
+router.get("/meeting-eligible", controller.getMeetingEligibleClients);
+
 router.get("/:clientId", controller.getClientDetails);
 
 export default router;

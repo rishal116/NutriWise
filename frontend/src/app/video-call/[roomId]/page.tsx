@@ -12,7 +12,6 @@ import {
   Play,
   Smile,
 } from "lucide-react";
-import { nutritionistMeetService } from "@/services/nutritionist/nutritionistMeet.service";
 
 const VideoCallPage = () => {
   const params = useParams();
@@ -39,45 +38,44 @@ const VideoCallPage = () => {
   const handleJoin = async () => {
     setJoining(true);
 
-  try {
-   await nutritionistMeetService.updateMeetingStatus(roomId, "ongoing");
+    try {
+      await startCall();
+    } catch (err) {
+      console.error(err);
+    }
 
-
-
-    await startCall();
-  } catch (err) {
-    console.error(err);
-  }
-
-  setJoining(false);
+    setJoining(false);
   };
 
-  const handleLeave =  async () => {
-
-  endCall();
-  router.back();
+  const handleLeave = async () => {
+    endCall();
+    router.back();
   };
 
   if (!roomId) return null;
 
   return (
     <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden font-sans selection:bg-emerald-500/30">
-      
       {/* MINIMAL TOP INFO */}
       <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
         <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900/60 backdrop-blur-md border border-white/5 rounded-xl">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] font-mono text-emerald-50/70 tracking-wider uppercase">{roomId}</span>
+          <span className="text-[11px] font-mono text-emerald-50/70 tracking-wider uppercase">
+            {roomId}
+          </span>
         </div>
       </div>
 
       {/* VIDEO LAYOUT */}
       <div className="relative w-full h-full p-4 flex flex-col md:flex-row items-center justify-center gap-4">
-        
         {/* LOCAL FEED */}
-        <div className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-900 transition-all duration-500 shadow-2xl ${
-            hasRemoteStream ? "w-full md:w-1/2 h-1/2 md:h-[70%]" : "w-full max-w-5xl h-[80%]"
-        }`}>
+        <div
+          className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-900 transition-all duration-500 shadow-2xl ${
+            hasRemoteStream
+              ? "w-full md:w-1/2 h-1/2 md:h-[70%]"
+              : "w-full max-w-5xl h-[80%]"
+          }`}
+        >
           <video
             ref={localVideoRef}
             autoPlay
@@ -96,10 +94,17 @@ const VideoCallPage = () => {
         </div>
 
         {/* REMOTE FEED */}
-        <div className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-950 transition-all duration-500 ${
+        <div
+          className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-950 transition-all duration-500 ${
             hasRemoteStream ? "w-full md:w-1/2 h-1/2 md:h-[70%]" : "hidden"
-        }`}>
-          <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover" />
+          }`}
+        >
+          <video
+            ref={remoteVideoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
+          />
           <div className="absolute bottom-4 left-4 text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded">
             Partner
           </div>
@@ -122,7 +127,9 @@ const VideoCallPage = () => {
             <button
               onClick={toggleAudio}
               className={`p-2.5 rounded-xl transition-colors ${
-                isAudioOn ? "text-neutral-400 hover:bg-neutral-800 hover:text-white" : "bg-red-500/20 text-red-500"
+                isAudioOn
+                  ? "text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                  : "bg-red-500/20 text-red-500"
               }`}
             >
               {isAudioOn ? <Mic size={20} /> : <MicOff size={20} />}
@@ -131,7 +138,9 @@ const VideoCallPage = () => {
             <button
               onClick={toggleVideo}
               className={`p-2.5 rounded-xl transition-colors ${
-                isVideoOn ? "text-neutral-400 hover:bg-neutral-800 hover:text-white" : "bg-red-500/20 text-red-500"
+                isVideoOn
+                  ? "text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                  : "bg-red-500/20 text-red-500"
               }`}
             >
               {isVideoOn ? <Video size={20} /> : <VideoOff size={20} />}
@@ -149,7 +158,10 @@ const VideoCallPage = () => {
                   {reactions.map((emoji) => (
                     <button
                       key={emoji}
-                      onClick={() => { console.log(emoji); setShowReactions(false); }}
+                      onClick={() => {
+                        console.log(emoji);
+                        setShowReactions(false);
+                      }}
                       className="p-1.5 hover:bg-white/5 rounded-lg text-lg transition-transform hover:scale-125"
                     >
                       {emoji}

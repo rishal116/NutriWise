@@ -1,4 +1,4 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 export enum MessageType {
   TEXT = "text",
@@ -10,29 +10,27 @@ export enum MessageType {
 
 export type MessageStatus = "active" | "edited" | "deleted";
 
-interface IAttachment {
+interface IMessageAttachment {
   url: string;
   fileName?: string;
   size?: number;
   mimeType?: string;
 }
 
-export interface IMessage extends Document {
+export interface IMessage {
   _id: Types.ObjectId;
 
   conversationId: Types.ObjectId;
   senderId: Types.ObjectId;
 
   text?: string;
-  attachments?: IAttachment[];
+  attachments?: IMessageAttachment[];
 
   messageType: MessageType;
 
   replyTo?: Types.ObjectId;
 
   status: MessageStatus;
-
-  senderRole?: "user" | "nutritionist";
 
   editedAt?: Date;
   deletedAt?: Date;
@@ -41,20 +39,18 @@ export interface IMessage extends Document {
   updatedAt: Date;
 }
 
-const messageSchema = new Schema<IMessage>(
+const MessageSchema = new Schema<IMessage>(
   {
     conversationId: {
       type: Schema.Types.ObjectId,
       ref: "Conversation",
       required: true,
-      index: true,
     },
 
     senderId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     text: {
@@ -68,10 +64,23 @@ const messageSchema = new Schema<IMessage>(
         url: {
           type: String,
           required: true,
+          trim: true,
         },
-        fileName: String,
-        size: Number,
-        mimeType: String,
+
+        fileName: {
+          type: String,
+          trim: true,
+        },
+
+        size: {
+          type: Number,
+          min: 0,
+        },
+
+        mimeType: {
+          type: String,
+          trim: true,
+        },
       },
     ],
 
@@ -79,7 +88,7 @@ const messageSchema = new Schema<IMessage>(
       type: String,
       enum: Object.values(MessageType),
       default: MessageType.TEXT,
-      index: true,
+      required: true,
     },
 
     replyTo: {
@@ -91,12 +100,7 @@ const messageSchema = new Schema<IMessage>(
       type: String,
       enum: ["active", "edited", "deleted"],
       default: "active",
-      index: true,
-    },
-
-    senderRole: {
-      type: String,
-      enum: ["user", "nutritionist"],
+      required: true,
     },
 
     editedAt: {
@@ -109,30 +113,51 @@ const messageSchema = new Schema<IMessage>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-messageSchema.pre("validate", function (next) {
-  if (!this.text && (!this.attachments || this.attachments.length === 0)) {
+MessageSchema.pre("validate", function (next) {
+  const hasText = Boolean(this.text?.trim());
+  const hasAttachments = Boolean(
+    this.attachments && this.attachments.length > 0,
+  );
+
+  if (!hasText && !hasAttachments) {
     return next(new Error("Message must contain text or attachment"));
   }
+
+  if (this.messageType === MessageType.TEXT && !hasText) {
+    return next(new Error("Text message requires text"));
+  }
+
+  if (
+    [MessageType.IMAGE, MessageType.FILE, MessageType.VIDEO].includes(
+      this.messageType,
+    ) &&
+    !hasAttachments
+  ) {
+    return next(new Error("Media message requires attachment"));
+  }
+
+  if (this.messageType === MessageType.SYSTEM && !hasText) {
+    return next(new Error("System message requires text"));
+  }
+
   next();
 });
 
-messageSchema.index(
-  { conversationId: 1, createdAt: -1 },
+MessageSchema.index(
   {
-    partialFilterExpression: { status: { $ne: "deleted" } },
-  }
+    conversationId: 1,
+    createdAt: -1,
+  },
+  {
+    partialFilterExpression: {
+      status: {
+        $ne: "deleted",
+      },
+    },
+  },
 );
 
-messageSchema.index({
-  conversationId: 1,
-  senderId: 1,
-});
-
-messageSchema.index({
-  replyTo: 1,
-});
-
-export const MessageModel = model<IMessage>("Message", messageSchema);
+export const MessageModel = model<IMessage>("Message", MessageSchema);

@@ -1,8 +1,4 @@
-export type SubscriptionStatus =
-  | "active"
-  | "expired"
-  | "cancelled"
-  | "pending";
+export type SubscriptionStatus = "active" | "expired" | "cancelled" | "pending";
 
 export type ProgramStatus =
   | "upcoming"
@@ -34,7 +30,8 @@ export interface ClientListItemDTO {
 
   fullName: string;
   username: string;
-  profileImage?: string;a
+  profileImage?: string;
+  a;
 
   programs: ClientProgramSummaryDTO[];
 }
@@ -67,4 +64,11 @@ export interface ClientDetailsResponseDTO {
   health: ClientHealthDetailsDTO;
 
   programs: ClientProgramSummaryDTO[];
+}
+
+export interface MeetingClientOptionDTO {
+  id: string;
+  fullName: string;
+  email: string;
+  profileImage?: string;
 }

@@ -58,18 +58,42 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
     userProgramDayId: string,
     activityId: string,
   ): Promise<UserActivityTrackingResponseDTO> {
+    console.log("========== START ACTIVITY ==========");
+    console.log("userId:", userId);
+    console.log("userProgramId:", userProgramId);
+    console.log("userProgramDayId:", userProgramDayId);
+    console.log("activityId:", activityId);
+    console.log("====================================");
+
     const existingTracking =
       await this._userActivityTrackingRepository.findByDayAndActivity(
         userProgramDayId,
         activityId,
       );
 
+    console.log("existingTracking:", existingTracking);
+
     if (!existingTracking) {
+      console.log("❌ Activity tracking has NOT been initialized");
       throw new CustomError(
         "Activity tracking has not been initialized",
         StatusCode.NOT_FOUND,
       );
     }
+
+    console.log("✅ Activity tracking found");
+    console.log("tracking._id:", existingTracking._id.toString());
+    console.log("tracking.userId:", existingTracking.userId.toString());
+    console.log(
+      "tracking.userProgramId:",
+      existingTracking.userProgramId.toString(),
+    );
+    console.log(
+      "tracking.userProgramDayId:",
+      existingTracking.userProgramDayId.toString(),
+    );
+    console.log("tracking.activityId:", existingTracking.activityId.toString());
+    console.log("tracking.status:", existingTracking.status);
 
     this.validateOwnership(
       existingTracking,
@@ -78,7 +102,11 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       userProgramDayId,
     );
 
+    console.log("✅ Ownership validation passed");
+
     this.validateActivityCanStart(existingTracking);
+
+    console.log("✅ Activity can be started");
 
     const updatedTracking =
       await this._userActivityTrackingRepository.updateById(
@@ -90,12 +118,18 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
         },
       );
 
+    console.log("updatedTracking:", updatedTracking);
+
     if (!updatedTracking) {
+      console.log("❌ Failed to start activity");
       throw new CustomError(
         "Failed to start activity",
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
+
+    console.log("✅ ACTIVITY STARTED SUCCESSFULLY");
+    console.log("====================================");
 
     return UserActivityTrackingMapper.toDTO(updatedTracking);
   }
@@ -107,6 +141,14 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
     activityId: string,
     data: UpdateActivityTrackingDTO,
   ): Promise<UserActivityTrackingResponseDTO> {
+    console.log("========== UPDATE ACTIVITY ==========");
+    console.log("userId:", userId);
+    console.log("userProgramId:", userProgramId);
+    console.log("userProgramDayId:", userProgramDayId);
+    console.log("activityId:", activityId);
+    console.log("data:", data);
+    console.log("=====================================");
+
     const existingTracking =
       await this._userActivityTrackingRepository.findByDayAndActivity(
         userProgramDayId,

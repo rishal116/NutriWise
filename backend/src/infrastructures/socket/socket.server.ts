@@ -3,16 +3,29 @@ import { Server, Socket } from "socket.io";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 
 import { jwtConfig } from "../../configs/jwt.config";
-import { UserRole } from "../../enums/userRole.enum";
+import { UserRole } from "../../enums/user.enum";
 import { registerChatSocket } from "./chat.socket";
 import { registerVideoSocket } from "./video.socket";
+import logger from "../../utils/logger";
 
 let io: Server;
+
+// Map userId -> Set of connected socket IDs
+const userSocketsMap = new Map<string, Set<string>>();
 
 interface JwtPayload {
   userId: string;
   activeRole: UserRole;
 }
+
+export const isUserOnline = (userId: string): boolean => {
+  const sockets = userSocketsMap.get(userId);
+  return Boolean(sockets && sockets.size > 0);
+};
+
+export const getOnlineUserIds = (): string[] => {
+  return Array.from(userSocketsMap.keys());
+};
 
 function getCookie(request: IncomingMessage, name: string): string | undefined {
   const cookieHeader = request.headers.cookie;
@@ -75,14 +88,46 @@ export const initializeSocket = (server: HTTPServer) => {
   });
 
   io.on("connection", (socket: Socket) => {
-    console.log("Client connected:", socket.id);
-    console.log("Authenticated User:", socket.data.user);
+    const userId = socket.data.user?.userId;
+    logger.info("Socket client connected", { socketId: socket.id, userId });
+
+    if (userId) {
+      let socketSet = userSocketsMap.get(userId);
+      const isFirstConnection = !socketSet || socketSet.size === 0;
+
+      if (!socketSet) {
+        socketSet = new Set<string>();
+        userSocketsMap.set(userId, socketSet);
+      }
+      socketSet.add(socket.id);
+
+      // Emit initial presence list to the connected client
+      socket.emit("presence:init", { onlineUserIds: Array.from(userSocketsMap.keys()) });
+
+      // Notify others if user transitioned to online
+      if (isFirstConnection) {
+        logger.info("User is now ONLINE", { userId });
+        io.emit("user:online", { userId });
+      }
+    }
 
     registerChatSocket(io, socket);
     registerVideoSocket(io, socket);
 
     socket.on("disconnect", () => {
-      console.log("Client disconnected:", socket.id);
+      logger.info("Socket client disconnected", { socketId: socket.id, userId });
+
+      if (userId) {
+        const socketSet = userSocketsMap.get(userId);
+        if (socketSet) {
+          socketSet.delete(socket.id);
+          if (socketSet.size === 0) {
+            userSocketsMap.delete(userId);
+            logger.info("User is now OFFLINE", { userId });
+            io.emit("user:offline", { userId });
+          }
+        }
+      }
     });
   });
 
@@ -96,3 +141,4 @@ export const getIO = () => {
 
   return io;
 };
+

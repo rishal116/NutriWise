@@ -2,6 +2,10 @@ import { ClientSession, Types } from "mongoose";
 
 import { BaseRepository } from "../common/base.repository";
 
+import { CursorData } from "../../../types/cursor.types";
+
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
+
 import { IConversationRepository } from "../../interfaces/chat/IConversationRepository";
 
 import {
@@ -10,6 +14,8 @@ import {
 } from "../../../models/conversation.model";
 
 import { ConversationMemberModel } from "../../../models/conversationMember.model";
+
+import { encodeCursor } from "../../../utils/cursor.util";
 
 export class ConversationRepository
   extends BaseRepository<IConversation>
@@ -23,24 +29,17 @@ export class ConversationRepository
     return new Types.ObjectId(id);
   }
 
-  async createWithSession(
-    data: Partial<IConversation>,
-    session: ClientSession,
-  ): Promise<IConversation> {
-    const [conversation] = await this._model.create([data], {
-      session,
-    });
-
-    return conversation;
-  }
-
-  async findByDirectKey(directKey: string): Promise<IConversation | null> {
+  async findByDirectKey(
+    directKey: string,
+    session?: ClientSession,
+  ): Promise<IConversation | null> {
     return this._model
       .findOne({
         directKey,
         chatType: "direct",
         status: "active",
       })
+      .session(session ?? null)
       .lean<IConversation | null>()
       .exec();
   }
@@ -48,61 +47,111 @@ export class ConversationRepository
   async findUserConversations(
     userId: string,
     limit: number,
-    skip: number,
-  ): Promise<IConversation[]> {
-    const memberships = await ConversationMemberModel.find({
-      userId: this.toObjectId(userId),
-      status: "active",
-    })
-      .select("conversationId")
-      .lean()
-      .exec();
+    cursor?: CursorData,
+  ): Promise<CursorPaginationResult<IConversation>> {
+    const userObjectId = this.toObjectId(userId);
 
-    const conversationIds = memberships.map((member) => member.conversationId);
+    const match: Record<string, unknown> = {
+      status: {
+        $ne: "closed",
+      },
+    };
 
-    if (conversationIds.length === 0) {
-      return [];
+    if (cursor) {
+      const cursorDate =
+        cursor.value instanceof Date ? cursor.value : new Date(cursor.value);
+
+      match.$or = [
+        {
+          lastActivityAt: {
+            $lt: cursorDate,
+          },
+        },
+        {
+          lastActivityAt: cursorDate,
+          _id: {
+            $lt: this.toObjectId(cursor.id),
+          },
+        },
+      ];
     }
 
-    return this._model
-      .find({
-        _id: {
-          $in: conversationIds,
+    const conversations = await this._model
+      .aggregate<IConversation>([
+        {
+          $lookup: {
+            from: ConversationMemberModel.collection.name,
+            let: {
+              conversationId: "$_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$conversationId", "$$conversationId"],
+                      },
+                      {
+                        $eq: ["$userId", userObjectId],
+                      },
+                      {
+                        $eq: ["$status", "active"],
+                      },
+                    ],
+                  },
+                },
+              },
+              {
+                $limit: 1,
+              },
+            ],
+            as: "membership",
+          },
         },
-        status: {
-          $ne: "closed",
-        },
-      })
-      .sort({
-        lastActivityAt: -1,
-      })
-      .skip(skip)
-      .limit(limit)
-      .lean<IConversation[]>()
-      .exec();
-  }
 
-  async findByIdsPaginated(
-    ids: string[],
-    limit: number,
-    skip: number,
-  ): Promise<IConversation[]> {
-    return this._model
-      .find({
-        _id: {
-          $in: ids.map((id) => this.toObjectId(id)),
+        {
+          $match: {
+            ...match,
+            "membership.0": {
+              $exists: true,
+            },
+          },
         },
-        status: {
-          $ne: "closed",
+
+        {
+          $sort: {
+            lastActivityAt: -1,
+            _id: -1,
+          },
         },
-      })
-      .sort({
-        lastActivityAt: -1,
-      })
-      .skip(skip)
-      .limit(limit)
-      .lean<IConversation[]>()
+
+        {
+          $limit: limit + 1,
+        },
+      ])
       .exec();
+
+    const hasMore = conversations.length > limit;
+
+    const items = hasMore ? conversations.slice(0, limit) : conversations;
+
+    const lastItem = items[items.length - 1];
+
+    const nextCursor =
+      hasMore && lastItem?.lastActivityAt
+        ? encodeCursor({
+            value: lastItem.lastActivityAt,
+            id: lastItem._id.toString(),
+            sortKey: "lastActivityAt",
+          })
+        : null;
+
+    return {
+      items,
+      nextCursor,
+      hasMore,
+    };
   }
 
   async findActiveConversation(

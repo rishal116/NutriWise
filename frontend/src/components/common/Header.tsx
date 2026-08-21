@@ -29,102 +29,47 @@ import { showLoading, hideLoading } from "@/redux/slices/uiSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 type NutritionistCtaKey = "none" | "pending" | "rejected" | "approved";
-type Accent = "emerald" | "amber" | "rose";
 
-const ACCENT_STYLES: Record<
-  Accent,
-  {
-    iconBg: string;
-    iconRing: string;
-    iconColor: string;
-    hoverBorder: string;
-    accentBar: string;
-    hoverArrowBg: string;
-    hoverArrowColor: string;
-    pillBg: string;
-    pillText: string;
-    dot: string;
-  }
-> = {
-  emerald: {
-    iconBg: "bg-emerald-50",
-    iconRing: "ring-emerald-100",
-    iconColor: "text-emerald-600",
-    hoverBorder: "hover:border-emerald-300",
-    accentBar: "bg-emerald-500",
-    hoverArrowBg: "group-hover:bg-emerald-50",
-    hoverArrowColor: "group-hover:text-emerald-600",
-    pillBg: "bg-emerald-50",
-    pillText: "text-emerald-700",
-    dot: "bg-emerald-500",
-  },
-  amber: {
-    iconBg: "bg-amber-50",
-    iconRing: "ring-amber-100",
-    iconColor: "text-amber-600",
-    hoverBorder: "hover:border-amber-300",
-    accentBar: "bg-amber-500",
-    hoverArrowBg: "group-hover:bg-amber-50",
-    hoverArrowColor: "group-hover:text-amber-600",
-    pillBg: "bg-amber-50",
-    pillText: "text-amber-700",
-    dot: "bg-amber-500",
-  },
-  rose: {
-    iconBg: "bg-rose-50",
-    iconRing: "ring-rose-100",
-    iconColor: "text-rose-600",
-    hoverBorder: "hover:border-rose-300",
-    accentBar: "bg-rose-500",
-    hoverArrowBg: "group-hover:bg-rose-50",
-    hoverArrowColor: "group-hover:text-rose-600",
-    pillBg: "bg-rose-50",
-    pillText: "text-rose-700",
-    dot: "bg-rose-500",
-  },
-};
-
+// Nutritionist row is deliberately minimal — a single line with an icon,
+// label, and (when relevant) a small status pill. It should never compete
+// visually with the Dashboard card above it; that's the whole point of the
+// redesign. Resist the urge to add color/rings/shadows back in here.
 const NUTRITIONIST_CTA_CONFIG: Record<
   NutritionistCtaKey,
   {
-    accent: Accent;
     icon: typeof Stethoscope;
     title: string;
-    subtitle: string;
     pillLabel: string | null;
+    pillColor: string;
     pulse: boolean;
   }
 > = {
   none: {
-    accent: "emerald",
     icon: Stethoscope,
     title: "Become a Nutritionist",
-    subtitle: "Coach clients, earn on your terms",
     pillLabel: null,
+    pillColor: "",
     pulse: false,
   },
   pending: {
-    accent: "amber",
     icon: Clock,
     title: "Application under review",
-    subtitle: "We'll email you once it's decided",
     pillLabel: "Pending",
+    pillColor: "text-amber-600",
     pulse: true,
   },
   rejected: {
-    accent: "rose",
     icon: AlertCircle,
     title: "Update your application",
-    subtitle: "Fix the noted issues and resubmit",
     pillLabel: "Needs changes",
+    pillColor: "text-rose-600",
     pulse: false,
   },
   approved: {
-    accent: "emerald",
     icon: Stethoscope,
     title: "Nutritionist Dashboard",
-    subtitle: "Manage sessions, clients & earnings",
     pillLabel: "Active",
+    pillColor: "text-emerald-600",
     pulse: false,
   },
 };
@@ -138,7 +83,9 @@ export default function Header() {
   const loading = useSelector((state: RootState) => state.auth.loading);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const accountMenuButtonRef = useRef<HTMLButtonElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
 
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -147,19 +94,20 @@ export default function Header() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
+        !dropdownRef.current.contains(target) &&
+        !accountMenuButtonRef.current?.contains(target)
       ) {
         setOpen(false);
       }
 
       if (
         mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(e.target as Node) &&
-        !(e.target as Element).closest(
-          'button[aria-label="Toggle mobile menu"]',
-        )
+        !mobileMenuRef.current.contains(target) &&
+        !mobileMenuButtonRef.current?.contains(target)
       ) {
         setMobileOpen(false);
       }
@@ -181,9 +129,13 @@ export default function Header() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
+  // Header lives in the layout, so it survives client-side navigation —
+  // resetting isLoading here too, or the "Get Started" button stays stuck
+  // in its spinner state on whatever page /signup lands on.
   useEffect(() => {
     setOpen(false);
     setMobileOpen(false);
+    setIsLoading(false);
   }, [pathname]);
 
   const isLoggedIn = !!user;
@@ -193,8 +145,6 @@ export default function Header() {
 
   const activeRole = user?.activeRole ?? "user";
 
-  // Drives which CTA card renders in the account menu (independent of `roles`,
-  // since an applicant can be pending/rejected before the role is ever granted).
   const nutritionistCtaKey: NutritionistCtaKey =
     user?.nutritionistStatus === "approved"
       ? "approved"
@@ -206,7 +156,6 @@ export default function Header() {
 
   const handleGetStarted = () => {
     setIsLoading(true);
-
     router.push("/signup");
   };
 
@@ -264,7 +213,6 @@ export default function Header() {
     try {
       await userAuthService.switchRole(role);
 
-      // IMPORTANT: update redux instead of local state
       dispatch({
         type: "auth/setActiveRole",
         payload: role,
@@ -291,6 +239,61 @@ export default function Header() {
     { name: "Communities", href: "/communities", icon: Users2 },
   ];
 
+  // Dashboard is the one thing every logged-in user needs on every visit —
+  // it gets the only richly-styled treatment in the menu.
+  const DashboardCard = ({ mobile = false }: { mobile?: boolean }) => (
+    <Link
+      href="/user/dashboard"
+      onClick={() => (mobile ? setMobileOpen(false) : setOpen(false))}
+      className={`group flex items-center gap-3 p-3 rounded-2xl bg-emerald-50/70 border border-emerald-100 transition-colors hover:bg-emerald-50 ${
+        mobile ? "active:scale-[0.98]" : ""
+      }`}
+    >
+      <span className="shrink-0 w-10 h-10 rounded-xl bg-white ring-1 ring-emerald-100 flex items-center justify-center">
+        <UserCircle className="w-5 h-5 text-emerald-600" />
+      </span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-sm font-semibold text-slate-900">
+          Dashboard
+        </span>
+        <span className="block text-xs text-slate-500 mt-0.5">
+          Your progress, plans & activity
+        </span>
+      </span>
+      <ArrowRight className="w-4 h-4 text-emerald-600 shrink-0 transition-transform group-hover:translate-x-0.5" />
+    </Link>
+  );
+
+  // Deliberately quiet — a single row, not a card. See config comment above.
+  const NutritionistRow = ({ mobile = false }: { mobile?: boolean }) => {
+    const cfg = NUTRITIONIST_CTA_CONFIG[nutritionistCtaKey];
+    const Icon = cfg.icon;
+
+    return (
+      <button
+        onClick={handleNutritionistDashboard}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-slate-50 transition-colors ${
+          mobile ? "active:scale-[0.98]" : ""
+        }`}
+      >
+        <span className="relative shrink-0 w-5 h-5 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-slate-400" />
+          {cfg.pulse && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+          )}
+        </span>
+        <span className="flex-1 text-sm text-slate-600">{cfg.title}</span>
+        {cfg.pillLabel && (
+          <span
+            className={`shrink-0 text-[10px] font-semibold ${cfg.pillColor}`}
+          >
+            {cfg.pillLabel}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   const RoleSwitcher = ({ mobile = false }: { mobile?: boolean }) => (
     <div className={mobile ? "mt-3" : "mt-3"}>
       <p className="text-[11px] font-semibold text-emerald-700/70 uppercase tracking-wide mb-1.5 px-0.5">
@@ -315,77 +318,6 @@ export default function Header() {
       </div>
     </div>
   );
-
-  // Single card that adapts to nutritionistStatus: none → CTA to apply,
-  // pending/rejected → application status message, approved → dashboard shortcut.
-  // Same white-card language as the rest of the menu; color is used sparingly
-  // (icon chip, status pill, hover accent) rather than tinting the whole card.
-  const NutritionistCTA = ({ mobile = false }: { mobile?: boolean }) => {
-    const cfg = NUTRITIONIST_CTA_CONFIG[nutritionistCtaKey];
-    const s = ACCENT_STYLES[cfg.accent];
-    const Icon = cfg.icon;
-
-    return (
-      <button
-        onClick={handleNutritionistDashboard}
-        className={`group relative w-full flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-200 ${s.hoverBorder} transition-all text-left overflow-hidden ${
-          mobile
-            ? "active:scale-[0.98]"
-            : "hover:shadow-md hover:shadow-slate-900/5"
-        }`}
-      >
-        <span
-          className={`absolute inset-x-0 top-0 h-0.5 ${s.accentBar} origin-left scale-x-0 transition-transform duration-300 ${
-            mobile ? "" : "group-hover:scale-x-100"
-          }`}
-        />
-
-        <span
-          className={`relative shrink-0 w-10 h-10 rounded-xl ${s.iconBg} ring-1 ${s.iconRing} flex items-center justify-center`}
-        >
-          <Icon className={`w-5 h-5 ${s.iconColor}`} />
-          {cfg.pulse && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
-              <span
-                className={`absolute inline-flex h-full w-full animate-ping rounded-full ${s.dot} opacity-75`}
-              />
-              <span
-                className={`relative inline-flex h-2.5 w-2.5 rounded-full ${s.dot} ring-2 ring-white`}
-              />
-            </span>
-          )}
-        </span>
-
-        <span className="flex-1 min-w-0">
-          <span className="flex items-center gap-1.5">
-            <span className="text-sm font-semibold text-slate-900 truncate">
-              {cfg.title}
-            </span>
-            {cfg.pillLabel && (
-              <span
-                className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold leading-none ${s.pillBg} ${s.pillText}`}
-              >
-                {cfg.pillLabel}
-              </span>
-            )}
-          </span>
-          <span className="block text-xs text-slate-500 truncate mt-0.5">
-            {cfg.subtitle}
-          </span>
-        </span>
-
-        <span
-          className={`shrink-0 w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center transition-colors ${s.hoverArrowBg}`}
-        >
-          <ArrowRight
-            className={`w-3.5 h-3.5 text-slate-400 transition-all ${s.hoverArrowColor} ${
-              !mobile ? "group-hover:translate-x-0.5" : ""
-            }`}
-          />
-        </span>
-      </button>
-    );
-  };
 
   if (loading) {
     return (
@@ -451,8 +383,10 @@ export default function Header() {
             {isLoggedIn ? (
               <div ref={dropdownRef} className="relative hidden sm:block">
                 <button
+                  ref={accountMenuButtonRef}
                   onClick={() => setOpen(!open)}
                   aria-expanded={open}
+                  aria-label="Account menu"
                   className="flex items-center gap-1.5 p-1 pr-2 rounded-full hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <span className="w-9 h-9 bg-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm shrink-0">
@@ -496,22 +430,14 @@ export default function Header() {
                     {isApprovedNutritionist && <RoleSwitcher />}
                   </div>
 
-                  {/* Dashboard link — common to every logged-in user */}
-                  <div className="py-1.5">
-                    <Link
-                      href="/user/dashboard"
-                      onClick={() => setOpen(false)}
-                      className="group flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors focus-visible:outline-none focus-visible:bg-slate-50"
-                    >
-                      <UserCircle className="w-4 h-4 text-slate-400" />
-                      <span className="flex-1">Dashboard</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-300 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                    </Link>
+                  {/* Dashboard — the primary, common action */}
+                  <div className="px-3 pt-3 pb-1.5">
+                    <DashboardCard />
                   </div>
 
-                  {/* Status-aware nutritionist card: apply / pending / rejected / dashboard */}
-                  <div className="px-3 pb-3">
-                    <NutritionistCTA />
+                  {/* Nutritionist — secondary, single line */}
+                  <div className="px-3 pb-2">
+                    <NutritionistRow />
                   </div>
 
                   <div className="border-t border-slate-100 py-1.5">
@@ -548,6 +474,7 @@ export default function Header() {
             )}
 
             <button
+              ref={mobileMenuButtonRef}
               onClick={() => setMobileOpen(!mobileOpen)}
               className="lg:hidden p-2 hover:bg-slate-50 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               aria-label="Toggle mobile menu"
@@ -619,24 +546,19 @@ export default function Header() {
                   {isApprovedNutritionist && <RoleSwitcher mobile />}
                 </div>
 
-                {/* Dashboard link — common to every logged-in user */}
-                <Link
-                  href="/user/dashboard"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
-                >
-                  <UserCircle className="w-4 h-4 text-slate-400" />
-                  Dashboard
-                </Link>
+                {/* Dashboard — the primary, common action */}
+                <div className="px-1">
+                  <DashboardCard mobile />
+                </div>
 
-                {/* Status-aware nutritionist card: apply / pending / rejected / dashboard */}
-                <div className="mt-2">
-                  <NutritionistCTA mobile />
+                {/* Nutritionist — secondary, single line */}
+                <div className="px-1 mt-1">
+                  <NutritionistRow mobile />
                 </div>
 
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                  className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl transition-colors mt-1"
                 >
                   <LogOut className="w-4 h-4" />
                   Logout

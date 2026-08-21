@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
-import { API_ROUTES } from "@/routes/user.routes";
+import { AUTH_ROUTES } from "@/routes/user/auth.routes";
 import { store } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
 import { userAuthService } from "@/services/user/userAuth.service";
@@ -17,20 +17,17 @@ interface ApiErrorResponse {
 export const clientApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 const ignoredRoutes = [
-  API_ROUTES.AUTH.LOGIN,
-  API_ROUTES.AUTH.SIGNUP,
-  API_ROUTES.AUTH.VERIFY_OTP,
-  API_ROUTES.AUTH.RESEND_OTP,
-  API_ROUTES.AUTH.GOOGLE,
-  API_ROUTES.AUTH.FORGOT_PASSWORD,
-  API_ROUTES.AUTH.RESET_PASSWORD,
-  API_ROUTES.AUTH.REFRESH_TOKEN,
+  AUTH_ROUTES.LOGIN,
+  AUTH_ROUTES.SIGNUP,
+  AUTH_ROUTES.VERIFY_OTP,
+  AUTH_ROUTES.RESEND_OTP,
+  AUTH_ROUTES.GOOGLE,
+  AUTH_ROUTES.FORGOT_PASSWORD,
+  AUTH_ROUTES.RESET_PASSWORD,
+  AUTH_ROUTES.REFRESH_TOKEN,
 ];
 
 clientApi.interceptors.response.use(
