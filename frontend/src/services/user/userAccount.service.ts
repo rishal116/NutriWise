@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/clientApi";
+import { clientApi } from "@/lib/axios/clientApi";
 
 interface ChangePasswordPayload {
   currentPassword: string;
@@ -7,7 +7,7 @@ interface ChangePasswordPayload {
 
 export const userAccountService = {
   changePassword: async (payload: ChangePasswordPayload) => {
-    const response = await api.post("/change-password", payload);
+    const response = await clientApi.post("/change-password", payload);
     return response.data;
   },
 };

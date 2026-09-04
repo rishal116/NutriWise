@@ -1,5 +1,7 @@
 import { Schema, model, Types } from "mongoose";
 
+import { Currency } from "../constants/currency.constants";
+
 export const PAYMENT_STATUS = [
   "pending",
   "paid",
@@ -7,6 +9,7 @@ export const PAYMENT_STATUS = [
   "refunded",
   "partially_refunded",
 ] as const;
+
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 
 export const SUBSCRIPTION_STATUS = [
@@ -15,29 +18,37 @@ export const SUBSCRIPTION_STATUS = [
   "expired",
   "cancelled",
 ] as const;
+
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
 
 export const PAYMENT_PROVIDERS = ["stripe", "razorpay", "paypal"] as const;
-export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
-export const CURRENCIES = ["INR", "USD"] as const;
-export type Currency = (typeof CURRENCIES)[number];
+export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
 export interface IUserPlan {
   _id: Types.ObjectId;
+
   userId: Types.ObjectId;
+
   nutritionistId: Types.ObjectId;
+
   planId: Types.ObjectId;
+
   paymentStatus: PaymentStatus;
+
   subscriptionStatus: SubscriptionStatus;
+
   amount: number;
+
   currency: Currency;
+
   payment: {
     provider: PaymentProvider;
     sessionId: string;
     transactionId?: string;
     completedAt?: Date;
   };
+
   planSnapshot: {
     title: string;
     description?: string;
@@ -47,9 +58,13 @@ export interface IUserPlan {
     currency: Currency;
     thumbnail?: string;
   };
+
   startDate: Date | null;
+
   endDate: Date | null;
+
   createdAt: Date;
+
   updatedAt: Date;
 }
 
@@ -78,14 +93,14 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
     paymentStatus: {
       type: String,
-      enum: PAYMENT_STATUS,
+      enum: ["pending", "paid", "failed", "refunded", "partially_refunded"],
       default: "pending",
       index: true,
     },
 
     subscriptionStatus: {
       type: String,
-      enum: SUBSCRIPTION_STATUS,
+      enum: ["pending", "active", "expired", "cancelled"],
       default: "pending",
       index: true,
     },
@@ -98,7 +113,7 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
     currency: {
       type: String,
-      enum: CURRENCIES,
+      enum: ["inr", "usd", "eur", "gbp", "aed"],
       required: true,
     },
 
@@ -161,7 +176,7 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
       currency: {
         type: String,
-        enum: CURRENCIES,
+        enum: ["inr", "usd", "eur", "gbp", "aed"],
         required: true,
       },
 
@@ -192,18 +207,22 @@ UserPlanSchema.index({
   userId: 1,
   subscriptionStatus: 1,
 });
+
 UserPlanSchema.index({
   nutritionistId: 1,
   subscriptionStatus: 1,
 });
+
 UserPlanSchema.index({
   endDate: 1,
   subscriptionStatus: 1,
 });
+
 UserPlanSchema.index({
   userId: 1,
   createdAt: -1,
 });
+
 UserPlanSchema.index({
   userId: 1,
   planId: 1,

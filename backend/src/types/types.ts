@@ -9,6 +9,10 @@ export const TYPES = {
   IStripeWebhookController: Symbol.for("IStripeWebhookController"),
   IConversationController: Symbol.for("IConversationController"),
   IMessageController: Symbol.for("IMessageController"),
+  IPublicSessionController: Symbol.for("IPublicSessionController"),
+  ISessionCheckoutController: Symbol.for("ISessionCheckoutController"),
+  ISessionRegistrationController: Symbol.for("ISessionRegistrationController"),
+  ISessionRoomController: Symbol.for("ISessionRoomController"),
 
   // -------------------- Services ------------------------
 
@@ -19,6 +23,11 @@ export const TYPES = {
   IConversationService: Symbol.for("IConversationService"),
   IMessageService: Symbol.for("IMessageService"),
   IStripeCheckoutHandlerService: Symbol.for("IStripeCheckoutHandlerService"),
+  IPublicSessionService: Symbol.for("IPublicSessionService"),
+  ISessionCheckoutService: Symbol.for("ISessionCheckoutService"),
+  ISessionRegistrationService: Symbol.for("ISessionRegistrationService"),
+  ILiveKitService: Symbol.for("ILiveKitService"),
+  ISessionRoomService: Symbol.for("ISessionRoomService"),
 
   // -------------------- Repositories --------------------
 
@@ -29,6 +38,14 @@ export const TYPES = {
   IConversationMemberRepository: Symbol.for("IConversationMemberRepository"),
   IMessageReceiptRepository: Symbol.for("IMessageReceiptRepository"),
   INotificationRepository: Symbol.for("INotificationRepository"),
+  IResourceRepository: Symbol.for("IResourceRepository"),
+  ISessionRepository: Symbol.for("ISessionRepository"),
+  ISessionRegistrationRepository: Symbol.for("ISessionRegistrationRepository"),
+  IResourceViewRepository: Symbol.for("IResourceViewRepository"),
+  IResourceDownloadRepository: Symbol.for("IResourceDownloadRepository"),
+  IResourceLikeRepository: Symbol.for("IResourceLikeRepository"),
+  IResourceBookmarkRepository: Symbol.for("IResourceBookmarkRepository"),
+  IResourceCommentRepository: Symbol.for("IResourceCommentRepository"),
 
   // -------------------- Shared Services -----------------
 
@@ -116,7 +133,10 @@ export const TYPES = {
   ),
   IUserProgramBrowseRepository: Symbol.for("IUserProgramBrowseRepository"),
   IUserMeetingRepository: Symbol.for("IUserMeetingRepository"),
-  IResourceRepository: Symbol.for("IResourceRepository"),
+
+  IUserPostRepository: Symbol.for("IUserPostRepository"),
+  IUserPostService: Symbol.for("IUserPostService"),
+  IUserPostController: Symbol.for("IUserPostController"),
 
   // ======================================================
   // ADMIN MODULE
@@ -131,6 +151,7 @@ export const TYPES = {
   ),
   IAdminNotificationController: Symbol.for("IAdminNotificationController"),
   IAdminPlanController: Symbol.for("IAdminPlanController"),
+  IAdminChallengeController: Symbol.for("IAdminChallengeController"),
 
   // -------------------- Services ------------------------
 
@@ -140,6 +161,7 @@ export const TYPES = {
     "IAdminNutritionistApplicationService",
   ),
   IAdminPlanService: Symbol.for("IAdminPlanService"),
+  IAdminChallengeService: Symbol.for("IAdminChallengeService"),
 
   // -------------------- Repositories --------------------
 
@@ -148,6 +170,7 @@ export const TYPES = {
   IAdminNutritionistApplicationRepository: Symbol.for(
     "IAdminNutritionistApplicationRepository",
   ),
+  IAdminChallengeRepository: Symbol.for("IAdminChallengeRepository"),
 
   // ======================================================
   // NUTRITIONIST MODULE
@@ -165,6 +188,7 @@ export const TYPES = {
   INutriClientController: Symbol.for("INutriClientController"),
   INutriProgramDayController: Symbol.for("INutriProgramDayController"),
   INutriResourceController: Symbol.for("INutriResourceController"),
+  INutriSessionController: Symbol.for("INutriSessionController"),
 
   // -------------------- Services ------------------------
 
@@ -178,6 +202,7 @@ export const TYPES = {
   INutriClientService: Symbol.for("INutriClientService"),
   INutriProgramDayService: Symbol.for("INutriProgramDayService"),
   INutriResourceService: Symbol.for("INutriResourceService"),
+  INutriSessionService: Symbol.for("INutriSessionService"),
 
   // -------------------- Repositories --------------------
 
@@ -190,4 +215,5 @@ export const TYPES = {
   INutriProgramRepository: Symbol.for("INutriProgramRepository"),
   INutriProgramDayRepository: Symbol.for("INutriProgramDayRepository"),
   INutriResourceRepository: Symbol.for("INutriResourceRepository"),
+  INutriSessionRepository: Symbol.for("INutriSessionRepository"),
 } as const;

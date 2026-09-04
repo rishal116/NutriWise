@@ -15,13 +15,10 @@ export interface PublicResourceListItemDTO {
 
   category: PublicResourceCategory;
 
-  isDownloadable: boolean;
 
   viewCount: number;
-  downloadCount: number;
   likeCount: number;
   bookmarkCount: number;
-  shareCount: number;
   commentCount: number;
 
   publishedAt?: string;

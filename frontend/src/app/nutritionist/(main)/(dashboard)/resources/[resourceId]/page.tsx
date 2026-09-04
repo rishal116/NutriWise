@@ -12,16 +12,13 @@ import {
   FileText,
   File,
   Video,
-  Link as LinkIcon,
   Image as ImageIcon,
   Pencil,
   X,
   Loader2,
   Eye,
-  Download,
   Heart,
   Bookmark,
-  Share2,
   MessageSquare,
   Send,
   Archive,
@@ -79,7 +76,6 @@ const TYPE_META: Record<
   article: { label: "Article", icon: FileText, accent: "emerald" },
   pdf: { label: "PDF", icon: File, accent: "rose" },
   video: { label: "Video", icon: Video, accent: "purple" },
-  external_link: { label: "External link", icon: LinkIcon, accent: "sky" },
   infographic: { label: "Infographic", icon: ImageIcon, accent: "orange" },
 };
 
@@ -184,9 +180,7 @@ export default function ResourceDetailsPage() {
       description: resource.description,
       type: resource.type,
       content: resource.content ?? "",
-      externalUrl: resource.externalUrl ?? "",
       category: resource.category,
-      isDownloadable: resource.isDownloadable,
     });
     setEditing(true);
   };
@@ -199,9 +193,7 @@ export default function ResourceDetailsPage() {
         description: values.description,
         type: values.type,
         content: values.content || undefined,
-        externalUrl: values.externalUrl || undefined,
         category: values.category,
-        isDownloadable: values.isDownloadable,
       };
 
       const updated = await nutriResourceService.updateResource(
@@ -404,11 +396,7 @@ export default function ResourceDetailsPage() {
                       label="Views"
                       value={resource.viewCount}
                     />
-                    <StatCard
-                      icon={Download}
-                      label="Downloads"
-                      value={resource.downloadCount}
-                    />
+
                     <StatCard
                       icon={Heart}
                       label="Likes"
@@ -419,11 +407,7 @@ export default function ResourceDetailsPage() {
                       label="Bookmarks"
                       value={resource.bookmarkCount}
                     />
-                    <StatCard
-                      icon={Share2}
-                      label="Shares"
-                      value={resource.shareCount}
-                    />
+
                     <StatCard
                       icon={MessageSquare}
                       label="Comments"
@@ -437,14 +421,6 @@ export default function ResourceDetailsPage() {
                     Details
                   </h2>
                   <dl className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <dt className="text-slate-400 font-medium">
-                        Downloadable
-                      </dt>
-                      <dd className="font-semibold text-slate-700">
-                        {resource.isDownloadable ? "Yes" : "No"}
-                      </dd>
-                    </div>
                     <div className="flex justify-between">
                       <dt className="text-slate-400 font-medium">Published</dt>
                       <dd className="font-semibold text-slate-700">
@@ -487,46 +463,46 @@ function ResourceContent({
   resource: NutriResourceDetailsResponseDTO;
   meta: { label: string; icon: typeof FileText };
 }) {
-  if (resource.type === "article") {
-    return (
-      <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
-        <h2 className="text-sm font-bold text-slate-900 mb-4">
-          Article content
-        </h2>
-        <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-          {resource.content || "No content added yet."}
-        </div>
-      </section>
-    );
-  }
+  const Icon = meta.icon;
 
-  if (resource.type === "pdf" || resource.type === "infographic") {
-    return (
-      <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
-        <h2 className="text-sm font-bold text-slate-900 mb-4">File</h2>
-        {resource.fileUrl ? (
-          <a
-            href={resource.fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-          >
-            <ExternalLink size={15} />
-            Open file
-          </a>
-        ) : (
-          <p className="text-sm text-slate-400">No file uploaded yet.</p>
-        )}
-      </section>
-    );
-  }
+  return (
+    <div className="space-y-6">
+      {/* RESOURCE CONTENT */}
+      {resource.content && (
+        <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Icon size={16} className="text-emerald-600" />
 
-  if (resource.type === "video") {
-    return (
-      <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
-        <h2 className="text-sm font-bold text-slate-900 mb-4">Video</h2>
-        <div className="flex flex-col gap-2">
-          {resource.fileUrl && (
+            <h2 className="text-sm font-bold text-slate-900">
+              Resource content
+            </h2>
+          </div>
+
+          <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+            {resource.content}
+          </div>
+        </section>
+      )}
+
+      {/* ARTICLE */}
+      {resource.type === "article" && !resource.content && (
+        <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <h2 className="text-sm font-bold text-slate-900 mb-4">
+            Resource content
+          </h2>
+
+          <p className="text-sm text-slate-400">
+            No additional content added yet.
+          </p>
+        </section>
+      )}
+
+      {/* PDF */}
+      {resource.type === "pdf" && (
+        <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <h2 className="text-sm font-bold text-slate-900 mb-4">PDF file</h2>
+
+          {resource.fileUrl ? (
             <a
               href={resource.fileUrl}
               target="_blank"
@@ -534,50 +510,61 @@ function ResourceContent({
               className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
             >
               <ExternalLink size={15} />
-              Open video file
+              Open PDF
             </a>
+          ) : (
+            <p className="text-sm text-slate-400">No PDF file uploaded yet.</p>
           )}
-          {resource.externalUrl && (
+        </section>
+      )}
+
+      {/* VIDEO */}
+      {resource.type === "video" && (
+        <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <h2 className="text-sm font-bold text-slate-900 mb-4">Video</h2>
+
+          {resource.fileUrl ? (
             <a
-              href={resource.externalUrl}
+              href={resource.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
             >
               <ExternalLink size={15} />
-              {resource.externalUrl}
+              Open video
             </a>
+          ) : (
+            <p className="text-sm text-slate-400">
+              No video file uploaded yet.
+            </p>
           )}
-          {!resource.fileUrl && !resource.externalUrl && (
-            <p className="text-sm text-slate-400">No video source added yet.</p>
+        </section>
+      )}
+
+      {/* INFOGRAPHIC */}
+      {resource.type === "infographic" && (
+        <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <h2 className="text-sm font-bold text-slate-900 mb-4">Infographic</h2>
+
+          {resource.fileUrl ? (
+            <a
+              href={resource.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+            >
+              <ExternalLink size={15} />
+              Open infographic
+            </a>
+          ) : (
+            <p className="text-sm text-slate-400">
+              No infographic uploaded yet.
+            </p>
           )}
-        </div>
-      </section>
-    );
-  }
-
-  if (resource.type === "external_link") {
-    return (
-      <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
-        <h2 className="text-sm font-bold text-slate-900 mb-4">External link</h2>
-        {resource.externalUrl ? (
-          <a
-            href={resource.externalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 hover:text-emerald-800 break-all"
-          >
-            <ExternalLink size={15} className="shrink-0" />
-            {resource.externalUrl}
-          </a>
-        ) : (
-          <p className="text-sm text-slate-400">No URL added yet.</p>
-        )}
-      </section>
-    );
-  }
-
-  return null;
+        </section>
+      )}
+    </div>
+  );
 }
 
 function StatCard({
@@ -706,7 +693,7 @@ function EditForm({
           </div>
         )}
 
-        {(editType === "video" || editType === "external_link") && (
+        {editType === "video" && (
           <div className="mt-5">
             <label className="block text-xs font-semibold text-slate-700 mb-2">
               External URL

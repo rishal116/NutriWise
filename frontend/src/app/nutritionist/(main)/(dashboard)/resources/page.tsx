@@ -8,14 +8,17 @@ import {
   FileText,
   File,
   Video,
-  Link as LinkIcon,
   Image as ImageIcon,
-  ChevronRight,
+  Eye,
+  Heart,
+  Bookmark,
   RefreshCw,
   Inbox,
   AlertCircle,
   Search,
   SlidersHorizontal,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 import { nutriResourceService } from "@/services/nutritionist/nutriResource.service";
@@ -47,15 +50,11 @@ const TYPE_OPTIONS: { label: string; value: ResourceType | "all" }[] = [
   { label: "Article", value: "article" },
   { label: "PDF", value: "pdf" },
   { label: "Video", value: "video" },
-  { label: "External link", value: "external_link" },
   { label: "Infographic", value: "infographic" },
 ];
 
 function formatCategoryLabel(value: string): string {
-  return value
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 const CATEGORY_OPTIONS: { label: string; value: ResourceCategory | "all" }[] = [
@@ -72,18 +71,15 @@ const SORT_OPTIONS: { label: string; value: NutriResourceSortBy }[] = [
   { label: "Title A-Z", value: NutriResourceSortBy.TITLE_ASC },
   { label: "Title Z-A", value: NutriResourceSortBy.TITLE_DESC },
   { label: "Most viewed", value: NutriResourceSortBy.MOST_VIEWED },
-  { label: "Most downloaded", value: NutriResourceSortBy.MOST_DOWNLOADED },
 ];
 
-function statusPillClasses(status: ResourceStatus): string {
+function statusBadgeClasses(status: ResourceStatus): string {
   switch (status) {
     case "published":
       return "bg-emerald-50 text-emerald-700 border-emerald-200";
     case "draft":
       return "bg-amber-50 text-amber-700 border-amber-200";
     case "archived":
-      return "bg-slate-100 text-slate-600 border-slate-200";
-    default:
       return "bg-slate-100 text-slate-600 border-slate-200";
   }
 }
@@ -96,12 +92,8 @@ function getResourceIcon(type: ResourceType) {
       return File;
     case "video":
       return Video;
-    case "external_link":
-      return LinkIcon;
     case "infographic":
       return ImageIcon;
-    default:
-      return FileText;
   }
 }
 
@@ -111,20 +103,15 @@ function getResourceIconClasses(type: ResourceType): string {
       return "bg-purple-100/80 text-purple-700";
     case "pdf":
       return "bg-rose-100/80 text-rose-700";
-    case "external_link":
-      return "bg-sky-100/80 text-sky-700";
     case "infographic":
       return "bg-orange-100/80 text-orange-700";
     case "article":
-    default:
       return "bg-emerald-100/80 text-emerald-700";
   }
 }
 
 function formatResourceType(type: ResourceType): string {
   switch (type) {
-    case "external_link":
-      return "External link";
     case "pdf":
       return "PDF";
     case "video":
@@ -133,9 +120,15 @@ function formatResourceType(type: ResourceType): string {
       return "Infographic";
     case "article":
       return "Article";
-    default:
-      return type;
   }
+}
+
+function formatDate(date: Date | string): string {
+  return new Date(date).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default function NutritionistResourcesPage() {
@@ -145,7 +138,7 @@ export default function NutritionistResourcesPage() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true); // state, not just ref — drives UI
+  const [hasMore, setHasMore] = useState(true);
 
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebounce(searchInput, 400);
@@ -171,6 +164,8 @@ export default function NutritionistResourcesPage() {
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
   useEffect(() => {
     searchRef.current = debouncedSearch;
@@ -202,19 +197,15 @@ export default function NutritionistResourcesPage() {
     async (reset: boolean) => {
       if (reset) {
         if (resettingRef.current) return;
-
         resettingRef.current = true;
         fetchingRef.current = true;
-
         cursorRef.current = null;
         hasMoreRef.current = true;
         setHasMore(true);
-
         setInitialLoading(true);
         setError(null);
       } else {
         if (fetchingRef.current || !hasMoreRef.current) return;
-
         fetchingRef.current = true;
         setLoadingMore(true);
       }
@@ -236,7 +227,6 @@ export default function NutritionistResourcesPage() {
       } finally {
         fetchingRef.current = false;
         resettingRef.current = false;
-
         setInitialLoading(false);
         setLoadingMore(false);
       }
@@ -254,7 +244,6 @@ export default function NutritionistResourcesPage() {
     if (!node) return;
 
     observerRef.current?.disconnect();
-
     observerRef.current = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
@@ -268,7 +257,6 @@ export default function NutritionistResourcesPage() {
       },
       { rootMargin: "200px" },
     );
-
     observerRef.current.observe(node);
 
     return () => observerRef.current?.disconnect();
@@ -281,11 +269,20 @@ export default function NutritionistResourcesPage() {
     (type !== "all" ? 1 : 0) +
     (category !== "all" ? 1 : 0);
 
+  const handleOpenResource = useCallback(
+    (resourceId: string) => {
+      if (navigatingId) return;
+      setNavigatingId(resourceId);
+      router.push(`/nutritionist/resources/${resourceId}`);
+    },
+    [router, navigatingId],
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
               Resources
@@ -297,17 +294,17 @@ export default function NutritionistResourcesPage() {
 
           <button
             onClick={() => router.push("/nutritionist/resources/create")}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 hover:-translate-y-0.5 text-white px-5 py-3 rounded-xl font-semibold shadow-xs transition-all"
+            className="inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-xs transition-colors"
           >
-            <Plus size={18} />
+            <Plus size={17} />
             Create Resource
           </button>
         </div>
 
         {/* FILTER BAR */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 mb-8 shadow-xs">
+        <div className="bg-white border border-slate-200/80 rounded-lg p-3.5 mb-6 shadow-xs">
           <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-[200px]">
               <Search
                 size={16}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -317,28 +314,28 @@ export default function NutritionistResourcesPage() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search resources"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
               />
             </div>
 
             <div className="hidden lg:block h-8 w-px bg-slate-200" />
 
             <div className="flex items-center gap-1.5">
-              <SlidersHorizontal size={14} className="text-slate-400 mr-1" />
+              <SlidersHorizontal size={14} className="text-slate-400" />
               {activeFilterCount > 0 && (
-                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">
                   {activeFilterCount} active
                 </span>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2.5">
               <select
                 value={status}
                 onChange={(e) =>
                   setStatus(e.target.value as ResourceStatus | "all")
                 }
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
               >
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -352,7 +349,7 @@ export default function NutritionistResourcesPage() {
                 onChange={(e) =>
                   setType(e.target.value as ResourceType | "all")
                 }
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
               >
                 {TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -366,7 +363,7 @@ export default function NutritionistResourcesPage() {
                 onChange={(e) =>
                   setCategory(e.target.value as ResourceCategory | "all")
                 }
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
               >
                 {CATEGORY_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -380,7 +377,7 @@ export default function NutritionistResourcesPage() {
                 onChange={(e) =>
                   setSortBy(e.target.value as NutriResourceSortBy)
                 }
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -401,12 +398,14 @@ export default function NutritionistResourcesPage() {
           <EmptyState />
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {resources.map((resource) => (
                 <ResourceCard
                   key={resource.resourceId}
                   resource={resource}
-                  router={router}
+                  isNavigating={navigatingId === resource.resourceId}
+                  disabled={navigatingId !== null}
+                  onOpen={handleOpenResource}
                 />
               ))}
             </div>
@@ -417,7 +416,7 @@ export default function NutritionistResourcesPage() {
               <div className="flex justify-center py-8">
                 <RefreshCw
                   className="animate-spin text-emerald-600"
-                  size={22}
+                  size={20}
                 />
               </div>
             )}
@@ -436,118 +435,146 @@ export default function NutritionistResourcesPage() {
 
 function ResourceCard({
   resource,
-  router,
+  isNavigating,
+  disabled,
+  onOpen,
 }: {
   resource: NutriResourceListItemDTO;
-  router: ReturnType<typeof useRouter>;
+  isNavigating: boolean;
+  disabled: boolean;
+  onOpen: (resourceId: string) => void;
 }) {
   const Icon = getResourceIcon(resource.type);
 
   return (
-    <div className="group relative aspect-square bg-white rounded-[20px] border border-slate-200/70 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_12px_28px_-8px_rgba(15,23,42,0.16)] hover:-translate-y-0.5 hover:border-slate-300/80 transition-all duration-300 flex flex-col overflow-hidden">
-      {/* COVER */}
-      <div className="relative h-[38%] shrink-0 overflow-hidden">
+    <div
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
+      onClick={() => !disabled && onOpen(resource.resourceId)}
+      onKeyDown={(e) => {
+        if (!disabled && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onOpen(resource.resourceId);
+        }
+      }}
+      className={`group relative bg-white rounded-lg border border-slate-200/80 shadow-xs flex flex-col overflow-hidden text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+        disabled
+          ? isNavigating
+            ? "opacity-100 cursor-wait"
+            : "opacity-50 cursor-not-allowed"
+          : "cursor-pointer hover:shadow-sm hover:border-slate-300"
+      }`}
+    >
+      {/* THUMBNAIL */}
+      <div className="relative h-36 shrink-0 overflow-hidden bg-slate-100">
         {resource.thumbnailUrl ? (
           <Image
             src={resource.thumbnailUrl}
             alt=""
             fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover"
           />
         ) : (
           <div
             className={`w-full h-full flex items-center justify-center ${getResourceIconClasses(resource.type)}`}
           >
-            <Icon size={26} strokeWidth={1.75} />
+            <Icon size={28} strokeWidth={1.75} />
           </div>
         )}
 
+        <span className="absolute top-2 left-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-white/90 text-slate-700 border border-slate-200">
+          <Icon size={11} />
+          {formatResourceType(resource.type)}
+        </span>
+
         <span
-          className={`absolute top-2.5 right-2.5 text-[10px] font-semibold px-2 py-0.5 rounded-full border capitalize backdrop-blur-sm ${statusPillClasses(resource.status)}`}
+          className={`absolute top-2 right-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border capitalize bg-white/90 ${statusBadgeClasses(resource.status)}`}
         >
           {resource.status}
         </span>
+
+        {isNavigating && (
+          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+            <Loader2 size={20} className="animate-spin text-emerald-700" />
+          </div>
+        )}
       </div>
 
       {/* BODY */}
-      <div className="flex flex-col flex-1 p-3.5 pt-3">
-        <h3 className="font-bold text-[13px] leading-snug text-slate-900 line-clamp-2 mb-1.5">
+      <div className="flex flex-col flex-1 p-3.5">
+        <h3 className="font-bold text-sm leading-snug text-slate-900 line-clamp-2 mb-1">
           {resource.title}
         </h3>
 
-        <div className="flex items-center gap-1.5 flex-wrap mb-auto">
-          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 rounded-full px-2 py-0.5 truncate max-w-[100px]">
-            {formatCategoryLabel(resource.category)}
-          </span>
-          <span className="text-[10px] font-medium text-slate-400">
-            {formatResourceType(resource.type)}
-          </span>
-        </div>
+        <p className="text-xs text-slate-500 leading-snug line-clamp-2 mb-2.5">
+          {resource.description}
+        </p>
 
-        {/* STATS */}
-        <div className="flex items-center gap-3 mt-3 mb-2.5 px-0.5">
-          <Stat value={resource.viewCount} label="views" />
-          <Stat value={resource.downloadCount} label="dl" />
-          <Stat value={resource.likeCount} label="likes" accent />
-        </div>
+        <span className="self-start text-[10px] font-semibold text-emerald-700 bg-emerald-50 rounded-md px-1.5 py-0.5 mb-3">
+          {formatCategoryLabel(resource.category)}
+        </span>
 
-        <button
-          onClick={() =>
-            router.push(`/nutritionist/resources/${resource.resourceId}`)
-          }
-          className="w-full bg-slate-900 group-hover:bg-emerald-700 text-white py-2 rounded-xl flex items-center justify-center gap-1 font-semibold text-xs transition-colors duration-300"
-        >
-          Details
-          <ChevronRight
-            size={13}
-            className="transition-transform duration-300 group-hover:translate-x-0.5"
-          />
-        </button>
+        <div className="mt-auto pt-2.5 border-t border-slate-100">
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2.5">
+              <Stat icon={Eye} value={resource.viewCount} />
+              <Stat icon={Heart} value={resource.likeCount} />
+              <Stat icon={Bookmark} value={resource.bookmarkCount} />
+            </div>
+            <span className="text-[10px] font-medium text-slate-400">
+              {formatDate(resource.createdAt)}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-center gap-1 text-xs font-semibold text-emerald-700 group-hover:text-emerald-800 py-1.5 rounded-md bg-emerald-50/80">
+            {isNavigating ? (
+              <>
+                <Loader2 size={13} className="animate-spin" />
+                Opening
+              </>
+            ) : (
+              <>
+                View details
+                <ChevronRight
+                  size={13}
+                  className="transition-transform duration-200 group-hover:translate-x-0.5"
+                />
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function Stat({
-  value,
-  label,
-  accent = false,
-}: {
-  value: number;
-  label: string;
-  accent?: boolean;
-}) {
+function Stat({ icon: Icon, value }: { icon: typeof Eye; value: number }) {
   return (
-    <div className="flex items-baseline gap-1">
-      <span
-        className={`text-[12px] font-bold ${accent ? "text-emerald-700" : "text-slate-700"}`}
-      >
-        {value}
-      </span>
-      <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wide">
-        {label}
-      </span>
+    <div className="flex items-center gap-1 text-slate-400">
+      <Icon size={12} />
+      <span className="text-[11px] font-semibold text-slate-600">{value}</span>
     </div>
   );
 }
 
 function LoadingGrid() {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {Array.from({ length: 8 }).map((_, index) => (
         <div
           key={index}
-          className="aspect-square bg-white rounded-2xl border border-slate-200/80 p-4 animate-pulse"
+          className="bg-white rounded-lg border border-slate-200/80 overflow-hidden animate-pulse"
         >
-          <div className="flex justify-between mb-3">
-            <div className="w-9 h-9 rounded-lg bg-slate-200" />
-            <div className="w-16 h-4 rounded-full bg-slate-200" />
+          <div className="h-36 bg-slate-200" />
+          <div className="p-3.5">
+            <div className="h-3.5 bg-slate-200 rounded w-4/5 mb-2" />
+            <div className="h-3 bg-slate-200 rounded w-full mb-1.5" />
+            <div className="h-3 bg-slate-200 rounded w-2/3 mb-3" />
+            <div className="h-4 bg-slate-100 rounded w-16 mb-3" />
+            <div className="h-4 bg-slate-100 rounded" />
           </div>
-          <div className="h-3.5 bg-slate-200 rounded w-3/4 mb-2" />
-          <div className="h-3.5 bg-slate-200 rounded w-1/2 mb-4" />
-          <div className="h-10 bg-slate-100 rounded-lg mb-2" />
-          <div className="h-8 bg-slate-100 rounded-lg" />
         </div>
       ))}
     </div>
@@ -556,7 +583,7 @@ function LoadingGrid() {
 
 function EmptyState() {
   return (
-    <div className="bg-white rounded-2xl py-20 text-center border border-dashed border-slate-300">
+    <div className="bg-white rounded-lg py-20 text-center border border-dashed border-slate-300">
       <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
         <Inbox className="text-emerald-600" size={24} />
       </div>
@@ -576,14 +603,14 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="bg-white rounded-2xl py-20 text-center border border-slate-200/80">
+    <div className="bg-white rounded-lg py-20 text-center border border-slate-200/80">
       <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
         <AlertCircle className="text-rose-600" size={24} />
       </div>
       <h3 className="text-base font-bold text-slate-600">{message}</h3>
       <button
         onClick={onRetry}
-        className="mt-4 inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 hover:-translate-y-0.5 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
+        className="mt-4 inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors"
       >
         <RefreshCw size={14} />
         Retry

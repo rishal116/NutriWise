@@ -11,25 +11,19 @@ export class NutriResourceDetailsResponseDTO {
   description!: string;
 
   type!: ResourceType;
+  category!: ResourceCategory;
 
   content?: string;
   fileUrl?: string;
-  externalUrl?: string;
   thumbnailUrl?: string;
 
-  category!: ResourceCategory;
-
   status!: ResourceStatus;
-
   publishedAt?: Date;
 
-  isDownloadable!: boolean;
 
   viewCount!: number;
-  downloadCount!: number;
   likeCount!: number;
   bookmarkCount!: number;
-  shareCount!: number;
   commentCount!: number;
 
   createdAt!: Date;

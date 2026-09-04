@@ -1,23 +1,57 @@
 import { injectable } from "inversify";
 import { PipelineStage, Types } from "mongoose";
+
 import {
   IResource,
-  ResourceStatus,
   ResourceModel,
+  ResourceStatus,
 } from "../../../models/resource.model";
+
 import { BaseRepository } from "../../implements/common/base.repository";
 import { INutriResourceRepository } from "../../interfaces/nutritionist/INutriResourceRepository";
+
 import {
   GetNutriResourcesQueryDTO,
   NutriResourceSortBy,
 } from "../../../dtos/nutritionist/resource/resource-list-query.dto";
+
 import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
+
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
+
 import {
   INutriResourceListProjection,
   INutriResourceListProjectionWithCursor,
 } from "../../../types/nutritionist/resource/nutri-resource-list.projection";
+
 import { INutriResourceDetailsProjection } from "../../../types/nutritionist/resource/nutri-resource-details.projection";
+
+const RESOURCE_DETAILS_PROJECTION = {
+  _id: 0,
+  resourceId: "$_id",
+
+  title: 1,
+  description: 1,
+  type: 1,
+  category: 1,
+
+  content: 1,
+  fileUrl: 1,
+  thumbnailUrl: 1,
+
+  status: 1,
+  publishedAt: 1,
+  isDownloadable: 1,
+
+  viewCount: 1,
+  downloadCount: 1,
+  likeCount: 1,
+  bookmarkCount: 1,
+  commentCount: 1,
+
+  createdAt: 1,
+  updatedAt: 1,
+};
 
 @injectable()
 export class NutriResourceRepository
@@ -41,11 +75,14 @@ export class NutriResourceRepository
       cursor,
       limit = 10,
     } = query;
+
     const nutritionistObjectId =
       typeof nutritionistId === "string"
         ? new Types.ObjectId(nutritionistId)
         : nutritionistId;
+
     const cursorData = decodeCursor(cursor);
+
     const pipeline: PipelineStage[] = [
       {
         $match: {
@@ -53,6 +90,7 @@ export class NutriResourceRepository
         },
       },
     ];
+
     if (search) {
       pipeline.push({
         $match: {
@@ -129,13 +167,6 @@ export class NutriResourceRepository
         };
         break;
 
-      case NutriResourceSortBy.MOST_DOWNLOADED:
-        sortStage = {
-          downloadCount: -1,
-          _id: -1,
-        };
-        break;
-
       case NutriResourceSortBy.LATEST:
       default:
         sortStage = {
@@ -187,58 +218,52 @@ export class NutriResourceRepository
       });
     }
 
-    pipeline.push({
-      $sort: sortStage,
-    });
-
-    pipeline.push({
-      $limit: limit + 1,
-    });
-
-    pipeline.push({
-      $project: {
-        _id: 0,
-
-        resourceId: "$_id",
-
-        title: 1,
-        description: 1,
-        type: 1,
-
-        thumbnailUrl: 1,
-
-        category: 1,
-
-        status: 1,
-
-        isDownloadable: 1,
-
-        viewCount: 1,
-        downloadCount: 1,
-        likeCount: 1,
-        bookmarkCount: 1,
-        shareCount: 1,
-        commentCount: 1,
-
-        createdAt: 1,
-        updatedAt: 1,
-
-        cursorId: "$_id",
-
-        cursorValue:
-          sortBy === NutriResourceSortBy.TITLE_ASC ||
-          sortBy === NutriResourceSortBy.TITLE_DESC
-            ? "$title"
-            : sortBy === NutriResourceSortBy.MOST_VIEWED
-              ? "$viewCount"
-              : sortBy === NutriResourceSortBy.MOST_DOWNLOADED
-                ? "$downloadCount"
-                : "$createdAt",
+    pipeline.push(
+      {
+        $sort: sortStage,
       },
-    });
+      {
+        $limit: limit + 1,
+      },
+      {
+        $project: {
+          _id: 0,
+
+          resourceId: "$_id",
+
+          title: 1,
+          description: 1,
+          type: 1,
+          category: 1,
+
+          thumbnailUrl: 1,
+
+          status: 1,
+          isDownloadable: 1,
+
+          viewCount: 1,
+          likeCount: 1,
+          bookmarkCount: 1,
+          commentCount: 1,
+
+          createdAt: 1,
+          updatedAt: 1,
+
+          cursorId: "$_id",
+
+          cursorValue:
+            sortBy === NutriResourceSortBy.TITLE_ASC ||
+            sortBy === NutriResourceSortBy.TITLE_DESC
+              ? "$title"
+              : sortBy === NutriResourceSortBy.MOST_VIEWED
+                ? "$viewCount"
+                : "$createdAt",
+        },
+      },
+    );
 
     const result =
-      await ResourceModel.aggregate<INutriResourceListProjectionWithCursor>(
+      await this._model.aggregate<INutriResourceListProjectionWithCursor>(
         pipeline,
       );
 
@@ -288,33 +313,7 @@ export class NutriResourceRepository
           },
         },
         {
-          $project: {
-            _id: 0,
-
-            resourceId: "$_id",
-
-            title: 1,
-            description: 1,
-            type: 1,
-            content: 1,
-            fileUrl: 1,
-            externalUrl: 1,
-            thumbnailUrl: 1,
-            category: 1,
-            status: 1,
-            publishedAt: 1,
-            isDownloadable: 1,
-
-            viewCount: 1,
-            downloadCount: 1,
-            likeCount: 1,
-            bookmarkCount: 1,
-            shareCount: 1,
-            commentCount: 1,
-
-            createdAt: 1,
-            updatedAt: 1,
-          },
+          $project: RESOURCE_DETAILS_PROJECTION,
         },
       ],
     );
@@ -337,7 +336,7 @@ export class NutriResourceRepository
         ? new Types.ObjectId(nutritionistId)
         : nutritionistId;
 
-    const resource = await this._model
+    return this._model
       .findOneAndUpdate(
         {
           _id: resourceObjectId,
@@ -352,59 +351,29 @@ export class NutriResourceRepository
         },
         {
           new: true,
-          projection: {
-            _id: 1,
-            title: 1,
-            description: 1,
-            type: 1,
-            content: 1,
-            fileUrl: 1,
-            externalUrl: 1,
-            thumbnailUrl: 1,
-            category: 1,
-            status: 1,
-            publishedAt: 1,
-            isDownloadable: 1,
-            viewCount: 1,
-            downloadCount: 1,
-            likeCount: 1,
-            bookmarkCount: 1,
-            shareCount: 1,
-            commentCount: 1,
-            createdAt: 1,
-            updatedAt: 1,
-          },
         },
       )
-      .lean()
+      .select({
+        _id: 1,
+        title: 1,
+        description: 1,
+        type: 1,
+        category: 1,
+        content: 1,
+        fileUrl: 1,
+        thumbnailUrl: 1,
+        status: 1,
+        publishedAt: 1,
+        isDownloadable: 1,
+        viewCount: 1,
+        likeCount: 1,
+        bookmarkCount: 1,
+        commentCount: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      })
+      .lean<INutriResourceDetailsProjection | null>()
       .exec();
-
-    if (!resource) {
-      return null;
-    }
-
-    return {
-      resourceId: resource._id,
-      title: resource.title,
-      description: resource.description,
-      type: resource.type,
-      content: resource.content,
-      fileUrl: resource.fileUrl,
-      externalUrl: resource.externalUrl,
-      thumbnailUrl: resource.thumbnailUrl,
-      category: resource.category,
-      status: resource.status,
-      publishedAt: resource.publishedAt,
-      isDownloadable: resource.isDownloadable,
-      viewCount: resource.viewCount,
-      downloadCount: resource.downloadCount,
-      likeCount: resource.likeCount,
-      bookmarkCount: resource.bookmarkCount,
-      shareCount: resource.shareCount,
-      commentCount: resource.commentCount,
-      createdAt: resource.createdAt,
-      updatedAt: resource.updatedAt,
-    };
   }
 
   async archiveResource(
@@ -421,7 +390,7 @@ export class NutriResourceRepository
         ? new Types.ObjectId(nutritionistId)
         : nutritionistId;
 
-    const resource = await this._model
+    return this._model
       .findOneAndUpdate(
         {
           _id: resourceObjectId,
@@ -437,58 +406,28 @@ export class NutriResourceRepository
         },
         {
           new: true,
-          projection: {
-            _id: 1,
-            title: 1,
-            description: 1,
-            type: 1,
-            content: 1,
-            fileUrl: 1,
-            externalUrl: 1,
-            thumbnailUrl: 1,
-            category: 1,
-            status: 1,
-            publishedAt: 1,
-            isDownloadable: 1,
-            viewCount: 1,
-            downloadCount: 1,
-            likeCount: 1,
-            bookmarkCount: 1,
-            shareCount: 1,
-            commentCount: 1,
-            createdAt: 1,
-            updatedAt: 1,
-          },
         },
       )
-      .lean()
+      .select({
+        _id: 1,
+        title: 1,
+        description: 1,
+        type: 1,
+        category: 1,
+        content: 1,
+        fileUrl: 1,
+        thumbnailUrl: 1,
+        status: 1,
+        publishedAt: 1,
+        isDownloadable: 1,
+        viewCount: 1,
+        likeCount: 1,
+        bookmarkCount: 1,
+        commentCount: 1,
+        createdAt: 1,
+        updatedAt: 1,
+      })
+      .lean<INutriResourceDetailsProjection | null>()
       .exec();
-
-    if (!resource) {
-      return null;
-    }
-
-    return {
-      resourceId: resource._id,
-      title: resource.title,
-      description: resource.description,
-      type: resource.type,
-      content: resource.content,
-      fileUrl: resource.fileUrl,
-      externalUrl: resource.externalUrl,
-      thumbnailUrl: resource.thumbnailUrl,
-      category: resource.category,
-      status: resource.status,
-      publishedAt: resource.publishedAt,
-      isDownloadable: resource.isDownloadable,
-      viewCount: resource.viewCount,
-      downloadCount: resource.downloadCount,
-      likeCount: resource.likeCount,
-      bookmarkCount: resource.bookmarkCount,
-      shareCount: resource.shareCount,
-      commentCount: resource.commentCount,
-      createdAt: resource.createdAt,
-      updatedAt: resource.updatedAt,
-    };
   }
 }

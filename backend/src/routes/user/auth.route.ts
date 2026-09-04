@@ -1,9 +1,20 @@
 import express from "express";
+
 import { container } from "../../configs/inversify";
+
 import { TYPES } from "../../types/types";
+
 import { IUserAuthController } from "../../controllers/interfaces/user/IUserAuthController";
+
 import { refreshToken } from "../../middlewares/refreshToken.middleware";
+
 import { authMiddleware } from "../../middlewares/auth.middleware";
+
+import {
+  authRateLimiter,
+  otpRateLimiter,
+  refreshRateLimiter,
+} from "../../middlewares/rate-limit.middleware";
 
 const router = express.Router();
 
@@ -11,18 +22,23 @@ const authController = container.get<IUserAuthController>(
   TYPES.IUserAuthController,
 );
 
-router.post("/signup", authController.signup);
-router.post("/verify-otp", authController.verifyOtp);
-router.post("/resend-otp", authController.resendOtp);
+router.post("/signup", authRateLimiter, authController.signup);
 
-router.post("/login", authController.login);
-router.post("/google", authController.googleAuth);
+router.post("/login", authRateLimiter, authController.login);
+
+router.post("/google", authRateLimiter, authController.googleAuth);
+
+router.post("/verify-otp", otpRateLimiter, authController.verifyOtp);
+
+router.post("/resend-otp", otpRateLimiter, authController.resendOtp);
+
+router.post("/forgot-password", authRateLimiter, authController.forgotPassword);
+
+router.post("/reset-password", authRateLimiter, authController.resetPassword);
+
+router.post("/refresh-token", refreshRateLimiter, refreshToken);
+
 router.post("/logout", authController.logout);
-
-router.post("/forgot-password", authController.forgotPassword);
-router.post("/reset-password", authController.resetPassword);
-
-router.post("/refresh-token", refreshToken);
 
 router.get("/me", authMiddleware, authController.getMe);
 

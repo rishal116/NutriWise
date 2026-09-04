@@ -1,4 +1,4 @@
-import { api } from "@/lib/axios/clientApi";
+import { clientApi } from "@/lib/axios/clientApi";
 
 export interface IProgressPoint {
   date: string;
@@ -22,17 +22,17 @@ export interface IHealthProgressData {
 
 export const healthProgressService = {
     getHealthProgress: async (days: number = 30): Promise<HealthProgressResponse> => {
-        const res = await api.get(`/health-progress?days=${days}`);
+        const res = await clientApi.get(`/health-progress?days=${days}`);
         return res.data.data;
     },
     
     getProgressByDate: async (date: string): Promise<IHealthProgressData | null> => {
-        const res = await api.get(`/health-progress/date?date=${date}`);
+        const res = await clientApi.get(`/health-progress/date?date=${date}`);
         return res.data.data;
     },
     
     getLatestProgress: async (): Promise<IHealthProgressData | null> => {
-        const res = await api.get(`/health-progress/latest`);
+        const res = await clientApi.get(`/health-progress/latest`);
         return res.data.data;
     },
 };

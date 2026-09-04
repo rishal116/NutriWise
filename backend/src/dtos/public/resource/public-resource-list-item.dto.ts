@@ -8,10 +8,8 @@ export class PublicResourceListItemDTO {
   isDownloadable!: boolean;
 
   viewCount!: number;
-  downloadCount!: number;
   likeCount!: number;
   bookmarkCount!: number;
-  shareCount!: number;
   commentCount!: number;
 
   publishedAt?: Date;

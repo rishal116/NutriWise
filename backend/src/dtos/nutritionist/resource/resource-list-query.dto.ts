@@ -13,7 +13,6 @@ export enum NutriResourceSortBy {
   TITLE_ASC = "title_asc",
   TITLE_DESC = "title_desc",
   MOST_VIEWED = "most_viewed",
-  MOST_DOWNLOADED = "most_downloaded",
 }
 
 export class GetNutriResourcesQueryDTO {

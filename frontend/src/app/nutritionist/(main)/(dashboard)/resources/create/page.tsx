@@ -10,12 +10,10 @@ import {
   FileText,
   File,
   Video,
-  Link as LinkIcon,
   Image as ImageIcon,
   UploadCloud,
   X,
   Loader2,
-  Info,
 } from "lucide-react";
 
 import { nutriResourceService } from "@/services/nutritionist/nutriResource.service";
@@ -38,6 +36,7 @@ const TYPE_CARDS: {
   value: ResourceType;
   label: string;
   hint: string;
+  fileHint?: string;
   icon: typeof FileText;
   accent: string;
 }[] = [
@@ -52,49 +51,50 @@ const TYPE_CARDS: {
     value: "pdf",
     label: "PDF",
     hint: "Downloadable file",
+    fileHint: "PDF · Max 10 MB",
     icon: File,
     accent: "rose",
   },
   {
     value: "video",
     label: "Video",
-    hint: "Upload or link",
+    hint: "Upload video",
+    fileHint: "MP4 or WebM · Max 100 MB",
     icon: Video,
     accent: "purple",
-  },
-  {
-    value: "external_link",
-    label: "External link",
-    hint: "Link out",
-    icon: LinkIcon,
-    accent: "sky",
   },
   {
     value: "infographic",
     label: "Infographic",
     hint: "Image content",
+    fileHint: "JPG, PNG or WebP · Max 10 MB",
     icon: ImageIcon,
     accent: "orange",
   },
 ];
 
-const ACCENT_CLASSES: Record<string, { active: string; icon: string }> = {
+const ACCENT_CLASSES: Record<
+  string,
+  {
+    active: string;
+    icon: string;
+  }
+> = {
   emerald: {
     active: "border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20",
     icon: "bg-emerald-100/80 text-emerald-700",
   },
+
   rose: {
     active: "border-rose-500 bg-rose-50/60 ring-2 ring-rose-500/20",
     icon: "bg-rose-100/80 text-rose-700",
   },
+
   purple: {
     active: "border-purple-500 bg-purple-50/60 ring-2 ring-purple-500/20",
     icon: "bg-purple-100/80 text-purple-700",
   },
-  sky: {
-    active: "border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/20",
-    icon: "bg-sky-100/80 text-sky-700",
-  },
+
   orange: {
     active: "border-orange-500 bg-orange-50/60 ring-2 ring-orange-500/20",
     icon: "bg-orange-100/80 text-orange-700",
@@ -103,10 +103,9 @@ const ACCENT_CLASSES: Record<string, { active: string; icon: string }> = {
 
 const ACCEPT_MAP: Record<string, string> = {
   pdf: "application/pdf",
-  video: "video/*",
-  infographic: "image/*",
+  video: "video/mp4,video/webm",
+  infographic: "image/jpeg,image/png,image/webp",
 };
-
 // ---------------------------------------------------------------------------
 // Reusable bits
 // ---------------------------------------------------------------------------
@@ -129,6 +128,7 @@ function CharCount({ value, max }: { value: string; max: number }) {
 function FileDropField({
   label,
   accept,
+  hint,
   fileName,
   fileSizeLabel,
   onSelect,
@@ -137,6 +137,7 @@ function FileDropField({
 }: {
   label: string;
   accept: string;
+  hint?: string;
   fileName?: string;
   fileSizeLabel?: string;
   onSelect: (file: File) => void;
@@ -149,16 +150,22 @@ function FileDropField({
         {label}
       </label>
 
+      {hint && (
+        <p className="text-[11px] font-medium text-slate-400 mb-2">{hint}</p>
+      )}
+
       {fileName ? (
         <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-slate-800 truncate">
               {fileName}
             </p>
+
             {fileSizeLabel && (
               <p className="text-[11px] text-slate-400">{fileSizeLabel}</p>
             )}
           </div>
+
           <button
             type="button"
             onClick={onClear}
@@ -170,16 +177,22 @@ function FileDropField({
       ) : (
         <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl py-8 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition-colors">
           <UploadCloud size={22} className="text-slate-400" />
+
           <span className="text-xs font-semibold text-slate-500">
             Click to upload
           </span>
+
           <input
             type="file"
             accept={accept}
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
-              if (file) onSelect(file);
+
+              if (file) {
+                onSelect(file);
+              }
+
               e.target.value = "";
             }}
           />
@@ -229,9 +242,7 @@ export default function CreateResourcePage() {
       content: "",
       file: undefined,
       thumbnail: undefined,
-      externalUrl: "",
       category: RESOURCE_CATEGORIES[0],
-      isDownloadable: false,
     },
   });
 
@@ -284,9 +295,7 @@ export default function CreateResourcePage() {
         description: values.description,
         type: values.type,
         content: values.content || undefined,
-        externalUrl: values.externalUrl || undefined,
         category: values.category,
-        isDownloadable: values.isDownloadable,
       };
 
       await nutriResourceService.createResource(
@@ -429,12 +438,14 @@ export default function CreateResourcePage() {
           <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
             <div className="mb-6">
               <h2 className="text-base font-bold text-slate-900">Content</h2>
+
               <p className="text-xs text-slate-400 mt-1">
                 Add the main content or resource file.
               </p>
             </div>
 
             <div className="space-y-5">
+              {/* ARTICLE */}
               {type === "article" && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-2">
@@ -454,10 +465,12 @@ export default function CreateResourcePage() {
                 </div>
               )}
 
-              {(type === "pdf" || type === "infographic") && (
+              {/* PDF */}
+              {type === "pdf" && (
                 <FileDropField
-                  label={type === "pdf" ? "PDF file" : "Image file"}
-                  accept={ACCEPT_MAP[type]}
+                  label="PDF file"
+                  accept={ACCEPT_MAP.pdf}
+                  hint="PDF · Max 10 MB"
                   fileName={file?.name}
                   fileSizeLabel={file ? formatFileSize(file.size) : undefined}
                   onSelect={handleFileSelect}
@@ -466,56 +479,40 @@ export default function CreateResourcePage() {
                 />
               )}
 
+              {/* VIDEO */}
               {type === "video" && (
-                <>
-                  <FileDropField
-                    label="Video file (optional if using an external URL)"
-                    accept={ACCEPT_MAP.video}
-                    fileName={file?.name}
-                    fileSizeLabel={file ? formatFileSize(file.size) : undefined}
-                    onSelect={handleFileSelect}
-                    onClear={handleFileClear}
-                    error={errors.file?.message}
-                  />
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-2">
-                      Or external video URL
-                    </label>
-
-                    <input
-                      type="text"
-                      {...register("externalUrl")}
-                      placeholder="https://youtube.com/watch?v=..."
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                    />
-
-                    <FieldError message={errors.externalUrl?.message} />
-                  </div>
-                </>
+                <FileDropField
+                  label="Video file"
+                  accept={ACCEPT_MAP.video}
+                  hint="MP4 or WebM · Max 100 MB"
+                  fileName={file?.name}
+                  fileSizeLabel={file ? formatFileSize(file.size) : undefined}
+                  onSelect={handleFileSelect}
+                  onClear={handleFileClear}
+                  error={errors.file?.message}
+                />
               )}
 
-              {type === "external_link" && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
-                    External URL
-                  </label>
-
-                  <input
-                    type="text"
-                    {...register("externalUrl")}
-                    placeholder="https://example.com/article"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                  />
-
-                  <FieldError message={errors.externalUrl?.message} />
-                </div>
+              {/* INFOGRAPHIC */}
+              {type === "infographic" && (
+                <FileDropField
+                  label="Image file"
+                  accept={ACCEPT_MAP.infographic}
+                  hint="JPG, PNG or WebP · Max 10 MB"
+                  fileName={file?.name}
+                  fileSizeLabel={file ? formatFileSize(file.size) : undefined}
+                  onSelect={handleFileSelect}
+                  onClear={handleFileClear}
+                  error={errors.file?.message}
+                />
               )}
 
+              {/* THUMBNAIL */}
               <div className="pt-1 border-t border-slate-100">
                 <FileDropField
                   label="Cover thumbnail (optional)"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
+                  hint="JPG, PNG or WebP · Max 5 MB"
                   fileName={thumbnail?.name}
                   fileSizeLabel={
                     thumbnail ? formatFileSize(thumbnail.size) : undefined
@@ -554,80 +551,6 @@ export default function CreateResourcePage() {
                 ))}
               </select>
               <FieldError message={errors.category?.message} />
-            </div>
-          </section>
-
-          {/* SETTINGS */}
-          <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
-            <div className="mb-6">
-              <h2 className="text-base font-bold text-slate-900">
-                Resource Settings
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Configure how clients can use this resource.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5">
-              <div>
-                <p className="text-sm font-semibold text-slate-800">
-                  Downloadable
-                </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Allow clients to download this resource
-                </p>
-              </div>
-
-              <Controller
-                control={control}
-                name="isDownloadable"
-                render={({ field }) => (
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={field.value}
-                    onClick={() => field.onChange(!field.value)}
-                    className={`group relative inline-flex h-7 w-[52px] shrink-0 items-center rounded-full transition-colors duration-300 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 focus-visible:ring-offset-2 ${
-                      field.value
-                        ? "bg-emerald-600 shadow-inner shadow-emerald-900/20"
-                        : "bg-slate-200 shadow-inner shadow-slate-300/40"
-                    }`}
-                  >
-                    <span
-                      className={`absolute left-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-black/5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${
-                        field.value ? "translate-x-[25px]" : "translate-x-0"
-                      }`}
-                    >
-                      <svg
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        className={`h-3 w-3 transition-all duration-200 ${
-                          field.value
-                            ? "scale-100 opacity-100 text-emerald-600"
-                            : "scale-50 opacity-0 text-slate-300"
-                        }`}
-                      >
-                        <path
-                          d="M2.5 6L5 8.5L9.5 3.5"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </button>
-                )}
-              />
-            </div>
-
-            <div className="flex items-start gap-2 mt-5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-              <Info size={14} className="text-amber-600 mt-0.5 shrink-0" />
-              <p className="text-[11px] font-medium text-amber-700">
-                File uploads are preview-only until a real resource upload
-                endpoint is wired in — the current object URLs will not resolve
-                after this session.
-              </p>
             </div>
           </section>
 

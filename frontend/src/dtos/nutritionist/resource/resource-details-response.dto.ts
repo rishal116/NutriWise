@@ -14,24 +14,20 @@ export interface NutriResourceDetailsResponseDTO {
 
   content?: string;
   fileUrl?: string;
-  externalUrl?: string;
   thumbnailUrl?: string;
 
   category: ResourceCategory;
-
   status: ResourceStatus;
 
-  publishedAt?: Date;
+  publishedAt?: string;
 
-  isDownloadable: boolean;
+
 
   viewCount: number;
-  downloadCount: number;
   likeCount: number;
   bookmarkCount: number;
-  shareCount: number;
   commentCount: number;
 
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }

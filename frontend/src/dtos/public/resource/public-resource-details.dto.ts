@@ -3,35 +3,36 @@ import {
   PublicResourceType,
 } from "./public-resource-list-query.dto";
 
+export interface PublicResourceCommentDTO {
+  commentId: string;
+  userId: string;
+  content: string;
+  isEdited: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PublicResourceDetailsDTO {
   resourceId: string;
-
   title: string;
   description: string;
-
   type: PublicResourceType;
-
   content?: string;
-
   fileUrl?: string;
-
-  externalUrl?: string;
-
   thumbnailUrl?: string;
-
   category: PublicResourceCategory;
 
-  isDownloadable: boolean;
+  isLiked: boolean;
+  isBookmarked: boolean;
 
   viewCount: number;
-  downloadCount: number;
   likeCount: number;
   bookmarkCount: number;
-  shareCount: number;
   commentCount: number;
 
-  publishedAt?: string;
+  comments: PublicResourceCommentDTO[];
 
+  publishedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

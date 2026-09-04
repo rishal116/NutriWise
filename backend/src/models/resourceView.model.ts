@@ -1,12 +1,10 @@
-import { Document, model, Schema, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
-export interface IResourceView extends Document {
+export interface IResourceView {
   resourceId: Types.ObjectId;
   userId?: Types.ObjectId;
   sessionId?: string;
-
   durationSeconds?: number;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,12 +42,17 @@ const resourceViewSchema = new Schema<IResourceView>(
 
 resourceViewSchema.index({
   resourceId: 1,
-  createdAt: -1,
+  viewDate: -1,
 });
 
 resourceViewSchema.index({
   userId: 1,
-  createdAt: -1,
+  viewDate: -1,
+});
+
+resourceViewSchema.index({
+  sessionId: 1,
+  viewDate: -1,
 });
 
 export const ResourceViewModel = model<IResourceView>(

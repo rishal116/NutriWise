@@ -21,7 +21,7 @@ export const toNutritionistPlanModel = (
   description: dto.description,
   durationDays: dto.durationDays,
   price: dto.price,
-  currency: dto.currency ?? "INR",
+  currency: dto.currency ?? "inr",
   features: dto.features,
   status: dto.status ?? "draft",
 });

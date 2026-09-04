@@ -1,17 +1,11 @@
 export type PublicResourceSortBy =
-  | "LATEST"
-  | "OLDEST"
-  | "MOST_VIEWED"
-  | "MOST_DOWNLOADED"
-  | "TITLE_ASC"
-  | "TITLE_DESC";
+  | "latest"
+  | "oldest"
+  | "most_viewed"
+  | "title_asc"
+  | "title_desc";
 
-export type PublicResourceType =
-  | "article"
-  | "pdf"
-  | "video"
-  | "external_link"
-  | "infographic";
+export type PublicResourceType = "article" | "pdf" | "video" | "infographic";
 
 export type PublicResourceCategory =
   | "nutrition"

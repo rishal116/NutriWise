@@ -43,9 +43,13 @@ export class PublicResourceController implements IPublicResourceController {
   getPublicResourceDetails = asyncHandler(
     async (req: Request, res: Response) => {
       const { resourceId } = req.params;
+      const userId = req.user?.userId;
 
       const resource =
-        await this._publicResourceService.getPublicResourceDetails(resourceId);
+        await this._publicResourceService.getPublicResourceDetails(
+          resourceId,
+          userId,
+        );
 
       res.status(StatusCode.OK).json({
         success: true,
@@ -56,28 +60,80 @@ export class PublicResourceController implements IPublicResourceController {
 
   recordResourceView = asyncHandler(async (req: Request, res: Response) => {
     const { resourceId } = req.params;
+    const userId = req.user?.userId;
 
-    await this._publicResourceService.recordResourceView(resourceId);
-
-    res.status(StatusCode.OK).json({
-      success: true,
-    });
-  });
-
-  recordResourceDownload = asyncHandler(async (req: Request, res: Response) => {
-    const { resourceId } = req.params;
-
-    await this._publicResourceService.recordResourceDownload(resourceId);
+    await this._publicResourceService.recordResourceView(resourceId, userId);
 
     res.status(StatusCode.OK).json({
       success: true,
     });
   });
 
-  recordResourceShare = asyncHandler(async (req: Request, res: Response) => {
+  likeResource = asyncHandler(async (req: Request, res: Response) => {
     const { resourceId } = req.params;
+    const userId = req.user!.userId;
 
-    await this._publicResourceService.recordResourceShare(resourceId);
+    await this._publicResourceService.likeResource(resourceId, userId);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+    });
+  });
+
+  unlikeResource = asyncHandler(async (req: Request, res: Response) => {
+    const { resourceId } = req.params;
+    const userId = req.user!.userId;
+
+    await this._publicResourceService.unlikeResource(resourceId, userId);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+    });
+  });
+
+  bookmarkResource = asyncHandler(async (req: Request, res: Response) => {
+    const { resourceId } = req.params;
+    const userId = req.user!.userId;
+
+    await this._publicResourceService.bookmarkResource(resourceId, userId);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+    });
+  });
+
+  unbookmarkResource = asyncHandler(async (req: Request, res: Response) => {
+    const { resourceId } = req.params;
+    const userId = req.user!.userId;
+
+    await this._publicResourceService.unbookmarkResource(resourceId, userId);
+
+    res.status(StatusCode.OK).json({
+      success: true,
+    });
+  });
+
+  addResourceComment = asyncHandler(async (req: Request, res: Response) => {
+    const { resourceId } = req.params;
+    const { content } = req.body;
+    const userId = req.user!.userId;
+
+    await this._publicResourceService.addResourceComment(
+      resourceId,
+      userId,
+      content,
+    );
+
+    res.status(StatusCode.OK).json({
+      success: true,
+    });
+  });
+
+  deleteResourceComment = asyncHandler(async (req: Request, res: Response) => {
+    const { commentId } = req.params;
+    const userId = req.user!.userId;
+
+    await this._publicResourceService.deleteResourceComment(commentId, userId);
 
     res.status(StatusCode.OK).json({
       success: true,

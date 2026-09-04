@@ -16,8 +16,6 @@ export interface IResourceDetailsProjection {
 
   fileUrl?: string;
 
-  externalUrl?: string;
-
   thumbnailUrl?: string;
 
   category: ResourceCategory;
@@ -29,10 +27,9 @@ export interface IResourceDetailsProjection {
   isDownloadable: boolean;
 
   viewCount: number;
-  downloadCount: number;
   likeCount: number;
   bookmarkCount: number;
-  shareCount: number;
+
   commentCount: number;
 
   createdAt: Date;

@@ -1,13 +1,15 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
-export const PAYMENT_STATUS = [
+import { CURRENCIES, Currency } from "../constants/currency.constants";
+
+export const PAYMENT_STATUSES = [
   "pending",
   "paid",
   "failed",
   "refunded",
 ] as const;
 
-export const PAYMENT_PROVIDER = ["stripe", "razorpay"] as const;
+export const PAYMENT_PROVIDERS = ["stripe", "razorpay"] as const;
 
 export const PAYMENT_RESOURCE_TYPES = [
   "nutritionist_plan",
@@ -15,17 +17,15 @@ export const PAYMENT_RESOURCE_TYPES = [
   "subscription",
   "membership",
   "wallet_topup",
+  "session",
+  "session_registration",
 ] as const;
 
-export const PAYMENT_CURRENCIES = ["INR", "USD"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
-
-export type PaymentProvider = (typeof PAYMENT_PROVIDER)[number];
+export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
 export type PaymentResourceType = (typeof PAYMENT_RESOURCE_TYPES)[number];
-
-export type PaymentCurrency = (typeof PAYMENT_CURRENCIES)[number];
 
 export interface IPayment {
   _id: Types.ObjectId;
@@ -44,7 +44,7 @@ export interface IPayment {
 
   amount: number;
 
-  currency: PaymentCurrency;
+  currency: Currency;
 
   checkoutSessionId: string;
 
@@ -54,10 +54,8 @@ export interface IPayment {
 
   itemSnapshot: {
     title: string;
-
     price: number;
-
-    currency: PaymentCurrency;
+    currency: Currency;
   };
 
   refundedAmount?: number;
@@ -71,7 +69,7 @@ export interface IPayment {
   updatedAt: Date;
 }
 
-const PaymentSchema = new Schema<IPayment>(
+const paymentSchema = new Schema<IPayment>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -102,14 +100,14 @@ const PaymentSchema = new Schema<IPayment>(
 
     provider: {
       type: String,
-      enum: PAYMENT_PROVIDER,
+      enum: PAYMENT_PROVIDERS,
       required: true,
       default: "stripe",
     },
 
     status: {
       type: String,
-      enum: PAYMENT_STATUS,
+      enum: PAYMENT_STATUSES,
       required: true,
       default: "pending",
       index: true,
@@ -123,9 +121,9 @@ const PaymentSchema = new Schema<IPayment>(
 
     currency: {
       type: String,
-      enum: PAYMENT_CURRENCIES,
+      enum: CURRENCIES,
       required: true,
-      default: "INR",
+      default: "inr",
     },
 
     checkoutSessionId: {
@@ -155,16 +153,18 @@ const PaymentSchema = new Schema<IPayment>(
       title: {
         type: String,
         required: true,
+        trim: true,
       },
 
       price: {
         type: Number,
         required: true,
+        min: 0,
       },
 
       currency: {
         type: String,
-        enum: PAYMENT_CURRENCIES,
+        enum: CURRENCIES,
         required: true,
       },
     },
@@ -192,24 +192,24 @@ const PaymentSchema = new Schema<IPayment>(
   },
 );
 
-PaymentSchema.index({
+paymentSchema.index({
   userId: 1,
   createdAt: -1,
 });
 
-PaymentSchema.index({
+paymentSchema.index({
   sellerId: 1,
   createdAt: -1,
 });
 
-PaymentSchema.index({
+paymentSchema.index({
   resourceType: 1,
   resourceId: 1,
 });
 
-PaymentSchema.index({
+paymentSchema.index({
   provider: 1,
   checkoutSessionId: 1,
 });
 
-export const PaymentModel = model<IPayment>("Payment", PaymentSchema);
+export const PaymentModel = model<IPayment>("Payment", paymentSchema);

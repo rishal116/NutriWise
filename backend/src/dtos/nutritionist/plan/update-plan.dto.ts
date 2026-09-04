@@ -8,14 +8,15 @@ import {
   Max,
   Min,
 } from "class-validator";
+
 import { Type } from "class-transformer";
 
 import {
-  PLAN_CURRENCY,
   PLAN_STATUS,
-  PlanCurrency,
   PlanStatus,
 } from "../../../models/nutritionistPlan.model";
+
+import { CURRENCIES, Currency } from "../../../constants/currency.constants";
 
 import {
   SPECIALIZATIONS,
@@ -51,8 +52,8 @@ export class UpdatePlanDTO {
   price?: number;
 
   @IsOptional()
-  @IsEnum(PLAN_CURRENCY)
-  currency?: PlanCurrency;
+  @IsEnum(CURRENCIES)
+  currency?: Currency;
 
   @IsOptional()
   @IsArray()

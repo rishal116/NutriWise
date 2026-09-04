@@ -1,9 +1,7 @@
 import {
-  IsBoolean,
   IsEnum,
   IsOptional,
   IsString,
-  IsUrl,
   MaxLength,
 } from "class-validator";
 
@@ -35,14 +33,6 @@ export class UpdateNutriResourceDTO {
   content?: string;
 
   @IsOptional()
-  @IsUrl()
-  externalUrl?: string;
-
-  @IsOptional()
   @IsEnum(RESOURCE_CATEGORIES)
   category?: ResourceCategory;
-
-  @IsOptional()
-  @IsBoolean()
-  isDownloadable?: boolean;
 }

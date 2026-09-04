@@ -1,6 +1,6 @@
-import { Document, model, Schema, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
-export interface IResourceBookmark extends Document {
+export interface IResourceBookmark {
   resourceId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;
@@ -13,14 +13,12 @@ const resourceBookmarkSchema = new Schema<IResourceBookmark>(
       type: Schema.Types.ObjectId,
       ref: "Resource",
       required: true,
-      index: true,
     },
 
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
   },
   {

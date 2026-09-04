@@ -3,7 +3,6 @@ import { model, Schema, Types } from "mongoose";
 export interface IPostBookmark {
   postId: Types.ObjectId;
   userId: Types.ObjectId;
-
   createdAt: Date;
   updatedAt: Date;
 }
