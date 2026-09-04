@@ -13,8 +13,7 @@ import userProgramRoutes from "./user-program.route";
 import userProgramDayRoutes from "./user-program-day.route";
 import userActivityTrackingRoutes from "./user-activity-track.route";
 import userMeetingRoutes from "./user-meeting.route";
-
-
+import userPostRoutes from "./user-post.route";
 
 const router = express.Router();
 
@@ -33,6 +32,6 @@ router.use("/programs/:programId/days", userProgramDayRoutes);
 router.use("/programs/:programId/days", userActivityTrackingRoutes);
 
 router.use("/meetings", userMeetingRoutes);
-
+router.use("/posts", userPostRoutes);
 
 export default router;

@@ -1,20 +1,41 @@
 import { model, Schema, Types } from "mongoose";
 
+import { PostMediaType } from "../types/common/post-media.type";
+
+export interface IPostMedia {
+  url: string;
+  type: PostMediaType;
+}
+
 export interface IPost {
+  _id: Types.ObjectId;
   authorId: Types.ObjectId;
-
-  content: string;
-
-  imageUrls: string[];
-
+  content?: string;
+  media?: IPostMedia;
   likeCount: number;
   commentCount: number;
   bookmarkCount: number;
-  shareCount: number;
-
   createdAt: Date;
   updatedAt: Date;
 }
+
+const postMediaSchema = new Schema<IPostMedia>(
+  {
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    type: {
+      type: String,
+      enum: Object.values(PostMediaType),
+      required: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
 
 const postSchema = new Schema<IPost>(
   {
@@ -27,14 +48,13 @@ const postSchema = new Schema<IPost>(
 
     content: {
       type: String,
-      required: true,
       trim: true,
       maxlength: 5000,
     },
 
-    imageUrls: {
-      type: [String],
-      default: [],
+    media: {
+      type: postMediaSchema,
+      required: false,
     },
 
     likeCount: {
@@ -50,12 +70,6 @@ const postSchema = new Schema<IPost>(
     },
 
     bookmarkCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    shareCount: {
       type: Number,
       default: 0,
       min: 0,

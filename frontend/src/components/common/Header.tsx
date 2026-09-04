@@ -30,10 +30,6 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 
 type NutritionistCtaKey = "none" | "pending" | "rejected" | "approved";
 
-// Nutritionist row is deliberately minimal — a single line with an icon,
-// label, and (when relevant) a small status pill. It should never compete
-// visually with the Dashboard card above it; that's the whole point of the
-// redesign. Resist the urge to add color/rings/shadows back in here.
 const NUTRITIONIST_CTA_CONFIG: Record<
   NutritionistCtaKey,
   {
@@ -129,9 +125,6 @@ export default function Header() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, []);
 
-  // Header lives in the layout, so it survives client-side navigation —
-  // resetting isLoading here too, or the "Get Started" button stays stuck
-  // in its spinner state on whatever page /signup lands on.
   useEffect(() => {
     setOpen(false);
     setMobileOpen(false);
@@ -202,7 +195,6 @@ export default function Header() {
       return;
     }
 
-    // pending or rejected
     router.push("/user/nutritionist/application/status");
   };
 
@@ -236,11 +228,9 @@ export default function Header() {
     { name: "Home", href: "/", icon: Home },
     { name: "Challenges", href: "/challenges", icon: Flame },
     { name: "Nutritionists", href: "/coaching", icon: Stethoscope },
-    { name: "Communities", href: "/communities", icon: Users2 },
+    { name: "Communities", href: "/communities/groups", icon: Users2 },
   ];
 
-  // Dashboard is the one thing every logged-in user needs on every visit —
-  // it gets the only richly-styled treatment in the menu.
   const DashboardCard = ({ mobile = false }: { mobile?: boolean }) => (
     <Link
       href="/user/dashboard"

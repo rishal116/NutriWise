@@ -1,20 +1,40 @@
 import { injectable } from "inversify";
-import { Types } from "mongoose";
-
-import { BaseRepository } from "../common/base.repository";
+import { PipelineStage, Types } from "mongoose";
 
 import { IResource, ResourceModel } from "../../../models/resource.model";
-
+import { BaseRepository } from "../common/base.repository";
 import { IResourceRepository } from "../../interfaces/public/IResourceRepository";
-
 import { PublicResourceListQueryDTO } from "../../../dtos/public/resource/public-resource-list-query.dto";
 
-import { IResourceListItemProjection } from "../../../types/public/resource/resource-list-item-projection";
+import {
+  IResourceListItemProjection,
+  IResourceListItemProjectionWithCursor,
+} from "../../../types/public/resource/resource-list-item-projection";
+
 import { IResourceDetailsProjection } from "../../../types/public/resource/resource-details-projection";
-
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-
 import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
+
+const RESOURCE_DETAILS_PROJECTION = {
+  _id: 0,
+  resourceId: "$_id",
+  title: 1,
+  description: 1,
+  type: 1,
+  category: 1,
+  content: 1,
+  fileUrl: 1,
+  thumbnailUrl: 1,
+  status: 1,
+  publishedAt: 1,
+  isDownloadable: 1,
+  viewCount: 1,
+  likeCount: 1,
+  bookmarkCount: 1,
+  commentCount: 1,
+  createdAt: 1,
+  updatedAt: 1,
+};
 
 @injectable()
 export class ResourceRepository
@@ -34,222 +54,183 @@ export class ResourceRepository
       search,
       type,
       category,
-      sortBy = "LATEST",
+      sortBy = "latest",
     } = query;
+
+    const pipeline: PipelineStage[] = [
+      {
+        $match: {
+          status: "published",
+        },
+      },
+    ];
 
     const searchText = search?.trim();
 
-    const filter: Record<string, unknown> = {
-      status: "published",
-    };
+    if (searchText) {
+      pipeline.push({
+        $match: {
+          $text: {
+            $search: searchText,
+          },
+        },
+      });
+    }
 
     if (type) {
-      filter.type = type;
+      pipeline.push({
+        $match: {
+          type,
+        },
+      });
     }
 
     if (category) {
-      filter.category = category;
+      pipeline.push({
+        $match: {
+          category,
+        },
+      });
     }
-
-    if (searchText) {
-      filter.$text = {
-        $search: searchText,
-      };
-    }
-
-    /**
-     * ----------------------------------------
-     * SORT CONFIGURATION
-     * ----------------------------------------
-     */
 
     let sortField: string;
     let sortDirection: 1 | -1;
 
     switch (sortBy) {
-      case "OLDEST":
+      case "oldest":
         sortField = "publishedAt";
         sortDirection = 1;
         break;
 
-      case "TITLE_ASC":
+      case "title_asc":
         sortField = "title";
         sortDirection = 1;
         break;
 
-      case "TITLE_DESC":
+      case "title_desc":
         sortField = "title";
         sortDirection = -1;
         break;
 
-      case "MOST_VIEWED":
+      case "most_viewed":
         sortField = "viewCount";
         sortDirection = -1;
         break;
 
-      case "MOST_DOWNLOADED":
-        sortField = "downloadCount";
-        sortDirection = -1;
-        break;
-
-      case "LATEST":
+      case "latest":
       default:
         sortField = "publishedAt";
         sortDirection = -1;
         break;
     }
 
-    /**
-     * ----------------------------------------
-     * CURSOR
-     * ----------------------------------------
-     */
-
-    const decodedCursor = cursor ? decodeCursor(cursor) : null;
-
-    const cursorSortKey = `${sortBy}:${sortDirection}`;
-
-    if (decodedCursor?.sortKey && decodedCursor.sortKey !== cursorSortKey) {
-      throw new Error("Invalid cursor");
-    }
-
-    if (decodedCursor) {
-      let cursorValue: string | number | Date = decodedCursor.value;
-
-      /**
-       * Dates are encoded as strings.
-       */
-      if (sortField === "publishedAt" || sortField === "createdAt") {
-        cursorValue = new Date(decodedCursor.value);
-      }
-
-      const comparisonOperator = sortDirection === -1 ? "$lt" : "$gt";
-
-      filter.$or = [
-        {
-          [sortField]: {
-            [comparisonOperator]: cursorValue,
-          },
-        },
-        {
-          [sortField]: cursorValue,
-          _id: {
-            [comparisonOperator]: new Types.ObjectId(decodedCursor.id),
-          },
-        },
-      ];
-    }
-
-    /**
-     * ----------------------------------------
-     * SORT
-     * ----------------------------------------
-     */
-
     const sort: Record<string, 1 | -1> = {
       [sortField]: sortDirection,
       _id: sortDirection,
     };
 
-    /**
-     * ----------------------------------------
-     * QUERY
-     * ----------------------------------------
-     */
+    const cursorData = decodeCursor(cursor);
 
-    const documents = await this._model
-      .find(filter)
-      .sort(sort)
-      .limit(limit + 1)
-      .select({
-        _id: 1,
-        title: 1,
-        description: 1,
-        type: 1,
-        thumbnailUrl: 1,
-        category: 1,
-        status: 1,
-        isDownloadable: 1,
-        viewCount: 1,
-        downloadCount: 1,
-        likeCount: 1,
-        bookmarkCount: 1,
-        shareCount: 1,
-        commentCount: 1,
-        publishedAt: 1,
-        createdAt: 1,
-        updatedAt: 1,
-      })
-      .lean();
+    if (cursorData) {
+      let cursorValue: string | number | Date = cursorData.value;
 
-    /**
-     * ----------------------------------------
-     * PAGINATION
-     * ----------------------------------------
-     */
+      if (sortField === "publishedAt" || sortField === "createdAt") {
+        cursorValue = new Date(cursorData.value);
+      }
 
-    const hasMore = documents.length > limit;
+      const comparisonOperator = sortDirection === -1 ? "$lt" : "$gt";
 
-    const items = hasMore ? documents.slice(0, limit) : documents;
+      pipeline.push({
+        $match: {
+          $or: [
+            {
+              [sortField]: {
+                [comparisonOperator]: cursorValue,
+              },
+            },
+            {
+              [sortField]: cursorValue,
+              _id: {
+                [comparisonOperator]: new Types.ObjectId(cursorData.id),
+              },
+            },
+          ],
+        },
+      });
+    }
 
-    /**
-     * ----------------------------------------
-     * NEXT CURSOR
-     * ----------------------------------------
-     */
+    pipeline.push(
+      {
+        $sort: sort,
+      },
+      {
+        $limit: limit + 1,
+      },
+      {
+        $project: {
+          _id: 0,
+
+          resourceId: {
+            $toString: "$_id",
+          },
+
+          title: 1,
+          description: 1,
+          type: 1,
+          thumbnailUrl: 1,
+          category: 1,
+          isDownloadable: 1,
+
+          viewCount: 1,
+          likeCount: 1,
+          bookmarkCount: 1,
+          shareCount: 1,
+          commentCount: 1,
+
+          publishedAt: 1,
+          createdAt: 1,
+          updatedAt: 1,
+
+          cursorId: "$_id",
+
+          cursorValue:
+            sortField === "title"
+              ? "$title"
+              : sortField === "viewCount"
+                ? "$viewCount"
+                : sortField === "downloadCount"
+                  ? "$downloadCount"
+                  : `$${sortField}`,
+        },
+      },
+    );
+
+    const result =
+      await this._model.aggregate<IResourceListItemProjectionWithCursor>(
+        pipeline,
+      );
+
+    const hasMore = result.length > limit;
+
+    const items = hasMore ? result.slice(0, limit) : result;
 
     let nextCursor: string | null = null;
 
     if (hasMore && items.length > 0) {
       const lastItem = items[items.length - 1];
 
-      const rawCursorValue = lastItem[sortField as keyof typeof lastItem];
-
-      let cursorValue: string | number | Date;
-
-      if (rawCursorValue instanceof Date) {
-        cursorValue = rawCursorValue.toISOString();
-      } else {
-        cursorValue = rawCursorValue as string | number;
-      }
-
       nextCursor = encodeCursor({
-        id: lastItem._id.toString(),
-        value: cursorValue,
-        sortKey: cursorSortKey,
+        id: lastItem.cursorId.toString(),
+        value: lastItem.cursorValue,
       });
     }
 
-    /**
-     * ----------------------------------------
-     * MAP RESPONSE
-     * ----------------------------------------
-     */
-
-    const mappedItems: IResourceListItemProjection[] = items.map(
-      (resource) => ({
-        resourceId: resource._id.toString(),
-        title: resource.title,
-        description: resource.description,
-        type: resource.type,
-        thumbnailUrl: resource.thumbnailUrl,
-        category: resource.category,
-        status: resource.status,
-        isDownloadable: resource.isDownloadable,
-        viewCount: resource.viewCount,
-        downloadCount: resource.downloadCount,
-        likeCount: resource.likeCount,
-        bookmarkCount: resource.bookmarkCount,
-        shareCount: resource.shareCount,
-        commentCount: resource.commentCount,
-        publishedAt: resource.publishedAt,
-        createdAt: resource.createdAt,
-        updatedAt: resource.updatedAt,
-      }),
+    const resourceItems = items.map(
+      ({ cursorId: _cursorId, cursorValue: _cursorValue, ...item }) => item,
     );
 
     return {
-      items: mappedItems,
+      items: resourceItems,
       nextCursor,
       hasMore,
     };
@@ -263,61 +244,19 @@ export class ResourceRepository
         ? new Types.ObjectId(resourceId)
         : resourceId;
 
-    const resource = await this._model
-      .findOne({
-        _id: resourceObjectId,
-        status: "published",
-      })
-      .select({
-        _id: 1,
-        title: 1,
-        description: 1,
-        type: 1,
-        content: 1,
-        fileUrl: 1,
-        externalUrl: 1,
-        thumbnailUrl: 1,
-        category: 1,
-        status: 1,
-        publishedAt: 1,
-        isDownloadable: 1,
-        viewCount: 1,
-        downloadCount: 1,
-        likeCount: 1,
-        bookmarkCount: 1,
-        shareCount: 1,
-        commentCount: 1,
-        createdAt: 1,
-        updatedAt: 1,
-      })
-      .lean();
+    const result = await this._model.aggregate<IResourceDetailsProjection>([
+      {
+        $match: {
+          _id: resourceObjectId,
+          status: "published",
+        },
+      },
+      {
+        $project: RESOURCE_DETAILS_PROJECTION,
+      },
+    ]);
 
-    if (!resource) {
-      return null;
-    }
-
-    return {
-      resourceId: resource._id.toString(),
-      title: resource.title,
-      description: resource.description,
-      type: resource.type,
-      content: resource.content,
-      fileUrl: resource.fileUrl,
-      externalUrl: resource.externalUrl,
-      thumbnailUrl: resource.thumbnailUrl,
-      category: resource.category,
-      status: resource.status,
-      publishedAt: resource.publishedAt,
-      isDownloadable: resource.isDownloadable,
-      viewCount: resource.viewCount,
-      downloadCount: resource.downloadCount,
-      likeCount: resource.likeCount,
-      bookmarkCount: resource.bookmarkCount,
-      shareCount: resource.shareCount,
-      commentCount: resource.commentCount,
-      createdAt: resource.createdAt,
-      updatedAt: resource.updatedAt,
-    };
+    return result[0] ?? null;
   }
 
   async incrementViewCount(resourceId: string | Types.ObjectId): Promise<void> {
@@ -334,9 +273,7 @@ export class ResourceRepository
     );
   }
 
-  async incrementDownloadCount(
-    resourceId: string | Types.ObjectId,
-  ): Promise<void> {
+  async incrementLikeCount(resourceId: string | Types.ObjectId): Promise<void> {
     await this._model.updateOne(
       {
         _id: resourceId,
@@ -344,13 +281,28 @@ export class ResourceRepository
       },
       {
         $inc: {
-          downloadCount: 1,
+          likeCount: 1,
         },
       },
     );
   }
 
-  async incrementShareCount(
+  async decrementLikeCount(resourceId: string | Types.ObjectId): Promise<void> {
+    await this._model.updateOne(
+      {
+        _id: resourceId,
+        status: "published",
+        likeCount: { $gt: 0 },
+      },
+      {
+        $inc: {
+          likeCount: -1,
+        },
+      },
+    );
+  }
+
+  async incrementBookmarkCount(
     resourceId: string | Types.ObjectId,
   ): Promise<void> {
     await this._model.updateOne(
@@ -360,7 +312,57 @@ export class ResourceRepository
       },
       {
         $inc: {
-          shareCount: 1,
+          bookmarkCount: 1,
+        },
+      },
+    );
+  }
+
+  async decrementBookmarkCount(
+    resourceId: string | Types.ObjectId,
+  ): Promise<void> {
+    await this._model.updateOne(
+      {
+        _id: resourceId,
+        status: "published",
+        bookmarkCount: { $gt: 0 },
+      },
+      {
+        $inc: {
+          bookmarkCount: -1,
+        },
+      },
+    );
+  }
+
+  async incrementCommentCount(
+    resourceId: string | Types.ObjectId,
+  ): Promise<void> {
+    await this._model.updateOne(
+      {
+        _id: resourceId,
+        status: "published",
+      },
+      {
+        $inc: {
+          commentCount: 1,
+        },
+      },
+    );
+  }
+
+  async decrementCommentCount(
+    resourceId: string | Types.ObjectId,
+  ): Promise<void> {
+    await this._model.updateOne(
+      {
+        _id: resourceId,
+        status: "published",
+        commentCount: { $gt: 0 },
+      },
+      {
+        $inc: {
+          commentCount: -1,
         },
       },
     );

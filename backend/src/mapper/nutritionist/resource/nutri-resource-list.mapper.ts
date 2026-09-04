@@ -1,5 +1,4 @@
 import { NutriResourceListItemDTO } from "../../../dtos/nutritionist/resource/resource-list-response.dto";
-
 import { INutriResourceListProjection } from "../../../types/nutritionist/resource/nutri-resource-list.projection";
 
 export class NutriResourceListMapper {
@@ -13,10 +12,9 @@ export class NutriResourceListMapper {
       description: resource.description,
 
       type: resource.type,
+      category: resource.category,
 
       thumbnailUrl: resource.thumbnailUrl,
-
-      category: resource.category,
 
       status: resource.status,
 
@@ -26,7 +24,6 @@ export class NutriResourceListMapper {
       downloadCount: resource.downloadCount,
       likeCount: resource.likeCount,
       bookmarkCount: resource.bookmarkCount,
-      shareCount: resource.shareCount,
       commentCount: resource.commentCount,
 
       createdAt: resource.createdAt,
@@ -37,6 +34,6 @@ export class NutriResourceListMapper {
   static toDTOList(
     resources: INutriResourceListProjection[],
   ): NutriResourceListItemDTO[] {
-    return resources.map((resource) => NutriResourceListMapper.toDTO(resource));
+    return resources.map((resource) => this.toDTO(resource));
   }
 }

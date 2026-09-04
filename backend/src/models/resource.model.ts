@@ -4,7 +4,6 @@ export const RESOURCE_TYPES = [
   "article",
   "pdf",
   "video",
-  "external_link",
   "infographic",
 ] as const;
 export type ResourceType = (typeof RESOURCE_TYPES)[number];
@@ -27,27 +26,20 @@ export interface IResource {
   description: string;
 
   type: ResourceType;
+  category: ResourceCategory;
 
   content?: string;
   fileUrl?: string;
-  externalUrl?: string;
   thumbnailUrl?: string;
-
-  category: ResourceCategory;
 
   status: ResourceStatus;
 
   createdBy: Types.ObjectId;
-
   publishedAt?: Date;
 
-  isDownloadable: boolean;
-
   viewCount: number;
-  downloadCount: number;
   likeCount: number;
   bookmarkCount: number;
-  shareCount: number;
   commentCount: number;
 
   createdAt: Date;
@@ -77,6 +69,13 @@ const resourceSchema = new Schema<IResource>(
       index: true,
     },
 
+    category: {
+      type: String,
+      enum: RESOURCE_CATEGORIES,
+      required: true,
+      index: true,
+    },
+
     content: {
       type: String,
       trim: true,
@@ -87,21 +86,9 @@ const resourceSchema = new Schema<IResource>(
       trim: true,
     },
 
-    externalUrl: {
-      type: String,
-      trim: true,
-    },
-
     thumbnailUrl: {
       type: String,
       trim: true,
-    },
-
-    category: {
-      type: String,
-      enum: RESOURCE_CATEGORIES,
-      required: true,
-      index: true,
     },
 
     status: {
@@ -123,18 +110,7 @@ const resourceSchema = new Schema<IResource>(
       type: Date,
     },
 
-    isDownloadable: {
-      type: Boolean,
-      default: false,
-    },
-
     viewCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    downloadCount: {
       type: Number,
       default: 0,
       min: 0,
@@ -147,12 +123,6 @@ const resourceSchema = new Schema<IResource>(
     },
 
     bookmarkCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    shareCount: {
       type: Number,
       default: 0,
       min: 0,
@@ -183,6 +153,12 @@ resourceSchema.index({
 resourceSchema.index({
   status: 1,
   type: 1,
+  createdAt: -1,
+});
+
+resourceSchema.index({
+  createdBy: 1,
+  status: 1,
   createdAt: -1,
 });
 

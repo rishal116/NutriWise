@@ -12,9 +12,7 @@ export interface CreateNutriResourceDTO {
 
   content?: string;
 
-  externalUrl?: string;
-
   category: ResourceCategory;
 
-  isDownloadable: boolean;
+
 }

@@ -3,7 +3,6 @@ import { model, Schema, Types } from "mongoose";
 export interface IPostLike {
   postId: Types.ObjectId;
   userId: Types.ObjectId;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,14 +13,12 @@ const postLikeSchema = new Schema<IPostLike>(
       type: Schema.Types.ObjectId,
       ref: "Post",
       required: true,
-      index: true,
     },
 
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
   },
   {

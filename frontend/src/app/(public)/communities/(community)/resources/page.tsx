@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   Bookmark,
-  Download,
   Eye,
   FileText,
   Image as ImageIcon,
@@ -29,7 +28,6 @@ const RESOURCE_TYPES: { value: PublicResourceType | ""; label: string }[] = [
   { value: "article", label: "Articles" },
   { value: "pdf", label: "PDFs" },
   { value: "video", label: "Videos" },
-  { value: "external_link", label: "External Links" },
   { value: "infographic", label: "Infographics" },
 ];
 
@@ -44,15 +42,16 @@ const RESOURCE_CATEGORIES: {
   { value: "recipes", label: "Recipes" },
 ];
 
-const RESOURCE_SORT_OPTIONS: { value: PublicResourceSortBy; label: string }[] =
-  [
-    { value: "LATEST", label: "Latest" },
-    { value: "OLDEST", label: "Oldest" },
-    { value: "MOST_VIEWED", label: "Most Viewed" },
-    { value: "MOST_DOWNLOADED", label: "Most Downloaded" },
-    { value: "TITLE_ASC", label: "Title A-Z" },
-    { value: "TITLE_DESC", label: "Title Z-A" },
-  ];
+const RESOURCE_SORT_OPTIONS: {
+  value: PublicResourceSortBy;
+  label: string;
+}[] = [
+  { value: "latest", label: "Latest" },
+  { value: "oldest", label: "Oldest" },
+  { value: "most_viewed", label: "Most Viewed" },
+  { value: "title_asc", label: "Title A-Z" },
+  { value: "title_desc", label: "Title Z-A" },
+];
 
 const SEARCH_DEBOUNCE_MS = 400;
 const PAGE_LIMIT = 12;
@@ -63,7 +62,7 @@ export default function PublicResourcesPage() {
 
   const [type, setType] = useState<PublicResourceType | "">("");
   const [category, setCategory] = useState<PublicResourceCategory | "">("");
-  const [sortBy, setSortBy] = useState<PublicResourceSortBy>("LATEST");
+  const [sortBy, setSortBy] = useState<PublicResourceSortBy>("latest");
 
   const [resources, setResources] = useState<PublicResourceListItemDTO[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -367,11 +366,6 @@ function ResourceCard({
           <span className="flex items-center gap-1">
             <Eye size={14} />
             {resource.viewCount}
-          </span>
-
-          <span className="flex items-center gap-1">
-            <Download size={14} />
-            {resource.downloadCount}
           </span>
 
           <span className="flex items-center gap-1">

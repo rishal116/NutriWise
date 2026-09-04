@@ -1,4 +1,4 @@
-import { StripeCheckoutInputDTO } from "../../../dtos/common/stripe.dto";
+import { StripeCheckoutInputDTO } from "../../../../dtos/common/stripe.dto";
 
 export interface IStripeService {
   createCheckoutSession(

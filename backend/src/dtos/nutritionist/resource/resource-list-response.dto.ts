@@ -11,20 +11,18 @@ export class NutriResourceListItemDTO {
   description!: string;
 
   type!: ResourceType;
+  category!: ResourceCategory;
 
   thumbnailUrl?: string;
 
-  category!: ResourceCategory;
-
   status!: ResourceStatus;
 
-  isDownloadable!: boolean;
+
 
   viewCount!: number;
   downloadCount!: number;
   likeCount!: number;
   bookmarkCount!: number;
-  shareCount!: number;
   commentCount!: number;
 
   createdAt!: Date;

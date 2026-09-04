@@ -13,6 +13,7 @@ import {
   CreditCard,
   Settings,
   X,
+  FileText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +59,7 @@ const navSections: NavSection[] = [
   {
     title: "Communication",
     items: [
+      { name: "My Posts", href: "/user/posts", icon: FileText },
       { name: "Messages", href: "/user/messages", icon: MessageCircle },
       { name: "Resources", href: "/user/resources", icon: BookOpen },
     ],

@@ -1,14 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import NutritionistSidebar from "@/components/nutritionist/NutritionistSidebar";
+import { useCallback, useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
+import NutritionistSidebar from "@/components/nutritionist/NutritionistSidebar";
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -21,11 +17,11 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
-      <div className="lg:hidden sticky top-16 left-0 right-0 bg-white/80 backdrop-blur-md border-b border-emerald-50 px-4 h-12 flex items-center z-30">
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <div className="sticky top-16 z-30 flex h-12 items-center border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur-md lg:hidden">
         <button
           onClick={() => setIsMobileOpen(true)}
-          className="flex items-center gap-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest"
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-600"
         >
           <Menu size={14} />
           Dashboard Menu
@@ -40,20 +36,18 @@ export default function DashboardLayout({
 
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm lg:hidden"
+          onClick={handleMobileClose}
         />
       )}
 
       <main
-        className={`
-          transition-all duration-300 ease-in-out
-          pb-20
-          ${isCollapsed ? "lg:ml-20" : "lg:ml-64"}
-        `}
+        className={`transition-all duration-300 ease-in-out pb-20 ${
+          isCollapsed ? "lg:ml-20" : "lg:ml-64"
+        }`}
       >
         <div className="p-4 md:p-8 lg:p-10">
-          <div className="max-w-7xl mx-auto">
+          <div className="mx-auto max-w-7xl">
             <div className="animate-in fade-in slide-in-from-bottom-3 duration-500">
               {children}
             </div>

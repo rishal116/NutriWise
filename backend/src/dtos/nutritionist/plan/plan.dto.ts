@@ -1,9 +1,8 @@
-import {
-  PlanCurrency,
-  PlanStatus,
-} from "../../../models/nutritionistPlan.model";
+import { PlanStatus } from "../../../models/nutritionistPlan.model";
 
 import { Specialization } from "../../../types/nutritionist.types";
+
+import { Currency } from "../../../constants/currency.constants";
 
 export class PlanDTO {
   id!: string;
@@ -18,7 +17,7 @@ export class PlanDTO {
 
   price!: number;
 
-  currency!: PlanCurrency;
+  currency!: Currency;
 
   features!: string[];
 

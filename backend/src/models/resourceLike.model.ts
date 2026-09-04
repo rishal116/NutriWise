@@ -1,6 +1,6 @@
-import { Document, model, Schema, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
-export interface IResourceLike extends Document {
+export interface IResourceLike {
   resourceId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;
@@ -13,14 +13,12 @@ const resourceLikeSchema = new Schema<IResourceLike>(
       type: Schema.Types.ObjectId,
       ref: "Resource",
       required: true,
-      index: true,
     },
 
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
   },
   {

@@ -1,24 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Bookmark,
-  Download,
-  ExternalLink,
   Eye,
   FileText,
-  Share2,
+  Heart,
+  MessageCircle,
+  Send,
+  Trash2,
+  User as UserIcon,
 } from "lucide-react";
 
 import { publicResourceService } from "@/services/public/publicResource.service";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import { useAppSelector } from "@/redux/hooks";
 
-import type { PublicResourceDetailsDTO } from "@/dtos/public/resource/public-resource-details.dto";
+import type {
+  PublicResourceDetailsDTO,
+  PublicResourceCommentDTO,
+} from "@/dtos/public/resource/public-resource-details.dto";
 
 export default function ResourceDetailsPage() {
   const { resourceId } = useParams<{ resourceId: string }>();
+  const router = useRouter();
+  const currentUser = useAppSelector((state) => state.auth.user);
 
   const [resource, setResource] = useState<PublicResourceDetailsDTO | null>(
     null,
@@ -26,22 +34,35 @@ export default function ResourceDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [downloading, setDownloading] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  const [liking, setLiking] = useState(false);
+  const [bookmarking, setBookmarking] = useState(false);
 
-  // Guards against double-firing recordView in React StrictMode dev double-invoke,
-  // and against re-firing if resourceId is somehow the same value re-rendered.
+  const [commentText, setCommentText] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null,
+  );
+
   const viewRecordedFor = useRef<string | null>(null);
+
+  const fetchResource = async () => {
+    try {
+      const response =
+        await publicResourceService.getResourceDetails(resourceId);
+      setResource(response.data);
+      setError(null);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  };
 
   useEffect(() => {
     if (!resourceId) return;
 
     let cancelled = false;
 
-    const fetchResource = async () => {
+    const load = async () => {
       setLoading(true);
-      setError(null);
-
       try {
         const response =
           await publicResourceService.getResourceDetails(resourceId);
@@ -55,58 +76,114 @@ export default function ResourceDetailsPage() {
       }
     };
 
-    fetchResource();
+    load();
 
     return () => {
       cancelled = true;
     };
   }, [resourceId]);
 
-  // Fire-and-forget view tracking, once per resourceId, only after we know it exists.
   useEffect(() => {
     if (!resource || viewRecordedFor.current === resourceId) return;
 
     viewRecordedFor.current = resourceId;
-    publicResourceService.recordView(resourceId).catch(() => {
-      // Non-critical: don't surface view-tracking failures to the user.
-    });
+    publicResourceService.recordView(resourceId).catch(() => {});
   }, [resource, resourceId]);
 
-  const handleDownload = async () => {
-    if (!resource?.fileUrl || downloading) return;
+  const requireAuth = () => {
+    if (currentUser) return true;
+    router.push(`/login?redirect=/resources/${resourceId}`);
+    return false;
+  };
 
-    setDownloading(true);
+  const handleToggleLike = async () => {
+    if (!requireAuth() || !resource || liking) return;
+
+    const previous = resource;
+    const nextLiked = !resource.isLiked;
+
+    setLiking(true);
+    setResource({
+      ...resource,
+      isLiked: nextLiked,
+      likeCount: resource.likeCount + (nextLiked ? 1 : -1),
+    });
+
     try {
-      await publicResourceService.recordDownload(resourceId);
-      window.open(resource.fileUrl, "_blank", "noopener,noreferrer");
+      if (nextLiked) {
+        await publicResourceService.likeResource(resourceId);
+      } else {
+        await publicResourceService.unlikeResource(resourceId);
+      }
     } catch (err) {
+      setResource(previous);
       setError(getErrorMessage(err));
     } finally {
-      setDownloading(false);
+      setLiking(false);
     }
   };
 
-  const handleShare = async () => {
-    if (sharing) return;
+  const handleToggleBookmark = async () => {
+    if (!requireAuth() || !resource || bookmarking) return;
 
-    setSharing(true);
+    const previous = resource;
+    const nextBookmarked = !resource.isBookmarked;
+
+    setBookmarking(true);
+    setResource({
+      ...resource,
+      isBookmarked: nextBookmarked,
+      bookmarkCount: resource.bookmarkCount + (nextBookmarked ? 1 : -1),
+    });
+
     try {
-      await publicResourceService.recordShare(resourceId);
-
-      const shareUrl = window.location.href;
-
-      if (navigator.share) {
-        await navigator.share({ title: resource?.title, url: shareUrl });
+      if (nextBookmarked) {
+        await publicResourceService.bookmarkResource(resourceId);
       } else {
-        await navigator.clipboard.writeText(shareUrl);
+        await publicResourceService.unbookmarkResource(resourceId);
       }
     } catch (err) {
-      // User cancelling the native share sheet also throws — don't treat that as an error.
-      if (err instanceof Error && err.name !== "AbortError") {
-        setError(getErrorMessage(err));
-      }
+      setResource(previous);
+      setError(getErrorMessage(err));
     } finally {
-      setSharing(false);
+      setBookmarking(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    const content = commentText.trim();
+    if (!requireAuth() || !content || submittingComment) return;
+
+    setSubmittingComment(true);
+    try {
+      await publicResourceService.addResourceComment(resourceId, content);
+      setCommentText("");
+      await fetchResource();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!resource || deletingCommentId) return;
+
+    const previous = resource;
+    setDeletingCommentId(commentId);
+    setResource({
+      ...resource,
+      comments: resource.comments.filter((c) => c.commentId !== commentId),
+      commentCount: Math.max(0, resource.commentCount - 1),
+    });
+
+    try {
+      await publicResourceService.deleteResourceComment(commentId);
+    } catch (err) {
+      setResource(previous);
+      setError(getErrorMessage(err));
+    } finally {
+      setDeletingCommentId(null);
     }
   };
 
@@ -114,7 +191,7 @@ export default function ResourceDetailsPage() {
     return <ResourceDetailsSkeleton />;
   }
 
-  if (error) {
+  if (error && !resource) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-16 text-center">
         <p className="text-rose-600">{error}</p>
@@ -168,8 +245,16 @@ export default function ResourceDetailsPage() {
             {resource.viewCount} views
           </span>
           <span className="flex items-center gap-1">
+            <Heart size={16} />
+            {resource.likeCount}
+          </span>
+          <span className="flex items-center gap-1">
             <Bookmark size={16} />
             {resource.bookmarkCount}
+          </span>
+          <span className="flex items-center gap-1">
+            <MessageCircle size={16} />
+            {resource.commentCount}
           </span>
           {resource.publishedAt && (
             <span>
@@ -179,34 +264,157 @@ export default function ResourceDetailsPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {resource.isDownloadable && resource.fileUrl && (
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className="flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-medium text-white shadow-xs transition hover:-translate-y-0.5 hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Download size={16} />
-              {downloading
-                ? "Preparing..."
-                : `Download (${resource.downloadCount})`}
-            </button>
-          )}
+          <button
+            onClick={handleToggleLike}
+            disabled={liking}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-xs transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              resource.isLiked
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-slate-200/80 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+            }`}
+          >
+            <Heart
+              size={16}
+              className={resource.isLiked ? "fill-emerald-700" : ""}
+            />
+            {resource.isLiked ? "Liked" : "Like"}
+          </button>
 
           <button
-            onClick={handleShare}
-            disabled={sharing}
-            className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-xs transition hover:-translate-y-0.5 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={handleToggleBookmark}
+            disabled={bookmarking}
+            className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-xs transition disabled:cursor-not-allowed disabled:opacity-50 ${
+              resource.isBookmarked
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-slate-200/80 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+            }`}
           >
-            <Share2 size={16} />
-            Share ({resource.shareCount})
+            <Bookmark
+              size={16}
+              className={resource.isBookmarked ? "fill-emerald-700" : ""}
+            />
+            {resource.isBookmarked ? "Bookmarked" : "Bookmark"}
           </button>
         </div>
+
+        {error && (
+          <p className="mt-3 text-xs font-medium text-rose-600">{error}</p>
+        )}
 
         <div className="mt-10 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-8">
           <ResourceBody resource={resource} />
         </div>
+
+        <CommentsSection
+          comments={resource.comments}
+          currentUserId={currentUser?.id}
+          commentText={commentText}
+          onCommentTextChange={setCommentText}
+          onSubmit={handleAddComment}
+          submitting={submittingComment}
+          deletingCommentId={deletingCommentId}
+          onDelete={handleDeleteComment}
+          isAuthenticated={!!currentUser}
+        />
       </article>
     </main>
+  );
+}
+
+function CommentsSection({
+  comments,
+  currentUserId,
+  commentText,
+  onCommentTextChange,
+  onSubmit,
+  submitting,
+  deletingCommentId,
+  onDelete,
+  isAuthenticated,
+}: {
+  comments: PublicResourceCommentDTO[];
+  currentUserId?: string;
+  commentText: string;
+  onCommentTextChange: (value: string) => void;
+  onSubmit: () => void;
+  submitting: boolean;
+  deletingCommentId: string | null;
+  onDelete: (commentId: string) => void;
+  isAuthenticated: boolean;
+}) {
+  return (
+    <section className="mt-8 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs sm:p-8">
+      <div className="flex items-center gap-2">
+        <span className="h-5 w-1 rounded-full bg-emerald-600" />
+        <h2 className="text-base font-bold tracking-tight text-slate-900">
+          Comments ({comments.length})
+        </h2>
+      </div>
+
+      <div className="mt-5 flex items-start gap-3">
+        <textarea
+          value={commentText}
+          onChange={(e) => onCommentTextChange(e.target.value)}
+          placeholder={
+            isAuthenticated ? "Add a comment..." : "Sign in to comment"
+          }
+          disabled={!isAuthenticated || submitting}
+          rows={2}
+          className="flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+        />
+        <button
+          onClick={onSubmit}
+          disabled={!isAuthenticated || submitting || !commentText.trim()}
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white shadow-xs transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Post comment"
+        >
+          <Send size={15} />
+        </button>
+      </div>
+
+      <ul className="mt-6 space-y-4">
+        {comments.length === 0 && (
+          <li className="text-sm text-slate-500">
+            No comments yet. Be the first to share your thoughts.
+          </li>
+        )}
+
+        {comments.map((comment) => (
+          <li key={comment.commentId} className="flex items-start gap-3">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <UserIcon size={15} />
+            </div>
+
+            <div className="min-w-0 flex-1 rounded-xl bg-slate-50 px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-semibold text-slate-900">
+                  {comment.userId === currentUserId ? "You" : "User"}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-medium text-slate-400">
+                    {new Date(comment.createdAt).toLocaleDateString()}
+                    {comment.isEdited && " · edited"}
+                  </span>
+                  {comment.userId === currentUserId && (
+                    <button
+                      onClick={() => onDelete(comment.commentId)}
+                      disabled={deletingCommentId === comment.commentId}
+                      className="text-slate-400 transition hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label="Delete comment"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+              <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
+                {comment.content}
+              </p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -238,20 +446,6 @@ function ResourceBody({ resource }: { resource: PublicResourceDetailsDTO }) {
       );
 
     case "video":
-      // Assumption: externalUrl carries an embeddable link (YouTube/Vimeo).
-      // Adjust this branch if your videos are always direct file URLs instead.
-      if (resource.externalUrl) {
-        return (
-          <div className="aspect-video overflow-hidden rounded-xl bg-black">
-            <iframe
-              src={resource.externalUrl}
-              className="h-full w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        );
-      }
       if (resource.fileUrl) {
         return (
           <video controls className="w-full rounded-xl bg-black">
@@ -271,21 +465,6 @@ function ResourceBody({ resource }: { resource: PublicResourceDetailsDTO }) {
         >
           <FileText size={18} />
           Open PDF in a new tab
-        </a>
-      ) : (
-        <EmptyBody />
-      );
-
-    case "external_link":
-      return resource.externalUrl ? (
-        <a
-          href={resource.externalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 text-emerald-700 hover:underline"
-        >
-          <ExternalLink size={18} />
-          Visit external resource
         </a>
       ) : (
         <EmptyBody />

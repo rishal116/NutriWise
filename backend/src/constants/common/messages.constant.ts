@@ -8,8 +8,6 @@ export const COMMON_MESSAGES = {
   SOMETHING_WENT_WRONG: "Something went wrong",
 } as const;
 
-
-
 export const AUTH_MESSAGES = {
   ACCESS_TOKEN_MISSING: "Access token missing",
   TOKEN_EXPIRED: "Access token expired",
@@ -25,11 +23,17 @@ export const AUTH_MESSAGES = {
   LOGOUT_SUCCESS: "Logout successful",
 } as const;
 
-
-
 export const PAYMENT_MESSAGES = {
   CHECKOUT_CREATED: "Checkout session created",
   PAYMENT_VERIFIED: "Payment verified",
   PAYMENT_FAILED: "Payment failed",
   WEBHOOK_RECEIVED: "Webhook received",
 } as const;
+
+export const POST_MESSAGES = {
+  CREATED: "Post created successfully",
+  FETCHED: "Posts fetched successfully",
+  FETCHED_DETAILS: "Post details fetched successfully",
+  UPDATED: "Post updated successfully",
+  DELETED: "Post deleted successfully",
+};
