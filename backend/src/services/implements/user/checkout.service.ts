@@ -3,7 +3,7 @@ import { IStripeService } from "../../interfaces/common/stripe/IStripeService";
 import { injectable, inject } from "inversify";
 import { TYPES } from "../../../types/types";
 import { CreateCheckoutSessionDTO } from "../../../dtos/user/checkout/create-checkout-session.dto";
-import { CheckoutStripeMapper } from "../../../mapper/user/checkout/checkout-stripe.mapper";
+import { CheckoutStripeMapper } from "../../../mappers/user/checkout/checkout-stripe.mapper";
 import { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";

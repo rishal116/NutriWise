@@ -1,17 +1,17 @@
-import { ApplicationStatus } from "../../../types/nutritionist.types";
-import { AdminNutritionistApplicationListItemDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-item.dto";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+
 import { AdminNutritionistApplicationListQueryDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-query.dto";
+
+import { AdminNutritionistApplicationListItemDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-item.dto";
+
+import { ApplicationStatus } from "../../../types/nutritionist.types";
 
 export interface IAdminNutritionistApplicationService {
   getApplications(
     query: AdminNutritionistApplicationListQueryDto,
-  ): Promise<{
-    data: AdminNutritionistApplicationListItemDto[];
-    total: number;
-    skip: number;
-    limit: number;
-    hasMore: boolean;
-  }>;
+  ): Promise<
+    InfiniteScrollResponseDTO<AdminNutritionistApplicationListItemDto>
+  >;
 
   updateApplicationStatus(
     userId: string,

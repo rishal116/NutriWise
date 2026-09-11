@@ -18,7 +18,7 @@ import {
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 
 import { validateDto } from "../../../middlewares/validateDto.middleware";
-import { UserPostMapper } from "../../../mapper/user/post/user-post.mapper";
+import { UserPostMapper } from "../../../mappers/user/post/user-post.mapper";
 
 import { PostMediaType } from "../../../types/common/post-media.type";
 
@@ -174,10 +174,10 @@ export class UserPostService implements IUserPostService {
 
     this.validatePostMedia(file, type);
 
-    const url = await uploadToCloudinary(file, "nutriwise/posts");
+    const uploadRes = await uploadToCloudinary(file, "nutriwise/posts");
 
     return {
-      url,
+      url: uploadRes.secureUrl,
       type,
     };
   }

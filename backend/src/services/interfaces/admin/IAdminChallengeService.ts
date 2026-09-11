@@ -14,6 +14,7 @@ export interface IAdminChallengeService {
   createChallenge(
     data: CreateChallengeDTO,
     adminId: string,
+    thumbnailFile?: Express.Multer.File,
   ): Promise<AdminChallengeDetailsDTO>;
 
   browseChallenges(
@@ -25,6 +26,7 @@ export interface IAdminChallengeService {
   updateChallenge(
     challengeId: string,
     data: UpdateChallengeDTO,
+    thumbnailFile?: Express.Multer.File,
   ): Promise<AdminChallengeDetailsDTO>;
 
   deleteChallenge(challengeId: string): Promise<void>;

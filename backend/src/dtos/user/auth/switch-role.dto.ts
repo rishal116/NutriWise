@@ -1,4 +1,4 @@
-import { UserRole } from "../../../enums/userRole.enum";
+import { UserRole } from "../../../enums/user.enum";
 
 export interface SwitchRoleDto {
   role: UserRole;

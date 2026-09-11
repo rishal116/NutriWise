@@ -4,7 +4,7 @@ import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 import logger from "../../../../utils/logger";
 import { NutritionistPlanDTO } from "../../../../dtos/user/nutri-browsing/nutri-plan.dto";
-import { toNutritionistPlanDTO } from "../../../../mapper/user/nutri-browsing/nutri-plan.mapper.dto";
+import { toNutritionistPlanDTO } from "../../../../mappers/user/nutri-browsing/nutri-plan.mapper.dto";
 import { INutritionistPlanBrowsingRepository } from "../../../../repositories/interfaces/user/discovery/INutriPlanBrowsingRepository";
 import { IUserRepository } from "../../../../repositories/interfaces/user/account/IUserRepository";
 import { INutritionistPlanBrowsingService } from "../../../interfaces/user/discovery/INutritionistPlanBrowsingService";

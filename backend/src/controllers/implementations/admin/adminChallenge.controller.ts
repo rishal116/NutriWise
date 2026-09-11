@@ -30,7 +30,13 @@ export class AdminChallengeController implements IAdminChallengeController {
 
     const data: CreateChallengeDTO = req.body;
 
-    const result = await this._challengeService.createChallenge(data, adminId);
+    const thumbnailFile = req.file;
+
+    const result = await this._challengeService.createChallenge(
+      data,
+      adminId,
+      thumbnailFile,
+    );
 
     return res.status(StatusCode.CREATED).json({
       success: true,
@@ -39,7 +45,7 @@ export class AdminChallengeController implements IAdminChallengeController {
     });
   });
 
-  browseChallenges = asyncHandler(async (req: Request, res: Response) => {
+  listChallenges = asyncHandler(async (req: Request, res: Response) => {
     const query: AdminChallengeListQueryDTO = {
       search: req.query.search as string | undefined,
 
@@ -50,8 +56,6 @@ export class AdminChallengeController implements IAdminChallengeController {
       difficulty: req.query.difficulty as
         | AdminChallengeListQueryDTO["difficulty"]
         | undefined,
-
-      type: req.query.type as AdminChallengeListQueryDTO["type"] | undefined,
 
       accessType: req.query.accessType as
         | AdminChallengeListQueryDTO["accessType"]
@@ -75,18 +79,18 @@ export class AdminChallengeController implements IAdminChallengeController {
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Challenges fetched successfully",
-      ...result,
+      data: result,
     });
   });
 
-  getChallenge = asyncHandler(async (req: Request, res: Response) => {
+  getChallengeDetails = asyncHandler(async (req: Request, res: Response) => {
     const { challengeId } = req.params;
 
     const result = await this._challengeService.getChallenge(challengeId);
 
     return res.status(StatusCode.OK).json({
       success: true,
-      message: "Challenge fetched successfully",
+      message: "Challenge details fetched successfully",
       data: result,
     });
   });
@@ -96,9 +100,12 @@ export class AdminChallengeController implements IAdminChallengeController {
 
     const data: UpdateChallengeDTO = req.body;
 
+    const thumbnailFile = req.file;
+
     const result = await this._challengeService.updateChallenge(
       challengeId,
       data,
+      thumbnailFile,
     );
 
     return res.status(StatusCode.OK).json({

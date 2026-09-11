@@ -5,20 +5,13 @@ import {
   CHALLENGE_CATEGORIES,
   CHALLENGE_DIFFICULTIES,
   CHALLENGE_STATUSES,
-  CHALLENGE_TYPES,
   ChallengeAccessType,
   ChallengeCategory,
   ChallengeDifficulty,
   ChallengeStatus,
-  ChallengeType,
 } from "../../../models/challenge.model";
 
-export const ADMIN_CHALLENGE_SORT_OPTIONS = [
-  "newest",
-  "oldest",
-  "start_date_asc",
-  "start_date_desc",
-] as const;
+export const ADMIN_CHALLENGE_SORT_OPTIONS = ["newest", "oldest"] as const;
 
 export type AdminChallengeSortBy =
   (typeof ADMIN_CHALLENGE_SORT_OPTIONS)[number];
@@ -35,10 +28,6 @@ export class AdminChallengeListQueryDTO {
   @IsOptional()
   @IsEnum(CHALLENGE_DIFFICULTIES)
   difficulty?: ChallengeDifficulty;
-
-  @IsOptional()
-  @IsEnum(CHALLENGE_TYPES)
-  type?: ChallengeType;
 
   @IsOptional()
   @IsEnum(CHALLENGE_ACCESS_TYPES)

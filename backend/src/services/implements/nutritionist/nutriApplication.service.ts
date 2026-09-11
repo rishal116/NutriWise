@@ -8,7 +8,7 @@ import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
 import { CustomError } from "../../../utils/customError";
 import { NutritionistApplicationDetailsDto } from "../../../dtos/nutritionist/form/nutritionist-details.dto";
-import { NutritionistMapper } from "../../../mapper/nutritionist/form/nutritionist.mapper";
+import { NutritionistMapper } from "../../../mappers/nutritionist/form/nutritionist.mapper";
 import {
   SubmitNutritionistApplicationDto,
   NutritionistFormDto,
@@ -79,10 +79,11 @@ export class NutritionistApplicationService implements INutritionistApplicationS
     let resumeUrl = existingProfile?.resumeUrl ?? "";
 
     if (files?.resume?.length) {
-      resumeUrl = await uploadToCloudinary(
+      const uploadRes = await uploadToCloudinary(
         files.resume[0],
         "nutritionist/resume",
       );
+      resumeUrl = uploadRes.secureUrl;
     } else if (!resumeUrl) {
       throw new CustomError("Resume is required", StatusCode.BAD_REQUEST);
     }
@@ -95,10 +96,11 @@ export class NutritionistApplicationService implements INutritionistApplicationS
       let certificateUrl = certificate.fileUrl ?? "";
 
       if (files?.certifications?.[uploadIndex]) {
-        certificateUrl = await uploadToCloudinary(
+        const uploadRes = await uploadToCloudinary(
           files.certifications[uploadIndex],
           "nutritionist/certifications",
         );
+        certificateUrl = uploadRes.secureUrl;
 
         uploadIndex++;
       }

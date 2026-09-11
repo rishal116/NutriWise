@@ -7,8 +7,8 @@ import { UpdateNutriSessionDTO } from "../../../dtos/nutritionist/session/update
 import { NutriSessionListResponseDTO } from "../../../dtos/nutritionist/session/session-list-response.dto";
 import { NutriSessionDetailsResponseDTO } from "../../../dtos/nutritionist/session/session-details-response.dto";
 import { v4 as uuidv4 } from "uuid";
-import { NutriSessionMapper } from "../../../mapper/nutritionist/session/nutri-session.mapper";
-import { NutriSessionPersistenceMapper } from "../../../mapper/nutritionist/session/nutri-session.persistence.mapper";
+import { NutriSessionMapper } from "../../../mappers/nutritionist/session/nutri-session.mapper";
+import { NutriSessionPersistenceMapper } from "../../../mappers/nutritionist/session/nutri-session.persistence.mapper";
 import { TYPES } from "../../../types/types";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
@@ -53,7 +53,8 @@ export class NutriSessionService implements INutriSessionService {
     let thumbnailUrl: string | undefined;
 
     if (thumbnail) {
-      thumbnailUrl = await uploadToCloudinary(thumbnail, "nutriwise/sessions");
+      const uploadRes = await uploadToCloudinary(thumbnail, "nutriwise/sessions");
+      thumbnailUrl = uploadRes.secureUrl;
     }
 
     const roomId = `session_${uuidv4()}`;
@@ -92,7 +93,9 @@ export class NutriSessionService implements INutriSessionService {
       query,
     );
 
-    const items = result.items.map(NutriSessionMapper.toListResponse);
+    const items: NutriSessionListResponseDTO[] = result.items.map((item) =>
+      NutriSessionMapper.toListResponse(item),
+    );
 
     return new InfiniteScrollResponseDTO(
       items,
@@ -153,10 +156,11 @@ export class NutriSessionService implements INutriSessionService {
     };
 
     if (thumbnail) {
-      updateData.thumbnailUrl = await uploadToCloudinary(
+      const uploadRes = await uploadToCloudinary(
         thumbnail,
         "nutriwise/sessions",
       );
+      updateData.thumbnailUrl = uploadRes.secureUrl;
     }
 
     const session = await this._nutriSessionRepository.updateById(sessionId, {

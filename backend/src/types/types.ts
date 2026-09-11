@@ -152,6 +152,7 @@ export const TYPES = {
   IAdminNotificationController: Symbol.for("IAdminNotificationController"),
   IAdminPlanController: Symbol.for("IAdminPlanController"),
   IAdminChallengeController: Symbol.for("IAdminChallengeController"),
+  IAdminChallengeDayController:Symbol.for("IAdminChallengeDayController"),
 
   // -------------------- Services ------------------------
 
@@ -162,6 +163,7 @@ export const TYPES = {
   ),
   IAdminPlanService: Symbol.for("IAdminPlanService"),
   IAdminChallengeService: Symbol.for("IAdminChallengeService"),
+  IAdminChallengeDayService:Symbol.for("IAdminChallengeDayService"),
 
   // -------------------- Repositories --------------------
 
@@ -171,6 +173,7 @@ export const TYPES = {
     "IAdminNutritionistApplicationRepository",
   ),
   IAdminChallengeRepository: Symbol.for("IAdminChallengeRepository"),
+  IAdminChallengeDayRepository:Symbol.for("IAdminChallengeDayRepository"),
 
   // ======================================================
   // NUTRITIONIST MODULE

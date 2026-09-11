@@ -5,7 +5,7 @@ import { asyncHandler } from "../../../utils/asyncHandler";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IUserProgramController } from "../../interfaces/user/IUserProgramController";
 import { IUserProgramService } from "../../../services/interfaces/user/program/IUserProgramService";
-import { UserProgramQueryMapper } from "../../../mapper/user/program/user-program-query.mapper";
+import { UserProgramQueryMapper } from "../../../mappers/user/program/user-program-query.mapper";
 
 @injectable()
 export class UserProgramController implements IUserProgramController {

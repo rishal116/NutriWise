@@ -1,7 +1,5 @@
-import {
-  PlanCurrency,
-  PlanStatus,
-} from "../../../models/nutritionistPlan.model";
+import { PlanStatus } from "../../../models/nutritionistPlan.model";
+import { Currency } from "../../../constants/currency.constants";
 
 import { Specialization } from "../../../types/nutritionist.types";
 
@@ -17,7 +15,7 @@ export interface NutritionistPlanDTO {
   durationDays: number;
 
   price: number;
-  currency: PlanCurrency;
+  currency: Currency;
 
   features: string[];
 

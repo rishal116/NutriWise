@@ -28,7 +28,7 @@ import { CustomError } from "../../../utils/customError";
 
 import logger from "../../../utils/logger";
 
-import { PublicResourceMapper } from "../../../mapper/public/resource/public-resource.mapper";
+import { PublicResourceMapper } from "../../../mappers/public/resource/public-resource.mapper";
 
 @injectable()
 export class PublicResourceService implements IPublicResourceService {

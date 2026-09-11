@@ -16,16 +16,17 @@ export interface IUserChallenge {
 
   status: UserChallengeStatus;
 
+  joinedAt: Date;
+  startedAt: Date;
+
+  currentDay: number;
+
   progressPercentage: number;
 
   currentStreak: number;
   longestStreak: number;
 
-  joinedAt: Date;
-  startedAt?: Date;
   completedAt?: Date;
-
-  rewardGranted: boolean;
 
   createdAt: Date;
   updatedAt: Date;
@@ -55,25 +56,6 @@ const UserChallengeSchema = new Schema<IUserChallenge>(
       index: true,
     },
 
-    progressPercentage: {
-      type: Number,
-      min: 0,
-      max: 100,
-      default: 0,
-    },
-
-    currentStreak: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-
-    longestStreak: {
-      type: Number,
-      min: 0,
-      default: 0,
-    },
-
     joinedAt: {
       type: Date,
       required: true,
@@ -82,15 +64,41 @@ const UserChallengeSchema = new Schema<IUserChallenge>(
 
     startedAt: {
       type: Date,
+      required: true,
+      default: Date.now,
+    },
+
+    currentDay: {
+      type: Number,
+      required: true,
+      min: 1,
+      default: 1,
+    },
+
+    progressPercentage: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+
+    currentStreak: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+
+    longestStreak: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
     },
 
     completedAt: {
       type: Date,
-    },
-
-    rewardGranted: {
-      type: Boolean,
-      default: false,
     },
   },
   {

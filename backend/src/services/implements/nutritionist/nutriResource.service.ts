@@ -13,8 +13,8 @@ import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
-import { NutriResourceListMapper } from "../../../mapper/nutritionist/resource/nutri-resource-list.mapper";
-import { NutriResourceDetailsMapper } from "../../../mapper/nutritionist/resource/nutri-resource-details.mapper";
+import { NutriResourceListMapper } from "../../../mappers/nutritionist/resource/nutri-resource-list.mapper";
+import { NutriResourceDetailsMapper } from "../../../mappers/nutritionist/resource/nutri-resource-details.mapper";
 import { Types } from "mongoose";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 import { ResourceType } from "cloudinary";
@@ -152,14 +152,16 @@ export class NutriResourceService implements INutriResourceService {
     let thumbnailUrl: string | undefined;
 
     if (file) {
-      fileUrl = await uploadToCloudinary(file, "nutriwise/resources");
+      const uploadRes = await uploadToCloudinary(file, "nutriwise/resources");
+      fileUrl = uploadRes.secureUrl;
     }
 
     if (thumbnail) {
-      thumbnailUrl = await uploadToCloudinary(
+      const uploadRes = await uploadToCloudinary(
         thumbnail,
         "nutriwise/resources/thumbnails",
       );
+      thumbnailUrl = uploadRes.secureUrl;
     }
 
     const resource = await this._nutriResourceRepository.create({

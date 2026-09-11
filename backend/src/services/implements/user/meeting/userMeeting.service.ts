@@ -12,9 +12,9 @@ import { UserMeetingListResponseDTO } from "../../../../dtos/user/meeting/user-m
 
 import { UserMeetingDetailsResponseDTO } from "../../../../dtos/user/meeting/user-meeting-details-response.dto";
 
-import { UserMeetingListMapper } from "../../../../mapper/user/meeting/user-meeting-list.mapper";
+import { UserMeetingListMapper } from "../../../../mappers/user/meeting/user-meeting-list.mapper";
 
-import { UserMeetingDetailsMapper } from "../../../../mapper/user/meeting/user-meeting-details.mapper";
+import { UserMeetingDetailsMapper } from "../../../../mappers/user/meeting/user-meeting-details.mapper";
 
 import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";

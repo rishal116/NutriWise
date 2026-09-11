@@ -28,9 +28,11 @@ import { UpdateChallengeDTO } from "../../../dtos/admin/challenge/update-challen
 
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 
-import { toAdminChallengeCardDTO } from "../../../mapper/admin/challenge/admin-challenge-list.mapper";
+import { toAdminChallengeCardDTO } from "../../../mappers/admin/challenge/admin-challenge-list.mapper";
 
-import { toAdminChallengeDetailsDTO } from "../../../mapper/admin/challenge/admin-challenge-details.mapper";
+import { toAdminChallengeDetailsDTO } from "../../../mappers/admin/challenge/admin-challenge-details.mapper";
+
+import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 
 @injectable()
 export class AdminChallengeService implements IAdminChallengeService {
@@ -49,74 +51,15 @@ export class AdminChallengeService implements IAdminChallengeService {
     }
   }
 
-  private validateChallengeDates(startDate: Date, endDate: Date): void {
-    if (endDate <= startDate) {
-      throw new CustomError(
-        "End date must be after start date",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-  }
-
-  private validateChallengeConfiguration(
-    type: CreateChallengeDTO["type"] | UpdateChallengeDTO["type"],
-    valueType:
-      | CreateChallengeDTO["valueType"]
-      | UpdateChallengeDTO["valueType"],
-    targetValue?: number,
-    targetUnit?: string,
-    targetCount?: number,
-  ): void {
-    if (type === "daily_target" || type === "total_target") {
-      if (targetValue === undefined) {
-        throw new CustomError(
-          "Target value is required for target-based challenges",
-          StatusCode.BAD_REQUEST,
-        );
-      }
-
-      if (!targetUnit?.trim()) {
-        throw new CustomError(
-          "Target unit is required for target-based challenges",
-          StatusCode.BAD_REQUEST,
-        );
-      }
-    }
-
-    if (type === "completion") {
-      if (targetCount === undefined) {
-        throw new CustomError(
-          "Target count is required for completion challenges",
-          StatusCode.BAD_REQUEST,
-        );
-      }
-    }
-
-    if (type === "streak" && valueType !== "boolean") {
-      throw new CustomError(
-        "Streak challenges must use boolean value type",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (
-      (type === "daily_target" || type === "total_target") &&
-      valueType === "boolean"
-    ) {
-      throw new CustomError(
-        "Target-based challenges cannot use boolean value type",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-  }
-
   async createChallenge(
     data: CreateChallengeDTO,
     adminId: string,
+    thumbnailFile?: Express.Multer.File,
   ): Promise<AdminChallengeDetailsDTO> {
     logger.info("Creating challenge", {
       title: data.title,
       adminId,
+      hasThumbnail: Boolean(thumbnailFile),
     });
 
     const validatedData = await validateDto(CreateChallengeDTO, data);
@@ -125,27 +68,19 @@ export class AdminChallengeService implements IAdminChallengeService {
       throw new CustomError("Invalid admin ID", StatusCode.BAD_REQUEST);
     }
 
-    const startDate = new Date(validatedData.startDate);
+    let thumbnailUrl: string | undefined;
 
-    const endDate = new Date(validatedData.endDate);
-
-    this.validateChallengeDates(startDate, endDate);
-
-    this.validateChallengeConfiguration(
-      validatedData.type,
-      validatedData.valueType,
-      validatedData.targetValue,
-      validatedData.targetUnit,
-      validatedData.targetCount,
-    );
+    if (thumbnailFile) {
+      const uploadResult = await uploadToCloudinary(
+        thumbnailFile,
+        "nutriwise/challenges",
+      );
+      thumbnailUrl = uploadResult.secureUrl;
+    }
 
     const challenge = await this._adminChallengeRepository.create({
       ...validatedData,
-      startDate,
-      endDate,
-      badgeId: validatedData.badgeId
-        ? new Types.ObjectId(validatedData.badgeId)
-        : undefined,
+      thumbnailUrl,
       createdBy: new Types.ObjectId(adminId),
     });
 
@@ -214,9 +149,11 @@ export class AdminChallengeService implements IAdminChallengeService {
   async updateChallenge(
     challengeId: string,
     data: UpdateChallengeDTO,
+    thumbnailFile?: Express.Multer.File,
   ): Promise<AdminChallengeDetailsDTO> {
     logger.info("Updating challenge", {
       challengeId,
+      hasThumbnail: Boolean(thumbnailFile),
     });
 
     this.validateChallengeId(challengeId);
@@ -230,55 +167,22 @@ export class AdminChallengeService implements IAdminChallengeService {
       throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
     }
 
-    const startDate = validatedData.startDate
-      ? new Date(validatedData.startDate)
-      : existingChallenge.startDate;
+    let thumbnailUrl = existingChallenge.thumbnailUrl;
 
-    const endDate = validatedData.endDate
-      ? new Date(validatedData.endDate)
-      : existingChallenge.endDate;
-
-    this.validateChallengeDates(startDate, endDate);
-
-    const finalType = validatedData.type ?? existingChallenge.type;
-
-    const finalValueType =
-      validatedData.valueType ?? existingChallenge.valueType;
-
-    const finalTargetValue =
-      validatedData.targetValue ?? existingChallenge.targetValue;
-
-    const finalTargetUnit =
-      validatedData.targetUnit ?? existingChallenge.targetUnit;
-
-    const finalTargetCount =
-      validatedData.targetCount ?? existingChallenge.targetCount;
-
-    this.validateChallengeConfiguration(
-      finalType,
-      finalValueType,
-      finalTargetValue,
-      finalTargetUnit,
-      finalTargetCount,
-    );
+    if (thumbnailFile) {
+      const uploadResult = await uploadToCloudinary(
+        thumbnailFile,
+        "nutriwise/challenges",
+      );
+      thumbnailUrl = uploadResult.secureUrl;
+    }
 
     const updatedChallenge = await this._adminChallengeRepository.updateById(
       challengeId,
       {
         ...validatedData,
-
-        ...(validatedData.startDate && {
-          startDate,
-        }),
-
-        ...(validatedData.endDate && {
-          endDate,
-        }),
-
-        ...(validatedData.badgeId !== undefined && {
-          badgeId: validatedData.badgeId
-            ? new Types.ObjectId(validatedData.badgeId)
-            : undefined,
+        ...(thumbnailFile && {
+          thumbnailUrl,
         }),
       },
     );
@@ -373,16 +277,6 @@ export class AdminChallengeService implements IAdminChallengeService {
         StatusCode.BAD_REQUEST,
       );
     }
-
-    this.validateChallengeDates(challenge.startDate, challenge.endDate);
-
-    this.validateChallengeConfiguration(
-      challenge.type,
-      challenge.valueType,
-      challenge.targetValue,
-      challenge.targetUnit,
-      challenge.targetCount,
-    );
 
     const updated = await this._adminChallengeRepository.updateById(
       challengeId,

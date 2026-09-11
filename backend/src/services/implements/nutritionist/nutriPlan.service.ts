@@ -12,12 +12,12 @@ import {
   toNutritionistPlanModel,
   toNutritionistPlanUpdateModel,
   toPlanDTO,
-} from "../../../mapper/nutritionist/plan/nutritionist-plan.mapper";
+} from "../../../mappers/nutritionist/plan/nutritionist-plan.mapper";
 import { CreatePlanDTO } from "../../../dtos/nutritionist/plan/create-plan.dto";
 import { PlanDTO } from "../../../dtos/nutritionist/plan/plan.dto";
 import { UpdatePlanDTO } from "../../../dtos/nutritionist/plan/update-plan.dto";
 import { MAX_PUBLISHED_PLANS } from "../../../constants/nutritionist/plan/nutritionist-plan.constant";
-import { toPlanMetadataDTO } from "../../../mapper/nutritionist/plan/plan-metadata.dto";
+import { toPlanMetadataDTO } from "../../../mappers/nutritionist/plan/plan-metadata.dto";
 import { PlanMetadataDTO } from "../../../dtos/nutritionist/plan/plan-metadata.dto";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { GetPlansDTO } from "../../../dtos/nutritionist/plan/get-plans.dto";

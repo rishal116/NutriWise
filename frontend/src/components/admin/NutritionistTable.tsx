@@ -1,42 +1,43 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
-  MoreHorizontal,
-  Lock,
-  Unlock,
   ExternalLink,
   Loader2,
+  Lock,
+  MoreHorizontal,
   Star,
-  ArrowUp,
+  Unlock,
   ArrowDown,
-  ArrowUpDown,
+  ArrowUp,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { toast } from "sonner";
+
 import { adminNutritionistService } from "@/services/admin/adminNutri.service";
 import { adminUserService } from "@/services/admin/adminUser.service";
+
 import { useDebounce } from "@/hooks/admin/debounce.hooks";
+
 import UserSearchBar from "./UserSearchBar";
+
 import { AdminNutritionistListItemDto } from "@/dtos/admin/nutritionist/admin-nutritionist-list-item.dto";
-import { InfiniteScrollResponseDto } from "@/dtos/common/infinite-scroll-response.dto";
+
+import { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
+
 import { AvailabilityStatus, CoachLevel } from "@/types/nutritionist.types";
 
 interface NutritionistTableProps {
-  initialData: InfiniteScrollResponseDto<AdminNutritionistListItemDto>;
-  limit: number;
+  initialData: InfiniteScrollResponseDTO<AdminNutritionistListItemDto>;
 }
 
-type SortBy =
-  | "createdAt"
-  | "fullName"
-  | "rating"
-  | "coachLevel"
-  | "totalExperienceYears";
-type SortOrder = "asc" | "desc";
+type SortBy = "newest" | "oldest";
+
 type AccountStatusFilter = "all" | "active" | "blocked";
+
 type CoachLevelFilter = "all" | CoachLevel;
+
 type AvailabilityFilter = "all" | AvailabilityStatus;
 
 const COACH_LEVEL_STYLES: Record<CoachLevel, string> = {
@@ -57,9 +58,18 @@ const AVAILABILITY_STYLES: Record<
   AvailabilityStatus,
   { dot: string; text: string }
 > = {
-  available: { dot: "bg-emerald-600", text: "text-emerald-600" },
-  busy: { dot: "bg-amber-500", text: "text-amber-600" },
-  offline: { dot: "bg-slate-400", text: "text-slate-500" },
+  available: {
+    dot: "bg-emerald-600",
+    text: "text-emerald-600",
+  },
+  busy: {
+    dot: "bg-amber-500",
+    text: "text-amber-600",
+  },
+  offline: {
+    dot: "bg-slate-400",
+    text: "text-slate-500",
+  },
 };
 
 const AVAILABILITY_LABELS: Record<AvailabilityStatus, string> = {
@@ -68,7 +78,7 @@ const AVAILABILITY_LABELS: Record<AvailabilityStatus, string> = {
   offline: "Offline",
 };
 
-function getInitials(fullName: string) {
+function getInitials(fullName: string): string {
   return fullName
     .trim()
     .split(/\s+/)
@@ -77,10 +87,18 @@ function getInitials(fullName: string) {
     .join("");
 }
 
+function formatDate(value: string | Date): string {
+  return new Date(value).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function CoachLevelBadge({ level }: { level: CoachLevel }) {
   return (
     <span
-      className={`text-xs font-bold px-2 py-1 rounded-md uppercase tracking-tight ${COACH_LEVEL_STYLES[level]}`}
+      className={`rounded-md px-2 py-1 text-xs font-bold uppercase tracking-tight ${COACH_LEVEL_STYLES[level]}`}
     >
       {COACH_LEVEL_LABELS[level]}
     </span>
@@ -88,12 +106,14 @@ function CoachLevelBadge({ level }: { level: CoachLevel }) {
 }
 
 function AvailabilityBadge({ status }: { status: AvailabilityStatus }) {
-  const s = AVAILABILITY_STYLES[status];
+  const style = AVAILABILITY_STYLES[status];
+
   return (
     <span
-      className={`inline-flex items-center gap-1.5 text-xs font-semibold ${s.text}`}
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold ${style.text}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+
       {AVAILABILITY_LABELS[status]}
     </span>
   );
@@ -108,50 +128,12 @@ function RatingDisplay({
 }) {
   return (
     <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700">
-      <Star size={13} className="text-amber-400 fill-amber-400" />
+      <Star size={13} className="fill-amber-400 text-amber-400" />
+
       {rating.toFixed(1)}
-      <span className="text-slate-400 font-medium">({totalReviews})</span>
+
+      <span className="font-medium text-slate-400">({totalReviews})</span>
     </span>
-  );
-}
-
-function SortableHeader({
-  label,
-  field,
-  activeSortBy,
-  sortOrder,
-  onSort,
-  className,
-}: {
-  label: string;
-  field: SortBy;
-  activeSortBy: SortBy;
-  sortOrder: SortOrder;
-  onSort: (field: SortBy) => void;
-  className?: string;
-}) {
-  const isActive = activeSortBy === field;
-
-  return (
-    <th className={className}>
-      <button
-        onClick={() => onSort(field)}
-        className={`flex items-center gap-1 font-semibold hover:text-slate-700 transition-colors ${
-          isActive ? "text-slate-900" : ""
-        }`}
-      >
-        {label}
-        {isActive ? (
-          sortOrder === "asc" ? (
-            <ArrowUp size={13} />
-          ) : (
-            <ArrowDown size={13} />
-          )
-        ) : (
-          <ArrowUpDown size={13} className="text-slate-300" />
-        )}
-      </button>
-    </th>
   );
 }
 
@@ -161,18 +143,21 @@ function FilterSelect<T extends string>({
   options,
 }: {
   value: T;
-  onChange: (v: T) => void;
-  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+  options: {
+    value: T;
+    label: string;
+  }[];
 }) {
   return (
     <select
       value={value}
-      onChange={(e) => onChange(e.target.value as T)}
-      className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+      onChange={(event) => onChange(event.target.value as T)}
+      className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-600 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
     >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
         </option>
       ))}
     </select>
@@ -181,105 +166,136 @@ function FilterSelect<T extends string>({
 
 export default function NutritionistTable({
   initialData,
-  limit,
 }: NutritionistTableProps) {
   const router = useRouter();
 
-  const [nutritionists, setNutritionists] = useState(initialData.data);
+  const [nutritionists, setNutritionists] = useState<
+    AdminNutritionistListItemDto[]
+  >(initialData.items);
+
   const [search, setSearch] = useState("");
+
   const debouncedSearch = useDebounce(search, 500);
 
-  const [sortBy, setSortBy] = useState<SortBy>("createdAt");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [sortBy, setSortBy] = useState<SortBy>("newest");
+
   const [coachLevel, setCoachLevel] = useState<CoachLevelFilter>("all");
+
   const [availabilityStatus, setAvailabilityStatus] =
     useState<AvailabilityFilter>("all");
+
   const [accountStatus, setAccountStatus] =
     useState<AccountStatusFilter>("all");
 
+  const [nextCursor, setNextCursor] = useState<string | null>(
+    initialData.nextCursor,
+  );
+
+  const [hasMore, setHasMore] = useState(initialData.hasMore);
+
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const [isResetting, setIsResetting] = useState(false);
+
   const [isToggling, setIsToggling] = useState(false);
+
   const [activeId, setActiveId] = useState<string | null>(null);
+
   const [confirmNutritionist, setConfirmNutritionist] =
     useState<AdminNutritionistListItemDto | null>(null);
 
-  const resettingRef = useRef(false);
-  const [isResetting, setIsResetting] = useState(false);
-  const skipRef = useRef(initialData.skip + initialData.data.length);
-  const hasMoreRef = useRef(initialData.hasMore);
-  const fetchingMoreRef = useRef(false);
-  const isFirstRun = useRef(true);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
   const menuRef = useRef<HTMLDivElement | null>(null);
 
+  const fetchingMoreRef = useRef(false);
+
+  const resettingRef = useRef(false);
+
   const searchRef = useRef("");
-  const sortByRef = useRef<SortBy>("createdAt");
-  const sortOrderRef = useRef<SortOrder>("desc");
+
+  const sortByRef = useRef<SortBy>("newest");
+
   const coachLevelRef = useRef<CoachLevelFilter>("all");
+
   const availabilityStatusRef = useRef<AvailabilityFilter>("all");
+
   const accountStatusRef = useRef<AccountStatusFilter>("all");
 
-  const fetchPage = useCallback(
-    async (skip: number, replace: boolean) => {
-      const res = await adminNutritionistService.getNutritionists({
-        skip,
-        limit,
-        search: searchRef.current || undefined,
-        sortBy: sortByRef.current,
-        sortOrder: sortOrderRef.current,
-        applicationStatus: "approved",
-        coachLevel:
-          coachLevelRef.current === "all" ? undefined : coachLevelRef.current,
-        availabilityStatus:
-          availabilityStatusRef.current === "all"
-            ? undefined
-            : availabilityStatusRef.current,
-        isBlocked:
-          accountStatusRef.current === "all"
-            ? undefined
-            : accountStatusRef.current === "blocked",
-      });
-
-      setNutritionists((prev) => (replace ? res.data : [...prev, ...res.data]));
-      skipRef.current = skip + res.data.length;
-      hasMoreRef.current = res.hasMore;
-    },
-    [limit],
-  );
-
-  useEffect(() => {
-    setNutritionists(initialData.data);
-    skipRef.current = initialData.skip + initialData.data.length;
-    hasMoreRef.current = initialData.hasMore;
-  }, [initialData]);
-
-  // Single reset path shared by search, sort, and every filter dimension.
-  useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false;
-      searchRef.current = debouncedSearch;
-      sortByRef.current = sortBy;
-      sortOrderRef.current = sortOrder;
-      coachLevelRef.current = coachLevel;
-      availabilityStatusRef.current = availabilityStatus;
-      accountStatusRef.current = accountStatus;
-      return;
+  const getIsBlocked = (status: AccountStatusFilter): boolean | undefined => {
+    if (status === "active") {
+      return false;
     }
 
-    searchRef.current = debouncedSearch;
-    sortByRef.current = sortBy;
-    sortOrderRef.current = sortOrder;
-    coachLevelRef.current = coachLevel;
-    availabilityStatusRef.current = availabilityStatus;
-    accountStatusRef.current = accountStatus;
+    if (status === "blocked") {
+      return true;
+    }
 
-    skipRef.current = 0;
-    hasMoreRef.current = true;
+    return undefined;
+  };
+
+  const fetchNutritionists = useCallback(async (cursor?: string) => {
+    const response = await adminNutritionistService.getNutritionists({
+      search: searchRef.current || undefined,
+
+      coachLevel:
+        coachLevelRef.current === "all" ? undefined : coachLevelRef.current,
+
+      availabilityStatus:
+        availabilityStatusRef.current === "all"
+          ? undefined
+          : availabilityStatusRef.current,
+
+      applicationStatus: "approved",
+
+      isBlocked: getIsBlocked(accountStatusRef.current),
+
+      sortBy: sortByRef.current,
+
+      cursor,
+
+      limit: 10,
+    });
+
+    const data = response.data;
+
+    if (cursor) {
+      setNutritionists((prev) => [...prev, ...data.items]);
+    } else {
+      setNutritionists(data.items);
+    }
+
+    setNextCursor(data.nextCursor);
+    setHasMore(data.hasMore);
+  }, []);
+
+  useEffect(() => {
+    searchRef.current = debouncedSearch;
+
+    sortByRef.current = sortBy;
+
+    coachLevelRef.current = coachLevel;
+
+    availabilityStatusRef.current = availabilityStatus;
+
+    accountStatusRef.current = accountStatus;
+  }, [debouncedSearch, sortBy, coachLevel, availabilityStatus, accountStatus]);
+
+  useEffect(() => {
+    if (
+      debouncedSearch === "" &&
+      sortBy === "newest" &&
+      coachLevel === "all" &&
+      availabilityStatus === "all" &&
+      accountStatus === "all"
+    ) {
+      return;
+    }
 
     resettingRef.current = true;
     setIsResetting(true);
 
-    fetchPage(0, true)
+    fetchNutritionists()
       .catch(() => toast.error("Failed to load nutritionists"))
       .finally(() => {
         resettingRef.current = false;
@@ -288,67 +304,94 @@ export default function NutritionistTable({
   }, [
     debouncedSearch,
     sortBy,
-    sortOrder,
     coachLevel,
     availabilityStatus,
     accountStatus,
-    fetchPage,
+    fetchNutritionists,
   ]);
 
   useEffect(() => {
+    setNutritionists(initialData.items);
+    setNextCursor(initialData.nextCursor);
+    setHasMore(initialData.hasMore);
+  }, [initialData]);
+
+  useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+
+    if (!sentinel) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) return;
-        if (resettingRef.current) return;
-        if (fetchingMoreRef.current) return;
-        if (!hasMoreRef.current) return;
+        if (!entry.isIntersecting) {
+          return;
+        }
+
+        if (resettingRef.current) {
+          return;
+        }
+
+        if (fetchingMoreRef.current) {
+          return;
+        }
+
+        if (!hasMore) {
+          return;
+        }
+
+        if (!nextCursor) {
+          return;
+        }
 
         fetchingMoreRef.current = true;
         setIsLoadingMore(true);
 
-        fetchPage(skipRef.current, false)
+        fetchNutritionists(nextCursor)
           .catch(() => toast.error("Failed to load more nutritionists"))
           .finally(() => {
             fetchingMoreRef.current = false;
             setIsLoadingMore(false);
           });
       },
-      { rootMargin: "200px" },
+      {
+        rootMargin: "200px",
+      },
     );
 
     observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [fetchPage]);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [fetchNutritionists, hasMore, nextCursor]);
 
   useEffect(() => {
-    if (!activeId) return;
+    if (!activeId) {
+      return;
+    }
 
-    const handleMouseDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+    const handleMouseDown = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setActiveId(null);
       }
     };
 
     document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+    };
   }, [activeId]);
 
-  const handleSort = (field: SortBy) => {
-    if (sortBy === field) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(field);
-      setSortOrder("asc");
-    }
+  const handleSort = () => {
+    setSortBy((prev) => (prev === "newest" ? "oldest" : "newest"));
   };
 
-  // Blocking is an account-level action, so it goes through adminUserService
-  // against the linked userId — not the nutritionist profile's _id.
   const toggleBlock = async (nutritionist: AdminNutritionistListItemDto) => {
     setIsToggling(true);
+
     try {
       await adminUserService.updateBlockStatus(
         nutritionist.userId,
@@ -357,12 +400,17 @@ export default function NutritionistTable({
 
       if (accountStatus !== "all") {
         setNutritionists((prev) =>
-          prev.filter((n) => n._id !== nutritionist._id),
+          prev.filter((item) => item.userId !== nutritionist.userId),
         );
       } else {
         setNutritionists((prev) =>
-          prev.map((n) =>
-            n._id === nutritionist._id ? { ...n, isBlocked: !n.isBlocked } : n,
+          prev.map((item) =>
+            item.userId === nutritionist.userId
+              ? {
+                  ...item,
+                  isBlocked: !item.isBlocked,
+                }
+              : item,
           ),
         );
       }
@@ -379,11 +427,37 @@ export default function NutritionistTable({
     }
   };
 
+  const handleClearFilters = () => {
+    setSearch("");
+    setSortBy("newest");
+    setCoachLevel("all");
+    setAvailabilityStatus("all");
+    setAccountStatus("all");
+  };
+
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    sortBy !== "newest" ||
+    coachLevel !== "all" ||
+    availabilityStatus !== "all" ||
+    accountStatus !== "all";
+
   return (
     <div className="bg-white">
-      <div className="p-4 border-b border-slate-100 flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Toolbar */}
+      <div className="space-y-3 border-b border-slate-100 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <UserSearchBar value={search} onChange={setSearch} />
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="self-start text-xs font-semibold text-teal-700 transition hover:text-teal-800 sm:self-auto"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -391,218 +465,281 @@ export default function NutritionistTable({
             value={coachLevel}
             onChange={setCoachLevel}
             options={[
-              { value: "all", label: "All Levels" },
-              { value: "beginner", label: "Beginner" },
-              { value: "verified", label: "Verified" },
-              { value: "expert", label: "Expert" },
-              { value: "top_coach", label: "Top Coach" },
+              {
+                value: "all",
+                label: "All Levels",
+              },
+              {
+                value: "beginner",
+                label: "Beginner",
+              },
+              {
+                value: "verified",
+                label: "Verified",
+              },
+              {
+                value: "expert",
+                label: "Expert",
+              },
+              {
+                value: "top_coach",
+                label: "Top Coach",
+              },
             ]}
           />
+
           <FilterSelect
             value={availabilityStatus}
             onChange={setAvailabilityStatus}
             options={[
-              { value: "all", label: "All Availability" },
-              { value: "available", label: "Available" },
-              { value: "busy", label: "Busy" },
-              { value: "offline", label: "Offline" },
+              {
+                value: "all",
+                label: "All Availability",
+              },
+              {
+                value: "available",
+                label: "Available",
+              },
+              {
+                value: "busy",
+                label: "Busy",
+              },
+              {
+                value: "offline",
+                label: "Offline",
+              },
             ]}
           />
+
           <FilterSelect
             value={accountStatus}
             onChange={setAccountStatus}
             options={[
-              { value: "all", label: "All Accounts" },
-              { value: "active", label: "Active" },
-              { value: "blocked", label: "Blocked" },
+              {
+                value: "all",
+                label: "All Accounts",
+              },
+              {
+                value: "active",
+                label: "Active",
+              },
+              {
+                value: "blocked",
+                label: "Blocked",
+              },
             ]}
           />
         </div>
       </div>
 
-      <div className="overflow-x-auto relative">
+      {/* Table */}
+      <div className="relative overflow-x-auto">
         {isResetting && (
-          <div className="absolute inset-0 bg-white/60 z-10 flex items-start justify-center pt-16">
+          <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/70 pt-16 backdrop-blur-[1px]">
             <Loader2 size={20} className="animate-spin text-slate-400" />
           </div>
         )}
 
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50/50 text-slate-500 font-medium border-b border-slate-100">
+        <table className="w-full text-left text-sm">
+          <thead className="border-b border-slate-100 bg-slate-50/50 font-medium text-slate-500">
             <tr>
-              <SortableHeader
-                label="Professional"
-                field="fullName"
-                activeSortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-                className="px-6 py-4"
-              />
-              <SortableHeader
-                label="Level"
-                field="coachLevel"
-                activeSortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-                className="px-6 py-4 hidden sm:table-cell"
-              />
-              <th className="px-6 py-4 font-semibold hidden md:table-cell">
+              <th className="px-6 py-4 font-semibold">Professional</th>
+
+              <th className="hidden px-6 py-4 font-semibold sm:table-cell">
+                Level
+              </th>
+
+              <th className="hidden px-6 py-4 font-semibold md:table-cell">
                 Availability
               </th>
-              <SortableHeader
-                label="Experience"
-                field="totalExperienceYears"
-                activeSortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-                className="px-6 py-4 hidden lg:table-cell"
-              />
-              <SortableHeader
-                label="Rating"
-                field="rating"
-                activeSortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-                className="px-6 py-4 hidden lg:table-cell"
-              />
-              <th className="px-6 py-4 font-semibold hidden xl:table-cell">
+
+              <th className="hidden px-6 py-4 font-semibold lg:table-cell">
+                Experience
+              </th>
+
+              <th className="hidden px-6 py-4 font-semibold lg:table-cell">
+                Rating
+              </th>
+
+              <th className="hidden px-6 py-4 font-semibold xl:table-cell">
                 Coached
               </th>
-              <th className="px-6 py-4 font-semibold text-center">Account</th>
-              <th className="px-6 py-4 font-semibold text-right">Actions</th>
+
+              <th className="px-6 py-4 text-center font-semibold">Account</th>
+
+              <th className="px-6 py-4 text-right font-semibold">Actions</th>
+            </tr>
+
+            <tr className="sr-only">
+              <th>Sort</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100">
             {nutritionists.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-slate-400">
+                <td colSpan={8} className="py-12 text-center text-slate-400">
                   No nutritionists found
                 </td>
               </tr>
             ) : (
-              nutritionists.map((n) => (
+              nutritionists.map((nutritionist) => (
                 <tr
-                  key={n._id}
-                  className="hover:bg-slate-50/50 transition-colors group"
+                  key={nutritionist.userId}
+                  className="group transition-colors hover:bg-slate-50/50"
                 >
+                  {/* Professional */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      {n.profileImage ? (
+                      {nutritionist.profileImage ? (
                         <Image
-                          src={n.profileImage}
-                          alt={n.fullName}
+                          src={nutritionist.profileImage}
+                          alt={nutritionist.fullName}
                           width={40}
                           height={40}
-                          className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
+                          className="h-10 w-10 shrink-0 rounded-full border border-slate-200 object-cover"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200">
-                          {getInitials(n.fullName)}
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-emerald-50 text-xs font-bold text-emerald-600">
+                          {getInitials(nutritionist.fullName)}
                         </div>
                       )}
 
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-bold text-slate-900 uppercase text-[13px] truncate">
-                          {n.fullName}
-                        </span>
-                        <span className="text-xs text-slate-500 truncate">
-                          @{n.username} · {n.email}
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-[13px] font-bold text-slate-900">
+                          {nutritionist.fullName}
                         </span>
 
-                        <div className="flex flex-wrap items-center gap-2 mt-1.5 sm:hidden">
-                          <CoachLevelBadge level={n.coachLevel} />
-                          <AvailabilityBadge status={n.availabilityStatus} />
+                        <span className="truncate text-xs text-slate-500">
+                          @{nutritionist.username} · {nutritionist.email}
+                        </span>
+
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2 sm:hidden">
+                          <CoachLevelBadge level={nutritionist.coachLevel} />
+
+                          <AvailabilityBadge
+                            status={nutritionist.availabilityStatus}
+                          />
+
                           <RatingDisplay
-                            rating={n.rating}
-                            totalReviews={n.totalReviews}
+                            rating={nutritionist.rating}
+                            totalReviews={nutritionist.totalReviews}
                           />
                         </div>
                       </div>
                     </div>
                   </td>
 
-                  <td className="px-6 py-4 hidden sm:table-cell">
-                    <CoachLevelBadge level={n.coachLevel} />
+                  {/* Level */}
+                  <td className="hidden px-6 py-4 sm:table-cell">
+                    <CoachLevelBadge level={nutritionist.coachLevel} />
                   </td>
 
-                  <td className="px-6 py-4 hidden md:table-cell">
-                    <AvailabilityBadge status={n.availabilityStatus} />
-                  </td>
-
-                  <td className="px-6 py-4 hidden lg:table-cell text-slate-500 font-medium">
-                    {n.totalExperienceYears} yrs
-                  </td>
-
-                  <td className="px-6 py-4 hidden lg:table-cell">
-                    <RatingDisplay
-                      rating={n.rating}
-                      totalReviews={n.totalReviews}
+                  {/* Availability */}
+                  <td className="hidden px-6 py-4 md:table-cell">
+                    <AvailabilityBadge
+                      status={nutritionist.availabilityStatus}
                     />
                   </td>
 
-                  <td className="px-6 py-4 hidden xl:table-cell text-slate-500 font-medium">
-                    {n.totalPeopleCoached}
+                  {/* Experience */}
+                  <td className="hidden px-6 py-4 font-medium text-slate-500 lg:table-cell">
+                    {nutritionist.totalExperienceYears} yrs
                   </td>
 
+                  {/* Rating */}
+                  <td className="hidden px-6 py-4 lg:table-cell">
+                    <RatingDisplay
+                      rating={nutritionist.rating}
+                      totalReviews={nutritionist.totalReviews}
+                    />
+                  </td>
+
+                  {/* Coached */}
+                  <td className="hidden px-6 py-4 font-medium text-slate-500 xl:table-cell">
+                    {nutritionist.totalPeopleCoached}
+                  </td>
+
+                  {/* Account */}
                   <td className="px-6 py-4 text-center">
                     <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
-                        n.isBlocked
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${
+                        nutritionist.isBlocked
                           ? "bg-red-50 text-red-600"
                           : "bg-emerald-50 text-emerald-600"
                       }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                          n.isBlocked ? "bg-red-600" : "bg-emerald-600"
+                        className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
+                          nutritionist.isBlocked
+                            ? "bg-red-600"
+                            : "bg-emerald-600"
                         }`}
                       />
-                      {n.isBlocked ? "Blocked" : "Active"}
+
+                      {nutritionist.isBlocked ? "Blocked" : "Active"}
                     </span>
                   </td>
 
-                  <td className="px-6 py-4 text-right relative">
+                  {/* Actions */}
+                  <td className="relative px-6 py-4 text-right">
                     <button
+                      type="button"
                       onClick={() =>
-                        setActiveId(activeId === n._id ? null : n._id)
+                        setActiveId(
+                          activeId === nutritionist.userId
+                            ? null
+                            : nutritionist.userId,
+                        )
                       }
-                      className="p-1.5 hover:bg-white border border-transparent hover:border-slate-200 rounded-lg transition-all"
+                      className="rounded-lg border border-transparent p-1.5 transition hover:border-slate-200 hover:bg-white"
+                      aria-label={`Actions for ${nutritionist.fullName}`}
                     >
                       <MoreHorizontal size={18} className="text-slate-400" />
                     </button>
 
-                    {activeId === n._id && (
+                    {activeId === nutritionist.userId && (
                       <div
                         ref={menuRef}
-                        className="absolute right-6 mt-2 w-44 bg-white border border-slate-200 shadow-xl rounded-xl z-20 p-1 animate-in fade-in slide-in-from-top-1"
+                        className="absolute right-6 top-12 z-20 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
                       >
                         <button
-                          onClick={() =>
-                            router.push(`/admin/nutritionists/${n._id}`)
-                          }
-                          className="w-full px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2"
-                        >
-                          <ExternalLink size={14} /> View Profile
-                        </button>
-                        <button
+                          type="button"
                           onClick={() => {
-                            setConfirmNutritionist(n);
+                            setActiveId(null);
+
+                            router.push(
+                              `/admin/nutritionists/${nutritionist.userId}`,
+                            );
+                          }}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          <ExternalLink size={14} />
+                          View Profile
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setConfirmNutritionist(nutritionist);
+
                             setActiveId(null);
                           }}
-                          className={`w-full px-3 py-2 text-xs font-semibold rounded-lg flex items-center gap-2 mt-1 ${
-                            n.isBlocked
+                          className={`mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                            nutritionist.isBlocked
                               ? "text-emerald-600 hover:bg-emerald-50"
                               : "text-red-600 hover:bg-red-50"
                           }`}
                         >
-                          {n.isBlocked ? (
+                          {nutritionist.isBlocked ? (
                             <>
-                              <Unlock size={14} /> Unblock
+                              <Unlock size={14} />
+                              Unblock
                             </>
                           ) : (
                             <>
-                              <Lock size={14} /> Block
+                              <Lock size={14} />
+                              Block
                             </>
                           )}
                         </button>
@@ -614,47 +751,82 @@ export default function NutritionistTable({
             )}
           </tbody>
         </table>
+
+        {/* Sort control */}
+        <div className="border-t border-slate-100 px-6 py-3">
+          <button
+            type="button"
+            onClick={handleSort}
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition hover:text-slate-800"
+          >
+            {sortBy === "newest" ? (
+              <ArrowDown size={13} />
+            ) : (
+              <ArrowUp size={13} />
+            )}
+
+            {sortBy === "newest" ? "Newest first" : "Oldest first"}
+          </button>
+        </div>
       </div>
 
-      <div ref={sentinelRef} className="h-10 flex items-center justify-center">
+      {/* Infinite Scroll */}
+      <div ref={sentinelRef} className="flex h-16 items-center justify-center">
         {isLoadingMore && (
           <Loader2 size={18} className="animate-spin text-slate-400" />
         )}
+
+        {!isLoadingMore && !hasMore && nutritionists.length > 0 && (
+          <span className="text-xs font-medium text-slate-400">
+            No more nutritionists
+          </span>
+        )}
       </div>
 
+      {/* Confirm Dialog */}
       {confirmNutritionist && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center z-[100] p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-slate-100 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-[2px]">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-2xl">
             <h2 className="text-lg font-bold text-slate-900">Confirm Action</h2>
-            <p className="text-sm text-slate-500 mt-2 font-medium">
+
+            <p className="mt-2 text-sm font-medium text-slate-500">
               Are you sure you want to{" "}
               {confirmNutritionist.isBlocked ? "unblock" : "block"}{" "}
-              <span className="text-slate-900 font-bold italic">
+              <span className="font-bold italic text-slate-900">
                 {confirmNutritionist.fullName}
               </span>
               ?
             </p>
-            <div className="flex gap-3 mt-8">
+
+            <div className="mt-8 flex gap-3">
               <button
+                type="button"
                 onClick={() => setConfirmNutritionist(null)}
                 disabled={isToggling}
-                className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all disabled:opacity-50"
+                className="flex-1 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-500 transition hover:bg-slate-200 disabled:opacity-50"
               >
                 Cancel
               </button>
+
               <button
+                type="button"
                 onClick={async () => {
                   await toggleBlock(confirmNutritionist);
+
                   setConfirmNutritionist(null);
                 }}
                 disabled={isToggling}
-                className={`flex-1 px-4 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg transition-all disabled:opacity-50 ${
+                className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white shadow-lg transition disabled:opacity-50 ${
                   confirmNutritionist.isBlocked
-                    ? "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200"
-                    : "bg-red-600 hover:bg-red-700 shadow-red-200"
+                    ? "bg-emerald-600 shadow-emerald-200 hover:bg-emerald-700"
+                    : "bg-red-600 shadow-red-200 hover:bg-red-700"
                 }`}
               >
-                Yes, {confirmNutritionist.isBlocked ? "Unblock" : "Block"}
+                {isToggling
+                  ? "Please wait..."
+                  : `Yes, ${
+                      confirmNutritionist.isBlocked ? "Unblock" : "Block"
+                    }`}
               </button>
             </div>
           </div>

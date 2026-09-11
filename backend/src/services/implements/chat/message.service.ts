@@ -16,7 +16,7 @@ import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-
 
 import { ISocketService } from "../../interfaces/socket/ISocketService";
 
-import { MessageMapper } from "../../../mapper/chat/message.mapper";
+import { MessageMapper } from "../../../mappers/chat/message.mapper";
 
 import { MessageType } from "../../../models/message.model";
 import { ReceiptStatus } from "../../../models/messageReceipt.model";
@@ -232,7 +232,9 @@ export class MessageService implements IMessageService {
       decodedCursor ?? undefined,
     );
 
-    const items = result.items.map(MessageMapper.toResponseDTO).reverse();
+    const items: MessageResponseDTO[] = result.items
+      .map((item) => MessageMapper.toResponseDTO(item))
+      .reverse();
 
     logger.debug("Messages fetched", {
       conversationId,
@@ -275,7 +277,8 @@ export class MessageService implements IMessageService {
       throw new CustomError("Unsupported file type", StatusCode.BAD_REQUEST);
     }
 
-    const fileUrl = await uploadToCloudinary(file, "chat-files");
+    const uploadResult = await uploadToCloudinary(file, "chat-files");
+    const fileUrl = uploadResult.secureUrl;
 
     return this.sendMessage({
       conversationId: dto.conversationId,

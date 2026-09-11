@@ -12,7 +12,7 @@ import { ISessionRepository } from "../../../repositories/interfaces/public/ISes
 
 import { CreateSessionCheckoutDTO } from "../../../dtos/public/session-registration/create-session-checkout.dto";
 
-import { SessionCheckoutStripeMapper } from "../../../mapper/public/session-registration/session-checkout-stripe.mapper";
+import { SessionCheckoutStripeMapper } from "../../../mappers/public/session-registration/session-checkout-stripe.mapper";
 
 import { CustomError } from "../../../utils/customError";
 

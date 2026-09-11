@@ -21,6 +21,7 @@ export interface INutriResourceListProjection {
   isDownloadable: boolean;
 
   viewCount: number;
+  downloadCount?: number;
   likeCount: number;
   bookmarkCount: number;
   commentCount: number;

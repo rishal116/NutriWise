@@ -27,13 +27,11 @@ export default function AuthProvider({
 
   const user = useSelector((state: RootState) => state.auth.user);
 
-  // Restore authentication
   useEffect(() => {
     const shouldSkip = SKIP_AUTH_ROUTES.some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`)
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
 
-    // Don't call /me on auth pages
     if (shouldSkip) return;
 
     let isMounted = true;
@@ -59,14 +57,13 @@ export default function AuthProvider({
     };
   }, [dispatch, pathname]);
 
-  // Redirect authenticated users
   useEffect(() => {
     if (!user) return;
 
     const isAuthRoute =
       pathname === "/" ||
       SKIP_AUTH_ROUTES.some(
-        (route) => pathname === route || pathname.startsWith(`${route}/`)
+        (route) => pathname === route || pathname.startsWith(`${route}/`),
       );
 
     if (!isAuthRoute) return;

@@ -3,9 +3,9 @@ import { Request, Response, NextFunction } from "express";
 export interface IAdminChallengeController {
   createChallenge(req: Request, res: Response, next: NextFunction): void;
 
-  browseChallenges(req: Request, res: Response, next: NextFunction): void;
+  listChallenges(req: Request, res: Response, next: NextFunction): void;
 
-  getChallenge(req: Request, res: Response, next: NextFunction): void;
+  getChallengeDetails(req: Request, res: Response, next: NextFunction): void;
 
   updateChallenge(req: Request, res: Response, next: NextFunction): void;
 

@@ -12,7 +12,7 @@ import { UserActivityTrackingResponseDTO } from "../../../../dtos/user/tracking/
 import { CustomError } from "../../../../utils/customError";
 import { TYPES } from "../../../../types/types";
 import { StatusCode } from "../../../../enums/statusCode.enum";
-import { UserActivityTrackingMapper } from "../../../../mapper/user/tracking/user-activity-tracking.mapper";
+import { UserActivityTrackingMapper } from "../../../../mappers/user/tracking/user-activity-tracking.mapper";
 import { Types } from "mongoose";
 
 @injectable()

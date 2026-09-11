@@ -10,7 +10,7 @@ import { GetUserProfileDto } from "../../../dtos/user/profile/getUserProfile.dto
 import {
   toUserProfileDto,
   toUserProfileImageDto,
-} from "../../../mapper/user/profile/userProfile.mapper";
+} from "../../../mappers/user/profile/userProfile.mapper";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { UpdateUserProfileDto } from "../../../dtos/user/profile/updateUserProfile.dto";
 import { validateProfileImage } from "../../../validations/file/profileImage.validation";
@@ -74,7 +74,8 @@ export class UserProfileService implements IUserProfileService {
     let cloudinaryUrl: string;
 
     try {
-      cloudinaryUrl = await uploadToCloudinary(file, "user-profile-images");
+      const uploadRes = await uploadToCloudinary(file, "user-profile-images");
+      cloudinaryUrl = uploadRes.secureUrl;
     } catch (error) {
       logger.error("Cloudinary upload failed", {
         userId,
