@@ -8,7 +8,7 @@ import { IUserRepository } from "../../../repositories/interfaces/user/account/I
 import { IUserPlanRepository } from "../../../repositories/interfaces/user/program/IUserPlanRepository";
 import { CreateDirectConversationDTO } from "../../../dtos/chat/createConversation.dto";
 import { ConversationResponseDTO } from "../../../dtos/chat/conversationResponse.dto";
-import { ConversationMapper } from "../../../mapper/chat/conversation.mapper";
+import { ConversationMapper } from "../../../mappers/chat/conversation.mapper";
 import { decodeCursor } from "../../../utils/cursor.util";
 import { buildDirectKey } from "../../../utils/chat.util";
 import logger from "../../../utils/logger";

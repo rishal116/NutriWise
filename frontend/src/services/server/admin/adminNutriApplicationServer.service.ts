@@ -1,0 +1,36 @@
+import { cookies } from "next/headers";
+
+import { serverApi } from "@/lib/axios/serverApi";
+
+import { ADMIN_NUTRITIONIST_APPLICATION_ROUTES } from "@/routes/admin";
+
+import { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
+
+import { AdminNutritionistApplicationListQueryDto } from "@/dtos/admin/nutritionistApplication/admin-nutritionist-application-list-query.dto";
+
+import { AdminNutritionistApplicationListItemDto } from "@/dtos/admin/nutritionistApplication/admin-nutritionist-application-list-item.dto";
+
+import { ApiResponseDTO } from "@/dtos/common/api-response.dto";
+
+export const adminNutritionistApplicationServerService = {
+  async getApplications(
+    query: AdminNutritionistApplicationListQueryDto,
+  ): Promise<
+    InfiniteScrollResponseDTO<AdminNutritionistApplicationListItemDto>
+  > {
+    const cookieStore = await cookies();
+
+    const response = await serverApi.get<
+      ApiResponseDTO<
+        InfiniteScrollResponseDTO<AdminNutritionistApplicationListItemDto>
+      >
+    >(ADMIN_NUTRITIONIST_APPLICATION_ROUTES.APPLICATIONS, {
+      params: query,
+      headers: {
+        Cookie: cookieStore.toString(),
+      },
+    });
+
+    return response.data.data;
+  },
+};

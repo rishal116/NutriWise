@@ -16,11 +16,10 @@ export class NutriResourceListItemDTO {
   thumbnailUrl?: string;
 
   status!: ResourceStatus;
-
-
+  isDownloadable?: boolean;
 
   viewCount!: number;
-  downloadCount!: number;
+  downloadCount?: number;
   likeCount!: number;
   bookmarkCount!: number;
   commentCount!: number;

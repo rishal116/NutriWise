@@ -1,7 +1,11 @@
 import { ClassConstructor, plainToInstance } from "class-transformer";
+
 import { validate } from "class-validator";
+
 import { Request, Response, NextFunction } from "express";
+
 import { CustomError } from "../utils/customError";
+
 import { StatusCode } from "../enums/statusCode.enum";
 
 export const validateDtoMiddleware = <T extends object>(
@@ -12,7 +16,9 @@ export const validateDtoMiddleware = <T extends object>(
     _res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    const dto = plainToInstance(DtoClass, req.body);
+    const dto = plainToInstance(DtoClass, req.body, {
+      enableImplicitConversion: true,
+    });
 
     const errors = await validate(dto);
 
@@ -32,7 +38,9 @@ export const validateDto = async <T extends object>(
   DtoClass: ClassConstructor<T>,
   payload: unknown,
 ): Promise<T> => {
-  const dto = plainToInstance(DtoClass, payload);
+  const dto = plainToInstance(DtoClass, payload, {
+    enableImplicitConversion: true,
+  });
 
   const errors = await validate(dto);
 

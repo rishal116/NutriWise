@@ -31,7 +31,6 @@ export class UserGroupService implements IUserGroupService {
 
     const userMemberships = await this._conversationMemberRepo.findByUser(
       userId,
-      "user",
     );
 
     const joinedSet = new Set(
@@ -45,7 +44,7 @@ export class UserGroupService implements IUserGroupService {
         id,
         title: group.title ?? "Untitled Group",
         description: group.description ?? "",
-        visibility: group.visibility ?? "public",
+        visibility: "public",
         memberCount: memberCountMap.get(id) || 0,
         isJoined: joinedSet.has(id),
         createdAt: group.createdAt,

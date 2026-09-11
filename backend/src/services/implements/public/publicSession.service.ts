@@ -8,7 +8,7 @@ import { PublicSessionDetailsResponseDTO } from "../../../dtos/public/session/pu
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { PublicSessionMapper } from "../../../mapper/public/session/public-session.mapper";
+import { PublicSessionMapper } from "../../../mappers/public/session/public-session.mapper";
 import logger from "../../../utils/logger";
 
 @injectable()

@@ -1,13 +1,34 @@
-import { Types } from "mongoose";
+import { PipelineStage, Types } from "mongoose";
+
 import { BaseRepository } from "../common/base.repository";
+
 import { IAdminNutritionistApplicationRepository } from "../../interfaces/admin/IAdminNutritionistApplicationRepository";
+
 import {
   INutritionistProfile,
   NutritionistProfileModel,
 } from "../../../models/nutritionistProfile.model";
+
 import { ApplicationStatus } from "../../../types/nutritionist.types";
+
 import { AdminNutritionistApplicationListQueryDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-query.dto";
+
 import { AdminNutritionistApplicationListItemDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-item.dto";
+
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
+
+import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
+
+type AdminNutritionistApplicationWithCursor =
+  AdminNutritionistApplicationListItemDto & {
+    cursorId: Types.ObjectId;
+    cursorValue: Date;
+  };
+
+const ADMIN_NUTRITIONIST_APPLICATION_SORT_FIELD_MAP = {
+  newest: "createdAt",
+  oldest: "createdAt",
+} as const;
 
 export class AdminNutritionistApplicationRepository
   extends BaseRepository<INutritionistProfile>
@@ -19,112 +40,169 @@ export class AdminNutritionistApplicationRepository
 
   async getApplications(
     query: AdminNutritionistApplicationListQueryDto,
-  ): Promise<{
-    applications: AdminNutritionistApplicationListItemDto[];
-    total: number;
-  }> {
+  ): Promise<CursorPaginationResult<AdminNutritionistApplicationListItemDto>> {
     const {
-      skip,
-      limit,
       search,
       applicationStatus,
-      sortBy = "createdAt",
-      sortOrder = "desc",
+      sortBy = "newest",
+      cursor,
+      limit = 12,
     } = query;
 
-    const profileFilter: Record<string, unknown> = {};
-    const userFilter: Record<string, unknown> = {};
+    const sortField = ADMIN_NUTRITIONIST_APPLICATION_SORT_FIELD_MAP[sortBy];
+
+    const cursorData = decodeCursor(cursor);
+
+    const profileMatch: Record<string, unknown> = {};
 
     if (applicationStatus) {
-      profileFilter.applicationStatus = applicationStatus;
+      profileMatch.applicationStatus = applicationStatus;
     }
 
-    const keyword = search?.trim();
+    const pipeline: PipelineStage[] = [
+      {
+        $match: profileMatch,
+      },
 
-    if (keyword) {
-      userFilter.$or = [
-        { "user.fullName": { $regex: keyword, $options: "i" } },
-        { "user.email": { $regex: keyword, $options: "i" } },
-        { "user.username": { $regex: keyword, $options: "i" } },
-      ];
+      {
+        $lookup: {
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+
+      {
+        $unwind: "$user",
+      },
+
+      {
+        $match: {
+          "user.deletedAt": null,
+        },
+      },
+    ];
+
+    if (search?.trim()) {
+      const keyword = search.trim();
+
+      pipeline.push({
+        $match: {
+          $or: [
+            {
+              "user.fullName": {
+                $regex: keyword,
+                $options: "i",
+              },
+            },
+            {
+              "user.email": {
+                $regex: keyword,
+                $options: "i",
+              },
+            },
+            {
+              "user.username": {
+                $regex: keyword,
+                $options: "i",
+              },
+            },
+          ],
+        },
+      });
     }
 
-    const [applications, count] = await Promise.all([
-      this._model.aggregate<AdminNutritionistApplicationListItemDto>([
-        {
-          $match: profileFilter,
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
-          },
-        },
-        {
-          $unwind: "$user",
-        },
-        {
-          $match: {
-            "user.deletedAt": null,
-            ...userFilter,
-          },
-        },
-        {
-          $project: {
-            _id: 1,
-            userId: "$user._id",
-            fullName: "$user.fullName",
-            email: "$user.email",
-            profileImage: "$user.profileImage",
-            applicationStatus: 1,
-            createdAt: 1,
-          },
-        },
-        {
-          $sort: {
-            [sortBy]: sortOrder === "asc" ? 1 : -1,
-          },
-        },
-        {
-          $skip: skip,
-        },
-        {
-          $limit: limit,
-        },
-      ]),
+    const isAscending = sortBy === "oldest";
 
-      this._model.aggregate([
-        {
-          $match: profileFilter,
+    if (cursorData) {
+      const cursorValue = new Date(cursorData.value);
+
+      pipeline.push({
+        $match: {
+          $or: [
+            {
+              [sortField]: {
+                [isAscending ? "$gt" : "$lt"]: cursorValue,
+              },
+            },
+            {
+              [sortField]: cursorValue,
+              _id: {
+                [isAscending ? "$gt" : "$lt"]: new Types.ObjectId(
+                  cursorData.id,
+                ),
+              },
+            },
+          ],
         },
-        {
-          $lookup: {
-            from: "users",
-            localField: "userId",
-            foreignField: "_id",
-            as: "user",
+      });
+    }
+
+    pipeline.push(
+      {
+        $sort: {
+          [sortField]: isAscending ? 1 : -1,
+          _id: isAscending ? 1 : -1,
+        },
+      },
+      {
+        $limit: limit + 1,
+      },
+      {
+        $project: {
+          _id: 0,
+
+          id: {
+            $toString: "$_id",
           },
-        },
-        {
-          $unwind: "$user",
-        },
-        {
-          $match: {
-            "user.deletedAt": null,
-            ...userFilter,
+
+          userId: {
+            $toString: "$user._id",
           },
+
+          fullName: "$user.fullName",
+          email: "$user.email",
+          profileImage: "$user.profileImage",
+
+          applicationStatus: 1,
+          createdAt: 1,
+
+          cursorId: "$_id",
+          cursorValue: `$${sortField}`,
         },
-        {
-          $count: "total",
-        },
-      ]),
-    ]);
+      },
+    );
+
+    const result =
+      await this._model.aggregate<AdminNutritionistApplicationWithCursor>(
+        pipeline,
+      );
+
+    const hasMore = result.length > limit;
+
+    const items = hasMore ? result.slice(0, limit) : result;
+
+    const lastItem = items[items.length - 1];
+
+    const nextCursor =
+      hasMore && lastItem
+        ? encodeCursor({
+            id: lastItem.cursorId.toString(),
+            value: lastItem.cursorValue.toISOString(),
+            sortKey: sortBy,
+          })
+        : null;
+
+    const cleanItems = items.map(
+      ({ cursorId: _cursorId, cursorValue: _cursorValue, ...application }) =>
+        application,
+    );
 
     return {
-      applications,
-      total: count[0]?.total ?? 0,
+      items: cleanItems,
+      nextCursor,
+      hasMore,
     };
   }
 
@@ -142,6 +220,7 @@ export class AdminNutritionistApplicationRepository
           applicationStatus: status,
           rejectionReason: status === "rejected" ? rejectionReason : undefined,
         },
+
         $unset:
           status === "approved"
             ? {

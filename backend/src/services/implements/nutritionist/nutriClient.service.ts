@@ -16,9 +16,9 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
-import { NutriClientListMapper } from "../../../mapper/nutritionist/client/nutri-client-list.mapper";
-import { NutriClientDetailsMapper } from "../../../mapper/nutritionist/client/nutri-client-details.mapper";
-import { MeetingClientOptionMapper } from "../../../mapper/nutritionist/client/meeting-client-option.mapper";
+import { NutriClientListMapper } from "../../../mappers/nutritionist/client/nutri-client-list.mapper";
+import { NutriClientDetailsMapper } from "../../../mappers/nutritionist/client/nutri-client-details.mapper";
+import { MeetingClientOptionMapper } from "../../../mappers/nutritionist/client/meeting-client-option.mapper";
 
 @injectable()
 export class NutriClientService implements INutriClientService {

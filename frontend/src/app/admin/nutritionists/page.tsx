@@ -1,36 +1,34 @@
-import NutritionistTable from "@/components/admin/NutritionistTable";
-import { adminNutritionistServerService } from "@/services/server/admin/adminNutri.service";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Admin – Nutritionists",
-  description: "Manage professional nutritionist profiles and approvals",
+import NutritionistTable from "@/components/admin/NutritionistTable";
+
+import { adminNutritionistServerService } from "@/services/server/admin/adminNutriServer.service";
+
+export const metadata: Metadata = {
+  title: "Nutritionists | NutriWise Admin",
+  description:
+    "Manage professional nutritionist profiles, verify credentials, and control account access.",
 };
 
 export default async function NutritionistsPage() {
-  const initialData =
-    await adminNutritionistServerService.getNutritionists({
-      skip: 0,
-      limit: 10,
-      search: "",
-      sortBy: "createdAt",
-      sortOrder: "desc",
-    });
+  const initialData = await adminNutritionistServerService.getNutritionists({
+    limit: 10,
+    sortBy: "newest",
+  });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">
-          Nutritionists
-        </h1>
+        <h1 className="text-2xl font-bold text-slate-900">Nutritionists</h1>
 
-        <p className="text-sm text-slate-500 font-medium">
+        <p className="text-sm font-medium text-slate-500">
           Manage professional profiles, verify credentials, and control account
           access.
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <NutritionistTable initialData={initialData} limit={10} />
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <NutritionistTable initialData={initialData} />
       </div>
     </div>
   );

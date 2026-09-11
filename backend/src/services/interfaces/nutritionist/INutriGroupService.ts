@@ -10,5 +10,9 @@ export interface INutriGroupService {
     },
   ): Promise<IConversation>;
 
-  getMyGroups(userId: string,role:string,limit:number,skip:number): Promise<IConversation[]>;
+  getMyGroups(
+    userId: string,
+    limit?: number,
+    skip?: number,
+  ): Promise<IConversation[]>;
 }

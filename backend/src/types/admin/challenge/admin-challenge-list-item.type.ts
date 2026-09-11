@@ -3,7 +3,6 @@ import {
   ChallengeCategory,
   ChallengeDifficulty,
   ChallengeStatus,
-  ChallengeType,
 } from "../../../models/challenge.model";
 
 export interface AdminChallengeListItem {
@@ -11,21 +10,18 @@ export interface AdminChallengeListItem {
 
   title: string;
   description: string;
+
   thumbnailUrl?: string;
 
   category: ChallengeCategory;
   difficulty: ChallengeDifficulty;
-  type: ChallengeType;
   accessType: ChallengeAccessType;
 
   durationDays: number;
 
-  startDate: Date;
-  endDate: Date;
-
   status: ChallengeStatus;
 
-  rewardPoints: number;
+  createdBy: string;
 
   createdAt: Date;
   updatedAt: Date;

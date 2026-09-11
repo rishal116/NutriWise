@@ -12,7 +12,7 @@ import {
   toNutritionistBrowseResponseDTO,
   toNutritionistBrowseStatsDTO,
   toNutritionistDetailDTO,
-} from "../../../../mapper/user/nutri-browsing/nutri-browsing.mapper";
+} from "../../../../mappers/user/nutri-browsing/nutri-browsing.mapper";
 import { NutritionistDetailDTO } from "../../../../dtos/user/nutri-browsing/nutri-profile.dto";
 import { NutritionistBrowseStatsDTO } from "../../../../dtos/user/nutri-browsing/nutri-browse-stats.dto";
 

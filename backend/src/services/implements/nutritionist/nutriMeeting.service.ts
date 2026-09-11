@@ -5,7 +5,7 @@ import { TYPES } from "../../../types/types";
 import { INutriMeetingService } from "../../interfaces/nutritionist/INutriMeetingService";
 import { INutriMeetingRepository } from "../../../repositories/interfaces/nutritionist/INutriMeetingRepository";
 import { CreateMeetingDTO } from "../../../dtos/nutritionist/meeting/create-meeting.dto";
-import { MeetingMapper } from "../../../mapper/nutritionist/meeting/meeting-list.mapper";
+import { MeetingMapper } from "../../../mappers/nutritionist/meeting/meeting-list.mapper";
 import { IMeeting, MeetingStatus } from "../../../models/meeting.model";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
@@ -14,7 +14,7 @@ import { MeetingListQueryDTO } from "../../../dtos/nutritionist/meeting/meeting-
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { MeetingCardResponseDTO } from "../../../dtos/nutritionist/meeting/meeting-card-response.dto";
 import { MeetingDetailsResponseDTO } from "../../../dtos/nutritionist/meeting/meeting-details-response.dto";
-import { MeetingDetailsMapper } from "../../../mapper/nutritionist/meeting/meeting-details.mapper";
+import { MeetingDetailsMapper } from "../../../mappers/nutritionist/meeting/meeting-details.mapper";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 
 @injectable()

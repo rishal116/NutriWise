@@ -4,16 +4,25 @@ export interface IUserChallengeProgress {
   _id: Types.ObjectId;
 
   userChallengeId: Types.ObjectId;
+
   userId: Types.ObjectId;
   challengeId: Types.ObjectId;
+
+  challengeDayId: Types.ObjectId;
+  activityId: Types.ObjectId;
+
+  dayNumber: number;
 
   dateKey: string;
 
   value?: number;
   durationMinutes?: number;
-  isCompleted?: boolean;
+
+  isCompleted: boolean;
 
   note?: string;
+
+  completedAt?: Date;
 
   createdAt: Date;
   updatedAt: Date;
@@ -40,6 +49,24 @@ const UserChallengeProgressSchema = new Schema<IUserChallengeProgress>(
       ref: "Challenge",
       required: true,
       index: true,
+    },
+
+    challengeDayId: {
+      type: Schema.Types.ObjectId,
+      ref: "ChallengeDay",
+      required: true,
+      index: true,
+    },
+
+    activityId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
+
+    dayNumber: {
+      type: Number,
+      required: true,
+      min: 1,
     },
 
     dateKey: {
@@ -70,6 +97,10 @@ const UserChallengeProgressSchema = new Schema<IUserChallengeProgress>(
       trim: true,
       maxlength: 1000,
     },
+
+    completedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -79,12 +110,17 @@ const UserChallengeProgressSchema = new Schema<IUserChallengeProgress>(
 UserChallengeProgressSchema.index(
   {
     userChallengeId: 1,
-    dateKey: 1,
+    activityId: 1,
   },
   {
     unique: true,
   },
 );
+
+UserChallengeProgressSchema.index({
+  userChallengeId: 1,
+  dayNumber: 1,
+});
 
 UserChallengeProgressSchema.index({
   userId: 1,

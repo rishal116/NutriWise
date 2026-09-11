@@ -392,6 +392,18 @@ import { IUserPostService } from "../services/interfaces/user/IUserPostSservice"
 import { UserPostService } from "../services/implements/user/userPost.service";
 import { IUserPostController } from "../controllers/interfaces/user/IUserPostController";
 import { UserPostController } from "../controllers/implementations/user/userPost.controller";
+import { IAdminChallengeController } from "../controllers/interfaces/admin/IAdminChallengeController";
+import { AdminChallengeController } from "../controllers/implementations/admin/adminChallenge.controller";
+import { IAdminChallengeService } from "../services/interfaces/admin/IAdminChallengeService";
+import { AdminChallengeService } from "../services/implements/admin/adminChallenge.service";
+import { AdminChallengeRepository } from "../repositories/implements/admin/adminChallenge.repository";
+import { IAdminChallengeRepository } from "../repositories/interfaces/admin/IAdminChallengeRepository";
+import { IAdminChallengeDayController } from "../controllers/interfaces/admin/IAdminChallengeDayController";
+import { AdminChallengeDayController } from "../controllers/implementations/admin/adminChallengeDay.controller";
+import { IAdminChallengeDayService } from "../services/interfaces/admin/IAdminChallengeDayService";
+import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDAy.service";
+import { IAdminChallengeDayRepository } from "../repositories/interfaces/admin/IAdminChallengDayRepository";
+import { AdminChallengeDayRepository } from "../repositories/implements/admin/adminChallengeDay.repository";
 
 const container = new Container();
 
@@ -659,6 +671,14 @@ container
 // ---------- Controllers ----------
 
 container
+  .bind<IAdminChallengeDayController>(TYPES.IAdminChallengeDayController)
+  .to(AdminChallengeDayController);
+
+container
+  .bind<IAdminChallengeController>(TYPES.IAdminChallengeController)
+  .to(AdminChallengeController);
+
+container
   .bind<IAdminNutritionistApplicationController>(
     TYPES.IAdminNutritionistApplicationController,
   )
@@ -675,6 +695,13 @@ container
 // ---------- Services ----------
 
 container
+  .bind<IAdminChallengeDayService>(TYPES.IAdminChallengeDayService)
+  .to(AdminChallengeDayService);
+
+container
+  .bind<IAdminChallengeService>(TYPES.IAdminChallengeService)
+  .to(AdminChallengeService);
+container
   .bind<IAdminNutritionistApplicationService>(
     TYPES.IAdminNutritionistApplicationService,
   )
@@ -687,7 +714,13 @@ container
 container.bind<IAdminUserService>(TYPES.IAdminUserService).to(AdminUserService);
 
 // ---------- Repositories ----------
+container
+  .bind<IAdminChallengeDayRepository>(TYPES.IAdminChallengeDayRepository)
+  .to(AdminChallengeDayRepository);
 
+container
+  .bind<IAdminChallengeRepository>(TYPES.IAdminChallengeRepository)
+  .to(AdminChallengeRepository);
 container
   .bind<IAdminNutritionistApplicationRepository>(
     TYPES.IAdminNutritionistApplicationRepository,

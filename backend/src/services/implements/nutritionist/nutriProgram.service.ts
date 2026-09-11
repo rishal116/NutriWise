@@ -12,8 +12,8 @@ import logger from "../../../utils/logger";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { UserProgramCardResponseDTO } from "../../../dtos/nutritionist/program/program-card-response.dto";
-import { ProgramCardMapper } from "../../../mapper/nutritionist/program/program-card.mapper";
-import { ProgramDetailsMapper } from "../../../mapper/nutritionist/program/program-details.mapper";
+import { ProgramCardMapper } from "../../../mappers/nutritionist/program/program-card.mapper";
+import { ProgramDetailsMapper } from "../../../mappers/nutritionist/program/program-details.mapper";
 import { UserProgramDetailsResponseDTO } from "../../../dtos/nutritionist/program/program-details-response.dto";
 
 @injectable()

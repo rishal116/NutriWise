@@ -41,9 +41,8 @@ export class NutriGroupService implements INutriGroupService {
 
     const group = await this._conversationRepo.create({
       chatType: "group",
+      purpose: "group_coaching",
       title: data.title,
-      admins: [new Types.ObjectId(userId)],
-      visibility: data.isPublic ? "public" : "private",
       description: data.description,
     });
 
@@ -55,7 +54,6 @@ export class NutriGroupService implements INutriGroupService {
       conversationId: group._id,
       userId: new Types.ObjectId(userId),
       role: "owner",
-      roleContext: "nutritionist",
     });
 
     logger.info("Creator added as owner", {
@@ -68,23 +66,15 @@ export class NutriGroupService implements INutriGroupService {
 
   async getMyGroups(
     userId: string,
-    role: "user" | "nutritionist",
     limit = 10,
     skip = 0,
   ): Promise<IConversation[]> {
-    const memberships = await this._conversationMemberRepo.findByUser(
-      userId,
-      role,
-    );
+    const memberships = await this._conversationMemberRepo.findByUser(userId);
 
-    const groupIds = memberships.map((m) => m.conversationId);
+    const groupIds = new Set(memberships.map((m) => m.conversationId.toString()));
 
-    const groups = await this._conversationRepo.findByIdsPaginated(
-      groupIds.map((id) => id.toString()),
-      limit,
-      skip,
-    );
+    const groups = await this._conversationRepo.findGroups(limit, skip);
 
-    return groups.filter((g) => g.chatType === "group");
+    return groups.filter((g) => groupIds.has(g._id.toString()));
   }
 }

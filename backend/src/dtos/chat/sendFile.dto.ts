@@ -1,9 +1,9 @@
-import { RoleContext } from "../../models/conversationMember.model";
+import { UserRole } from "../../enums/user.enum";
 
 export interface SendFileDTO {
   conversationId: string;
   senderId: string;
-   context: RoleContext;
+  context: UserRole;
   file?: Express.Multer.File;
  
 }

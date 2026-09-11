@@ -1,13 +1,18 @@
-import { UserRole } from "../../../enums/userRole.enum";
+import { UserRole } from "../../../enums/user.enum";
 
 export interface AdminUserListItemDto {
   id: string;
+
   fullName: string;
   email: string;
   username: string;
+
   profileImage?: string;
+
   activeRole: UserRole;
+
   isBlocked: boolean;
   isProfileCompleted: boolean;
+
   createdAt: Date;
 }

@@ -3,14 +3,14 @@ import { IHealthDetailsService } from "../../interfaces/user/account/IHealthDeta
 import { IHealthDetailsRepository } from "../../../repositories/interfaces/user/account/IHealthDetailsRepository";
 import { TYPES } from "../../../types/types";
 import { HealthDetailsResponseDto } from "../../../dtos/user/health/health-details.response.dto";
-import { HealthDetailsMapper } from "../../../mapper/user/health/health-details.mapper";
+import { HealthDetailsMapper } from "../../../mappers/user/health/health-details.mapper";
 import { HealthDetailsValidator } from "../../../validations/user/health/healthDetails.validator";
 import logger from "../../../utils/logger";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IHealthProgressRepository } from "../../../repositories/interfaces/user/account/IHealthProgressRepository";
 import { HealthDetailsRequestDto } from "../../../dtos/user/health/health-details.request.dto";
-import { HealthCalculatorHelper } from "../../../helper/user/health/health-calculator.helper";
+import { HealthCalculatorHelper } from "../../../helpers/user/health/health-calculator.helper";
 
 @injectable()
 export class HealthDetailsService implements IHealthDetailsService {

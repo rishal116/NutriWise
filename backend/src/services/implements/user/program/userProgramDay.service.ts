@@ -8,9 +8,9 @@ import { StatusCode } from "../../../../enums/statusCode.enum";
 import logger from "../../../../utils/logger";
 import { InfiniteScrollResponseDTO } from "../../../../dtos/common/infinite-scroll-response.dto";
 import { UserProgramDayListQueryDTO } from "../../../../dtos/user/program/user-program-day-list-query.dto";
-import { UserProgramDayListMapper } from "../../../../mapper/user/program/user-program-day-list.mapper";
+import { UserProgramDayListMapper } from "../../../../mappers/user/program/user-program-day-list.mapper";
 import { UserProgramDayDetailsResponseDTO } from "../../../../dtos/user/program/user-program-day-details-response.dto";
-import { UserProgramDayDetailsMapper } from "../../../../mapper/user/program/user-program-day-details.mapper";
+import { UserProgramDayDetailsMapper } from "../../../../mappers/user/program/user-program-day-details.mapper";
 
 @injectable()
 export class UserProgramDayService implements IUserProgramDayService {

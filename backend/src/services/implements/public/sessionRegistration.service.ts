@@ -13,7 +13,7 @@ import { SessionRegistrationResponseDTO } from "../../../dtos/public/session-reg
 
 import { SessionRegistrationCheckoutResponseDTO } from "../../../dtos/public/session-registration/session-registration-checkout-response.dto";
 
-import { SessionRegistrationMapper } from "../../../mapper/public/session-registration/session-registration.mapper";
+import { SessionRegistrationMapper } from "../../../mappers/public/session-registration/session-registration.mapper";
 
 import { CustomError } from "../../../utils/customError";
 

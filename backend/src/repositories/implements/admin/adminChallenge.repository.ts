@@ -20,8 +20,6 @@ import { AdminChallengeDetailsResult } from "../../../types/admin/challenge/admi
 const ADMIN_CHALLENGE_SORT_FIELD_MAP = {
   newest: "createdAt",
   oldest: "createdAt",
-  start_date_asc: "startDate",
-  start_date_desc: "startDate",
 } as const;
 
 type ChallengeCardWithCursor = AdminChallengeListItem & {
@@ -45,7 +43,6 @@ export class AdminChallengeRepository
       search,
       category,
       difficulty,
-      type,
       accessType,
       status,
       sortBy = "newest",
@@ -69,10 +66,6 @@ export class AdminChallengeRepository
       matchStage.difficulty = difficulty;
     }
 
-    if (type) {
-      matchStage.type = type;
-    }
-
     if (accessType) {
       matchStage.accessType = accessType;
     }
@@ -82,16 +75,20 @@ export class AdminChallengeRepository
     }
 
     if (search?.trim()) {
+      const escapedSearch = search
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
       matchStage.$or = [
         {
           title: {
-            $regex: search.trim(),
+            $regex: escapedSearch,
             $options: "i",
           },
         },
         {
           description: {
-            $regex: search.trim(),
+            $regex: escapedSearch,
             $options: "i",
           },
         },
@@ -104,10 +101,10 @@ export class AdminChallengeRepository
       });
     }
 
+    const isAscending = sortBy === "oldest";
+
     if (cursorData) {
       const cursorValue = new Date(cursorData.value);
-
-      const isAscending = sortBy === "oldest" || sortBy === "start_date_asc";
 
       pipeline.push({
         $match: {
@@ -129,8 +126,6 @@ export class AdminChallengeRepository
         },
       });
     }
-
-    const isAscending = sortBy === "oldest" || sortBy === "start_date_asc";
 
     pipeline.push({
       $sort: {
@@ -154,21 +149,14 @@ export class AdminChallengeRepository
         title: 1,
         description: 1,
         thumbnailUrl: 1,
-
         category: 1,
         difficulty: 1,
-        type: 1,
         accessType: 1,
-
         durationDays: 1,
-
-        startDate: 1,
-        endDate: 1,
-
         status: 1,
 
-        rewardPoints: {
-          $ifNull: ["$rewardPoints", 0],
+        createdBy: {
+          $toString: "$createdBy",
         },
 
         createdAt: 1,
@@ -229,38 +217,10 @@ export class AdminChallengeRepository
           description: 1,
           instructions: 1,
           thumbnailUrl: 1,
-
           category: 1,
           difficulty: 1,
-          type: 1,
           accessType: 1,
-          valueType: 1,
-
           durationDays: 1,
-
-          targetValue: 1,
-          targetUnit: 1,
-          targetCount: 1,
-
-          startDate: 1,
-          endDate: 1,
-
-          rewardPoints: {
-            $ifNull: ["$rewardPoints", 0],
-          },
-
-          badgeId: {
-            $cond: [
-              {
-                $ne: ["$badgeId", null],
-              },
-              {
-                $toString: "$badgeId",
-              },
-              null,
-            ],
-          },
-
           status: 1,
 
           createdBy: {

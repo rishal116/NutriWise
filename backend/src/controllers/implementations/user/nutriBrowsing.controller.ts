@@ -6,7 +6,7 @@ import { COMMON_MESSAGES } from "../../../constants";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { INutritionistBrowsingController } from "../../interfaces/user/INutriBrowsingController";
 import { INutritionistBrowsingService } from "../../../services/interfaces/user/discovery/INutriBrowsingService";
-import { toNutritionistListQueryDTO } from "../../../mapper/user/nutri-browsing/nutri-list-query.mapper";
+import { toNutritionistListQueryDTO } from "../../../mappers/user/nutri-browsing/nutri-list-query.mapper";
 
 @injectable()
 export class NutritionistBrowsingController implements INutritionistBrowsingController {
