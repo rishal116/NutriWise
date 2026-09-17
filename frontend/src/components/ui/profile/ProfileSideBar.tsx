@@ -15,6 +15,7 @@ import {
   X,
   FileText,
   type LucideIcon,
+  BarChart3,
 } from "lucide-react";
 
 interface NavItem {
@@ -41,6 +42,7 @@ const navSections: NavSection[] = [
       { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
     ],
   },
+
   {
     title: "Account",
     items: [
@@ -48,22 +50,30 @@ const navSections: NavSection[] = [
       { name: "Health Details", href: "/user/health", icon: HeartPulse },
     ],
   },
+
   {
     title: "My Journey",
     items: [
       { name: "My Programs", href: "/user/programs", icon: Calendar },
+      { name: "My Challenges", href: "/user/challenges", icon: Trophy },
       { name: "Meetings", href: "/user/meetings", icon: Video },
-      { name: "Progress", href: "/user/progress", icon: Trophy },
+      { name: "Progress", href: "/user/progress", icon: BarChart3 },
     ],
   },
+
   {
-    title: "Communication",
+    title: "Community",
     items: [
       { name: "My Posts", href: "/user/posts", icon: FileText },
       { name: "Messages", href: "/user/messages", icon: MessageCircle },
-      { name: "Resources", href: "/user/resources", icon: BookOpen },
     ],
   },
+
+  {
+    title: "Learn",
+    items: [{ name: "Resources", href: "/user/resources", icon: BookOpen }],
+  },
+
   {
     title: "Billing & Settings",
     items: [

@@ -12,6 +12,7 @@ export const toAdminChallengeDetailsDTO = (
     description: challenge.description,
 
     instructions: challenge.instructions,
+    coverImageUrl: challenge.coverImageUrl,
     thumbnailUrl: challenge.thumbnailUrl,
 
     category: challenge.category,

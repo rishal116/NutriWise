@@ -11,10 +11,18 @@ import { CreateChallengeDTO } from "../../../dtos/admin/challenge/create-challen
 import { UpdateChallengeDTO } from "../../../dtos/admin/challenge/update-challenge.dto";
 
 export interface IAdminChallengeService {
+  updateChallenge(
+    challengeId: string,
+    data: UpdateChallengeDTO,
+    thumbnailFile?: Express.Multer.File,
+    coverImageFile?: Express.Multer.File,
+  ): Promise<AdminChallengeDetailsDTO>;
+
   createChallenge(
     data: CreateChallengeDTO,
     adminId: string,
     thumbnailFile?: Express.Multer.File,
+    coverImageFile?: Express.Multer.File,
   ): Promise<AdminChallengeDetailsDTO>;
 
   browseChallenges(
@@ -22,12 +30,6 @@ export interface IAdminChallengeService {
   ): Promise<InfiniteScrollResponseDTO<AdminChallengeCardDTO>>;
 
   getChallenge(challengeId: string): Promise<AdminChallengeDetailsDTO>;
-
-  updateChallenge(
-    challengeId: string,
-    data: UpdateChallengeDTO,
-    thumbnailFile?: Express.Multer.File,
-  ): Promise<AdminChallengeDetailsDTO>;
 
   deleteChallenge(challengeId: string): Promise<void>;
 

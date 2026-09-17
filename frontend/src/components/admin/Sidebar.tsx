@@ -7,16 +7,18 @@ import {
   LayoutDashboard,
   Users,
   Stethoscope,
+  BadgeDollarSign,
   Trophy,
   FileText,
   CreditCard,
-  MessageSquare,
+  MessagesSquare,
   Menu,
   ChevronLeft,
   ChevronDown,
   X,
   LucideIcon,
 } from "lucide-react";
+
 import Logo from "../common/Logo";
 
 interface NavChild {
@@ -38,39 +40,74 @@ interface NavSection {
 
 interface SidebarProps {
   collapsed: boolean;
-  setCollapsed: (val: boolean) => void;
+  setCollapsed: (value: boolean) => void;
   mobileOpen: boolean;
-  setMobileOpen: (val: boolean) => void;
+  setMobileOpen: (value: boolean) => void;
 }
 
 const NAV_SECTIONS: NavSection[] = [
   {
     title: "Overview",
     items: [
-      { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+      {
+        name: "Dashboard",
+        icon: LayoutDashboard,
+        path: "/admin/dashboard",
+      },
     ],
   },
   {
     title: "Management",
     items: [
-      { name: "Users", icon: Users, path: "/admin/users" },
+      {
+        name: "Users",
+        icon: Users,
+        path: "/admin/users",
+      },
       {
         name: "Nutritionists",
         icon: Stethoscope,
         children: [
-          { name: "All Nutritionists", path: "/admin/nutritionists" },
-          { name: "Applications", path: "/admin/nutritionists/applications" },
+          {
+            name: "All Nutritionists",
+            path: "/admin/nutritionists",
+          },
+          {
+            name: "Applications",
+            path: "/admin/nutritionists/applications",
+          },
         ],
       },
-      { name: "Challenges", icon: Trophy, path: "/admin/challenges" },
-      { name: "Posts", icon: FileText, path: "/admin/posts" },
+      {
+        name: "Plans",
+        icon: BadgeDollarSign,
+        path: "/admin/plans",
+      },
+      {
+        name: "Challenges",
+        icon: Trophy,
+        path: "/admin/challenges",
+      },
+      {
+        name: "Posts",
+        icon: FileText,
+        path: "/admin/posts",
+      },
     ],
   },
   {
     title: "Finance & Community",
     items: [
-      { name: "Payments", icon: CreditCard, path: "/admin/payments" },
-      { name: "Community", icon: MessageSquare, path: "/admin/community" },
+      {
+        name: "Payments",
+        icon: CreditCard,
+        path: "/admin/payments",
+      },
+      {
+        name: "Communities",
+        icon: MessagesSquare,
+        path: "/admin/community",
+      },
     ],
   },
 ];
@@ -78,11 +115,12 @@ const NAV_SECTIONS: NavSection[] = [
 function findInitialOpenGroup(pathname: string): string | null {
   for (const section of NAV_SECTIONS) {
     for (const item of section.items) {
-      if (item.children?.some((c) => pathname.startsWith(c.path))) {
+      if (item.children?.some((child) => pathname.startsWith(child.path))) {
         return item.name;
       }
     }
   }
+
   return null;
 }
 
@@ -93,6 +131,7 @@ export default function Sidebar({
   setMobileOpen,
 }: SidebarProps) {
   const pathname = usePathname();
+
   const [openGroup, setOpenGroup] = useState<string | null>(() =>
     findInitialOpenGroup(pathname),
   );
@@ -104,196 +143,229 @@ export default function Sidebar({
   useEffect(() => {
     if (!mobileOpen) return;
 
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMobileOpen(false);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMobileOpen(false);
+      }
     };
-    window.addEventListener("keydown", onKeyDown);
+
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [mobileOpen, setMobileOpen]);
 
   return (
     <>
+      {/* Mobile Overlay */}
       <div
-        onClick={() => setMobileOpen(false)}
         aria-hidden="true"
-        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity lg:hidden ${
+        onClick={() => setMobileOpen(false)}
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden ${
           mobileOpen
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
         }`}
       />
 
+      {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-admin-surface border-r border-admin-border flex flex-col z-50 transition-all duration-300 ease-in-out
-          ${collapsed ? "lg:w-20" : "lg:w-64"}
-          ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-admin-border bg-admin-surface transition-all duration-300 ease-in-out ${
+          collapsed ? "lg:w-20" : "lg:w-64"
+        } ${
+          mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b border-admin-border shrink-0">
+        {/* Header */}
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-admin-border px-4">
           <div className={collapsed ? "lg:mx-auto" : ""}>
             <Logo size="small" href="/admin/dashboard" showText={!collapsed} />
           </div>
+
           <button
+            type="button"
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
-            className="lg:hidden p-1.5 rounded-lg text-admin-muted hover:bg-admin-surface-hover hover:text-admin-text transition-colors shrink-0"
+            className="rounded-lg p-1.5 text-admin-muted transition-colors hover:bg-admin-surface-hover hover:text-admin-text lg:hidden"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto scrollbar-hide">
-          {NAV_SECTIONS.map((section) => (
-            <div key={section.title} className="space-y-1">
-              <h3
-                className={`px-3 mb-2 text-[10px] font-bold text-admin-muted uppercase tracking-widest ${
-                  collapsed ? "lg:hidden" : ""
-                }`}
-              >
-                {section.title}
-              </h3>
+        {/* Navigation */}
+        <nav className="scrollbar-hide flex-1 overflow-y-auto px-3 py-4">
+          <div className="space-y-6">
+            {NAV_SECTIONS.map((section) => (
+              <div key={section.title} className="space-y-1">
+                <h3
+                  className={`mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-admin-muted ${
+                    collapsed ? "lg:hidden" : ""
+                  }`}
+                >
+                  {section.title}
+                </h3>
 
-              {section.items.map((item) => {
-                const Icon = item.icon;
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
 
-                if (item.children) {
-                  const isOpen = openGroup === item.name;
-                  const groupActive = item.children.some((c) =>
-                    pathname.startsWith(c.path),
-                  );
+                    if (item.children) {
+                      const isOpen = openGroup === item.name;
 
-                  return (
-                    <div key={item.name}>
-                      <button
-                        onClick={() =>
-                          setOpenGroup((prev) =>
-                            prev === item.name ? null : item.name,
-                          )
-                        }
-                        aria-expanded={isOpen}
-                        className={`w-full flex items-center rounded-xl px-3 py-2.5 gap-3 transition-all duration-200 group
-                          ${collapsed ? "lg:justify-center lg:px-0" : ""}
-                          ${
-                            groupActive
-                              ? "bg-admin-accent-soft text-admin-accent"
-                              : "text-admin-muted hover:bg-admin-surface-hover hover:text-admin-text"
-                          }
-                        `}
+                      const groupActive = item.children.some((child) =>
+                        pathname.startsWith(child.path),
+                      );
+
+                      return (
+                        <div key={item.name}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setOpenGroup((current) =>
+                                current === item.name ? null : item.name,
+                              )
+                            }
+                            aria-expanded={isOpen}
+                            className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${
+                              collapsed ? "lg:justify-center lg:px-0" : ""
+                            } ${
+                              groupActive
+                                ? "bg-admin-accent-soft text-admin-accent"
+                                : "text-admin-muted hover:bg-admin-surface-hover hover:text-admin-text"
+                            }`}
+                          >
+                            <Icon
+                              className={`h-5 w-5 shrink-0 transition-colors ${
+                                groupActive
+                                  ? "text-admin-accent"
+                                  : "group-hover:text-admin-accent"
+                              }`}
+                            />
+
+                            <span
+                              className={`flex-1 whitespace-nowrap text-left text-sm font-semibold ${
+                                collapsed ? "lg:hidden" : ""
+                              }`}
+                            >
+                              {item.name}
+                            </span>
+
+                            <ChevronDown
+                              className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                                isOpen ? "rotate-180" : ""
+                              } ${collapsed ? "lg:hidden" : ""}`}
+                            />
+                          </button>
+
+                          <div
+                            className={`overflow-hidden transition-all duration-200 ease-out ${
+                              isOpen
+                                ? "mt-1 max-h-40 opacity-100"
+                                : "max-h-0 opacity-0"
+                            } ${collapsed ? "lg:hidden" : ""}`}
+                          >
+                            <div className="ml-[1.35rem] space-y-0.5 border-l border-admin-border pl-4">
+                              {item.children.map((child) => {
+                                const childActive = pathname.startsWith(
+                                  child.path,
+                                );
+
+                                return (
+                                  <Link
+                                    key={child.path}
+                                    href={child.path}
+                                    aria-current={
+                                      childActive ? "page" : undefined
+                                    }
+                                    className={`flex items-center rounded-lg px-3 py-2 text-sm transition-colors ${
+                                      childActive
+                                        ? "bg-admin-accent-soft font-medium text-admin-accent"
+                                        : "text-admin-muted hover:bg-admin-surface-hover hover:text-admin-text"
+                                    }`}
+                                  >
+                                    <span className="truncate">
+                                      {child.name}
+                                    </span>
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    const isActive =
+                      item.path === pathname ||
+                      (item.path !== "/admin/dashboard" &&
+                        pathname.startsWith(`${item.path}/`));
+
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.path!}
+                        aria-current={isActive ? "page" : undefined}
+                        className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 ${
+                          collapsed ? "lg:justify-center lg:px-0" : ""
+                        } ${
+                          isActive
+                            ? "bg-admin-accent-soft text-admin-accent"
+                            : "text-admin-muted hover:bg-admin-surface-hover hover:text-admin-text"
+                        }`}
                       >
                         <Icon
-                          className={`w-5 h-5 shrink-0 ${
-                            groupActive
+                          className={`h-5 w-5 shrink-0 transition-colors ${
+                            isActive
                               ? "text-admin-accent"
                               : "group-hover:text-admin-accent"
                           }`}
                         />
 
                         <span
-                          className={`text-sm font-semibold whitespace-nowrap flex-1 text-left ${
+                          className={`whitespace-nowrap text-sm font-semibold ${
                             collapsed ? "lg:hidden" : ""
                           }`}
                         >
                           {item.name}
                         </span>
 
-                        <ChevronDown
-                          className={`w-3.5 h-3.5 shrink-0 transition-transform ${
-                            isOpen ? "rotate-180" : ""
-                          } ${collapsed ? "lg:hidden" : ""}`}
-                        />
-                      </button>
-
-                      <div
-                        className={`overflow-hidden transition-all duration-200 ease-out ${
-                          isOpen
-                            ? "max-h-40 opacity-100 mt-1"
-                            : "max-h-0 opacity-0"
-                        } ${collapsed ? "lg:hidden" : ""}`}
-                      >
-                        <div className="ml-[1.35rem] pl-4 border-l border-admin-border space-y-0.5">
-                          {item.children.map((child) => {
-                            const childActive = pathname.startsWith(child.path);
-                            return (
-                              <Link
-                                key={child.path}
-                                href={child.path}
-                                aria-current={childActive ? "page" : undefined}
-                                className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
-                                  childActive
-                                    ? "bg-admin-accent-soft text-admin-accent font-medium"
-                                    : "text-admin-muted hover:bg-admin-surface-hover hover:text-admin-text"
-                                }`}
-                              >
-                                <span className="truncate">{child.name}</span>
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                const isActive = pathname === item.path;
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.path!}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`w-full flex items-center rounded-xl px-3 py-2.5 gap-3 transition-all duration-200 group
-                      ${collapsed ? "lg:justify-center lg:px-0" : ""}
-                      ${
-                        isActive
-                          ? "bg-admin-accent-soft text-admin-accent"
-                          : "text-admin-muted hover:bg-admin-surface-hover hover:text-admin-text"
-                      }
-                    `}
-                  >
-                    <Icon
-                      className={`w-5 h-5 shrink-0 ${
-                        isActive
-                          ? "text-admin-accent"
-                          : "group-hover:text-admin-accent"
-                      }`}
-                    />
-                    <span
-                      className={`text-sm font-semibold whitespace-nowrap ${
-                        collapsed ? "lg:hidden" : ""
-                      }`}
-                    >
-                      {item.name}
-                    </span>
-                    {isActive && (
-                      <div
-                        className={`ml-auto w-1 h-4 rounded-full bg-admin-accent ${
-                          collapsed ? "lg:hidden" : ""
-                        }`}
-                      />
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+                        {isActive && (
+                          <span
+                            className={`ml-auto h-4 w-1 rounded-full bg-admin-accent ${
+                              collapsed ? "lg:hidden" : ""
+                            }`}
+                          />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
         </nav>
 
-        <div className="p-3 border-t border-admin-border shrink-0">
+        {/* Collapse Button */}
+        <div className="shrink-0 border-t border-admin-border p-3">
           <button
+            type="button"
             onClick={() => setCollapsed(!collapsed)}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={`hidden lg:flex w-full items-center text-admin-muted hover:text-admin-accent hover:bg-admin-accent-soft rounded-xl transition-all
-              ${collapsed ? "justify-center h-10" : "px-3 py-2 gap-3"}`}
+            className={`hidden w-full items-center rounded-xl text-admin-muted transition-all hover:bg-admin-accent-soft hover:text-admin-accent lg:flex ${
+              collapsed ? "h-10 justify-center" : "gap-3 px-3 py-2"
+            }`}
           >
             {collapsed ? (
-              <Menu size={20} />
+              <Menu className="h-5 w-5" />
             ) : (
               <>
-                <ChevronLeft size={18} />
+                <ChevronLeft className="h-[18px] w-[18px]" />
+
                 <span className="text-xs font-bold uppercase tracking-wider">
                   Collapse
                 </span>

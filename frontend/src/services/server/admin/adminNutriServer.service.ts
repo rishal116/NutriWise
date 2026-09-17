@@ -15,11 +15,15 @@ import { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 export const adminNutritionistServerService = {
   async getNutritionists(
     query: AdminNutritionistListQueryDto,
-  ): Promise<InfiniteScrollResponseDTO<AdminNutritionistListItemDto>> {
+  ): Promise<
+    InfiniteScrollResponseDTO<AdminNutritionistListItemDto>
+  > {
     const cookieStore = await cookies();
 
     const response = await serverApi.get<
-      ApiResponseDTO<InfiniteScrollResponseDTO<AdminNutritionistListItemDto>>
+      ApiResponseDTO<
+        InfiniteScrollResponseDTO<AdminNutritionistListItemDto>
+      >
     >(ADMIN_NUTRITIONIST_ROUTES.NUTRITIONISTS, {
       params: query,
       headers: {

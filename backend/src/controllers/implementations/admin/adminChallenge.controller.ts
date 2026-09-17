@@ -25,17 +25,51 @@ export class AdminChallengeController implements IAdminChallengeController {
     private readonly _challengeService: IAdminChallengeService,
   ) {}
 
+  updateChallenge = asyncHandler(async (req: Request, res: Response) => {
+    const { challengeId } = req.params;
+
+    const data: UpdateChallengeDTO = req.body;
+
+    const files = req.files as {
+      thumbnail?: Express.Multer.File[];
+      coverImage?: Express.Multer.File[];
+    };
+
+    const thumbnailFile = files.thumbnail?.[0];
+    const coverImageFile = files.coverImage?.[0];
+
+    const result = await this._challengeService.updateChallenge(
+      challengeId,
+      data,
+      thumbnailFile,
+      coverImageFile,
+    );
+
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: "Challenge updated successfully",
+      data: result,
+    });
+  });
+
   createChallenge = asyncHandler(async (req: Request, res: Response) => {
     const adminId = req.user!.userId;
 
     const data: CreateChallengeDTO = req.body;
 
-    const thumbnailFile = req.file;
+    const files = req.files as {
+      thumbnail?: Express.Multer.File[];
+      coverImage?: Express.Multer.File[];
+    };
+
+    const thumbnailFile = files.thumbnail?.[0];
+    const coverImageFile = files.coverImage?.[0];
 
     const result = await this._challengeService.createChallenge(
       data,
       adminId,
       thumbnailFile,
+      coverImageFile,
     );
 
     return res.status(StatusCode.CREATED).json({
@@ -91,26 +125,6 @@ export class AdminChallengeController implements IAdminChallengeController {
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Challenge details fetched successfully",
-      data: result,
-    });
-  });
-
-  updateChallenge = asyncHandler(async (req: Request, res: Response) => {
-    const { challengeId } = req.params;
-
-    const data: UpdateChallengeDTO = req.body;
-
-    const thumbnailFile = req.file;
-
-    const result = await this._challengeService.updateChallenge(
-      challengeId,
-      data,
-      thumbnailFile,
-    );
-
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Challenge updated successfully",
       data: result,
     });
   });

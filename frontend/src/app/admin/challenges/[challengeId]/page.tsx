@@ -1,4 +1,4 @@
-import ChallengeDetails from "@/components/admin/challenge/ChallengeDetails";
+import ChallengeDetails from "@/components/admin/challenge-details/ChallengeDetails";
 
 interface AdminChallengeDetailsPageProps {
   params: Promise<{

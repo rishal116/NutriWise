@@ -10,24 +10,16 @@ export type UserChallengeStatus = (typeof USER_CHALLENGE_STATUSES)[number];
 
 export interface IUserChallenge {
   _id: Types.ObjectId;
-
   userId: Types.ObjectId;
   challengeId: Types.ObjectId;
-
   status: UserChallengeStatus;
-
   joinedAt: Date;
   startedAt: Date;
-
   currentDay: number;
-
   progressPercentage: number;
-
   currentStreak: number;
   longestStreak: number;
-
   completedAt?: Date;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,14 +30,12 @@ const UserChallengeSchema = new Schema<IUserChallenge>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     challengeId: {
       type: Schema.Types.ObjectId,
       ref: "Challenge",
       required: true,
-      index: true,
     },
 
     status: {

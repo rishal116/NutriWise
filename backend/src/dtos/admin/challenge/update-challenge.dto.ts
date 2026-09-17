@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -53,4 +54,12 @@ export class UpdateChallengeDTO {
   @Min(1)
   @Max(365)
   durationDays?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  removeThumbnail?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  removeCoverImage?: boolean;
 }

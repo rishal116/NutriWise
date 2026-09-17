@@ -1,51 +1,67 @@
 import { Request, Response } from "express";
-import { injectable, inject } from "inversify";
+import { inject, injectable } from "inversify";
+
 import { TYPES } from "../../../types/types";
-import { asyncHandler } from "../../../utils/asyncHandler";
+
 import { INutriGroupController } from "../../interfaces/nutritionist/INutriGroupController";
-import { StatusCode } from "../../../enums/statusCode.enum";
 import { INutriGroupService } from "../../../services/interfaces/nutritionist/INutriGroupService";
+
+import { asyncHandler } from "../../../utils/asyncHandler";
+import { StatusCode } from "../../../enums/statusCode.enum";
 
 @injectable()
 export class NutriGroupController implements INutriGroupController {
   constructor(
     @inject(TYPES.INutriGroupService)
-    private _groupService: INutriGroupService,
+    private readonly _groupService: INutriGroupService,
   ) {}
 
-  createGroup = asyncHandler(async (req: Request, res: Response) => {
-    const { userId } = req.user!;
+  createGroup = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const nutritionistId = req.user!.userId;
 
-    const { title, description, isPublic } = req.body;
+      const group = await this._groupService.createGroup(
+        nutritionistId,
+        req.body,
+      );
 
-    const group = await this._groupService.createGroup(userId, {
-      title,
-      description,
-      isPublic,
-    });
+      res.status(StatusCode.CREATED).json({
+        success: true,
+        message: "Group created successfully",
+        data: group,
+      });
+    },
+  );
 
-    return res.status(StatusCode.CREATED).json({
-      success: true,
-      message: "Group created successfully",
-      data: group,
-    });
-  });
+  browseGroups = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const nutritionistId = req.user!.userId;
 
-  getMyGroups = asyncHandler(async (req: Request, res: Response) => {
-    const { userId } = req.user!;
+      const groups = await this._groupService.browseGroups(
+        nutritionistId,
+        req.query,
+      );
 
-    const { limit = 10, skip = 0 } = req.query;
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Groups fetched successfully",
+        data: groups,
+      });
+    },
+  );
 
-    const groups = await this._groupService.getMyGroups(
-      userId,
-      Number(limit),
-      Number(skip),
-    );
+  getGroup = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+      const nutritionistId = req.user!.userId;
+      const { groupId } = req.params;
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Groups fetched successfully",
-      data: groups,
-    });
-  });
+      const group = await this._groupService.getGroup(nutritionistId, groupId);
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        message: "Group fetched successfully",
+        data: group,
+      });
+    },
+  );
 }

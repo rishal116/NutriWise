@@ -1,3 +1,4 @@
+import { injectable } from "inversify";
 import { ClientSession, Types } from "mongoose";
 
 import { BaseRepository } from "../common/base.repository";
@@ -9,6 +10,7 @@ import {
   IConversationMember,
 } from "../../../models/conversationMember.model";
 
+@injectable()
 export class ConversationMemberRepository
   extends BaseRepository<IConversationMember>
   implements IConversationMemberRepository

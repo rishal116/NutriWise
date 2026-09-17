@@ -1,5 +1,7 @@
 import { ClientSession } from "mongoose";
+
 import { IConversationMember } from "../../../models/conversationMember.model";
+
 import { IBaseRepository } from "../common/IBaseRepository";
 
 export interface IConversationMemberRepository extends IBaseRepository<IConversationMember> {

@@ -28,7 +28,7 @@ const menu = [
   { label: "Programs", href: "/nutritionist/programs", icon: ClipboardList },
   { label: "Nutrition Plans", href: "/nutritionist/plans", icon: FileText },
   { label: "Resources", href: "/nutritionist/resources", icon: BookOpen },
-  { label: "Communities", href: "/nutritionist/communities", icon: Globe },
+  { label: "Groups", href: "/nutritionist/groups", icon: Globe },
   { label: "Messages", href: "/nutritionist/messages", icon: Mail },
   { label: "Earnings", href: "/nutritionist/earnings", icon: DollarSign },
   { label: "Settings", href: "/nutritionist/settings", icon: Settings },

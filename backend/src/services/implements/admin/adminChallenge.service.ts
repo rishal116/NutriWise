@@ -32,7 +32,10 @@ import { toAdminChallengeCardDTO } from "../../../mappers/admin/challenge/admin-
 
 import { toAdminChallengeDetailsDTO } from "../../../mappers/admin/challenge/admin-challenge-details.mapper";
 
-import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
+import {
+  deleteFromCloudinary,
+  uploadToCloudinary,
+} from "../../../utils/cloudinaryUploads.util";
 
 @injectable()
 export class AdminChallengeService implements IAdminChallengeService {
@@ -51,15 +54,86 @@ export class AdminChallengeService implements IAdminChallengeService {
     }
   }
 
+  private getCloudinaryPublicId(imageUrl?: string): string | null {
+    if (!imageUrl?.trim()) {
+      return null;
+    }
+
+    try {
+      const url = new URL(imageUrl);
+
+      const uploadIndex = url.pathname.indexOf("/upload/");
+
+      if (uploadIndex === -1) {
+        return null;
+      }
+
+      const pathAfterUpload = url.pathname.slice(
+        uploadIndex + "/upload/".length,
+      );
+
+      const segments = pathAfterUpload.split("/").filter(Boolean);
+
+      if (segments.length === 0) {
+        return null;
+      }
+
+      const versionIndex = segments.findIndex((segment) =>
+        /^v\d+$/.test(segment),
+      );
+
+      const publicIdSegments =
+        versionIndex >= 0 ? segments.slice(versionIndex + 1) : segments;
+
+      if (publicIdSegments.length === 0) {
+        return null;
+      }
+
+      const lastIndex = publicIdSegments.length - 1;
+
+      publicIdSegments[lastIndex] = publicIdSegments[lastIndex].replace(
+        /\.[^/.]+$/,
+        "",
+      );
+
+      return publicIdSegments.join("/");
+    } catch {
+      logger.warn("Failed to extract Cloudinary public ID", {
+        imageUrl,
+      });
+
+      return null;
+    }
+  }
+
+  private async deleteOldImage(imageUrl?: string): Promise<void> {
+    const publicId = this.getCloudinaryPublicId(imageUrl);
+
+    if (!publicId) {
+      return;
+    }
+
+    try {
+      await deleteFromCloudinary(publicId);
+    } catch (error) {
+      logger.warn("Failed to delete old Cloudinary image", {
+        publicId,
+        error,
+      });
+    }
+  }
+
   async createChallenge(
     data: CreateChallengeDTO,
     adminId: string,
     thumbnailFile?: Express.Multer.File,
+    coverImageFile?: Express.Multer.File,
   ): Promise<AdminChallengeDetailsDTO> {
     logger.info("Creating challenge", {
       title: data.title,
       adminId,
       hasThumbnail: Boolean(thumbnailFile),
+      hasCoverImage: Boolean(coverImageFile),
     });
 
     const validatedData = await validateDto(CreateChallengeDTO, data);
@@ -69,18 +143,30 @@ export class AdminChallengeService implements IAdminChallengeService {
     }
 
     let thumbnailUrl: string | undefined;
+    let coverImageUrl: string | undefined;
 
     if (thumbnailFile) {
       const uploadResult = await uploadToCloudinary(
         thumbnailFile,
         "nutriwise/challenges",
       );
+
       thumbnailUrl = uploadResult.secureUrl;
+    }
+
+    if (coverImageFile) {
+      const uploadResult = await uploadToCloudinary(
+        coverImageFile,
+        "nutriwise/challenges",
+      );
+
+      coverImageUrl = uploadResult.secureUrl;
     }
 
     const challenge = await this._adminChallengeRepository.create({
       ...validatedData,
       thumbnailUrl,
+      coverImageUrl,
       createdBy: new Types.ObjectId(adminId),
     });
 
@@ -150,10 +236,14 @@ export class AdminChallengeService implements IAdminChallengeService {
     challengeId: string,
     data: UpdateChallengeDTO,
     thumbnailFile?: Express.Multer.File,
+    coverImageFile?: Express.Multer.File,
   ): Promise<AdminChallengeDetailsDTO> {
     logger.info("Updating challenge", {
       challengeId,
       hasThumbnail: Boolean(thumbnailFile),
+      hasCoverImage: Boolean(coverImageFile),
+      removeThumbnail: data.removeThumbnail,
+      removeCoverImage: data.removeCoverImage,
     });
 
     this.validateChallengeId(challengeId);
@@ -168,22 +258,42 @@ export class AdminChallengeService implements IAdminChallengeService {
     }
 
     let thumbnailUrl = existingChallenge.thumbnailUrl;
+    let coverImageUrl = existingChallenge.coverImageUrl;
 
     if (thumbnailFile) {
       const uploadResult = await uploadToCloudinary(
         thumbnailFile,
         "nutriwise/challenges",
       );
+
       thumbnailUrl = uploadResult.secureUrl;
+    } else if (validatedData.removeThumbnail) {
+      thumbnailUrl = undefined;
     }
+
+    if (coverImageFile) {
+      const uploadResult = await uploadToCloudinary(
+        coverImageFile,
+        "nutriwise/challenges",
+      );
+
+      coverImageUrl = uploadResult.secureUrl;
+    } else if (validatedData.removeCoverImage) {
+      coverImageUrl = undefined;
+    }
+
+    const {
+      removeThumbnail: _removeThumbnail,
+      removeCoverImage: _removeCoverImage,
+      ...challengeData
+    } = validatedData;
 
     const updatedChallenge = await this._adminChallengeRepository.updateById(
       challengeId,
       {
-        ...validatedData,
-        ...(thumbnailFile && {
-          thumbnailUrl,
-        }),
+        ...challengeData,
+        thumbnailUrl,
+        coverImageUrl,
       },
     );
 
@@ -242,6 +352,11 @@ export class AdminChallengeService implements IAdminChallengeService {
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
+
+    await Promise.all([
+      this.deleteOldImage(challenge.thumbnailUrl),
+      this.deleteOldImage(challenge.coverImageUrl),
+    ]);
 
     logger.info("Challenge deleted successfully", {
       challengeId,

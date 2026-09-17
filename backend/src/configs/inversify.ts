@@ -404,12 +404,68 @@ import { IAdminChallengeDayService } from "../services/interfaces/admin/IAdminCh
 import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDAy.service";
 import { IAdminChallengeDayRepository } from "../repositories/interfaces/admin/IAdminChallengDayRepository";
 import { AdminChallengeDayRepository } from "../repositories/implements/admin/adminChallengeDay.repository";
+import { IPublicChallengeController } from "../controllers/interfaces/public/IPublicChallengeController";
+import { PublicChallengeController } from "../controllers/implementations/public/publicChallenge.controller";
+import { IPublicChallengeRepository } from "../repositories/interfaces/public/IPublicChallengeRepository";
+import { PublicChallengeRepository } from "../repositories/implements/public/publicChallenge.repository";
+import { IPublicChallengeService } from "../services/interfaces/public/IPublicChallengeService";
+import { PublicChallengeService } from "../services/implements/public/publicChallenge.service";
+import { IUserChallengeController } from "../controllers/interfaces/user/IUserChallengeController";
+import { UserChallengeController } from "../controllers/implementations/user/userChallenge.controller";
+import { IUserChallengeService } from "../services/interfaces/user/challenge/IUserChallengeService";
+import { UserChallengeService } from "../services/implements/user/challenge/userChallenge.service";
+import { IUserChallengeRepository } from "../repositories/interfaces/user/challenge/IUserChallengeRepository";
+import { UserChallengeRepository } from "../repositories/implements/user/challenge/userChallenge.repository";
+import { IUserChallengeTrackingController } from "../controllers/interfaces/user/IUserChallengeTrackingController";
+import { UserChallengeTrackingController } from "../controllers/implementations/user/userChallengeTracking.controller";
+import { IUserChallengeTrackingService } from "../services/interfaces/user/challenge/IUserChallengeTrackingService";
+import { UserChallengeTrackingService } from "../services/implements/user/challenge/userChallengeTracking.service";
+import { IUserChallengeProgressRepository } from "../repositories/interfaces/user/challenge/IUserChallengeProgressRepository";
+import { UserChallengeProgressRepository } from "../repositories/implements/user/challenge/userChallengeProgress.repository";
+import { INutriGroupRepository } from "../repositories/interfaces/nutritionist/INutriGroupRepository";
+import { NutriGroupRepository } from "../repositories/implements/nutritionist/nutriGroup.repository";
+import { IPublicGroupController } from "../controllers/interfaces/public/IPublicGroupController";
+import { PublicGroupController } from "../controllers/implementations/public/publicGroup.controller";
+import { IPublicGroupService } from "../services/interfaces/public/IPublicGroupService";
+import { PublicGroupService } from "../services/implements/public/publicGroup.service";
+import { IPublicGroupRepository } from "../repositories/interfaces/public/IPublicGroupRepository";
+import { PublicGroupRepository } from "../repositories/implements/public/publicGroup.repository";
+import { IAdminDashboardController } from "../controllers/interfaces/admin/IAdminDashboardController";
+import { AdminDashboardController } from "../controllers/implementations/admin/adminDashboard.controller";
+import { IAdminDashboardService } from "../services/interfaces/admin/IAdminDashboardService";
+import { AdminDashboardService } from "../services/implements/admin/adminDashboard.service";
+import { IAdminDashboardRepository } from "../repositories/interfaces/admin/IAdminDashboardRepository";
+import { AdminDashboardRepository } from "../repositories/implements/admin/adminDashboard.repository";
+import { IAdminPlanController } from "../controllers/interfaces/admin/IAdminPlanController";
+import { AdminPlanController } from "../controllers/implementations/admin/adminPlan.controller";
+import { IAdminPlanService } from "../services/interfaces/admin/IAdminPlanService";
+import { AdminPlanService } from "../services/implements/admin/adminPlan.service";
+import { IAdminPlanRepository } from "../repositories/interfaces/admin/IAdminPlanRepository";
+import { AdminPlanRepository } from "../repositories/implements/admin/adminPlan.repository";
+import { IUserDashboardController } from "../controllers/interfaces/user/IUserDashboardController";
+import { UserDashboardController } from "../controllers/implementations/user/userDashboard.controller";
+import { IUserDashboardService } from "../services/interfaces/user/IUserDashboardService";
+import { UserDashboardService } from "../services/implements/user/userDashboard.service";
+import { IUserDashboardRepository } from "../repositories/interfaces/user/account/IUserDashboardRepository";
+import { UserDashboardRepository } from "../repositories/implements/user/account/userDashboard.repository";
 
 const container = new Container();
 
 // USER BINDINGS
 
 // ---------- Controllers ----------
+container
+  .bind<IUserDashboardController>(TYPES.IUserDashboardController)
+  .to(UserDashboardController);
+
+container
+  .bind<IUserChallengeTrackingController>(
+    TYPES.IUserChallengeTrackingController,
+  )
+  .to(UserChallengeTrackingController);
+container
+  .bind<IUserChallengeController>(TYPES.IUserChallengeController)
+  .to(UserChallengeController);
 
 container
   .bind<IUserProgramController>(TYPES.IUserProgramController)
@@ -474,6 +530,18 @@ container
 // ---------- Services ----------
 
 container
+  .bind<IUserDashboardService>(TYPES.IUserDashboardService)
+  .to(UserDashboardService);
+
+container
+  .bind<IUserChallengeTrackingService>(TYPES.IUserChallengeTrackingService)
+  .to(UserChallengeTrackingService);
+
+container
+  .bind<IUserChallengeService>(TYPES.IUserChallengeService)
+  .to(UserChallengeService);
+
+container
   .bind<IUserProgramService>(TYPES.IUserProgramService)
   .to(UserProgramService);
 
@@ -532,6 +600,19 @@ container
 container.bind<IUserPostService>(TYPES.IUserPostService).to(UserPostService);
 
 // ---------- Repositories ----------
+
+container
+  .bind<IUserDashboardRepository>(TYPES.IUserDashboardRepository)
+  .to(UserDashboardRepository);
+
+container
+  .bind<IUserChallengeProgressRepository>(
+    TYPES.IUserChallengeProgressRepository,
+  )
+  .to(UserChallengeProgressRepository);
+container
+  .bind<IUserChallengeRepository>(TYPES.IUserChallengeRepository)
+  .to(UserChallengeRepository);
 
 container
   .bind<IUserProgramBrowseRepository>(TYPES.IUserProgramBrowseRepository)
@@ -596,6 +677,12 @@ container
 // ---------- Controllers ----------
 
 container
+  .bind<IPublicGroupController>(TYPES.IPublicGroupController)
+  .to(PublicGroupController);
+container
+  .bind<IPublicChallengeController>(TYPES.IPublicChallengeController)
+  .to(PublicChallengeController);
+container
   .bind<IPublicResourceController>(TYPES.IPublicResourceController)
   .to(PublicResourceController);
 
@@ -615,7 +702,12 @@ container
   .to(SessionRoomController);
 
 // ---------- Services ----------
-
+container
+  .bind<IPublicGroupService>(TYPES.IPublicGroupService)
+  .to(PublicGroupService);
+container
+  .bind<IPublicChallengeService>(TYPES.IPublicChallengeService)
+  .to(PublicChallengeService);
 container
   .bind<IPublicResourceService>(TYPES.IPublicResourceService)
   .to(PublicResourceService);
@@ -638,7 +730,12 @@ container
 container.bind<ILiveKitService>(TYPES.ILiveKitService).to(LiveKitService);
 
 // ---------- Repositories ----------
-
+container
+  .bind<IPublicGroupRepository>(TYPES.IPublicGroupRepository)
+  .to(PublicGroupRepository);
+container
+  .bind<IPublicChallengeRepository>(TYPES.IPublicChallengeRepository)
+  .to(PublicChallengeRepository);
 container
   .bind<IResourceRepository>(TYPES.IResourceRepository)
   .to(ResourceRepository);
@@ -671,6 +768,14 @@ container
 // ---------- Controllers ----------
 
 container
+  .bind<IAdminPlanController>(TYPES.IAdminPlanController)
+  .to(AdminPlanController);
+
+container
+  .bind<IAdminDashboardController>(TYPES.IAdminDashboardController)
+  .to(AdminDashboardController);
+
+container
   .bind<IAdminChallengeDayController>(TYPES.IAdminChallengeDayController)
   .to(AdminChallengeDayController);
 
@@ -694,6 +799,12 @@ container
 
 // ---------- Services ----------
 
+container.bind<IAdminPlanService>(TYPES.IAdminPlanService).to(AdminPlanService);
+
+container
+  .bind<IAdminDashboardService>(TYPES.IAdminDashboardService)
+  .to(AdminDashboardService);
+
 container
   .bind<IAdminChallengeDayService>(TYPES.IAdminChallengeDayService)
   .to(AdminChallengeDayService);
@@ -714,6 +825,15 @@ container
 container.bind<IAdminUserService>(TYPES.IAdminUserService).to(AdminUserService);
 
 // ---------- Repositories ----------
+
+container
+  .bind<IAdminPlanRepository>(TYPES.IAdminPlanRepository)
+  .to(AdminPlanRepository);
+
+container
+  .bind<IAdminDashboardRepository>(TYPES.IAdminDashboardRepository)
+  .to(AdminDashboardRepository);
+
 container
   .bind<IAdminChallengeDayRepository>(TYPES.IAdminChallengeDayRepository)
   .to(AdminChallengeDayRepository);
@@ -848,6 +968,9 @@ container
 container
   .bind<INutriSessionRepository>(TYPES.INutriSessionRepository)
   .to(NutriSessionRepository);
+container
+  .bind<INutriGroupRepository>(TYPES.INutriGroupRepository)
+  .to(NutriGroupRepository);
 
 // CHAT BINDINGS
 

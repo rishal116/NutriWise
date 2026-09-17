@@ -10,6 +10,7 @@ export const CHALLENGE_CATEGORIES = [
   "wellness",
   "weight_management",
 ] as const;
+
 export type ChallengeCategory = (typeof CHALLENGE_CATEGORIES)[number];
 
 export const CHALLENGE_DIFFICULTIES = [
@@ -17,26 +18,35 @@ export const CHALLENGE_DIFFICULTIES = [
   "intermediate",
   "advanced",
 ] as const;
+
 export type ChallengeDifficulty = (typeof CHALLENGE_DIFFICULTIES)[number];
 
 export const CHALLENGE_ACCESS_TYPES = ["free", "premium"] as const;
+
 export type ChallengeAccessType = (typeof CHALLENGE_ACCESS_TYPES)[number];
 
 export const CHALLENGE_STATUSES = ["draft", "published", "archived"] as const;
+
 export type ChallengeStatus = (typeof CHALLENGE_STATUSES)[number];
 
 export interface IChallenge {
   _id: Types.ObjectId;
+
   title: string;
   description: string;
   instructions?: string;
+
   thumbnailUrl?: string;
+  coverImageUrl?: string;
+
   category: ChallengeCategory;
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
   durationDays: number;
   status: ChallengeStatus;
+
   createdBy: Types.ObjectId;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -68,11 +78,15 @@ const ChallengeSchema = new Schema<IChallenge>(
       trim: true,
     },
 
+    coverImageUrl: {
+      type: String,
+      trim: true,
+    },
+
     category: {
       type: String,
       enum: CHALLENGE_CATEGORIES,
       required: true,
-      index: true,
     },
 
     difficulty: {
@@ -102,7 +116,6 @@ const ChallengeSchema = new Schema<IChallenge>(
       enum: CHALLENGE_STATUSES,
       required: true,
       default: "draft",
-      index: true,
     },
 
     createdBy: {
@@ -126,6 +139,12 @@ ChallengeSchema.index({
   category: 1,
   difficulty: 1,
   status: 1,
+});
+
+ChallengeSchema.index({
+  status: 1,
+  createdAt: -1,
+  _id: -1,
 });
 
 export const ChallengeModel = model<IChallenge>("Challenge", ChallengeSchema);
