@@ -12,6 +12,7 @@ export interface AdminChallengeDetailsDTO {
   description: string;
 
   instructions?: string;
+  coverImageUrl?: string;
   thumbnailUrl?: string;
 
   category: ChallengeCategory;

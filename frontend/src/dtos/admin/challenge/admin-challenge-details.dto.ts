@@ -10,19 +10,16 @@ export interface AdminChallengeDetailsDTO {
 
   title: string;
   description: string;
-
   instructions?: string;
+
   thumbnailUrl?: string;
+  coverImageUrl?: string;
 
   category: ChallengeCategory;
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
-
   durationDays: number;
-
   status: ChallengeStatus;
-
-  createdBy: string;
 
   createdAt: string;
   updatedAt: string;

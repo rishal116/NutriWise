@@ -8,7 +8,7 @@ import { authMiddleware } from "../../middlewares/auth.middleware";
 
 import { IPublicSessionController } from "../../controllers/interfaces/public/IPublicSessionController";
 
-import { ISessionRoomController } from "../../controllers/interfaces/public/ISessionRoomController"; 
+import { ISessionRoomController } from "../../controllers/interfaces/public/ISessionRoomController";
 
 const router = Router();
 

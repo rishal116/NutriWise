@@ -9,7 +9,7 @@ export interface AdminChallengeCardDTO {
   id: string;
 
   title: string;
-  description: string;
+
 
   thumbnailUrl?: string;
 

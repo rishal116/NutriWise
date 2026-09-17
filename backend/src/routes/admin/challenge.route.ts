@@ -18,7 +18,16 @@ const adminChallengeController = container.get<IAdminChallengeController>(
 
 router.post(
   "/",
-  upload.single("thumbnail"),
+  upload.fields([
+    {
+      name: "thumbnail",
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
   adminChallengeController.createChallenge,
 );
 
@@ -28,7 +37,16 @@ router.get("/:challengeId", adminChallengeController.getChallengeDetails);
 
 router.patch(
   "/:challengeId",
-  upload.single("thumbnail"),
+  upload.fields([
+    {
+      name: "thumbnail",
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
   adminChallengeController.updateChallenge,
 );
 

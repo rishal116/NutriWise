@@ -15,11 +15,15 @@ import { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 export const adminUserServerService = {
   async getUsers(
     query: AdminUserListQueryDto,
-  ): Promise<InfiniteScrollResponseDTO<AdminUserListItemDto>> {
+  ): Promise<
+    InfiniteScrollResponseDTO<AdminUserListItemDto>
+  > {
     const cookieStore = await cookies();
 
     const response = await serverApi.get<
-      ApiResponseDTO<InfiniteScrollResponseDTO<AdminUserListItemDto>>
+      ApiResponseDTO<
+        InfiniteScrollResponseDTO<AdminUserListItemDto>
+      >
     >(ADMIN_USER_ROUTES.USERS, {
       params: query,
       headers: {

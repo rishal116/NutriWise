@@ -1,238 +1,251 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { userGroupService } from "@/services/user/userGroup.service";
 
-export interface Group {
-  id: string;
-  title: string;
-  description?: string;
-  memberCount: number;
-  isJoined: boolean;
-  visibility: "public" | "private";
-  joinStatus?: "none" | "requested" | "joined";
-  createdAt: string;
-}
+import { Loader2, RefreshCw } from "lucide-react";
+
+import { publicGroupService } from "@/services/public/publicGroup.service";
+
+import type { PublicGroupListItemDTO } from "@/dtos/public/group/public-group-list-item.dto";
+
+import type { PublicGroupListQueryDTO } from "@/dtos/public/group/public-group-list-query.dto";
+
+import PublicGroupCard from "@/components/public/group/PublicGroupCard";
+
+import PublicGroupHeader from "@/components/public/group/PublicGroupHeader";
+
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const LIMIT = 10;
 
-export default function GroupsPage({ preview = false }: { preview?: boolean }) {
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [processingId, setProcessingId] = useState<string | null>(null);
+interface GroupsPageProps {
+  preview?: boolean;
+}
+
+export default function GroupsPage({
+  preview = false,
+}: GroupsPageProps) {
+  const [groups, setGroups] = useState<PublicGroupListItemDTO[]>([]);
+
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+
   const [hasMore, setHasMore] = useState(true);
 
-  const skipRef = useRef(0);
+  const [loading, setLoading] = useState(true);
+
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchGroups = async (reset = false) => {
-    try {
-      if (reset) setLoading(true);
-      else setLoadingMore(true);
+  const fetchingRef = useRef(false);
 
-      const currentSkip = reset ? 0 : skipRef.current;
+  const fetchGroups = useCallback(
+    async (cursor?: string) => {
+      if (fetchingRef.current) {
+        return;
+      }
 
-      const res = await userGroupService.getGroups({
-        limit: LIMIT,
-        skip: currentSkip,
-      });
+      fetchingRef.current = true;
 
-      const newGroups: Group[] = res.groups || [];
+      try {
+        if (cursor) {
+          setLoadingMore(true);
+        } else {
+          setLoading(true);
+        }
 
-      setGroups((prev) => (reset ? newGroups : [...prev, ...newGroups]));
+        setError(null);
 
-      if (reset) skipRef.current = LIMIT;
-      else skipRef.current += LIMIT;
+        const query: PublicGroupListQueryDTO = {
+          limit: LIMIT,
+          sortBy: "newest",
+          ...(cursor ? { cursor } : {}),
+        };
 
-      setHasMore(newGroups.length === LIMIT);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+        const response = await publicGroupService.getGroups(query);
+
+        const data = response.data;
+
+        if (cursor) {
+          setGroups((previous) => [
+            ...previous,
+            ...data.items,
+          ]);
+        } else {
+          setGroups(data.items);
+        }
+
+        setNextCursor(data.nextCursor);
+        setHasMore(data.hasMore);
+      } catch (error) {
+        setError(getErrorMessage(error));
+      } finally {
+        fetchingRef.current = false;
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    fetchGroups(true);
-  }, []);
-
-  const handleJoin = async (group: Group) => {
-    try {
-      setProcessingId(group.id);
-
-      const res = await userGroupService.joinGroup(group.id);
-
-      setGroups((prev) =>
-        prev.map((g) => {
-          if (g.id !== group.id) return g;
-
-          if (res.status === "joined") {
-            return {
-              ...g,
-              isJoined: true,
-              joinStatus: "joined",
-              memberCount: g.memberCount + 1,
-            };
-          }
-
-          if (res.status === "requested") {
-            return {
-              ...g,
-              joinStatus: "requested",
-            };
-          }
-
-          return g;
-        })
-      );
-    } finally {
-      setProcessingId(null);
-    }
-  };
+    fetchGroups();
+  }, [fetchGroups]);
 
   const loadMore = useCallback(() => {
-    if (!loadingMore && hasMore) {
-      fetchGroups(false);
+    if (!nextCursor || !hasMore || fetchingRef.current) {
+      return;
     }
-  }, [loadingMore, hasMore]);
+
+    fetchGroups(nextCursor);
+  }, [fetchGroups, hasMore, nextCursor]);
 
   useEffect(() => {
-    if (!loaderRef.current || preview) return;
+    if (preview) {
+      return;
+    }
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) loadMore();
-    });
+    const loader = loaderRef.current;
 
-    observer.observe(loaderRef.current);
+    if (!loader) {
+      return;
+    }
 
-    return () => observer.disconnect();
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          loadMore();
+        }
+      },
+      {
+        rootMargin: "200px",
+      },
+    );
+
+    observer.observe(loader);
+
+    return () => {
+      observer.disconnect();
+    };
   }, [loadMore, preview]);
 
   const items = preview ? groups.slice(0, 2) : groups;
 
   if (loading) {
     return (
-      <div className="p-10 text-center text-gray-500 animate-pulse">
-        Loading amazing communities...
-      </div>
+      <section className="min-h-screen bg-slate-50 px-4 py-10 md:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="animate-pulse space-y-6">
+            <div className="h-8 w-56 rounded-lg bg-slate-200" />
+            <div className="h-4 w-96 max-w-full rounded bg-slate-200" />
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: preview ? 2 : 6 }).map(
+                (_, index) => (
+                  <div
+                    key={index}
+                    className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  >
+                    <div className="h-44 bg-slate-200" />
+
+                    <div className="space-y-3 p-5">
+                      <div className="h-5 w-2/3 rounded bg-slate-200" />
+                      <div className="h-4 w-full rounded bg-slate-200" />
+                      <div className="h-4 w-4/5 rounded bg-slate-200" />
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && groups.length === 0) {
+    return (
+      <section className="min-h-screen bg-slate-50 px-4 py-10 md:px-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-2xl border border-rose-100 bg-white p-8 text-center">
+            <h2 className="text-lg font-bold text-slate-900">
+              Unable to load groups
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              {error}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => fetchGroups()}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+            >
+              <RefreshCw size={15} />
+              Try again
+            </button>
+          </div>
+        </div>
+      </section>
     );
   }
 
   return (
-    <section className="min-h-screen bg-gradient-to-b from-gray-50 to-white p-4 md:p-8">
-      {/* HEADER */}
-      <div className="max-w-5xl mx-auto mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Discover Groups</h2>
-            <p className="text-gray-500 mt-1">
-              Join communities that match your interests
+    <section className="min-h-screen bg-slate-50 px-4 py-10 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        <PublicGroupHeader count={groups.length} />
+
+        {items.length > 0 ? (
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((group) => (
+              <PublicGroupCard
+                key={group.id}
+                group={group}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center">
+            <h2 className="text-lg font-bold text-slate-900">
+              No public groups yet
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Public groups will appear here when nutritionists
+              create them.
             </p>
           </div>
+        )}
 
-          <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
-            <span className="px-3 py-1 rounded-full bg-green-50 text-green-600 border border-green-200">
-              Live
-            </span>
-            <span>Active communities</span>
-          </div>
-        </div>
-      </div>
-
-      {/* GRID */}
-      <div className="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {items.map((g) => {
-          const isPrivate = g.visibility === "private";
-
-          return (
-            <div
-              key={g.id}
-              className="group relative p-5 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-            >
-              {/* glow effect */}
-              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 bg-gradient-to-r from-green-50 to-blue-50 transition" />
-
-              <div className="relative">
-                {/* TITLE */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-lg text-gray-900 group-hover:text-green-700 transition">
-                      {g.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                      {g.description || "No description available"}
-                    </p>
-                  </div>
-
-                  {g.isJoined && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 border border-green-200">
-                      Joined
-                    </span>
-                  )}
-                </div>
-
-                {/* BADGES */}
-                <div className="mt-3 flex gap-2">
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full border font-medium ${
-                      isPrivate
-                        ? "bg-red-50 text-red-600 border-red-200"
-                        : "bg-blue-50 text-blue-600 border-blue-200"
-                    }`}
-                  >
-                    {isPrivate ? "Private" : "Public"}
-                  </span>
-
-                  <span className="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-600 border">
-                    👥 {g.memberCount}
-                  </span>
-                </div>
-
-                {/* FOOTER */}
-                <div className="flex justify-between items-center mt-5">
-                  {g.isJoined ? (
-                    <button className="text-sm px-4 py-1 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-100 transition">
-                      Leave
-                    </button>
-                  ) : isPrivate && g.joinStatus === "requested" ? (
-                    <button
-                      disabled
-                      className="text-sm px-4 py-1 rounded-full border text-yellow-700 bg-yellow-50"
-                    >
-                      Requested
-                    </button>
-                  ) : (
-                    <button
-                      disabled={processingId === g.id}
-                      onClick={() => handleJoin(g)}
-                      className="text-sm px-4 py-1 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:opacity-90 transition disabled:opacity-50 shadow-sm"
-                    >
-                      {isPrivate ? "Request Join" : "Join"}
-                    </button>
-                  )}
-                </div>
+        {!preview && hasMore && nextCursor && (
+          <div
+            ref={loaderRef}
+            className="flex min-h-24 items-center justify-center py-8"
+          >
+            {loadingMore ? (
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-400">
+                <Loader2
+                  size={16}
+                  className="animate-spin"
+                />
+                Loading more groups...
               </div>
-            </div>
-          );
-        })}
+            ) : (
+              <span className="text-sm text-slate-400">
+                Scroll to explore more
+              </span>
+            )}
+          </div>
+        )}
+
+        {!preview && !hasMore && groups.length > 0 && (
+          <p className="mt-10 text-center text-sm font-medium text-slate-400">
+            You&apos;ve reached the end
+          </p>
+        )}
       </div>
-
-      {/* LOADER */}
-      {!preview && hasMore && (
-        <div ref={loaderRef} className="py-12 text-center text-gray-400">
-          {loadingMore ? (
-            <span className="animate-pulse">Loading more groups...</span>
-          ) : (
-            "Scroll to explore more"
-          )}
-        </div>
-      )}
-
-      {!hasMore && !preview && (
-        <p className="text-center text-gray-400 mt-10">
-          🎉 You’ve reached the end
-        </p>
-      )}
     </section>
   );
 }

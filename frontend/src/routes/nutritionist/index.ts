@@ -13,3 +13,5 @@ export * from "./meeting.routes";
 export * from "./resource.routes";
 
 export * from "./session.routes";
+
+export * from "./group.routes";

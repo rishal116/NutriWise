@@ -28,53 +28,30 @@ export type ChallengeActivityValueType =
 
 export interface IChallengeActivity {
   _id: Types.ObjectId;
-
   type: ChallengeActivityType;
-
   title: string;
-
   description?: string;
-
   instructions?: string;
-
   valueType: ChallengeActivityValueType;
-
   targetValue?: number;
-
   unit?: string;
-
   estimatedDurationMinutes?: number;
-
   imageUrl?: string;
-
   imagePublicId?: string;
-
   videoUrl?: string;
-
   videoPublicId?: string;
-
   isRequired: boolean;
-
   order: number;
-
-  configuration?: Record<string, unknown>;
 }
 
 export interface IChallengeDay {
   _id: Types.ObjectId;
-
   challengeId: Types.ObjectId;
-
   dayNumber: number;
-
   title?: string;
-
   description?: string;
-
   activities: IChallengeActivity[];
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -157,11 +134,6 @@ const ChallengeActivitySchema = new Schema<IChallengeActivity>(
       min: 0,
       default: 0,
     },
-
-    configuration: {
-      type: Schema.Types.Mixed,
-      default: {},
-    },
   },
   {
     _id: true,
@@ -175,7 +147,6 @@ const ChallengeDaySchema = new Schema<IChallengeDay>(
       type: Schema.Types.ObjectId,
       ref: "Challenge",
       required: true,
-      index: true,
     },
 
     dayNumber: {

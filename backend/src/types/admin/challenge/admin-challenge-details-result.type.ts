@@ -12,7 +12,8 @@ export interface AdminChallengeDetailsResult {
   description: string;
   instructions?: string;
 
-  thumbnailUrl?: string;
+  coverImageUrl?: string;
+   thumbnailUrl?:string;
 
   category: ChallengeCategory;
   difficulty: ChallengeDifficulty;

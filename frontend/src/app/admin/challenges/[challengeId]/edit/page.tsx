@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+
 import Link from "next/link";
+
 import { ArrowLeft } from "lucide-react";
 
 import ChallengeForm from "@/components/admin/challenge/ChallengeForm";
 
-import { adminChallengeService } from "@/services/admin/adminChallenge.service";
+import { adminChallengeServerService } from "@/services/server/admin/adminChallengeServer.service";
 
 interface ChallengeEditPageProps {
   params: Promise<{
@@ -14,7 +16,8 @@ interface ChallengeEditPageProps {
 
 export const metadata: Metadata = {
   title: "Edit Challenge | NutriWise Admin",
-  description: "Edit and manage a NutriWise health challenge.",
+  description:
+    "Edit and manage a NutriWise health challenge.",
 };
 
 export default async function AdminChallengeEditPage({
@@ -22,7 +25,10 @@ export default async function AdminChallengeEditPage({
 }: ChallengeEditPageProps) {
   const { challengeId } = await params;
 
-  const response = await adminChallengeService.getChallengeDetails(challengeId);
+  const challenge =
+    await adminChallengeServerService.getChallengeDetails(
+      challengeId,
+    );
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
@@ -35,13 +41,14 @@ export default async function AdminChallengeEditPage({
           Back to Challenge
         </Link>
 
-        <div className="mt-6 mb-8">
+        <div className="mb-8 mt-6">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Edit Challenge
           </h1>
 
           <p className="mt-2 text-sm text-slate-500">
-            Update the details and configuration of this challenge.
+            Update the details and configuration of this
+            challenge.
           </p>
         </div>
 
@@ -49,13 +56,17 @@ export default async function AdminChallengeEditPage({
           mode="edit"
           challengeId={challengeId}
           initialValues={{
-            title: response.data.title,
-            description: response.data.description,
-            instructions: response.data.instructions,
-            category: response.data.category,
-            difficulty: response.data.difficulty,
-            accessType: response.data.accessType,
-            durationDays: response.data.durationDays,
+            title: challenge.title,
+            description: challenge.description,
+            instructions: challenge.instructions,
+            thumbnailUrl:
+              challenge.thumbnailUrl,
+            coverImageUrl:
+              challenge.coverImageUrl,
+            category: challenge.category,
+            difficulty: challenge.difficulty,
+            accessType: challenge.accessType,
+            durationDays: challenge.durationDays,
           }}
         />
       </div>

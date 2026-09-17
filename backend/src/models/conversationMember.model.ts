@@ -10,24 +10,17 @@ export type ConversationMemberStatus =
 
 export interface IConversationMember {
   _id: Types.ObjectId;
-
   conversationId: Types.ObjectId;
   userId: Types.ObjectId;
-
   role: ConversationMemberRole;
   status: ConversationMemberStatus;
-
   lastReadAt?: Date;
   lastReadMessageId?: Types.ObjectId;
-
   unreadCount: number;
-
   isMuted: boolean;
   isArchived: boolean;
-
   joinedAt: Date;
   leftAt?: Date;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,12 +43,14 @@ const ConversationMemberSchema = new Schema<IConversationMember>(
       type: String,
       enum: ["member", "admin", "owner"],
       default: "member",
+      required: true,
     },
 
     status: {
       type: String,
       enum: ["active", "left", "removed", "blocked"],
       default: "active",
+      required: true,
     },
 
     lastReadAt: {
@@ -86,6 +81,7 @@ const ConversationMemberSchema = new Schema<IConversationMember>(
     joinedAt: {
       type: Date,
       default: Date.now,
+      required: true,
     },
 
     leftAt: {
@@ -116,6 +112,18 @@ ConversationMemberSchema.index({
   userId: 1,
   status: 1,
   updatedAt: -1,
+});
+
+ConversationMemberSchema.pre("validate", function (next) {
+  if (this.status === "active" && this.leftAt) {
+    return next(new Error("Active conversation member cannot have leftAt"));
+  }
+
+  if ((this.status === "left" || this.status === "removed") && !this.leftAt) {
+    return next(new Error("Inactive conversation member requires leftAt"));
+  }
+
+  next();
 });
 
 export const ConversationMemberModel = model<IConversationMember>(
