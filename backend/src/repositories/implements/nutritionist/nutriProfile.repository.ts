@@ -1,11 +1,14 @@
 import { injectable } from "inversify";
+import { Types } from "mongoose";
+
 import { BaseRepository } from "../common/base.repository";
+
 import { INutritionistProfileRepository } from "../../interfaces/nutritionist/INutriProfileRepository";
+
 import {
   NutritionistProfileModel,
   INutritionistProfile,
 } from "../../../models/nutritionistProfile.model";
-import { Types } from "mongoose";
 
 @injectable()
 export class NutritionistProfileRepository
@@ -17,7 +20,11 @@ export class NutritionistProfileRepository
   }
 
   async findByUserId(userId: string): Promise<INutritionistProfile | null> {
-    return this._model.findOne({ userId: new Types.ObjectId(userId) }).exec();
+    return this._model
+      .findOne({
+        userId: new Types.ObjectId(userId),
+      })
+      .exec();
   }
 
   async updateByUserId(
@@ -26,25 +33,51 @@ export class NutritionistProfileRepository
   ): Promise<INutritionistProfile | null> {
     return this._model
       .findOneAndUpdate(
-        { userId: new Types.ObjectId(userId) },
-        { $set: data },
-        { new: true, runValidators: true },
+        {
+          userId: new Types.ObjectId(userId),
+        },
+        {
+          $set: data,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
       )
       .exec();
   }
-  async getProfileImageByUserId(
+
+  async updateRatingSummary(
     userId: string,
-  ): Promise<{ profileImage?: string } | null> {
+    rating: number,
+    totalReviews: number,
+  ): Promise<INutritionistProfile | null> {
     return this._model
-      .findOne({ userId }, { profileImage: 1, _id: 0 })
-      .lean<{ profileImage?: string }>();
+      .findOneAndUpdate(
+        {
+          userId: new Types.ObjectId(userId),
+        },
+        {
+          $set: {
+            rating,
+            totalReviews,
+          },
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+      .exec();
   }
 
   async findCompleteProfile(
     userId: string,
   ): Promise<INutritionistProfile | null> {
     return this._model
-      .findOne({ userId: new Types.ObjectId(userId) })
+      .findOne({
+        userId: new Types.ObjectId(userId),
+      })
       .populate("userId")
       .exec();
   }

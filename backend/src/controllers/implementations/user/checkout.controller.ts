@@ -36,4 +36,20 @@ export class CheckoutController implements ICheckoutController {
       },
     });
   });
+
+  getCheckoutStatus = asyncHandler(async (req: Request, res: Response) => {
+    const { sessionId } = req.params;
+    const { userId } = req.user!;
+
+    const result = await this._checkoutService.getCheckoutStatus(
+      sessionId,
+      userId,
+    );
+
+    return res.status(StatusCode.OK).json({
+      success: true,
+      data: result,
+    });
+  });
 }
+

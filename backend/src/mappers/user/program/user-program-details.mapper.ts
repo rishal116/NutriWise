@@ -7,7 +7,10 @@ export class UserProgramDetailsMapper {
   ): UserProgramDetailsResponseDTO {
     return {
       _id: program._id.toString(),
+
       title: program.title,
+
+      userPlanId: program.userPlanId.toString(),
 
       nutritionist: {
         _id: program.nutritionist._id.toString(),
@@ -17,16 +20,22 @@ export class UserProgramDetailsMapper {
       },
 
       status: program.status,
+
       subscriptionStatus: program.subscriptionStatus,
 
       currentDay: program.currentDay,
+
       durationDays: program.durationDays,
+
       completionPercentage: program.completionPercentage,
 
       startDate: program.startDate,
+
       endDate: program.endDate,
 
       paymentStatus: program.paymentStatus,
+
+      purchasedAt: program.purchasedAt,
     };
   }
 }

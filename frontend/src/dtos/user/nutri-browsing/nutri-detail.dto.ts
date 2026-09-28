@@ -12,6 +12,7 @@ import {
 } from "@/types/nutritionist.types";
 
 export interface NutritionistProfileSummaryDTO {
+  id:string;
   username: string;
   fullName: string;
   profileImage?: string;

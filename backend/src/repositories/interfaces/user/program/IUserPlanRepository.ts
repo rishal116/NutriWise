@@ -5,6 +5,7 @@ import {
   UpdateQuery,
   UpdateResult,
 } from "mongoose";
+
 import { IUserPlan } from "../../../../models/userPlan.model";
 import { IUserPlanPopulated } from "../../../../types/userPlan.populated";
 import { IBaseRepository } from "../../common/IBaseRepository";
@@ -27,6 +28,7 @@ export interface IUserPlanRepository extends IBaseRepository<IUserPlan> {
   findActiveByUserAndNutritionist(
     userId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
+    session?: ClientSession,
   ): Promise<IUserPlan | null>;
 
   findLatestPlan(

@@ -1,8 +1,7 @@
 import { Schema, model, Types } from "mongoose";
 
+import { CURRENCY, Currency } from "../constants/currency.constants";
 import { SPECIALIZATIONS, Specialization } from "../types/nutritionist.types";
-
-import { CURRENCIES, Currency } from "../constants/currency.constants";
 
 export const PLAN_STATUS = ["draft", "published", "archived"] as const;
 
@@ -10,33 +9,19 @@ export type PlanStatus = (typeof PLAN_STATUS)[number];
 
 export interface INutritionistPlan {
   _id: Types.ObjectId;
-
   nutritionistId: Types.ObjectId;
-
   slug: string;
-
   title: string;
-
   specialization: Specialization;
-
   description: string;
-
   durationDays: number;
-
   price: number;
-
   currency: Currency;
-
   features: string[];
-
   status: PlanStatus;
-
   isDeleted: boolean;
-
   deletedAt?: Date;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -93,8 +78,8 @@ const NutritionistPlanSchema = new Schema<INutritionistPlan>(
 
     currency: {
       type: String,
-      enum: CURRENCIES,
-      default: "inr",
+      enum: [CURRENCY],
+      default: CURRENCY,
     },
 
     features: {

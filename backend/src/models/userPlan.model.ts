@@ -1,6 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 
-import { Currency } from "../constants/currency.constants";
+import { CURRENCY, Currency } from "../constants/currency.constants";
 
 export const PAYMENT_STATUS = [
   "pending",
@@ -27,19 +27,12 @@ export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
 export interface IUserPlan {
   _id: Types.ObjectId;
-
   userId: Types.ObjectId;
-
   nutritionistId: Types.ObjectId;
-
   planId: Types.ObjectId;
-
   paymentStatus: PaymentStatus;
-
   subscriptionStatus: SubscriptionStatus;
-
   amount: number;
-
   currency: Currency;
 
   payment: {
@@ -60,11 +53,8 @@ export interface IUserPlan {
   };
 
   startDate: Date | null;
-
   endDate: Date | null;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -93,14 +83,14 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed", "refunded", "partially_refunded"],
+      enum: PAYMENT_STATUS,
       default: "pending",
       index: true,
     },
 
     subscriptionStatus: {
       type: String,
-      enum: ["pending", "active", "expired", "cancelled"],
+      enum: SUBSCRIPTION_STATUS,
       default: "pending",
       index: true,
     },
@@ -113,8 +103,9 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
     currency: {
       type: String,
-      enum: ["inr", "usd", "eur", "gbp", "aed"],
+      enum: [CURRENCY],
       required: true,
+      default: CURRENCY,
     },
 
     payment: {
@@ -176,8 +167,9 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
       currency: {
         type: String,
-        enum: ["inr", "usd", "eur", "gbp", "aed"],
+        enum: [CURRENCY],
         required: true,
+        default: CURRENCY,
       },
 
       thumbnail: {

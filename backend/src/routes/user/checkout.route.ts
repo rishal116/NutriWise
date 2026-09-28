@@ -26,10 +26,17 @@ router.post(
   checkoutController.createCheckoutSession,
 );
 
+router.get(
+  "/status/:sessionId",
+  authMiddleware,
+  checkoutController.getCheckoutStatus,
+);
+
 router.post(
   "/session-registration",
   authMiddleware,
   sessionCheckoutController.createCheckoutSession,
 );
+
 
 export default router;

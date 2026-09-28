@@ -1,0 +1,569 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import {
+  CalendarCheck,
+  ClipboardList,
+  Dumbbell,
+  Lock,
+  Search,
+  Sparkles,
+} from "lucide-react";
+
+import { userProgramDayService } from "@/services/user/userProgramDay.service";
+
+import type { UserProgramDayListDTO } from "@/dtos/user/program/user-program-day-list.dto";
+
+import {
+  UserDayTrackingStatus,
+  UserProgramDaySort,
+} from "@/dtos/user/program/user-program-day-list-query.dto";
+
+import { useDebounce } from "@/hooks/common/debounce.hooks";
+
+const PAGE_LIMIT = 12;
+
+interface ProgramDaysSectionProps {
+  programId: string;
+}
+
+const STATUS_STYLES: Record<UserDayTrackingStatus, string> = {
+  [UserDayTrackingStatus.NOT_STARTED]:
+    "bg-slate-100 text-slate-700 border-slate-200",
+
+  [UserDayTrackingStatus.IN_PROGRESS]:
+    "bg-amber-50 text-amber-700 border-amber-200",
+
+  [UserDayTrackingStatus.COMPLETED]:
+    "bg-emerald-50 text-emerald-700 border-emerald-200",
+
+  [UserDayTrackingStatus.MISSED]:
+    "bg-rose-50 text-rose-700 border-rose-200",
+
+  [UserDayTrackingStatus.SKIPPED]:
+    "bg-slate-100 text-slate-500 border-slate-200",
+};
+
+const STATUS_LABELS: Record<UserDayTrackingStatus, string> = {
+  [UserDayTrackingStatus.NOT_STARTED]: "Not started",
+  [UserDayTrackingStatus.IN_PROGRESS]: "In progress",
+  [UserDayTrackingStatus.COMPLETED]: "Completed",
+  [UserDayTrackingStatus.MISSED]: "Missed",
+  [UserDayTrackingStatus.SKIPPED]: "Skipped",
+};
+
+const SORT_LABELS: Record<UserProgramDaySort, string> = {
+  [UserProgramDaySort.DAY_ASC]: "Day ascending",
+  [UserProgramDaySort.DAY_DESC]: "Day descending",
+  [UserProgramDaySort.NEWEST]: "Newest first",
+  [UserProgramDaySort.OLDEST]: "Oldest first",
+};
+
+export default function ProgramDaysSection({
+  programId,
+}: ProgramDaysSectionProps) {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<
+    UserDayTrackingStatus | "all"
+  >("all");
+
+  const [locked, setLocked] = useState<
+    "all" | "true" | "false"
+  >("all");
+
+  const [sort, setSort] = useState<UserProgramDaySort>(
+    UserProgramDaySort.DAY_ASC,
+  );
+
+  const debouncedSearch = useDebounce(search, 400);
+
+  const hasActiveFilters =
+    debouncedSearch !== "" ||
+    status !== "all" ||
+    locked !== "all";
+
+  const queryKey = useMemo(
+    () => [
+      "user-program-days",
+      programId,
+      {
+        search: debouncedSearch,
+        status,
+        locked,
+        sort,
+      },
+    ],
+    [programId, debouncedSearch, status, locked, sort],
+  );
+
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey,
+    enabled: Boolean(programId),
+    initialPageParam: undefined as string | undefined,
+
+    queryFn: async ({ pageParam }) => {
+      const response =
+        await userProgramDayService.browseProgramDays(
+          programId,
+          {
+            limit: PAGE_LIMIT,
+            cursor: pageParam,
+            search: debouncedSearch || undefined,
+            status:
+              status === "all" ? undefined : status,
+            locked:
+              locked === "all"
+                ? undefined
+                : locked === "true",
+            sort,
+          },
+        );
+
+      return response.data;
+    },
+
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore
+        ? (lastPage.nextCursor ?? undefined)
+        : undefined,
+  });
+
+  const days =
+    data?.pages.flatMap((page) => page.items) ?? [];
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const observerRef =
+    useRef<IntersectionObserver | null>(null);
+
+  const setSentinel = (node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    sentinelRef.current = node;
+
+    if (!node) {
+      return;
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasNextPage &&
+          !isFetchingNextPage
+        ) {
+          fetchNextPage().catch(() => {
+            toast.error("Failed to load more days.");
+          });
+        }
+      },
+      {
+        rootMargin: "200px",
+      },
+    );
+
+    observerRef.current.observe(node);
+  };
+
+  useEffect(() => {
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, []);
+
+  const handleReset = () => {
+    setSearch("");
+    setStatus("all");
+    setLocked("all");
+    setSort(UserProgramDaySort.DAY_ASC);
+  };
+
+  const selectClassName =
+    "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 transition-colors focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
+
+  return (
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+      {/* Heading */}
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+            <CalendarCheck className="h-4 w-4" />
+          </div>
+
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+              Program Days
+            </h2>
+
+            <p className="mt-0.5 text-xs font-medium text-slate-500">
+              Complete each day and track your progress.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 sm:p-4 md:flex-row md:items-center md:justify-between">
+        <div className="relative w-full md:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+
+          <input
+            type="text"
+            value={search}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
+            placeholder="Search days..."
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-8 pr-3 text-xs font-medium text-slate-700 transition-colors focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={status}
+            onChange={(event) =>
+              setStatus(
+                event.target.value as
+                  | UserDayTrackingStatus
+                  | "all",
+              )
+            }
+            className={selectClassName}
+          >
+            <option value="all">All status</option>
+
+            {Object.values(UserDayTrackingStatus).map(
+              (value) => (
+                <option key={value} value={value}>
+                  {STATUS_LABELS[value]}
+                </option>
+              ),
+            )}
+          </select>
+
+          <select
+            value={locked}
+            onChange={(event) =>
+              setLocked(
+                event.target.value as
+                  | "all"
+                  | "true"
+                  | "false",
+              )
+            }
+            className={selectClassName}
+          >
+            <option value="all">All days</option>
+            <option value="false">Unlocked only</option>
+            <option value="true">Locked only</option>
+          </select>
+
+          <select
+            value={sort}
+            onChange={(event) =>
+              setSort(
+                event.target.value as UserProgramDaySort,
+              )
+            }
+            className={selectClassName}
+          >
+            {Object.values(UserProgramDaySort).map(
+              (value) => (
+                <option key={value} value={value}>
+                  {SORT_LABELS[value]}
+                </option>
+              ),
+            )}
+          </select>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleReset}
+              className="rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition-colors hover:bg-white hover:text-slate-700"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="mt-5">
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map(
+              (_, index) => (
+                <DayCardSkeleton key={index} />
+              ),
+            )}
+          </div>
+        ) : isError ? (
+          <EmptyState
+            icon={
+              <ClipboardList className="h-6 w-6 text-rose-700" />
+            }
+            iconBg="bg-rose-100"
+            title="Couldn't load program days"
+            description="Something went wrong while loading the days."
+          />
+        ) : days.length === 0 ? (
+          <EmptyState
+            icon={
+              hasActiveFilters ? (
+                <Search className="h-6 w-6 text-emerald-600" />
+              ) : (
+                <ClipboardList className="h-6 w-6 text-emerald-600" />
+              )
+            }
+            title={
+              hasActiveFilters
+                ? "No days match your filters"
+                : "No program days found"
+            }
+            description={
+              hasActiveFilters
+                ? "Try adjusting your search or filters."
+                : "This program doesn't contain any days yet."
+            }
+          />
+        ) : (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              {days.map((day) => (
+                <DayCard
+                  key={day._id}
+                  programId={programId}
+                  day={day}
+                />
+              ))}
+            </div>
+
+            <div
+              ref={setSentinel}
+              className="h-1"
+            />
+
+            {isFetchingNextPage && (
+              <div className="grid gap-4 pt-4 md:grid-cols-2">
+                {Array.from({ length: 2 }).map(
+                  (_, index) => (
+                    <DayCardSkeleton key={index} />
+                  ),
+                )}
+              </div>
+            )}
+
+            {!hasNextPage && days.length > 0 && (
+              <p className="pt-7 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                You&apos;ve reached the end
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function DayCard({
+  programId,
+  day,
+}: {
+  programId: string;
+  day: UserProgramDayListDTO;
+}) {
+  const content = (
+    <div
+      className={`group rounded-2xl border border-slate-200/80 bg-white p-4 transition-all duration-300 ${
+        day.isLocked
+          ? "opacity-60"
+          : "hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Program Day
+          </p>
+
+          <h3 className="mt-1 text-lg font-bold tracking-tight text-slate-900 group-hover:text-emerald-700">
+            Day {day.dayNumber}
+          </h3>
+        </div>
+
+        {day.isLocked ? (
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+            <Lock className="h-3.5 w-3.5" />
+          </span>
+        ) : (
+          <span
+            className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+              STATUS_STYLES[day.status]
+            }`}
+          >
+            {STATUS_LABELS[day.status]}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-medium text-slate-500">
+            Progress
+          </span>
+
+          <span className="font-bold text-emerald-700">
+            {day.completionPercentage}%
+          </span>
+        </div>
+
+        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-emerald-600 transition-all duration-300"
+            style={{
+              width: `${day.completionPercentage}%`,
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100/80 text-emerald-700">
+            <Dumbbell className="h-3.5 w-3.5" />
+          </span>
+
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+              Activities
+            </p>
+
+            <p className="text-sm font-bold text-slate-900">
+              {day.completedActivities}/
+              {day.totalActivities}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-100/80 text-sky-700">
+            <Sparkles className="h-3.5 w-3.5" />
+          </span>
+
+          <div className="min-w-0">
+            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+              Adherence
+            </p>
+
+            <p className="text-sm font-bold text-slate-900">
+              {day.adherenceScore}%
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {day.isLocked ? (
+        <div className="mt-4 flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2.5 text-xs font-semibold text-slate-500">
+          <Lock className="h-3.5 w-3.5" />
+          Locked
+        </div>
+      ) : (
+        <div className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-semibold text-white transition-all duration-150 group-hover:bg-emerald-800">
+          <CalendarCheck className="h-3.5 w-3.5" />
+          View Day
+        </div>
+      )}
+    </div>
+  );
+
+  if (day.isLocked) {
+    return (
+      <div className="cursor-not-allowed">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={`/user/programs/${programId}/days/${day.dayNumber}`}
+    >
+      {content}
+    </Link>
+  );
+}
+
+function DayCardSkeleton() {
+  return (
+    <div className="rounded-2xl border border-slate-200/80 bg-white p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="h-2.5 w-16 animate-pulse rounded bg-slate-200" />
+          <div className="mt-2 h-5 w-20 animate-pulse rounded bg-slate-200" />
+        </div>
+
+        <div className="h-6 w-16 animate-pulse rounded-full bg-slate-200" />
+      </div>
+
+      <div className="mt-4">
+        <div className="flex items-center justify-between">
+          <div className="h-2.5 w-14 animate-pulse rounded bg-slate-200" />
+          <div className="h-2.5 w-8 animate-pulse rounded bg-slate-200" />
+        </div>
+
+        <div className="mt-1.5 h-2 animate-pulse rounded-full bg-slate-200" />
+      </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3">
+        <div className="h-9 animate-pulse rounded-lg bg-slate-200" />
+        <div className="h-9 animate-pulse rounded-lg bg-slate-200" />
+      </div>
+
+      <div className="mt-4 h-9 animate-pulse rounded-xl bg-slate-200" />
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  iconBg = "bg-emerald-50",
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  iconBg?: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-300 py-14 text-center">
+      <div
+        className={`flex h-12 w-12 items-center justify-center rounded-full ${iconBg}`}
+      >
+        {icon}
+      </div>
+
+      <h3 className="mt-4 text-lg font-bold tracking-tight text-slate-900">
+        {title}
+      </h3>
+
+      <p className="mt-1 max-w-sm text-xs font-medium text-slate-500">
+        {description}
+      </p>
+    </div>
+  );
+}

@@ -1,12 +1,17 @@
 import { Types } from "mongoose";
+
 import { ProgramStatus } from "../../../models/userProgram.model";
-import { PaymentStatus } from "../../../models/userPlan.model";
-import { SubscriptionStatus } from "../../../models/userPlan.model";
+import {
+  PaymentStatus,
+  SubscriptionStatus,
+} from "../../../models/userPlan.model";
 
 export interface IUserProgramDetailsProjection {
   _id: Types.ObjectId;
 
   title: string;
+
+  userPlanId: Types.ObjectId;
 
   nutritionist: {
     _id: Types.ObjectId;
@@ -16,14 +21,19 @@ export interface IUserProgramDetailsProjection {
   };
 
   status: ProgramStatus;
+
   currentDay: number;
+
   durationDays: number;
+
   completionPercentage: number;
 
   startDate: Date;
+
   endDate: Date;
 
   paymentStatus: PaymentStatus;
+
   subscriptionStatus: SubscriptionStatus;
 
   purchasedAt: Date;

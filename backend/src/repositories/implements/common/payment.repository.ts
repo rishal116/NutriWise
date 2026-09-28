@@ -32,6 +32,15 @@ export class PaymentRepository
     );
   }
 
+  async findByCheckoutSessionId(
+    checkoutSessionId: string,
+  ): Promise<IPayment | null> {
+    return this._model
+      .findOne({ checkoutSessionId })
+      .lean<IPayment | null>()
+      .exec();
+  }
+
   async findByUserId(userId: string | Types.ObjectId): Promise<IPayment[]> {
     return this._model
       .find({ userId })

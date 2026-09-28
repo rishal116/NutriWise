@@ -56,7 +56,6 @@ const reviewSchema = new Schema<IReview>(
   { timestamps: true },
 );
 
-// 🔥 Useful index
 reviewSchema.index({ nutritionist: 1, createdAt: -1 });
 
 export const Review = mongoose.model<IReview>("Review", reviewSchema);

@@ -3,6 +3,8 @@ export interface UserProgramDetailsDTO {
 
   title: string;
 
+  userPlanId: string;
+
   nutritionist: {
     _id: string;
     fullName: string;
@@ -18,10 +20,13 @@ export interface UserProgramDetailsDTO {
     | "cancelled";
 
   currentDay: number;
+
   durationDays: number;
+
   completionPercentage: number;
 
   startDate: string;
+
   endDate: string;
 
   paymentStatus:
@@ -35,4 +40,6 @@ export interface UserProgramDetailsDTO {
     | "active"
     | "expired"
     | "cancelled";
+
+  purchasedAt: string;
 }

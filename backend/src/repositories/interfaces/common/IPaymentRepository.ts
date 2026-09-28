@@ -10,6 +10,8 @@ export interface IPaymentRepository extends IBaseRepository<IPayment> {
 
   existsByCheckoutSessionId(checkoutSessionId: string): Promise<boolean>;
 
+  findByCheckoutSessionId(checkoutSessionId: string): Promise<IPayment | null>;
+
   findByUserId(userId: string | Types.ObjectId): Promise<IPayment[]>;
 
   findBySellerId(sellerId: string | Types.ObjectId): Promise<IPayment[]>;

@@ -27,7 +27,7 @@ import { HealthProgressService } from "../services/implements/user/healthProgres
 import { NutritionistBrowsingService } from "../services/implements/user/discovery/nutriBrowsing.service";
 import { NutritionistPlanBrowsingService } from "../services/implements/user/discovery/nutriPlanBrowsing.service";
 import { OnboardingService } from "../services/implements/user/onboarding.service";
-import { ReviewService } from "../services/implements/user/review.service";
+import { ReviewService } from "../services/implements/user/discovery/review.service"; 
 import { UserAccountService } from "../services/implements/user/userAccount.service";
 import { UserAuthService } from "../services/implements/user/userAuth.service";
 import { UserGroupService } from "../services/implements/user/userGroup.service";
@@ -85,7 +85,7 @@ import { IHealthProgressService } from "../services/interfaces/user/account/IHea
 
 import { INutritionistBrowsingService } from "../services/interfaces/user/discovery/INutriBrowsingService";
 import { INutritionistPlanBrowsingService } from "../services/interfaces/user/discovery/INutritionistPlanBrowsingService";
-import { IReviewService } from "../services/interfaces/user/IReviewService";
+import { IReviewService } from "../services/interfaces/user/discovery/IReviewService"; 
 
 import { IOnboardingService } from "../services/interfaces/user/IOnboardingService";
 import { IUserAccountService } from "../services/interfaces/user/IUserAccountService";
@@ -448,6 +448,11 @@ import { IUserDashboardService } from "../services/interfaces/user/IUserDashboar
 import { UserDashboardService } from "../services/implements/user/userDashboard.service";
 import { IUserDashboardRepository } from "../repositories/interfaces/user/account/IUserDashboardRepository";
 import { UserDashboardRepository } from "../repositories/implements/user/account/userDashboard.repository";
+import { INutriDashboardController } from "../controllers/interfaces/nutritionist/INutriDashboardController";
+import { NutriDashboardController } from "../controllers/implementations/nutritionist/nutriDashboard.controller";
+import { INutriDashboardService } from "../services/interfaces/nutritionist/INutriDashboardService";
+import { NutriDashboardService } from "../services/implements/nutritionist/nutriDashboard.service";
+import { NutritionistDashboardRepository } from "../services/implements/nutritionist/nutriDashboard.repository";
 
 const container = new Container();
 
@@ -860,6 +865,10 @@ container
 // ---------- Controllers ----------
 
 container
+  .bind<INutriDashboardController>(TYPES.INutriDashboardController)
+  .to(NutriDashboardController);
+
+container
   .bind<INutriGroupController>(TYPES.INutriGroupController)
   .to(NutriGroupController);
 
@@ -898,6 +907,9 @@ container
   .to(NutriProgramDayController);
 
 // ---------- Services ----------
+container
+  .bind<INutriDashboardService>(TYPES.INutriDashboardService)
+  .to(NutriDashboardService);
 
 container
   .bind<INutriGroupService>(TYPES.INutriGroupService)
@@ -936,6 +948,9 @@ container
   .to(NutriSessionService);
 
 // ---------- Repositories ----------
+container
+  .bind<INutriDashboardService>(TYPES.INutriDashboardRepository)
+  .to(NutritionistDashboardRepository);
 
 container
   .bind<INutriClientRepository>(TYPES.INutriClientRepository)

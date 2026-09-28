@@ -25,3 +25,5 @@ export * from "./user-challenge.routes";
 export * from "./user-challenge-tracking.routes";
 
 export * from "./dashboard.routes";
+
+export * from "./review.routes";

@@ -18,7 +18,7 @@ import {
   SessionType,
 } from "../../../models/session.model";
 
-import { CURRENCIES, Currency } from "../../../constants/currency.constants";
+import { CURRENCY, Currency } from "../../../constants/currency.constants";
 
 class UpdateSessionPricingDTO {
   @IsEnum(SESSION_PRICING_TYPES)
@@ -29,7 +29,7 @@ class UpdateSessionPricingDTO {
   @Min(0)
   amount!: number;
 
-  @IsEnum(CURRENCIES)
+  @IsEnum([CURRENCY])
   currency!: Currency;
 }
 

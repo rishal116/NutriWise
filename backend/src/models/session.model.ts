@@ -1,5 +1,6 @@
 import { model, Schema, Types } from "mongoose";
-import { CURRENCIES, Currency } from "../constants/currency.constants";
+
+import { CURRENCY, Currency } from "../constants/currency.constants";
 
 export const SESSION_TYPES = [
   "webinar",
@@ -65,9 +66,9 @@ const sessionPricingSchema = new Schema<ISessionPricing>(
 
     currency: {
       type: String,
-      enum: CURRENCIES,
+      enum: [CURRENCY],
       required: true,
-      default: "inr",
+      default: CURRENCY,
     },
   },
   {
@@ -150,6 +151,7 @@ const sessionSchema = new Schema<ISession>(
   },
   {
     timestamps: true,
+    collection: "hosted_sessions",
   },
 );
 

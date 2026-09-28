@@ -1,6 +1,6 @@
 import { Schema, Types, model } from "mongoose";
 
-import { CURRENCIES, Currency } from "../constants/currency.constants";
+import { CURRENCY, Currency } from "../constants/currency.constants";
 
 export const PAYMENT_STATUSES = [
   "pending",
@@ -29,27 +29,16 @@ export type PaymentResourceType = (typeof PAYMENT_RESOURCE_TYPES)[number];
 
 export interface IPayment {
   _id: Types.ObjectId;
-
   userId: Types.ObjectId;
-
   sellerId?: Types.ObjectId;
-
   resourceType: PaymentResourceType;
-
   resourceId: Types.ObjectId;
-
   provider: PaymentProvider;
-
   status: PaymentStatus;
-
   amount: number;
-
   currency: Currency;
-
   checkoutSessionId: string;
-
   paymentIntentId?: string;
-
   chargeId?: string;
 
   itemSnapshot: {
@@ -59,17 +48,13 @@ export interface IPayment {
   };
 
   refundedAmount?: number;
-
   refundReason?: string;
-
   metadata?: Record<string, string>;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
-const paymentSchema = new Schema<IPayment>(
+const PaymentSchema = new Schema<IPayment>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -121,9 +106,9 @@ const paymentSchema = new Schema<IPayment>(
 
     currency: {
       type: String,
-      enum: CURRENCIES,
+      enum: [CURRENCY],
       required: true,
-      default: "inr",
+      default: CURRENCY,
     },
 
     checkoutSessionId: {
@@ -164,8 +149,9 @@ const paymentSchema = new Schema<IPayment>(
 
       currency: {
         type: String,
-        enum: CURRENCIES,
+        enum: [CURRENCY],
         required: true,
+        default: CURRENCY,
       },
     },
 
@@ -192,24 +178,24 @@ const paymentSchema = new Schema<IPayment>(
   },
 );
 
-paymentSchema.index({
+PaymentSchema.index({
   userId: 1,
   createdAt: -1,
 });
 
-paymentSchema.index({
+PaymentSchema.index({
   sellerId: 1,
   createdAt: -1,
 });
 
-paymentSchema.index({
+PaymentSchema.index({
   resourceType: 1,
   resourceId: 1,
 });
 
-paymentSchema.index({
+PaymentSchema.index({
   provider: 1,
   checkoutSessionId: 1,
 });
 
-export const PaymentModel = model<IPayment>("Payment", paymentSchema);
+export const PaymentModel = model<IPayment>("Payment", PaymentSchema);

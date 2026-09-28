@@ -47,8 +47,7 @@ interface ProgramCardWithCursor extends UserProgramCardResponseDTO {
 @injectable()
 export class UserProgramBrowseRepository
   extends BaseRepository<IUserProgram>
-  implements IUserProgramBrowseRepository
-{
+  implements IUserProgramBrowseRepository {
   constructor() {
     super(UserProgramModel);
   }
@@ -255,13 +254,13 @@ export class UserProgramBrowseRepository
     const nextCursor =
       hasMore && lastItem
         ? encodeCursor({
-            id: lastItem.cursorId.toString(),
-            value:
-              lastItem.cursorValue instanceof Date
-                ? lastItem.cursorValue.toISOString()
-                : lastItem.cursorValue,
-            sortKey: sort,
-          })
+          id: lastItem.cursorId.toString(),
+          value:
+            lastItem.cursorValue instanceof Date
+              ? lastItem.cursorValue.toISOString()
+              : lastItem.cursorValue,
+          sortKey: sort,
+        })
         : null;
 
     const cleanItems = items.map(
@@ -280,10 +279,14 @@ export class UserProgramBrowseRepository
     programId: string | Types.ObjectId,
   ): Promise<IUserProgramDetailsProjection | null> {
     const userObjectId =
-      typeof userId === "string" ? new Types.ObjectId(userId) : userId;
+      typeof userId === "string"
+        ? new Types.ObjectId(userId)
+        : userId;
 
     const programObjectId =
-      typeof programId === "string" ? new Types.ObjectId(programId) : programId;
+      typeof programId === "string"
+        ? new Types.ObjectId(programId)
+        : programId;
 
     const pipeline: PipelineStage[] = [
       {
@@ -293,7 +296,6 @@ export class UserProgramBrowseRepository
           isDeleted: false,
         },
       },
-
       {
         $lookup: {
           from: "userplans",
@@ -302,11 +304,9 @@ export class UserProgramBrowseRepository
           as: "userPlan",
         },
       },
-
       {
         $unwind: "$userPlan",
       },
-
       {
         $lookup: {
           from: "userprogramprogresses",
@@ -315,14 +315,12 @@ export class UserProgramBrowseRepository
           as: "progress",
         },
       },
-
       {
         $unwind: {
           path: "$progress",
           preserveNullAndEmptyArrays: true,
         },
       },
-
       {
         $lookup: {
           from: "users",
@@ -331,16 +329,16 @@ export class UserProgramBrowseRepository
           as: "nutritionist",
         },
       },
-
       {
         $unwind: "$nutritionist",
       },
-
       {
         $project: {
           _id: 1,
 
           title: "$userPlan.planSnapshot.title",
+
+          userPlanId: "$userPlanId",
 
           nutritionist: {
             _id: "$nutritionist._id",
@@ -350,8 +348,11 @@ export class UserProgramBrowseRepository
           },
 
           status: 1,
+
           durationDays: 1,
+
           startDate: 1,
+
           endDate: 1,
 
           currentDay: {
@@ -363,14 +364,18 @@ export class UserProgramBrowseRepository
           },
 
           paymentStatus: "$userPlan.paymentStatus",
+
           subscriptionStatus: "$userPlan.subscriptionStatus",
+
           purchasedAt: "$userPlan.createdAt",
         },
       },
     ];
 
     const [program] =
-      await this._model.aggregate<IUserProgramDetailsProjection>(pipeline);
+      await this._model.aggregate<IUserProgramDetailsProjection>(
+        pipeline,
+      );
 
     return program ?? null;
   }
