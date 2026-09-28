@@ -1,29 +1,57 @@
-import { clientApi} from "@/lib/axios/clientApi";
-
-interface SubmitReviewPayload {
-  nutritionistId: string;
-  rating: number;
-  review?: string;
-  planId?: string;
-}
+import { clientApi } from "@/lib/axios/clientApi";
+import { REVIEW_ROUTES } from "@/routes/user";
+import {
+  CreateReviewDTO,
+  PublicReviewResponseDTO,
+  ReviewResponseDTO,
+  UpdateReviewDTO,
+} from "@/dtos/user/review/review.dto";
+import { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 
 export const reviewService = {
-  submitReview: async (payload: SubmitReviewPayload) => {
-    const res = await clientApi.post("/review", payload);
-    return res.data;
-  },
-  getMyReview: async (nutritionistId: string) => {
-    const res = await clientApi.get(`/review/${nutritionistId}`);
-    return res.data;
+  async createReview(
+    nutritionistId: string,
+    data: CreateReviewDTO,
+  ): Promise<ReviewResponseDTO> {
+    const { data: response } = await clientApi.post<
+      ApiResponseDTO<ReviewResponseDTO>
+    >(REVIEW_ROUTES.CREATE(nutritionistId), data);
+
+    return response.data;
   },
 
-  updateReview: async (reviewId: string, payload: any) => {
-    const res = await clientApi.put(`/review/${reviewId}`, payload);
-    return res.data;
+  async getMyReview(userPlanId: string): Promise<ReviewResponseDTO | null> {
+    const { data: response } = await clientApi.get<
+      ApiResponseDTO<ReviewResponseDTO | null>
+    >(REVIEW_ROUTES.MY_REVIEW(userPlanId));
+
+    return response.data;
   },
 
-  deleteReview: async (reviewId: string) => {
-    const res = await clientApi.delete(`/review/${reviewId}`);
-    return res.data;
+  async getNutritionistReviews(
+    nutritionistId: string,
+  ): Promise<PublicReviewResponseDTO[]> {
+    const response = await clientApi.get<
+      ApiResponseDTO<PublicReviewResponseDTO[]>
+    >(REVIEW_ROUTES.NUTRITIONIST_REVIEWS(nutritionistId));
+
+    return response.data.data;
+  },
+
+  async updateReview(
+    reviewId: string,
+    data: UpdateReviewDTO,
+  ): Promise<ReviewResponseDTO> {
+    const { data: response } = await clientApi.patch<
+      ApiResponseDTO<ReviewResponseDTO>
+    >(REVIEW_ROUTES.UPDATE(reviewId), data);
+
+    return response.data;
+  },
+
+  async deleteReview(reviewId: string): Promise<void> {
+    await clientApi.delete<ApiResponseDTO<null>>(
+      REVIEW_ROUTES.DELETE(reviewId),
+    );
   },
 };

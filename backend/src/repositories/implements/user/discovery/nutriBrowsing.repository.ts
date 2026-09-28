@@ -11,7 +11,7 @@ import { NutritionistListQueryDTO } from "../../../../dtos/user/nutri-browsing/n
 import {
   NutritionistDetailResult,
   NutritionistBrowseStatsResult,
-} from "../../../../types/nutri-browsing.types";
+} from "../../../../types/public/nutritionist/nutri-browsing.types";
 import { BaseRepository } from "../../common/base.repository";
 import { CursorPaginationResult } from "../../../../types/common/cursor-pagination.types";
 import { NutritionistCardDTO } from "../../../../dtos/user/nutri-browsing/nutri-card.dto";

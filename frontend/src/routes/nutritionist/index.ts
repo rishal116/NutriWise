@@ -1,5 +1,7 @@
 export * from "./application.routes";
 
+export * from "./dashboard.routes";
+
 export * from "./plan.routes";
 
 export * from "./client.routes";

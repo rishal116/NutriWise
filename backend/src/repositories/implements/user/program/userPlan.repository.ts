@@ -1,7 +1,3 @@
-import { BaseRepository } from "../../common/base.repository";
-import { IUserPlan, UserPlanModel } from "../../../../models/userPlan.model";
-import { IUserPlanRepository } from "../../../interfaces/user/program/IUserPlanRepository";
-import { IUserPlanPopulated } from "../../../../types/userPlan.populated";
 import {
   ClientSession,
   FilterQuery,
@@ -9,6 +5,11 @@ import {
   UpdateQuery,
   UpdateResult,
 } from "mongoose";
+
+import { BaseRepository } from "../../common/base.repository";
+import { IUserPlan, UserPlanModel } from "../../../../models/userPlan.model";
+import { IUserPlanRepository } from "../../../interfaces/user/program/IUserPlanRepository";
+import { IUserPlanPopulated } from "../../../../types/userPlan.populated";
 
 export class UserPlanRepository
   extends BaseRepository<IUserPlan>
@@ -43,20 +44,23 @@ export class UserPlanRepository
 
   async findBySessionId(sessionId: string): Promise<IUserPlan | null> {
     return this._model.findOne({
-      stripeCheckoutSessionId: sessionId,
+      "payment.sessionId": sessionId,
     });
   }
 
   async findActiveByUserAndNutritionist(
     userId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
+    session?: ClientSession,
   ): Promise<IUserPlan | null> {
-    return this._model.findOne({
-      userId,
-      nutritionistId,
-      subscriptionStatus: "active",
-      endDate: { $gt: new Date() },
-    });
+    return this._model
+      .findOne({
+        userId,
+        nutritionistId,
+        subscriptionStatus: "active",
+        endDate: { $gt: new Date() },
+      })
+      .session(session ?? null);
   }
 
   async findLatestPlan(

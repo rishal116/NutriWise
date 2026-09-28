@@ -1,4 +1,5 @@
 import { INutritionistProfile } from "../../../models/nutritionistProfile.model";
+
 import { IBaseRepository } from "../common/IBaseRepository";
 
 export interface INutritionistProfileRepository extends IBaseRepository<INutritionistProfile> {
@@ -7,6 +8,12 @@ export interface INutritionistProfileRepository extends IBaseRepository<INutriti
   updateByUserId(
     userId: string,
     data: Partial<INutritionistProfile>,
+  ): Promise<INutritionistProfile | null>;
+
+  updateRatingSummary(
+    userId: string,
+    rating: number,
+    totalReviews: number,
   ): Promise<INutritionistProfile | null>;
 
   findCompleteProfile(userId: string): Promise<INutritionistProfile | null>;

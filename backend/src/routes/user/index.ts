@@ -1,34 +1,21 @@
 import express from "express";
 
 import authRoutes from "./auth.route";
-
 import profileRoutes from "./profile.route";
-
 import healthRoutes from "./health.route";
-
 import onboardingRoutes from "./onboarding.route";
-
 import nutritionistBrowsingRoutes from "./nutri-browsing.route";
-
 import nutritionistPlanBrowsingRoutes from "./nutri-plan-browsing.route";
-
 import checkoutRoutes from "./checkout.route";
-
 import userProgramRoutes from "./user-program.route";
-
 import userProgramDayRoutes from "./user-program-day.route";
-
 import userActivityTrackingRoutes from "./user-activity-track.route";
-
 import userMeetingRoutes from "./user-meeting.route";
-
 import userPostRoutes from "./user-post.route";
-
 import userChallengeRoutes from "./user-challenge.route";
-
 import userChallengeTrackingRoutes from "./user-challenge-tracking.route";
-
 import userDashboardRouter from "./dashboard.route";
+import reviewRoutes from "./review.route";
 
 const router = express.Router();
 
@@ -61,5 +48,7 @@ router.use("/challenges", userChallengeRoutes);
 router.use("/challenges", userChallengeTrackingRoutes);
 
 router.use("/dashboard", userDashboardRouter);
+
+router.use("/reviews", reviewRoutes);
 
 export default router;

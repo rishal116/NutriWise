@@ -1,9 +1,3 @@
-export const CURRENCIES = [
-  "inr",
-  "usd",
-  "eur",
-  "gbp",
-  "aed",
-] as const;
+export const CURRENCY = "inr" as const;
 
-export type Currency = (typeof CURRENCIES)[number];
+export type Currency = typeof CURRENCY;

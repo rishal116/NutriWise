@@ -1,37 +1,36 @@
 import { Schema, model, Types } from "mongoose";
 
-export type WalletTransactionType = "CREDIT" | "DEBIT";
+export const WALLET_TRANSACTION_TYPES = ["credit", "debit"] as const;
+
+export type WalletTransactionType = (typeof WALLET_TRANSACTION_TYPES)[number];
+
+export const WALLET_TRANSACTION_REASONS = [
+  "plan_purchase",
+  "refund",
+  "withdrawal",
+  "top_up",
+] as const;
 
 export type WalletTransactionReason =
-  | "PLAN_PURCHASE"
-  | "REFUND"
-  | "WITHDRAWAL"
-  | "TOP_UP";
+  (typeof WALLET_TRANSACTION_REASONS)[number];
 
-export type WalletTxnStatus =
-  | "PENDING"
-  | "SUCCESS"
-  | "FAILED";
+export const WALLET_TXN_STATUSES = ["pending", "success", "failed"] as const;
+
+export type WalletTxnStatus = (typeof WALLET_TXN_STATUSES)[number];
 
 export interface IWalletTransaction {
   walletId: Types.ObjectId;
-
-  amount: number; 
-
+  amount: number;
   type: WalletTransactionType;
   reason: WalletTransactionReason;
-
   balanceBefore: number;
   balanceAfter: number;
-
   referenceId: string;
-
   status: WalletTxnStatus;
-
   createdAt: Date;
 }
 
-const walletTransactionSchema = new Schema<IWalletTransaction>(
+const WalletTransactionSchema = new Schema<IWalletTransaction>(
   {
     walletId: {
       type: Schema.Types.ObjectId,
@@ -48,14 +47,14 @@ const walletTransactionSchema = new Schema<IWalletTransaction>(
 
     type: {
       type: String,
-      enum: ["CREDIT", "DEBIT"],
+      enum: WALLET_TRANSACTION_TYPES,
       required: true,
       index: true,
     },
 
     reason: {
       type: String,
-      enum: ["PLAN_PURCHASE", "REFUND", "WITHDRAWAL", "TOP_UP"],
+      enum: WALLET_TRANSACTION_REASONS,
       required: true,
       index: true,
     },
@@ -63,11 +62,13 @@ const walletTransactionSchema = new Schema<IWalletTransaction>(
     balanceBefore: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     balanceAfter: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     referenceId: {
@@ -79,17 +80,25 @@ const walletTransactionSchema = new Schema<IWalletTransaction>(
 
     status: {
       type: String,
-      enum: ["PENDING", "SUCCESS", "FAILED"],
-      default: "SUCCESS",
+      enum: WALLET_TXN_STATUSES,
+      default: "success",
       index: true,
     },
   },
-  { timestamps: { createdAt: true, updatedAt: false } }
+  {
+    timestamps: {
+      createdAt: true,
+      updatedAt: false,
+    },
+  },
 );
 
-walletTransactionSchema.index({ walletId: 1, createdAt: -1 });
+WalletTransactionSchema.index({
+  walletId: 1,
+  createdAt: -1,
+});
 
 export const WalletTransactionModel = model<IWalletTransaction>(
   "WalletTransaction",
-  walletTransactionSchema
+  WalletTransactionSchema,
 );

@@ -1,41 +1,21 @@
 import { Schema, model, Types } from "mongoose";
 
-export const WALLET_OWNER_TYPES = [
-  "admin",
-  "nutritionist",
-  "user",
-] as const;
+import { CURRENCY, Currency } from "../constants/currency.constants";
 
-export const WALLET_CURRENCIES = [
-  "INR",
-  "USD",
-] as const;
+export const WALLET_OWNER_TYPES = ["admin", "nutritionist", "user"] as const;
 
-export type WalletOwnerType =
-  (typeof WALLET_OWNER_TYPES)[number];
-
-export type WalletCurrency =
-  (typeof WALLET_CURRENCIES)[number];
+export type WalletOwnerType = (typeof WALLET_OWNER_TYPES)[number];
 
 export interface IWallet {
   _id: Types.ObjectId;
-
   ownerId: Types.ObjectId;
-
   ownerType: WalletOwnerType;
-
   availableBalance: number;
-
   escrowBalance: number;
-
-  currency: WalletCurrency;
-
+  currency: Currency;
   isActive: boolean;
-
   lastTransactionAt?: Date;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -70,8 +50,9 @@ const WalletSchema = new Schema<IWallet>(
 
     currency: {
       type: String,
-      enum: WALLET_CURRENCIES,
-      default: "INR",
+      enum: [CURRENCY],
+      required: true,
+      default: CURRENCY,
     },
 
     isActive: {
@@ -105,7 +86,4 @@ WalletSchema.index({
   isActive: 1,
 });
 
-export const WalletModel = model<IWallet>(
-  "Wallet",
-  WalletSchema,
-);
+export const WalletModel = model<IWallet>("Wallet", WalletSchema);

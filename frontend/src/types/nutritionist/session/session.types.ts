@@ -22,6 +22,6 @@ export const SESSION_STATUSES = [
 
 export type SessionStatus = (typeof SESSION_STATUSES)[number];
 
-export const SESSION_CURRENCIES = ["inr", "usd", "eur", "gbp", "aed"] as const;
+export const SESSION_CURRENCIES = ["inr"] as const;
 
 export type SessionCurrency = (typeof SESSION_CURRENCIES)[number];

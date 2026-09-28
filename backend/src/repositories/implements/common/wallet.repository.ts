@@ -43,7 +43,7 @@ export class WalletRepository
           ownerType,
           availableBalance: 0,
           escrowBalance: 0,
-          currency: "INR",
+          currency: "inr",
           isActive: true,
         },
       },

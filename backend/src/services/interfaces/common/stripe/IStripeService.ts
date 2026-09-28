@@ -1,7 +1,10 @@
+import Stripe from "stripe";
 import { StripeCheckoutInputDTO } from "../../../../dtos/common/stripe.dto";
 
 export interface IStripeService {
   createCheckoutSession(
     stripeCheckoutInput: StripeCheckoutInputDTO,
   ): Promise<string>;
+  retrieveCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session>;
 }
+

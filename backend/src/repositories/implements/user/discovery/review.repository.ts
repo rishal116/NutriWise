@@ -1,52 +1,96 @@
+import { Types } from "mongoose";
 import { injectable } from "inversify";
-import { IReviewRepository } from "../../../interfaces/user/discovery/IReviewRepository";
-import { Review, IReview } from "../../../../models/review.model";
-import { IReviewPopulated } from "../../../../types/review.populated";
+
+import { IReview } from "../../../../models/review.model";
+import { Review } from "../../../../models/review.model";
+import { IReviewPopulated } from "../../../../types/user/review/review.populated";
+
+import { BaseRepository } from "../../common/base.repository";
+
+import {
+  IReviewRepository,
+  IReviewRatingSummary,
+} from "../../../interfaces/user/discovery/IReviewRepository";
 
 @injectable()
-export class ReviewRepository implements IReviewRepository {
-  async create(data: Partial<IReview>): Promise<IReview> {
-    return Review.create(data);
+export class ReviewRepository
+  extends BaseRepository<IReview>
+  implements IReviewRepository {
+  constructor() {
+    super(Review);
   }
 
-  async findByUserPlan(userPlanId: string): Promise<IReview | null> {
-    return Review.findOne({ userPlan: userPlanId });
-  }
-
-  async update(
-    reviewId: string,
-    data: Partial<IReview>,
+  async findByUserPlan(
+    userPlanId: string,
   ): Promise<IReview | null> {
-    return Review.findByIdAndUpdate(reviewId, data, { new: true });
+    return this._model
+      .findOne({
+        userPlan: new Types.ObjectId(userPlanId),
+      })
+      .lean<IReview | null>()
+      .exec();
   }
 
-  async softDelete(reviewId: string): Promise<IReview | null> {
-    return Review.findByIdAndUpdate(
-      reviewId,
-      { isDeleted: true },
-      { new: true },
-    );
-  }
-
-  async findByNutritionist(nutritionistId: string): Promise<IReviewPopulated[]> {
-    return Review.find({
-      nutritionist: nutritionistId,
-      isDeleted: false,
-    })
+  async findByNutritionist(
+    nutritionistId: string,
+  ): Promise<IReviewPopulated[]> {
+    return this._model
+      .find({
+        nutritionist: new Types.ObjectId(nutritionistId),
+      })
+      .select(
+        "user nutritionist userPlan rating review createdAt updatedAt",
+      )
       .populate("user", "fullName profileImage")
       .sort({ createdAt: -1 })
-      .lean<IReviewPopulated[]>();
+      .lean<IReviewPopulated[]>()
+      .exec();
   }
 
-  async findByUser(
-    userId: string,
+  getRatingSummary(
     nutritionistId: string,
-    planId?: string,
-  ): Promise<IReview | null> {
-    return await Review.findOne({
-      user: userId,
-      nutritionist: nutritionistId,
-      ...(planId && { plan: planId }),
-    });
+  ): Promise<IReviewRatingSummary>;
+
+  async getRatingSummary(
+    nutritionistId: string,
+  ): Promise<IReviewRatingSummary> {
+    const result = await this._model.aggregate<IReviewRatingSummary>([
+      {
+        $match: {
+          nutritionist: new Types.ObjectId(nutritionistId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageRating: {
+            $avg: "$rating",
+          },
+          totalReviews: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          averageRating: 1,
+          totalReviews: 1,
+        },
+      },
+    ]);
+
+    if (!result.length) {
+      return {
+        averageRating: 0,
+        totalReviews: 0,
+      };
+    }
+
+    return {
+      averageRating:
+        Math.round(result[0].averageRating * 10) / 10,
+      totalReviews: result[0].totalReviews,
+    };
   }
 }

@@ -1,6 +1,7 @@
 import { clientApi } from "@/lib/axios/clientApi";
 import { CHECKOUT_ROUTES } from "@/routes/user";
 import {
+  CheckoutStatusResponseDTO,
   CreateCheckoutSessionRequestDTO,
   CreateCheckoutSessionResponseDTO,
 } from "@/types/checkout.types";
@@ -16,4 +17,12 @@ export const checkoutService = {
 
     return data;
   },
-};
+
+  async getStatus(sessionId: string): Promise<CheckoutStatusResponseDTO> {
+    const { data } = await clientApi.get(
+      CHECKOUT_ROUTES.GET_STATUS(sessionId),
+    );
+
+    return data;
+  },
+};

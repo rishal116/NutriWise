@@ -1,19 +1,22 @@
+
+
 import { IReview } from "../../../../models/review.model";
-import { IReviewPopulated } from "../../../../types/review.populated";
+import { IReviewPopulated } from "../../../../types/user/review/review.populated";
+import { IBaseRepository } from "../../common/IBaseRepository";
 
-export interface IReviewRepository {
-  create(data: Partial<IReview>): Promise<IReview>;
+export interface IReviewRatingSummary {
+  averageRating: number;
+  totalReviews: number;
+}
 
+export interface IReviewRepository extends IBaseRepository<IReview> {
   findByUserPlan(userPlanId: string): Promise<IReview | null>;
-  findByUser(
-    userId: string,
+
+  findByNutritionist(
     nutritionistId: string,
-    planId?: string,
-  ): Promise<IReview | null>;
+  ): Promise<IReviewPopulated[]>;
 
-  update(reviewId: string, data: Partial<IReview>): Promise<IReview | null>;
-
-  softDelete(reviewId: string): Promise<IReview | null>;
-
-  findByNutritionist(nutritionistId: string): Promise<IReviewPopulated[]>;
+  getRatingSummary(
+    nutritionistId: string,
+  ): Promise<IReviewRatingSummary>;
 }

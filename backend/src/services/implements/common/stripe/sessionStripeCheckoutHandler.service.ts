@@ -4,6 +4,7 @@ import { inject, injectable } from "inversify";
 
 import logger from "../../../../utils/logger";
 import { TYPES } from "../../../../types/types";
+import { Currency } from "../../../../constants/currency.constants";
 
 import { ISessionStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
 
@@ -178,13 +179,13 @@ export class SessionStripeCheckoutHandlerService implements ISessionStripeChecko
           provider: "stripe",
           status: "paid",
           amount: sessionData.pricing.amount,
-          currency: sessionData.pricing.currency,
+          currency: sessionData.pricing.currency.toLowerCase() as Currency,
           checkoutSessionId: session.id,
           paymentIntentId: session.payment_intent.toString(),
           itemSnapshot: {
             title: sessionData.title,
             price: sessionData.pricing.amount,
-            currency: sessionData.pricing.currency,
+            currency: sessionData.pricing.currency.toLowerCase() as Currency,
           },
           metadata: {
             registrationId: registration._id.toString(),

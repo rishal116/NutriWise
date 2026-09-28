@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import { injectable } from "inversify";
 import { stripe } from "../../../../configs/stripe";
 import { StripeCheckoutInputDTO } from "../../../../dtos/common/stripe.dto";
@@ -37,4 +38,11 @@ export class StripeService implements IStripeService {
 
     return checkoutSession.url!;
   }
+
+  async retrieveCheckoutSession(
+    sessionId: string,
+  ): Promise<Stripe.Checkout.Session> {
+    return stripe.checkout.sessions.retrieve(sessionId);
+  }
 }
+

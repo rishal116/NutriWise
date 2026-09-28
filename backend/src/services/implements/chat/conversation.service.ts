@@ -66,13 +66,16 @@ export class ConversationService implements IConversationService {
         await this._userPlanRepository.findActiveByUserAndNutritionist(
           dto.currentUserId,
           dto.otherUserId,
+          session,
         );
+
       const activePlan2 =
         await this._userPlanRepository.findActiveByUserAndNutritionist(
           dto.otherUserId,
           dto.currentUserId,
+          session,
         );
-
+        
       if (!activePlan1 && !activePlan2) {
         throw new CustomError(
           "Cannot create coaching conversation without an active plan.",

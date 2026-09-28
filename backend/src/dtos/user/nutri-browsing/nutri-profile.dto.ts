@@ -12,6 +12,7 @@ import {
 } from "../../../models/nutritionistProfile.model";
 
 export interface NutritionistUserDTO {
+  id:string;
   username: string;
   fullName: string;
   profileImage?: string;

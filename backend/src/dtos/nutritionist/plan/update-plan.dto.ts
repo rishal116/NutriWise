@@ -16,7 +16,7 @@ import {
   PlanStatus,
 } from "../../../models/nutritionistPlan.model";
 
-import { CURRENCIES, Currency } from "../../../constants/currency.constants";
+import { CURRENCY, Currency } from "../../../constants/currency.constants";
 
 import {
   SPECIALIZATIONS,
@@ -52,7 +52,7 @@ export class UpdatePlanDTO {
   price?: number;
 
   @IsOptional()
-  @IsEnum(CURRENCIES)
+  @IsEnum([CURRENCY])
   currency?: Currency;
 
   @IsOptional()

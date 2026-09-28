@@ -4,8 +4,6 @@ import { IUserProgram } from "../../../../models/userProgram.model";
 import { IUserProgramPopulated } from "../../../../types/userProgram.populated";
 
 export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
-
-
   findActiveByUserAndNutritionist(
     userId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,

@@ -1,11 +1,5 @@
-import NutritionistDashboard from "@/components/nutritionist/NutritionistDashboard";
+import NutritionistDashboard from "@/components/nutritionist/dashboard/NutritionistDashboard";
 
-
-export const metadata = {
-  title: "NutriWise - Nutritionist Dashboard",
-};
-
-export default function DashboardPage() {
-
+export default function NutritionistDashboardPage() {
   return <NutritionistDashboard />;
 }
