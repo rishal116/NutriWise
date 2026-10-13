@@ -7,14 +7,16 @@ import { IConversationMemberRepository } from "../../../repositories/interfaces/
 import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import { IUserPlanRepository } from "../../../repositories/interfaces/user/program/IUserPlanRepository";
 import { CreateDirectConversationDTO } from "../../../dtos/chat/createConversation.dto";
-import { ConversationResponseDTO } from "../../../dtos/chat/conversationResponse.dto";
+import { ConversationResponseDTO } from "../../../dtos/chat/conversation-response.dto";
 import { ConversationMapper } from "../../../mappers/chat/conversation.mapper";
-import { decodeCursor } from "../../../utils/cursor.util";
 import { buildDirectKey } from "../../../utils/chat.util";
 import logger from "../../../utils/logger";
-import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { toConversationListItemDTO } from "../../../mappers/chat/conversation-list.mapper";
+import { ConversationListFilter } from "../../../types/chat/conversation-list.types";
+import { ConversationListItemDTO } from "../../../dtos/chat/conversation-list-item.dto";
 
 @injectable()
 export class ConversationService implements IConversationService {
@@ -34,13 +36,7 @@ export class ConversationService implements IConversationService {
 
   async createDirectConversation(
     dto: CreateDirectConversationDTO,
-  ): Promise<ConversationResponseDTO> {
-    return this.createDirectConversationInternal(dto);
-  }
-
-  async createDirectConversationWithSession(
-    dto: CreateDirectConversationDTO,
-    session: ClientSession,
+    session?: ClientSession,
   ): Promise<ConversationResponseDTO> {
     return this.createDirectConversationInternal(dto, session);
   }
@@ -75,7 +71,7 @@ export class ConversationService implements IConversationService {
           dto.currentUserId,
           session,
         );
-        
+
       if (!activePlan1 && !activePlan2) {
         throw new CustomError(
           "Cannot create coaching conversation without an active plan.",
@@ -159,97 +155,65 @@ export class ConversationService implements IConversationService {
     userId: string,
     limit: number,
     cursor?: string,
-  ): Promise<InfiniteScrollResponseDTO<ConversationResponseDTO>> {
+    filter: ConversationListFilter = "all",
+    search?: string,
+  ): Promise<InfiniteScrollResponseDTO<ConversationListItemDTO>> {
     logger.debug("Fetching user conversations", {
       userId,
       limit,
-      hasCursor: Boolean(cursor),
+      filter,
+      search: search ?? "none",
     });
 
-    const members = await this._conversationMemberRepository.findByUser(userId);
-
-    if (members.length === 0) {
-      return new InfiniteScrollResponseDTO([], null, false);
-    }
-
-    const decodedCursor = decodeCursor(cursor);
-
-    const conversationResult =
-      await this._conversationRepository.findUserConversations(
-        userId,
-        limit,
-        decodedCursor ?? undefined,
-      );
-
-    if (conversationResult.items.length === 0) {
-      return new InfiniteScrollResponseDTO([], null, false);
-    }
-
-    const conversations = conversationResult.items;
-
-    const conversationIds = conversations.map((conversation) =>
-      conversation._id.toString(),
+    const result = await this._conversationRepository.findUserConversations(
+      userId,
+      limit,
+      cursor,
+      filter,
+      search,
     );
 
-    const conversationMembers =
-      await this._conversationMemberRepository.findByConversationIds(
-        conversationIds,
-      );
+    const items = result.items.map(toConversationListItemDTO);
 
-    const otherUserIds = conversationMembers
-      .filter(
-        (member) =>
-          member.userId.toString() !== userId && member.status === "active",
-      )
-      .map((member) => member.userId.toString());
-
-    const users = await this._userRepository.findByIds(otherUserIds);
-
-    const userMap = new Map(users.map((user) => [user._id.toString(), user]));
-
-    const currentMemberMap = new Map(
-      members.map((member) => [member.conversationId.toString(), member]),
-    );
-
-    const items = conversations.map((conversation) => {
-      const conversationId = conversation._id.toString();
-
-      const currentMember = currentMemberMap.get(conversationId);
-
-      let otherUser = null;
-
-      if (conversation.chatType === "direct") {
-        const otherMember = conversationMembers.find(
-          (member) =>
-            member.conversationId.toString() === conversationId &&
-            member.userId.toString() !== userId &&
-            member.status === "active",
-        );
-
-        if (otherMember) {
-          otherUser = userMap.get(otherMember.userId.toString()) ?? null;
-        }
-      }
-
-      return ConversationMapper.toResponseDTO(
-        conversation,
-        otherUser,
-        currentMember?.unreadCount ?? 0,
-        currentMember?.isMuted ?? false,
-        currentMember?.isArchived ?? false,
-      );
-    });
-
-    logger.info("User conversations loaded", {
+    logger.debug("User conversations fetched", {
       userId,
       count: items.length,
-      hasMore: conversationResult.hasMore,
+      hasMore: result.hasMore,
     });
 
     return new InfiniteScrollResponseDTO(
       items,
-      conversationResult.nextCursor,
-      conversationResult.hasMore,
+      result.nextCursor,
+      result.hasMore,
     );
+  }
+
+  async getUserConversationDetails(
+    userId: string,
+    conversationId: string,
+  ): Promise<ConversationResponseDTO> {
+    logger.debug("Fetching conversation details", {
+      userId,
+      conversationId,
+    });
+
+    const conversation =
+      await this._conversationRepository.findUserConversationDetails(
+        userId,
+        conversationId,
+      );
+
+    if (!conversation) {
+      throw new CustomError("Conversation not found.", StatusCode.NOT_FOUND);
+    }
+
+    const result = ConversationMapper.toResponseDTOFromDetails(conversation);
+
+    logger.debug("Conversation details fetched", {
+      userId,
+      conversationId,
+    });
+
+    return result;
   }
 }

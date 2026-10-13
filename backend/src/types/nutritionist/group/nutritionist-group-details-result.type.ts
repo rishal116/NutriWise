@@ -1,12 +1,34 @@
+import type {
+  ConversationStatus,
+  ConversationVisibility,
+} from "../../../models/conversation.model";
+
+export class GroupDetailsDTO {
+  id!: string;
+  title!: string;
+  description?: string;
+  groupAvatar?: string;
+  visibility!: ConversationVisibility;
+  status!: ConversationStatus;
+  memberCount!: number;
+  inviteToken?: string;
+  createdAt!: Date;
+  updatedAt!: Date;
+
+  constructor(data: Partial<GroupDetailsDTO>) {
+    Object.assign(this, data);
+  }
+}
+
 export interface NutritionistGroupDetailsResult {
   id: string;
   title: string;
   description?: string;
   groupAvatar?: string;
-  visibility: "public" | "private";
-  status: "active" | "inactive" | "blocked" | "closed";
+  visibility: ConversationVisibility;
+  status: ConversationStatus;
   memberCount: number;
-  inviteTokenEncrypted?: string;
+  inviteToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -14,8 +14,10 @@ import {
   Settings,
   X,
   FileText,
-  type LucideIcon,
   BarChart3,
+  ChevronsLeft,
+  ChevronsRight,
+  type LucideIcon,
 } from "lucide-react";
 
 interface NavItem {
@@ -30,19 +32,17 @@ interface NavSection {
 }
 
 interface ProfileSidebarProps {
-  compact?: boolean;
   activePath: string;
   onClose?: () => void;
+  collapsed?: boolean; // desktop only (lg+); mobile drawer is always expanded
+  onToggle?: () => void;
 }
 
 const navSections: NavSection[] = [
   {
     title: "Overview",
-    items: [
-      { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
-    ],
+    items: [{ name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard }],
   },
-
   {
     title: "Account",
     items: [
@@ -50,7 +50,6 @@ const navSections: NavSection[] = [
       { name: "Health Details", href: "/user/health", icon: HeartPulse },
     ],
   },
-
   {
     title: "My Journey",
     items: [
@@ -60,7 +59,6 @@ const navSections: NavSection[] = [
       { name: "Progress", href: "/user/progress", icon: BarChart3 },
     ],
   },
-
   {
     title: "Community",
     items: [
@@ -68,12 +66,10 @@ const navSections: NavSection[] = [
       { name: "Messages", href: "/user/messages", icon: MessageCircle },
     ],
   },
-
   {
     title: "Learn",
     items: [{ name: "Resources", href: "/user/resources", icon: BookOpen }],
   },
-
   {
     title: "Billing & Settings",
     items: [
@@ -83,77 +79,73 @@ const navSections: NavSection[] = [
   },
 ];
 
-function isItemActive(activePath: string, href: string): boolean {
-  return activePath === href || activePath.startsWith(`${href}/`);
-}
+const isActive = (path: string, href: string) =>
+  path === href || path.startsWith(`${href}/`);
 
 export default function ProfileSidebar({
-  compact = false,
   activePath,
   onClose,
+  collapsed = false,
+  onToggle,
 }: ProfileSidebarProps) {
   return (
-    <aside
-      className={`h-full bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out ${
-        compact ? "w-16" : "w-56"
-      }`}
-    >
-      {!compact && (
-        <div className="lg:hidden flex items-center justify-between px-4 py-4 border-b border-slate-100">
-          <span className="text-sm font-semibold text-slate-900">Menu</span>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close menu"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+    <div className="flex h-full flex-col bg-white">
+      {/* Mobile header */}
+      <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-4 lg:hidden">
+        <span className="text-sm font-semibold text-slate-900">Menu</span>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu"
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-50 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
 
       <nav
-        className={`flex-1 overflow-y-auto py-4 ${compact ? "px-2" : "px-3"}`}
-        aria-label="Profile navigation"
+        className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+          collapsed ? "lg:px-2" : ""
+        }`}
+        aria-label="Profile menu"
       >
-        {navSections.map((section, si) => (
-          <div key={section.title} className={si !== 0 ? "mt-5" : ""}>
-            {!compact && (
-              <p className="px-2 mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                {section.title}
-              </p>
+        {navSections.map((section, i) => (
+          <div key={section.title} className={i ? "mt-5" : ""}>
+            {i > 0 && collapsed && (
+              <hr className="mb-4 hidden border-slate-100 lg:block" />
             )}
-
-            <ul
-              className={`flex flex-col gap-0.5 ${compact ? "items-center" : ""}`}
+            <p
+              className={`mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wide text-slate-400 ${
+                collapsed ? "lg:hidden" : ""
+              }`}
             >
-              {section.items.map((item) => {
-                const Icon = item.icon;
-                const active = isItemActive(activePath, item.href);
-
+              {section.title}
+            </p>
+            <ul className="flex flex-col gap-0.5">
+              {section.items.map(({ name, href, icon: Icon }) => {
+                const active = isActive(activePath, href);
                 return (
-                  <li key={item.name}>
+                  <li key={href}>
                     <Link
-                      href={item.href}
-                      onClick={onClose}
-                      title={compact ? item.name : undefined}
+                      href={href}
+                      title={collapsed ? name : undefined}
                       aria-current={active ? "page" : undefined}
-                      className={`flex items-center transition-all duration-150 rounded-lg ${
-                        compact
-                          ? "justify-center w-10 h-10 mx-auto"
-                          : "gap-2.5 px-3 py-2 w-full"
+                      className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                        collapsed ? "lg:justify-center lg:px-0" : ""
                       } ${
                         active
-                          ? "bg-emerald-600 text-white"
-                          : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-700"
                       }`}
                     >
-                      <Icon className="w-4 h-4 shrink-0" />
-                      {!compact && (
-                        <span className="text-sm font-medium truncate">
-                          {item.name}
-                        </span>
-                      )}
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span
+                        className={`truncate text-sm font-medium ${
+                          collapsed ? "lg:sr-only" : ""
+                        }`}
+                      >
+                        {name}
+                      </span>
                     </Link>
                   </li>
                 );
@@ -162,6 +154,29 @@ export default function ProfileSidebar({
           </div>
         ))}
       </nav>
-    </aside>
+
+      {/* Collapse toggle (desktop only) */}
+      <div className="hidden shrink-0 border-t border-slate-100 p-3 lg:block">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Expand sidebar" : undefined}
+          className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+            collapsed ? "justify-center px-0" : ""
+          }`}
+        >
+          {collapsed ? (
+            <ChevronsRight className="h-4 w-4" />
+          ) : (
+            <>
+              <ChevronsLeft className="h-4 w-4" />
+              <span>Collapse</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
   );
 }

@@ -3,220 +3,383 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+
+import type { IncomingMessagePayload } from "@/socket/chat.socket";
 import { useAppSelector } from "@/redux/hooks";
 import { conversationService } from "@/services/chat/conversation.service";
-import { ConversationResponseDTO } from "@/dtos/chat/conversation-response.dto";
+import type { ConversationListItemDTO } from "@/dtos/chat/conversation-list-item.dto";
+import type { ConversationListFilter } from "@/types/chat/chat.types";
+import { getSocket } from "@/lib/socket";
+import { chatSocket } from "@/socket/chat.socket";
+
 import ConversationListItem from "./ConversationListItem";
 import ConversationSearch from "./ConversationSearch";
 import ChatLoading from "./ChatLoading";
 import ChatError from "./ChatError";
 import EmptyChatState from "./EmptyChatState";
 
+type MessagesBasePath = "/user/messages" | "/nutritionist/messages";
+
 interface ConversationListProps {
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  conversations: ConversationResponseDTO[];
-  setConversations: React.Dispatch<
-    React.SetStateAction<ConversationResponseDTO[]>
-  >;
-  isMobile: boolean;
-  onBack: () => void;
+  filter: ConversationListFilter;
+  messagesBasePath: MessagesBasePath;
 }
 
-// Narrow an unknown error (axios-shaped or plain Error) into a message string.
+interface ApiErrorLike {
+  response?: {
+    data?: {
+      message?: unknown;
+    };
+  };
+}
+
 function getErrorMessage(err: unknown, fallback: string): string {
-  if (
-    typeof err === "object" &&
-    err !== null &&
-    "response" in err &&
-    typeof (err as { response?: { data?: { message?: unknown } } }).response
-      ?.data?.message === "string"
-  ) {
-    return (err as { response: { data: { message: string } } }).response.data
-      .message;
+  if (typeof err === "object" && err !== null) {
+    const message = (err as ApiErrorLike).response?.data?.message;
+
+    if (typeof message === "string") {
+      return message;
+    }
   }
-  if (err instanceof Error) return err.message;
+
+  if (err instanceof Error) {
+    return err.message;
+  }
+
   return fallback;
 }
 
+const TITLES: Record<ConversationListFilter, string> = {
+  all: "Messages",
+  personal: "Personal",
+  group: "Groups",
+};
+
+function getNavigation(messagesBasePath: MessagesBasePath) {
+  return [
+    {
+      label: "All",
+      filter: "all" as const,
+      path: messagesBasePath,
+    },
+    {
+      label: "Personal",
+      filter: "personal" as const,
+      path: `${messagesBasePath}/personal`,
+    },
+    {
+      label: "Groups",
+      filter: "group" as const,
+      path: `${messagesBasePath}/group`,
+    },
+  ];
+}
+
 export default function ConversationList({
-  selectedId,
-  onSelect,
-  conversations,
-  setConversations,
-  isMobile,
-  onBack,
+  filter,
+  messagesBasePath,
 }: ConversationListProps) {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
 
+  const navigation = getNavigation(messagesBasePath);
+
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [conversations, setConversations] = useState<ConversationListItemDTO[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
+  const [nextCursor, setNextCursor] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const fetchedRef = useRef(false);
+  const requestIdRef = useRef(0);
 
-  // Role-aware Back to Dashboard handler
-  const handleBackToDashboard = () => {
+  const handleBackToDashboard = useCallback(() => {
     const role = user?.activeRole;
-    let dashboardRoute = "/user/dashboard";
-    if (role === "nutritionist") {
-      dashboardRoute = "/nutritionist/dashboard";
-    } else if (role === "admin") {
-      dashboardRoute = "/admin/dashboard";
-    }
-    router.push(dashboardRoute);
-  };
 
-  // Initial fetch ONCE
-  const fetchInitialConversations = useCallback(async () => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await conversationService.getConversations(20);
-      if (response.success && response.data) {
-        setConversations(response.data.items || []);
-        setNextCursor(response.data.nextCursor ?? undefined);
-        setHasMore(response.data.hasMore);
-      } else {
-        setError(response.message || "Failed to load conversations");
-      }
-    } catch (err: unknown) {
-      setError(getErrorMessage(err, "Failed to load conversations"));
-    } finally {
-      setLoading(false);
+    if (role === "nutritionist") {
+      router.push("/nutritionist/dashboard");
+      return;
     }
-  }, [setConversations]);
+
+    if (role === "admin") {
+      router.push("/admin/dashboard");
+      return;
+    }
+
+    router.push("/user/dashboard");
+  }, [router, user?.activeRole]);
+
+  const handleNavigation = useCallback(
+    (path: string) => {
+      router.push(path);
+    },
+    [router],
+  );
+
+  const fetchConversations = useCallback(
+    async (cursor?: string) => {
+      const isInitialLoad = !cursor;
+      const requestId = isInitialLoad
+        ? ++requestIdRef.current
+        : requestIdRef.current;
+
+      const isStale = () => requestId !== requestIdRef.current;
+
+      if (isInitialLoad) {
+        setLoading(true);
+        setLoadingMore(false);
+        setError(null);
+      } else {
+        setLoadingMore(true);
+      }
+
+      try {
+        const response = await conversationService.getConversations({
+          limit: 20,
+          cursor,
+          filter,
+          search: search.trim() || undefined,
+        });
+
+        if (isStale()) return;
+
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Failed to load conversations");
+        }
+
+        const { items, nextCursor: newCursor, hasMore: more } = response.data;
+
+        setConversations((prev) => {
+          if (isInitialLoad) {
+            return items;
+          }
+
+          const existingIds = new Set(
+            prev.map((conversation) => conversation.conversationId),
+          );
+
+          return [
+            ...prev,
+            ...items.filter(
+              (conversation) => !existingIds.has(conversation.conversationId),
+            ),
+          ];
+        });
+
+        setNextCursor(newCursor ?? undefined);
+        setHasMore(more);
+      } catch (err: unknown) {
+        if (isStale()) return;
+
+        const message = getErrorMessage(err, "Failed to load conversations");
+
+        if (isInitialLoad) {
+          setConversations([]);
+          setNextCursor(undefined);
+          setHasMore(false);
+          setError(message);
+        } else {
+          console.error("Failed to fetch next conversations page:", message);
+        }
+      } finally {
+        if (!isStale()) {
+          if (isInitialLoad) {
+            setLoading(false);
+          } else {
+            setLoadingMore(false);
+          }
+        }
+      }
+    },
+    [filter, search],
+  );
 
   useEffect(() => {
-    fetchInitialConversations();
-  }, [fetchInitialConversations]);
+    const timeout = setTimeout(() => {
+      void fetchConversations();
+    }, 300);
 
-  // Load more (Cursor pagination)
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [fetchConversations]);
+
   const handleLoadMore = useCallback(async () => {
-    if (loadingMore || !hasMore || !nextCursor) return;
-    setLoadingMore(true);
-    try {
-      const response = await conversationService.getConversations(
-        20,
-        nextCursor
-      );
-      if (response.success && response.data) {
-        const newItems = response.data.items || [];
-        setConversations((prev) => {
-          const existingIds = new Set(prev.map((item) => item.id));
-          const filtered = newItems.filter((item) => !existingIds.has(item.id));
-          return [...prev, ...filtered];
-        });
-        setNextCursor(response.data.nextCursor ?? undefined);
-        setHasMore(response.data.hasMore);
-      }
-    } catch (err: unknown) {
-      console.error(
-        "Failed to fetch next conversations page:",
-        getErrorMessage(err, "Unknown error")
-      );
-    } finally {
-      setLoadingMore(false);
+    if (loading || loadingMore || !hasMore || !nextCursor) {
+      return;
     }
-  }, [loadingMore, hasMore, nextCursor, setConversations]);
 
-  // Scroll detection for bottom threshold
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    await fetchConversations(nextCursor);
+  }, [loading, loadingMore, hasMore, nextCursor, fetchConversations]);
+
+  const handleScroll = useCallback(() => {
+    const container = containerRef.current;
+
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+
     if (scrollHeight - scrollTop - clientHeight < 100) {
-      handleLoadMore();
+      void handleLoadMore();
     }
+  }, [handleLoadMore]);
+
+  const handleIncomingMessage = useCallback(
+    (message: IncomingMessagePayload) => {
+      if (!message?.id || !message.conversationId) return;
+
+      const preview =
+        message.status === "deleted"
+          ? "This message was deleted"
+          : message.text?.trim() || message.content?.trim() || "📎 Attachment";
+
+      setConversations((prev) => {
+        const index = prev.findIndex(
+          (item) => item.conversationId === message.conversationId,
+        );
+
+        // The conversation may not be in the loaded page.
+        if (index === -1) return prev;
+
+        const updated = {
+          ...prev[index],
+          lastMessagePreview: preview,
+          lastMessageSenderId: message.senderId,
+          lastActivityAt: message.createdAt
+            ? new Date(message.createdAt).toISOString()
+            : new Date().toISOString(),
+        };
+
+        return [
+          updated,
+          ...prev.filter(
+            (item) => item.conversationId !== message.conversationId,
+          ),
+        ];
+      });
+    },
+    [],
+  );
+
+  const handleSelectConversation = (conversation: ConversationListItemDTO) => {
+    if (!conversation.conversationId) {
+      console.error("Missing conversation ID:", conversation);
+      return;
+    }
+    console.log(conversation);
+
+    const type = conversation.chatType === "direct" ? "personal" : "group";
+
+    router.push(`${messagesBasePath}/${type}/${conversation.conversationId}`);
   };
 
-  const filteredConversations = conversations.filter((c) => {
-    const name = (c.chatType === "group" ? c.title : c.participant?.name) ?? "";
-    return name.toLowerCase().includes(search.toLowerCase());
-  });
+  useEffect(() => {
+    const socket = getSocket();
+
+    const cleanup = chatSocket.register(socket, {
+      onReceive: handleIncomingMessage,
+    });
+
+    return cleanup;
+  }, [handleIncomingMessage]);
 
   return (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200/80 select-none">
-      {/* Sidebar Top Header */}
-      <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-r border-slate-200/80 bg-white select-none">
+      {/* Header */}
+      <header className="shrink-0 border-b border-slate-100 p-3 sm:p-4">
         <div className="flex items-center gap-2.5">
           <button
+            type="button"
             onClick={handleBackToDashboard}
-            className="px-2.5 py-1.5 hover:bg-slate-100 rounded-xl text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5 border border-slate-200/80 group text-xs font-semibold shadow-2xs"
+            className="group flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200/80 px-2.5 py-1.5 text-xs font-semibold text-slate-600 shadow-2xs transition-colors hover:bg-slate-100 hover:text-slate-900"
             aria-label="Back to Dashboard"
             title="Back to Dashboard"
           >
-            <ArrowLeft className="w-4 h-4 text-slate-500 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Dashboard</span>
+            <ArrowLeft className="h-4 w-4 text-slate-500 transition-transform group-hover:-translate-x-0.5" />
+            <span className="hidden sm:inline">Dashboard</span>
           </button>
-          <h1 className="text-xl font-bold text-slate-800 tracking-tight">
-            Messages
+
+          <h1 className="min-w-0 truncate text-lg font-bold tracking-tight text-slate-800 sm:text-xl">
+            {TITLES[filter]}
           </h1>
         </div>
-      </div>
+      </header>
 
+      {/* Messages Navigation */}
+      <nav
+        aria-label="Message navigation"
+        className="shrink-0 border-b border-slate-100 bg-white"
+      >
+        <div className="flex overflow-x-auto px-3 scrollbar-none sm:px-4">
+          {navigation.map((item) => {
+            const isActive = item.filter === filter;
 
-      {/* Search Input */}
-      <div className="px-4 py-3 border-b border-slate-100">
+            return (
+              <button
+                key={item.filter}
+                type="button"
+                onClick={() => handleNavigation(item.path)}
+                aria-current={isActive ? "page" : undefined}
+                className={`relative shrink-0 px-3 py-3 text-sm font-medium transition-colors sm:px-4 ${
+                  isActive
+                    ? "text-emerald-600"
+                    : "text-slate-500 hover:text-slate-800"
+                }`}
+              >
+                {item.label}
+
+                {isActive && (
+                  <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-emerald-600 sm:inset-x-4" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Search */}
+      <div className="shrink-0 border-b border-slate-100 px-3 py-2.5 sm:px-4 sm:py-3">
         <ConversationSearch value={search} onChange={setSearch} />
       </div>
 
-      {/* Conversation List / States */}
+      {/* Scrollable conversation list */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto custom-scrollbar"
+        className="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain"
       >
-        {loading && conversations.length === 0 ? (
+        {loading ? (
           <ChatLoading type="conversations" />
-        ) : error && conversations.length === 0 ? (
-          <ChatError message={error} onRetry={() => {
-            fetchedRef.current = false;
-            fetchInitialConversations();
-          }} />
-        ) : filteredConversations.length === 0 ? (
+        ) : error ? (
+          <ChatError
+            message={error}
+            onRetry={() => void fetchConversations()}
+          />
+        ) : conversations.length === 0 ? (
           <EmptyChatState type="no-conversations" />
         ) : (
           <div className="divide-y divide-slate-100/50">
-            {filteredConversations.map((conv) => (
+            {conversations.map((conversation) => (
               <ConversationListItem
-                key={conv.id}
-                conversation={conv}
-                isSelected={selectedId === conv.id}
-                onSelect={onSelect}
+                key={conversation.conversationId}
+                conversation={conversation}
+                isSelected={false}
+                onSelect={() => handleSelectConversation(conversation)}
               />
             ))}
 
             {loadingMore && (
               <div className="p-4 text-center">
-                <div className="w-5 h-5 border-2 border-emerald-200 border-t-emerald-600 rounded-full animate-spin mx-auto" />
+                <div className="mx-auto h-5 w-5 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-600" />
               </div>
             )}
           </div>
         )}
       </div>
-
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #10b981;
-        }
-      `}</style>
     </div>
   );
 }

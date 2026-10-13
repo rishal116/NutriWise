@@ -8,6 +8,8 @@ import { ThemeProviders } from "@/providers/ThemeProvider";
 import AuthProvider from "@/providers/AuthProvider";
 import GlobalLoading from "@/components/common/GlobalLoading";
 import QueryProvider from "@/providers/QueryProvider";
+import InitialPageLoader from "@/components/common/InitialPageLoader";
+import NavigationLoading from "@/components/common/NavigationLoading";
 
 export const metadata: Metadata = {
   title: {
@@ -32,6 +34,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AuthProvider>
               <ThemeProviders>
                 <SocketProvider>
+                  <InitialPageLoader />
+                  <NavigationLoading />
                   <GlobalLoading />
                   {children}
                   <Toaster

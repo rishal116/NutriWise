@@ -1,21 +1,20 @@
-import { ClientSession, Types } from "mongoose";
-
+import { ClientSession, PipelineStage, Types } from "mongoose";
 import { BaseRepository } from "../common/base.repository";
-
-import { CursorData } from "../../../types/cursor.types";
-
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-
 import { IConversationRepository } from "../../interfaces/chat/IConversationRepository";
-
 import {
   ConversationModel,
   IConversation,
 } from "../../../models/conversation.model";
-
 import { ConversationMemberModel } from "../../../models/conversationMember.model";
-
-import { encodeCursor } from "../../../utils/cursor.util";
+import { decodeCursor, encodeCursor } from "../../../utils/cursor.util";
+import {
+  IConversationDetails,
+  IConversationListItem,
+} from "../../../types/chat/conversation.types";
+import { UserModel } from "../../../models/user.model";
+import { ConversationListFilter } from "../../../types/chat/conversation-list.types";
+import { MessageModel } from "../../../models/message.model";
 
 export class ConversationRepository
   extends BaseRepository<IConversation>
@@ -47,42 +46,128 @@ export class ConversationRepository
   async findUserConversations(
     userId: string,
     limit: number,
-    cursor?: CursorData,
-  ): Promise<CursorPaginationResult<IConversation>> {
+    cursor?: string,
+    filter: ConversationListFilter = "all",
+    search?: string,
+  ): Promise<CursorPaginationResult<IConversationListItem>> {
     const userObjectId = this.toObjectId(userId);
+    const decodedCursor = decodeCursor(cursor);
+    const trimmedSearch = search?.trim();
 
-    const match: Record<string, unknown> = {
-      status: {
+    const memberMatch: Record<string, unknown> = {
+      userId: userObjectId,
+      status: "active",
+    };
+
+    const conversationMatch: Record<string, unknown> = {
+      "conversation.status": {
         $ne: "closed",
       },
     };
 
-    if (cursor) {
-      const cursorDate =
-        cursor.value instanceof Date ? cursor.value : new Date(cursor.value);
+    if (filter === "personal") {
+      conversationMatch["conversation.chatType"] = "direct";
+    } else if (filter === "group") {
+      conversationMatch["conversation.chatType"] = "group";
+    }
 
-      match.$or = [
+    if (decodedCursor) {
+      const cursorDate =
+        decodedCursor.value instanceof Date
+          ? decodedCursor.value
+          : new Date(decodedCursor.value);
+
+      conversationMatch.$or = [
         {
-          lastActivityAt: {
+          "conversation.lastActivityAt": {
             $lt: cursorDate,
           },
         },
         {
-          lastActivityAt: cursorDate,
-          _id: {
-            $lt: this.toObjectId(cursor.id),
+          "conversation.lastActivityAt": cursorDate,
+          "conversation._id": {
+            $lt: this.toObjectId(decodedCursor.id),
           },
         },
       ];
     }
 
-    const conversations = await this._model
-      .aggregate<IConversation>([
+    const pipeline: PipelineStage[] = [
+      {
+        $match: memberMatch,
+      },
+      {
+        $lookup: {
+          from: this._model.collection.name,
+          localField: "conversationId",
+          foreignField: "_id",
+          pipeline: [
+            {
+              $project: {
+                _id: 1,
+                chatType: 1,
+                title: 1,
+                groupAvatar: 1,
+                lastMessagePreview: 1,
+                lastMessageSenderId: 1,
+                lastActivityAt: 1,
+                status: 1,
+              },
+            },
+          ],
+          as: "conversation",
+        },
+      },
+      {
+        $unwind: "$conversation",
+      },
+      {
+        $match: conversationMatch,
+      },
+
+      {
+        $lookup: {
+          from: MessageModel.collection.name,
+          let: {
+            conversationId: "$conversation._id",
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$conversationId", "$$conversationId"],
+                },
+              },
+            },
+            {
+              $sort: {
+                createdAt: -1,
+                _id: -1,
+              },
+            },
+            {
+              $limit: 1,
+            },
+            {
+              $project: {
+                _id: 1,
+                text: 1,
+                deletedAt: 1,
+              },
+            },
+          ],
+          as: "latestMessage",
+        },
+      },
+    ];
+
+    if (filter !== "group") {
+      pipeline.push(
         {
           $lookup: {
             from: ConversationMemberModel.collection.name,
             let: {
-              conversationId: "$_id",
+              conversationId: "$conversationId",
             },
             pipeline: [
               {
@@ -93,44 +178,192 @@ export class ConversationRepository
                         $eq: ["$conversationId", "$$conversationId"],
                       },
                       {
-                        $eq: ["$userId", userObjectId],
+                        $eq: ["$status", "active"],
                       },
                       {
-                        $eq: ["$status", "active"],
+                        $ne: ["$userId", userObjectId],
                       },
                     ],
                   },
                 },
               },
               {
+                $project: {
+                  _id: 0,
+                  userId: 1,
+                },
+              },
+              {
                 $limit: 1,
               },
             ],
-            as: "membership",
+            as: "otherMember",
           },
         },
-
         {
-          $match: {
-            ...match,
-            "membership.0": {
-              $exists: true,
+          $lookup: {
+            from: UserModel.collection.name,
+            let: {
+              otherUserId: {
+                $arrayElemAt: ["$otherMember.userId", 0],
+              },
             },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$_id", "$$otherUserId"],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  fullName: 1,
+                  profileImage: 1,
+                },
+              },
+              {
+                $limit: 1,
+              },
+            ],
+            as: "otherUser",
           },
         },
+      );
+    }
 
-        {
-          $sort: {
-            lastActivityAt: -1,
-            _id: -1,
+    if (trimmedSearch) {
+      const searchRegex = new RegExp(
+        trimmedSearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        "i",
+      );
+
+      if (filter === "personal") {
+        pipeline.push({
+          $match: {
+            "otherUser.fullName": searchRegex,
+          },
+        });
+      } else if (filter === "group") {
+        pipeline.push({
+          $match: {
+            "conversation.title": searchRegex,
+          },
+        });
+      } else {
+        pipeline.push({
+          $match: {
+            $or: [
+              {
+                "conversation.chatType": "direct",
+                "otherUser.fullName": searchRegex,
+              },
+              {
+                "conversation.chatType": "group",
+                "conversation.title": searchRegex,
+              },
+            ],
+          },
+        });
+      }
+    }
+
+    pipeline.push(
+      {
+        $sort: {
+          "conversation.lastActivityAt": -1,
+          "conversation._id": -1,
+        },
+      },
+      {
+        $limit: limit + 1,
+      },
+      {
+        $project: {
+          _id: 0,
+          conversationId: "$conversation._id",
+          chatType: "$conversation.chatType",
+          title: "$conversation.title",
+          groupAvatar: "$conversation.groupAvatar",
+
+          otherUserId: {
+            $cond: [
+              {
+                $eq: ["$conversation.chatType", "direct"],
+              },
+              {
+                $arrayElemAt: ["$otherUser._id", 0],
+              },
+              null,
+            ],
+          },
+
+          otherUsername: {
+            $cond: [
+              {
+                $eq: ["$conversation.chatType", "direct"],
+              },
+              {
+                $arrayElemAt: ["$otherUser.fullName", 0],
+              },
+              null,
+            ],
+          },
+
+          otherProfileImage: {
+            $cond: [
+              {
+                $eq: ["$conversation.chatType", "direct"],
+              },
+              {
+                $arrayElemAt: ["$otherUser.profileImage", 0],
+              },
+              null,
+            ],
+          },
+
+          lastMessagePreview: {
+            $cond: [
+              {
+                $ne: [
+                  {
+                    $ifNull: [
+                      { $arrayElemAt: ["$latestMessage.deletedAt", 0] },
+                      null,
+                    ],
+                  },
+                  null,
+                ],
+              },
+              "This message was deleted",
+              "$conversation.lastMessagePreview",
+            ],
+          },
+
+          lastMessageSenderId: "$conversation.lastMessageSenderId",
+
+          lastActivityAt: "$conversation.lastActivityAt",
+
+          unreadCount: {
+            $ifNull: ["$unreadCount", 0],
+          },
+
+          isMuted: {
+            $ifNull: ["$isMuted", false],
+          },
+
+          isArchived: {
+            $ifNull: ["$isArchived", false],
           },
         },
+      },
+    );
 
-        {
-          $limit: limit + 1,
-        },
-      ])
-      .exec();
+    const conversations =
+      await ConversationMemberModel.aggregate<IConversationListItem>(
+        pipeline,
+      ).exec();
 
     const hasMore = conversations.length > limit;
 
@@ -142,7 +375,7 @@ export class ConversationRepository
       hasMore && lastItem?.lastActivityAt
         ? encodeCursor({
             value: lastItem.lastActivityAt,
-            id: lastItem._id.toString(),
+            id: lastItem.conversationId.toString(),
             sortKey: "lastActivityAt",
           })
         : null;
@@ -152,6 +385,152 @@ export class ConversationRepository
       nextCursor,
       hasMore,
     };
+  }
+
+  async findUserConversationDetails(
+    userId: string,
+    conversationId: string,
+  ): Promise<IConversationDetails | null> {
+    const userObjectId = this.toObjectId(userId);
+    const conversationObjectId = this.toObjectId(conversationId);
+
+    const [result] =
+      await ConversationMemberModel.aggregate<IConversationDetails>([
+        {
+          $match: {
+            conversationId: conversationObjectId,
+            userId: userObjectId,
+            status: "active",
+          },
+        },
+        {
+          $lookup: {
+            from: "conversations",
+            let: {
+              conversationId: "$conversationId",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$_id", "$$conversationId"],
+                  },
+                },
+              },
+              {
+                $project: {
+                  _id: 1,
+                  chatType: 1,
+                  purpose: 1,
+                  status: 1,
+                  title: 1,
+                  groupAvatar: 1,
+                  description: 1,
+                  lastMessagePreview: 1,
+                  lastActivityAt: 1,
+                  createdAt: 1,
+                  updatedAt: 1,
+                },
+              },
+            ],
+            as: "conversation",
+          },
+        },
+        {
+          $unwind: "$conversation",
+        },
+        {
+          $lookup: {
+            from: "conversationmembers",
+            let: {
+              conversationId: "$conversationId",
+              chatType: "$conversation.chatType",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$$chatType", "direct"] },
+                      { $eq: ["$conversationId", "$$conversationId"] },
+                      { $eq: ["$status", "active"] },
+                      { $ne: ["$userId", userObjectId] },
+                    ],
+                  },
+                },
+              },
+              {
+                $limit: 1,
+              },
+              {
+                $lookup: {
+                  from: "users",
+                  let: {
+                    userId: "$userId",
+                  },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $eq: ["$_id", "$$userId"],
+                        },
+                      },
+                    },
+                    {
+                      $project: {
+                        _id: 1,
+                        fullName: 1,
+                        profileImage: 1,
+                      },
+                    },
+                  ],
+                  as: "user",
+                },
+              },
+              {
+                $unwind: "$user",
+              },
+              {
+                $project: {
+                  userId: "$user._id",
+                  fullName: "$user.fullName",
+                  profileImage: "$user.profileImage",
+                },
+              },
+            ],
+            as: "participant",
+          },
+        },
+        {
+          $project: {
+            conversationId: "$conversation._id",
+            chatType: "$conversation.chatType",
+            purpose: "$conversation.purpose",
+            status: "$conversation.status",
+            title: "$conversation.title",
+            groupAvatar: "$conversation.groupAvatar",
+            description: "$conversation.description",
+            participant: {
+              $arrayElemAt: ["$participant", 0],
+            },
+            lastMessagePreview: "$conversation.lastMessagePreview",
+            lastActivityAt: "$conversation.lastActivityAt",
+            unreadCount: {
+              $ifNull: ["$unreadCount", 0],
+            },
+            isMuted: {
+              $ifNull: ["$isMuted", false],
+            },
+            isArchived: {
+              $ifNull: ["$isArchived", false],
+            },
+            createdAt: "$conversation.createdAt",
+            updatedAt: "$conversation.updatedAt",
+          },
+        },
+      ]);
+
+    return result ?? null;
   }
 
   async findActiveConversation(
@@ -166,23 +545,6 @@ export class ConversationRepository
       .exec();
   }
 
-  async findGroups(limit: number, skip: number): Promise<IConversation[]> {
-    return this._model
-      .find({
-        chatType: "group",
-        status: {
-          $ne: "closed",
-        },
-      })
-      .sort({
-        createdAt: -1,
-      })
-      .skip(skip)
-      .limit(limit)
-      .lean<IConversation[]>()
-      .exec();
-  }
-
   async countGroups(): Promise<number> {
     return this._model.countDocuments({
       chatType: "group",
@@ -190,5 +552,47 @@ export class ConversationRepository
         $ne: "closed",
       },
     });
+  }
+
+  async findPrivateGroupByInviteTokenHash(
+    inviteTokenHash: string,
+  ): Promise<IConversation | null> {
+    return this._model
+      .findOne({
+        inviteTokenHash,
+        chatType: "group",
+        visibility: "private",
+        purpose: "group_coaching",
+        status: "active",
+      })
+      .select("+inviteTokenHash")
+      .lean<IConversation | null>()
+      .exec();
+  }
+
+  async updatePrivateGroupInviteToken(
+    conversationId: string,
+    inviteToken: string,
+    inviteTokenHash: string,
+  ): Promise<boolean> {
+    const result = await this._model
+      .updateOne(
+        {
+          _id: this.toObjectId(conversationId),
+          chatType: "group",
+          visibility: "private",
+          purpose: "group_coaching",
+          status: "active",
+        },
+        {
+          $set: {
+            inviteToken,
+            inviteTokenHash,
+          },
+        },
+      )
+      .exec();
+
+    return result.matchedCount > 0;
   }
 }

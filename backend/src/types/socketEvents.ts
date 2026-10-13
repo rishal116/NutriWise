@@ -1,4 +1,4 @@
-import { MessageResponseDTO } from "../dtos/chat/messageResponse.dto";
+import { MessageResponseDTO } from "../dtos/chat/message-response.dto";
 
 export interface SocketEvents {
 
@@ -30,4 +30,20 @@ export interface SocketEvents {
     content: string;
   };
 
+  conversationUpdated: ConversationUpdatePayload;
+
+  "conversation:updated": ConversationUpdatePayload;
+
+}
+
+export interface ConversationUpdatePayload {
+  conversationId: string;
+  chatType?: "direct" | "group";
+  lastMessagePreview: string;
+  lastMessageSenderId?: string;
+  lastActivityAt: string;
+  unreadCount?: number;
+  title?: string;
+  avatar?: string;
+  otherUserId?: string;
 }

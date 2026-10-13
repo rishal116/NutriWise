@@ -1,0 +1,5 @@
+const NUTRITIONIST_CREDENTIALS_BASE = "/api/nutritionists/credentials";
+
+export const NUTRITIONIST_CREDENTIALS_ROUTES = {
+  GET_CREDENTIALS: NUTRITIONIST_CREDENTIALS_BASE,
+} as const;

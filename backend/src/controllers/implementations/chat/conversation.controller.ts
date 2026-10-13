@@ -1,12 +1,18 @@
 import { Request, Response } from "express";
+
 import { injectable, inject } from "inversify";
 
 import { IConversationController } from "../../interfaces/chat/IConversationController";
+
 import { IConversationService } from "../../../services/interfaces/chat/IConversationService";
 
 import { asyncHandler } from "../../../utils/asyncHandler";
+
 import { TYPES } from "../../../types/types";
+
 import { StatusCode } from "../../../enums/statusCode.enum";
+
+import { ConversationListFilter } from "../../../types/chat/conversation-list.types";
 
 @injectable()
 export class ConversationController implements IConversationController {
@@ -30,18 +36,13 @@ export class ConversationController implements IConversationController {
     },
   );
 
-  getUserChats = asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.user?.userId as string;
-
-    const limit = Math.min(Number(req.query.limit) || 20, 50);
-
-    const cursor =
-      typeof req.query.cursor === "string" ? req.query.cursor : undefined;
-
+  getUserConversations = asyncHandler(async (req: Request, res: Response) => {
     const result = await this._conversationService.getUserConversations(
-      userId,
-      limit,
-      cursor,
+      req.user?.userId as string,
+      Number(req.query.limit),
+      req.query.cursor as string | undefined,
+      req.query.filter as ConversationListFilter | undefined,
+      req.query.search as string | undefined,
     );
 
     res.status(StatusCode.OK).json({
@@ -49,4 +50,18 @@ export class ConversationController implements IConversationController {
       data: result,
     });
   });
+
+  getUserConversationDetails = asyncHandler(
+    async (req: Request, res: Response) => {
+      const result = await this._conversationService.getUserConversationDetails(
+        req.user?.userId as string,
+        req.params.conversationId,
+      );
+
+      res.status(StatusCode.OK).json({
+        success: true,
+        data: result,
+      });
+    },
+  );
 }

@@ -9,4 +9,6 @@ export const NUTRITIONIST_MEETING_ROUTES = {
 
   UPDATE_STATUS: (roomId: string) =>
     `${NUTRITIONIST_BASE}/meetings/status/${roomId}`,
+  UPDATE: (meetingId: string) =>
+    `/api/nutritionists/meetings/${encodeURIComponent(meetingId)}`,
 } as const;

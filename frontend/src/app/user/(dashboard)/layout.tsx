@@ -1,93 +1,17 @@
-"use client";
-
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+// Server component: NO "use client" -> Header/Footer/children stay server-rendered
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
-import ProfileSidebar from "@/components/ui/profile/ProfileSideBar";
-import { Menu } from "lucide-react";
+import DashboardShell from "./DashboardShell";
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  // Close sidebar on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  // Prevent body scroll when mobile sidebar is open
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [mobileOpen]);
-
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-slate-50">
       <Header />
-
-      <div className="flex flex-1 relative overflow-hidden">
-        {/* Mobile backdrop overlay */}
-        {mobileOpen && (
-          <div
-            className="fixed inset-0 top-16 bg-black/40 z-30 lg:hidden"
-            onClick={() => setMobileOpen(false)}
-            aria-hidden="true"
-          />
-        )}
-
-        {/* SIDEBAR */}
-        <aside
-          role="dialog"
-          aria-modal={mobileOpen}
-          aria-label="Profile navigation"
-          className={`
-            fixed top-16 left-0 h-[calc(100%-4rem)] z-40
-            lg:static lg:top-0 lg:h-auto lg:z-auto
-            transition-transform duration-300 ease-in-out
-            ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
-            lg:translate-x-0
-          `}
-        >
-          <ProfileSidebar
-            activePath={pathname}
-            onClose={() => setMobileOpen(false)}
-          />
-        </aside>
-
-        {/* MAIN CONTENT */}
-        <main className="flex-1 min-w-0 overflow-y-auto">
-          {/* Mobile top bar */}
-          <div className="lg:hidden sticky top-0 z-20 bg-white border-b border-slate-100 shadow-sm px-4 py-3 flex items-center gap-3">
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 hover:bg-emerald-100 transition-colors"
-              aria-label="Open menu"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <span className="text-sm font-semibold text-slate-700 truncate">
-              Dashboard
-            </span>
-          </div>
-
-          {/* Page content */}
-          <div className="p-4 md:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">{children}</div>
-          </div>
-        </main>
-      </div>
-
+      <DashboardShell>{children}</DashboardShell>
       <Footer />
     </div>
   );

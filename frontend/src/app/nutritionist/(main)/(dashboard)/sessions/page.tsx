@@ -15,10 +15,10 @@ import {
   CalendarX2,
   RotateCw,
 } from "lucide-react";
+
 import { nutriSessionService } from "@/services/nutritionist/nutriSession.service";
 import type { NutriSessionListResponseDTO } from "@/dtos/nutritionist/session/session-list-response.dto";
 import type {
-  SessionCurrency,
   SessionType,
   SessionStatus,
 } from "@/types/nutritionist/session/session.types";
@@ -29,7 +29,7 @@ import {
 } from "@/dtos/nutritionist/session/session-list-query.dto";
 
 // ---------------------------------------------------------------------------
-// Static option lists — sourced directly from the locked contract, nothing invented
+// Static options
 // ---------------------------------------------------------------------------
 
 const TYPE_OPTIONS: { value: SessionType; label: string }[] = [
@@ -58,7 +58,10 @@ const SORT_LABELS: Record<NutriSessionSortOption, string> = {
 };
 
 const TYPE_LABELS: Record<SessionType, string> = TYPE_OPTIONS.reduce(
-  (acc, o) => ({ ...acc, [o.value]: o.label }),
+  (acc, option) => {
+    acc[option.value] = option.label;
+    return acc;
+  },
   {} as Record<SessionType, string>,
 );
 
@@ -70,14 +73,6 @@ const STATUS_STYLES: Record<SessionStatus, string> = {
   cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
-const CURRENCY_SYMBOLS: Record<SessionCurrency, string> = {
-  inr: "₹",
-  usd: "$",
-  eur: "€",
-  gbp: "£",
-  aed: "د.إ",
-};
-
 const PAGE_LIMIT = 12;
 
 // ---------------------------------------------------------------------------
@@ -86,6 +81,7 @@ const PAGE_LIMIT = 12;
 
 function formatScheduledAt(iso: string) {
   const date = new Date(iso);
+
   return {
     date: date.toLocaleDateString(undefined, {
       month: "short",
@@ -100,20 +96,28 @@ function formatScheduledAt(iso: string) {
 }
 
 function formatDuration(minutes: number) {
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+
   const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest === 0 ? `${hours} hr` : `${hours} hr ${rest} min`;
+  const remainingMinutes = minutes % 60;
+
+  return remainingMinutes === 0
+    ? `${hours} hr`
+    : `${hours} hr ${remainingMinutes} min`;
 }
 
 function formatPrice(pricing: NutriSessionListResponseDTO["pricing"]) {
-  if (pricing.type === "free") return "Free";
-  const symbol = CURRENCY_SYMBOLS[pricing.currency];
-  return `${symbol}${pricing.amount.toLocaleString()}`;
+  if (pricing.type === "free") {
+    return "Free";
+  }
+
+  return `₹${pricing.amount.toLocaleString("en-IN")}`;
 }
 
 // ---------------------------------------------------------------------------
-// Small presentational pieces
+// Presentational components
 // ---------------------------------------------------------------------------
 
 function StatusPill({ status }: { status: SessionStatus }) {
@@ -138,6 +142,7 @@ function PricingPill({
       </span>
     );
   }
+
   return (
     <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-800">
       {formatPrice(pricing)}
@@ -145,18 +150,28 @@ function PricingPill({
   );
 }
 
+// Mirrors SessionCard's structure so the grid doesn't jump when data arrives.
 function SessionCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
-      <div className="h-36 w-full animate-pulse bg-slate-200" />
-      <div className="space-y-3 p-4">
-        <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
-        <div className="h-3 w-full animate-pulse rounded bg-slate-200" />
-        <div className="h-3 w-2/3 animate-pulse rounded bg-slate-200" />
-        <div className="flex gap-2 pt-1">
-          <div className="h-6 w-16 animate-pulse rounded-full bg-slate-200" />
-          <div className="h-6 w-16 animate-pulse rounded-full bg-slate-200" />
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+      <div className="h-36 w-full shrink-0 animate-pulse bg-slate-200" />
+
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="space-y-1">
+          <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
+          <div className="h-6 w-3/4 animate-pulse rounded bg-slate-200" />
+          <div className="flex h-8 flex-col justify-center gap-1">
+            <div className="h-3 w-full animate-pulse rounded bg-slate-200" />
+            <div className="h-3 w-2/3 animate-pulse rounded bg-slate-200" />
+          </div>
         </div>
+
+        <div className="mt-auto flex flex-col gap-2 border-t border-slate-100 pt-3">
+          <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
+          <div className="h-4 w-1/3 animate-pulse rounded bg-slate-200" />
+        </div>
+
+        <div className="h-[34px] w-full animate-pulse rounded-xl bg-slate-200" />
       </div>
     </div>
   );
@@ -167,7 +182,7 @@ function SessionCard({ session }: { session: NutriSessionListResponseDTO }) {
   const { date, time } = formatScheduledAt(session.scheduledAt);
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs transition-all duration-150 hover:shadow-lg">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs transition-all duration-300 hover:border-emerald-300 hover:shadow-lg">
       <div className="relative h-36 w-full shrink-0 bg-slate-100">
         {session.thumbnailUrl ? (
           <Image
@@ -182,9 +197,11 @@ function SessionCard({ session }: { session: NutriSessionListResponseDTO }) {
             <ImageOff className="h-6 w-6 text-slate-300" />
           </div>
         )}
+
         <div className="absolute left-3 top-3">
           <StatusPill status={session.status} />
         </div>
+
         <div className="absolute right-3 top-3">
           <PricingPill pricing={session.pricing} />
         </div>
@@ -195,9 +212,11 @@ function SessionCard({ session }: { session: NutriSessionListResponseDTO }) {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
             {TYPE_LABELS[session.type]}
           </p>
+
           <h3 className="line-clamp-1 text-base font-bold tracking-tight text-slate-900">
             {session.title}
           </h3>
+
           <p className="line-clamp-2 text-xs font-medium text-slate-500">
             {session.description}
           </p>
@@ -210,12 +229,14 @@ function SessionCard({ session }: { session: NutriSessionListResponseDTO }) {
               {date} · {time}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <div className="flex items-center gap-1.5">
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
               <span>{formatDuration(session.durationInMinutes)}</span>
             </div>
-            <div className="flex items-center gap-1.5">
+
+            <div className="flex items-center gap-2">
               <Users className="h-3.5 w-3.5 shrink-0 text-slate-400" />
               <span>Up to {session.maxParticipants}</span>
             </div>
@@ -227,7 +248,7 @@ function SessionCard({ session }: { session: NutriSessionListResponseDTO }) {
           onClick={() =>
             router.push(`/nutritionist/sessions/${session.sessionId}`)
           }
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs transition-colors duration-150 hover:bg-slate-50"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs transition-colors duration-150 hover:bg-slate-50"
         >
           View details
         </button>
@@ -258,8 +279,8 @@ export default function SessionsPage() {
   const cursorRef = useRef<string | null>(null);
   const hasMoreRef = useRef(true);
   const fetchingMoreRef = useRef(false);
-  const resettingRef = useRef(false);
   const skipRef = useRef(false);
+  const requestIdRef = useRef(0);
 
   const searchRef = useRef(debouncedSearch);
   const statusRef = useRef(status);
@@ -268,20 +289,34 @@ export default function SessionsPage() {
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Debounce free-text search
+  // Debounce search input.
   useEffect(() => {
-    const id = setTimeout(() => setDebouncedSearch(search.trim()), 400);
-    return () => clearTimeout(id);
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
   }, [search]);
 
+  // Fetch sessions and manage cursor-based pagination.
   const fetchSessions = useCallback(async (reset: boolean) => {
+    if (!reset && (fetchingMoreRef.current || !hasMoreRef.current)) {
+      return;
+    }
+
+    const requestId = reset ? ++requestIdRef.current : requestIdRef.current;
+
     if (reset) {
-      if (resettingRef.current) return;
-      resettingRef.current = true;
+      skipRef.current = true;
+      cursorRef.current = null;
+      hasMoreRef.current = true;
+      fetchingMoreRef.current = false;
+
       setInitialLoading(true);
+      setLoadingMore(false);
+      setHasMore(true);
       setError(null);
     } else {
-      if (fetchingMoreRef.current || !hasMoreRef.current) return;
       fetchingMoreRef.current = true;
       setLoadingMore(true);
     }
@@ -298,71 +333,86 @@ export default function SessionsPage() {
 
       const response = await nutriSessionService.getSessions(query);
 
-      setSessions((prev) =>
-        reset ? response.items : [...prev, ...response.items],
+      // Ignore results from requests made before the latest reset.
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
+      setSessions((previous) =>
+        reset ? response.items : [...previous, ...response.items],
       );
+
       cursorRef.current = response.nextCursor;
       hasMoreRef.current = response.hasMore;
       setHasMore(response.hasMore);
+      setError(null);
     } catch {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
+
       setError("We couldn't load your sessions. Please try again.");
+
       if (reset) {
         setSessions([]);
+        cursorRef.current = null;
         hasMoreRef.current = false;
         setHasMore(false);
       }
     } finally {
-      if (reset) {
-        resettingRef.current = false;
-        setInitialLoading(false);
-      } else {
-        fetchingMoreRef.current = false;
-        setLoadingMore(false);
+      if (requestId === requestIdRef.current) {
+        if (reset) {
+          setInitialLoading(false);
+          skipRef.current = false;
+        } else {
+          fetchingMoreRef.current = false;
+          setLoadingMore(false);
+        }
       }
     }
   }, []);
 
-  // Refetch from scratch whenever filters/sort/search change
+  // Refetch when search, filters, or sorting changes.
   useEffect(() => {
     searchRef.current = debouncedSearch;
     statusRef.current = status;
     typeRef.current = type;
     sortRef.current = sortBy;
 
-    cursorRef.current = null;
-    hasMoreRef.current = true;
-    skipRef.current = true; // prevent the observer from double-firing during reset
-    fetchSessions(true).finally(() => {
-      skipRef.current = false;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, status, type, sortBy]);
+    void fetchSessions(true);
+  }, [debouncedSearch, status, type, sortBy, fetchSessions]);
 
-  // Infinite scroll via IntersectionObserver
+  // Infinite scrolling.
   useEffect(() => {
     const node = sentinelRef.current;
-    if (!node) return;
+
+    if (!node) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
-      (entries) => {
+      ([entry]) => {
         if (
-          entries[0].isIntersecting &&
+          entry.isIntersecting &&
           !skipRef.current &&
+          !initialLoading &&
           !fetchingMoreRef.current &&
           hasMoreRef.current
         ) {
-          fetchSessions(false);
+          void fetchSessions(false);
         }
       },
       { rootMargin: "200px" },
     );
 
     observer.observe(node);
+
     return () => observer.disconnect();
-  }, [fetchSessions]);
+  }, [fetchSessions, initialLoading]);
 
   const showEmpty = !initialLoading && !error && sessions.length === 0;
-  const showError = !initialLoading && error && sessions.length === 0;
+
+  const showError = !initialLoading && Boolean(error) && sessions.length === 0;
 
   return (
     <div className="space-y-6">
@@ -372,6 +422,7 @@ export default function SessionsPage() {
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             Sessions
           </h1>
+
           <p className="mt-1 text-sm font-medium text-slate-500">
             Create and manage your live and scheduled sessions.
           </p>
@@ -387,67 +438,80 @@ export default function SessionsPage() {
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs sm:flex-row sm:flex-wrap sm:items-center">
-        <div className="flex h-10 flex-1 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20 sm:min-w-[220px]">
+      {/* Filters: search on its own row until xl, then everything on one row */}
+      <div className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs sm:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_11rem_10rem_10rem]">
+        <div className="flex h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20 sm:col-span-3 xl:col-span-1">
           <Search className="h-4 w-4 shrink-0 text-slate-400" />
+
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
             placeholder="Search sessions..."
+            aria-label="Search sessions"
             className="h-full w-full bg-transparent text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400"
           />
         </div>
 
         <select
           value={type}
-          onChange={(e) => setType(e.target.value as SessionType | "")}
-          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 sm:w-44"
+          onChange={(event) => setType(event.target.value as SessionType | "")}
+          aria-label="Filter by session type"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
         >
           <option value="">All Types</option>
-          {TYPE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
+
+          {TYPE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>
 
         <select
           value={status}
-          onChange={(e) => setStatus(e.target.value as SessionStatus | "")}
-          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 sm:w-40"
+          onChange={(event) =>
+            setStatus(event.target.value as SessionStatus | "")
+          }
+          aria-label="Filter by session status"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
         >
           <option value="">All Status</option>
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
+
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>
 
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as NutriSessionSortOption)}
-          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 sm:w-40"
+          onChange={(event) =>
+            setSortBy(event.target.value as NutriSessionSortOption)
+          }
+          aria-label="Sort sessions"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
         >
-          {NUTRI_SESSION_SORT_OPTIONS.map((o) => (
-            <option key={o} value={o}>
-              {SORT_LABELS[o]}
+          {NUTRI_SESSION_SORT_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {SORT_LABELS[option]}
             </option>
           ))}
         </select>
       </div>
 
-      {/* Error state */}
+      {/* Initial error state */}
       {showError && (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-10 text-center shadow-xs">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100/80 text-rose-700">
             <AlertCircle className="h-5 w-5" />
           </div>
+
           <p className="text-sm font-semibold text-slate-700">{error}</p>
+
           <button
             type="button"
-            onClick={() => fetchSessions(true)}
+            onClick={() => void fetchSessions(true)}
             className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors duration-150 hover:bg-emerald-800"
           >
             <RotateCw className="h-4 w-4" />
@@ -462,9 +526,11 @@ export default function SessionsPage() {
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
             <CalendarX2 className="h-5 w-5" />
           </div>
+
           <p className="text-sm font-semibold text-slate-700">
             No sessions found
           </p>
+
           <p className="max-w-sm text-xs font-medium text-slate-500">
             Try adjusting your search or filters, or create a new session to get
             started.
@@ -475,8 +541,8 @@ export default function SessionsPage() {
       {/* Initial loading skeletons */}
       {initialLoading && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <SessionCardSkeleton key={i} />
+          {Array.from({ length: 6 }, (_, index) => (
+            <SessionCardSkeleton key={index} />
           ))}
         </div>
       )}
@@ -490,11 +556,11 @@ export default function SessionsPage() {
         </div>
       )}
 
-      {/* Infinite scroll sentinel + trailing states */}
+      {/* Infinite scroll sentinel and trailing states */}
       {!initialLoading && sessions.length > 0 && (
         <div
           ref={sentinelRef}
-          className="flex items-center justify-center py-4"
+          className="flex items-center justify-center py-2"
         >
           {loadingMore && (
             <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
@@ -502,15 +568,17 @@ export default function SessionsPage() {
               Loading more sessions...
             </div>
           )}
+
           {!hasMore && !loadingMore && (
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
               You&apos;ve reached the end of the list
             </p>
           )}
+
           {error && !loadingMore && hasMore && (
             <button
               type="button"
-              onClick={() => fetchSessions(false)}
+              onClick={() => void fetchSessions(false)}
               className="text-xs font-semibold text-emerald-700 hover:text-emerald-800"
             >
               Retry loading more

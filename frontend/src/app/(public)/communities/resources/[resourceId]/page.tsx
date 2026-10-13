@@ -18,6 +18,8 @@ import { publicResourceService } from "@/services/public/publicResource.service"
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { useAppSelector } from "@/redux/hooks";
 
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { usePendingAction } from "@/hooks/usePendingAction";
 import type {
   PublicResourceDetailsDTO,
   PublicResourceCommentDTO,
@@ -27,6 +29,7 @@ export default function ResourceDetailsPage() {
   const { resourceId } = useParams<{ resourceId: string }>();
   const router = useRouter();
   const currentUser = useAppSelector((state) => state.auth.user);
+  const { guardAction } = useAuthGuard();
 
   const [resource, setResource] = useState<PublicResourceDetailsDTO | null>(
     null,
@@ -90,102 +93,121 @@ export default function ResourceDetailsPage() {
     publicResourceService.recordView(resourceId).catch(() => {});
   }, [resource, resourceId]);
 
-  const requireAuth = () => {
-    if (currentUser) return true;
-    router.push(`/login?redirect=/resources/${resourceId}`);
-    return false;
-  };
-
   const handleToggleLike = async () => {
-    if (!requireAuth() || !resource || liking) return;
+    if (!resource || liking) return;
 
-    const previous = resource;
-    const nextLiked = !resource.isLiked;
+    guardAction(
+      async () => {
+        const previous = resource;
+        const nextLiked = !resource.isLiked;
 
-    setLiking(true);
-    setResource({
-      ...resource,
-      isLiked: nextLiked,
-      likeCount: resource.likeCount + (nextLiked ? 1 : -1),
-    });
+        setLiking(true);
+        setResource({
+          ...resource,
+          isLiked: nextLiked,
+          likeCount: resource.likeCount + (nextLiked ? 1 : -1),
+        });
 
-    try {
-      if (nextLiked) {
-        await publicResourceService.likeResource(resourceId);
-      } else {
-        await publicResourceService.unlikeResource(resourceId);
-      }
-    } catch (err) {
-      setResource(previous);
-      setError(getErrorMessage(err));
-    } finally {
-      setLiking(false);
-    }
+        try {
+          if (nextLiked) {
+            await publicResourceService.likeResource(resourceId);
+          } else {
+            await publicResourceService.unlikeResource(resourceId);
+          }
+        } catch (err) {
+          setResource(previous);
+          setError(getErrorMessage(err));
+        } finally {
+          setLiking(false);
+        }
+      },
+      { actionKey: "LIKE_RESOURCE" },
+    );
   };
 
   const handleToggleBookmark = async () => {
-    if (!requireAuth() || !resource || bookmarking) return;
+    if (!resource || bookmarking) return;
 
-    const previous = resource;
-    const nextBookmarked = !resource.isBookmarked;
+    guardAction(
+      async () => {
+        const previous = resource;
+        const nextBookmarked = !resource.isBookmarked;
 
-    setBookmarking(true);
-    setResource({
-      ...resource,
-      isBookmarked: nextBookmarked,
-      bookmarkCount: resource.bookmarkCount + (nextBookmarked ? 1 : -1),
-    });
+        setBookmarking(true);
+        setResource({
+          ...resource,
+          isBookmarked: nextBookmarked,
+          bookmarkCount: resource.bookmarkCount + (nextBookmarked ? 1 : -1),
+        });
 
-    try {
-      if (nextBookmarked) {
-        await publicResourceService.bookmarkResource(resourceId);
-      } else {
-        await publicResourceService.unbookmarkResource(resourceId);
-      }
-    } catch (err) {
-      setResource(previous);
-      setError(getErrorMessage(err));
-    } finally {
-      setBookmarking(false);
-    }
+        try {
+          if (nextBookmarked) {
+            await publicResourceService.bookmarkResource(resourceId);
+          } else {
+            await publicResourceService.unbookmarkResource(resourceId);
+          }
+        } catch (err) {
+          setResource(previous);
+          setError(getErrorMessage(err));
+        } finally {
+          setBookmarking(false);
+        }
+      },
+      { actionKey: "BOOKMARK_RESOURCE" },
+    );
   };
 
   const handleAddComment = async () => {
     const content = commentText.trim();
-    if (!requireAuth() || !content || submittingComment) return;
+    if (!content || submittingComment) return;
 
-    setSubmittingComment(true);
-    try {
-      await publicResourceService.addResourceComment(resourceId, content);
-      setCommentText("");
-      await fetchResource();
-    } catch (err) {
-      setError(getErrorMessage(err));
-    } finally {
-      setSubmittingComment(false);
-    }
+    guardAction(
+      async () => {
+        setSubmittingComment(true);
+        try {
+          await publicResourceService.addResourceComment(resourceId, content);
+          setCommentText("");
+          await fetchResource();
+        } catch (err) {
+          setError(getErrorMessage(err));
+        } finally {
+          setSubmittingComment(false);
+        }
+      },
+      { actionKey: "ADD_COMMENT" },
+    );
   };
 
   const handleDeleteComment = async (commentId: string) => {
     if (!resource || deletingCommentId) return;
 
-    const previous = resource;
-    setDeletingCommentId(commentId);
-    setResource({
-      ...resource,
-      comments: resource.comments.filter((c) => c.commentId !== commentId),
-      commentCount: Math.max(0, resource.commentCount - 1),
-    });
+    guardAction(async () => {
+      const previous = resource;
+      setDeletingCommentId(commentId);
+      setResource({
+        ...resource,
+        comments: resource.comments.filter((c) => c.commentId !== commentId),
+        commentCount: Math.max(0, resource.commentCount - 1),
+      });
 
-    try {
-      await publicResourceService.deleteResourceComment(commentId);
-    } catch (err) {
-      setResource(previous);
-      setError(getErrorMessage(err));
-    } finally {
-      setDeletingCommentId(null);
-    }
+      try {
+        await publicResourceService.deleteResourceComment(commentId);
+      } catch (err) {
+        setResource(previous);
+        setError(getErrorMessage(err));
+      } finally {
+        setDeletingCommentId(null);
+      }
+    });
   };
+
+  usePendingAction(async (pending) => {
+    if (pending.actionKey === "LIKE_RESOURCE") {
+      handleToggleLike();
+    } else if (pending.actionKey === "BOOKMARK_RESOURCE") {
+      handleToggleBookmark();
+    }
+  });
 
   if (loading) {
     return <ResourceDetailsSkeleton />;

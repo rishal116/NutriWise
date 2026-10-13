@@ -12,11 +12,16 @@ import {
   Play,
   Smile,
 } from "lucide-react";
+import { nutriMeetingService } from "@/services/nutritionist/nutriMeeting.service";
+import { MeetingStatus } from "@/enums/nutritionist/meeting/meeting.enum";
+import { useAppSelector } from "@/redux/hooks";
 
 const VideoCallPage = () => {
   const params = useParams();
   const router = useRouter();
   const roomId = params?.roomId as string;
+  const activeRole = useAppSelector((state) => state.auth.user?.activeRole);
+  const isNutritionist = activeRole === "nutritionist";
 
   const [showReactions, setShowReactions] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -48,8 +53,19 @@ const VideoCallPage = () => {
   };
 
   const handleLeave = async () => {
-    endCall();
-    router.back();
+    try {
+      if (isNutritionist) {
+        await nutriMeetingService.updateMeetingStatus(
+          roomId,
+          MeetingStatus.COMPLETED,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to update meeting status:", error);
+    } finally {
+      endCall();
+      router.back();
+    }
   };
 
   if (!roomId) return null;

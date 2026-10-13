@@ -1,6 +1,7 @@
 import { model, Schema, Types } from "mongoose";
 
 export interface IPostLike {
+  _id: Types.ObjectId;
   postId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;

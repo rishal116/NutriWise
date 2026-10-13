@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import {
   User,
@@ -13,6 +13,7 @@ import {
   Loader2,
   Pencil,
   X,
+  UserX,
 } from "lucide-react";
 import ProfileImageUploader from "@/components/common/ProfileImageUploader";
 import Toast from "@/components/common/Toast";
@@ -28,6 +29,13 @@ interface ToastState {
   message: string;
   type: "success" | "error";
 }
+
+const EMPTY_FORM: UpdateUserProfileDto = {
+  fullName: "",
+  phone: "",
+  gender: undefined,
+  birthDate: "",
+};
 
 function toDateInputValue(date?: string | Date): string {
   if (!date) return "";
@@ -45,46 +53,44 @@ function toFormState(profile: GetUserProfileDto): UpdateUserProfileDto {
   };
 }
 
+function calculateAge(birthDate?: string | Date): string {
+  if (!birthDate) return "—";
+  const diffMs = Date.now() - new Date(birthDate).getTime();
+  return `${Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365.25))} yrs`;
+}
+
 export default function AccountPage() {
   const [user, setUser] = useState<GetUserProfileDto | null>(null);
-  const [form, setForm] = useState<UpdateUserProfileDto>({
-    fullName: "",
-    phone: "",
-    gender: undefined,
-    birthDate: "",
-  });
-  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState<UpdateUserProfileDto>(EMPTY_FORM);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingForm, setEditingForm] = useState(false);
   const [showImageCropper, setShowImageCropper] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
-  useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const profile = await userProfileService.getProfile();
-        setUser(profile);
-        setForm(toFormState(profile));
-      } catch (err) {
-        console.error(err);
-        setToast({ message: "Failed to load profile", type: "error" });
-      } finally {
-        setLoading(false);
-      }
+  const fetchProfile = useCallback(async () => {
+    setIsLoading(true);
+    setIsError(false);
+    try {
+      const profile = await userProfileService.getProfile();
+      setUser(profile);
+      setForm(toFormState(profile));
+    } catch {
+      setIsError(true);
+    } finally {
+      setIsLoading(false);
     }
-    fetchProfile();
   }, []);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const calculateAge = (birthDate?: string | Date): string => {
-    if (!birthDate) return "—";
-    const diffMs = Date.now() - new Date(birthDate).getTime();
-    return `${Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365.25))} yrs`;
   };
 
   const phoneError = !!form.phone && !isValidPhoneNumber(form.phone);
@@ -110,237 +116,211 @@ export default function AccountPage() {
     setEditingForm(false);
   };
 
-  if (loading || !user) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="text-center space-y-3">
-          <Loader2 className="w-9 h-9 animate-spin text-emerald-500 mx-auto" />
-          <p className="text-emerald-700 font-semibold text-sm tracking-wide">
-            Loading your profile…
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="font-sans pb-12 space-y-6">
-      {/* PAGE HEADER */}
-      <div className="bg-emerald-600 rounded-2xl px-7 py-8 text-white">
-        <h1 className="text-2xl sm:text-3xl font-bold leading-tight mb-1">
-          Ac Settings
+    <div className="mx-auto max-w-6xl p-6">
+      <div className="mb-6 flex items-center gap-2">
+        <span className="h-6 w-1 rounded-full bg-emerald-600" />
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          Account Settings
         </h1>
-        <p className="text-emerald-50 text-sm font-medium">
-          Manage your profile information and preferences
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* LEFT — PROFILE CARD */}
-        <div className="lg:col-span-4 space-y-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32 mx-auto mb-5">
-              <div className="absolute -inset-1 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-full blur-sm opacity-25" />
-              <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg">
-                <Image
-                  src={user.profileImage || "/images/images.jpg"}
-                  alt={user.fullName}
-                  fill
-                  sizes="128px"
-                  className="object-cover"
-                />
-              </div>
-              <button
-                onClick={() => setShowImageCropper(true)}
-                className="absolute bottom-1 right-1 w-9 h-9 bg-emerald-600 hover:bg-emerald-700 rounded-full flex items-center justify-center text-white shadow-md transition-colors"
-                aria-label="Change profile picture"
-              >
-                <Camera size={15} />
-              </button>
-            </div>
-
-            <div className="text-center mb-5">
-              <h2 className="text-xl font-extrabold text-slate-900 mb-1">
-                {user.fullName}
-              </h2>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-100">
-                <ShieldCheck size={12} />
-                Verified Account
-              </span>
-            </div>
-
-            <div className="space-y-2.5 pt-4 border-t border-slate-50">
-              <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
-                <div className="bg-emerald-100 p-1.5 rounded-lg flex-shrink-0">
-                  <Mail size={13} className="text-emerald-600" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
-                    Email
-                  </p>
-                  <p className="text-sm font-semibold text-slate-800 truncate">
-                    {user.email}
-                  </p>
-                </div>
-              </div>
-
-              {user.phone && (
-                <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
-                  <div className="bg-teal-100 p-1.5 rounded-lg flex-shrink-0">
-                    <Phone size={13} className="text-teal-600" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
-                      Phone
-                    </p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {user.phone}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {user.birthDate && (
-                <div className="flex items-center gap-2.5 p-3 bg-slate-50 rounded-xl">
-                  <div className="bg-purple-100 p-1.5 rounded-lg flex-shrink-0">
-                    <Calendar size={13} className="text-purple-500" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide">
-                      Age
-                    </p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {calculateAge(user.birthDate)}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
+      {isLoading ? (
+        <ProfileSkeleton />
+      ) : isError || !user ? (
+        <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/40 py-16 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100">
+            <UserX className="h-6 w-6 text-rose-700" />
           </div>
-
-          {!editingForm ? (
-            <button
-              onClick={() => setEditingForm(true)}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl text-sm font-bold shadow-sm hover:shadow-emerald-100 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
-            >
-              <Pencil size={14} className="flex-shrink-0" />
-              Edit Profile
-            </button>
-          ) : (
-            <button
-              onClick={handleCancelEdit}
-              className="w-full inline-flex items-center justify-center gap-2 py-3 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
-            >
-              <X size={14} className="flex-shrink-0" />
-              Cancel Edit
-            </button>
-          )}
+          <h2 className="mt-4 text-lg font-bold tracking-tight text-slate-900">
+            Couldn&apos;t load your profile
+          </h2>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Something went wrong. Please try again.
+          </p>
+          <button
+            onClick={fetchProfile}
+            className="mt-5 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+          >
+            Retry
+          </button>
         </div>
-
-        {/* RIGHT — FORM */}
-        <div className="lg:col-span-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-1 h-5 bg-emerald-500 rounded-full flex-shrink-0" />
-                <h3 className="text-sm font-extrabold text-slate-900">
-                  Personal Information
-                </h3>
+      ) : (
+        <div className="grid items-start gap-6 lg:grid-cols-12">
+          {/* LEFT — PROFILE CARD */}
+          <div className="space-y-4 lg:col-span-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6">
+              <div className="relative mx-auto mb-5 h-28 w-28 sm:h-32 sm:w-32">
+                <div className="relative h-full w-full overflow-hidden rounded-full border-4 border-white shadow-md ring-1 ring-slate-200">
+                  <Image
+                    src={user.profileImage || "/images/images.jpg"}
+                    alt={user.fullName}
+                    fill
+                    sizes="128px"
+                    className="object-cover"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowImageCropper(true)}
+                  className="absolute bottom-1 right-1 flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white shadow-md transition-colors hover:bg-emerald-700"
+                  aria-label="Change profile picture"
+                >
+                  <Camera size={15} />
+                </button>
               </div>
-              {editingForm && (
-                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full">
-                  Editing
+
+              <div className="mb-5 text-center">
+                <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                  {user.fullName}
+                </h2>
+                <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                  <ShieldCheck size={12} />
+                  Verified Account
                 </span>
-              )}
-            </div>
+              </div>
 
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FieldInput
-                  label="Full Name"
-                  name="fullName"
-                  value={form.fullName ?? ""}
-                  onChange={handleChange}
-                  disabled={!editingForm}
-                  icon={<User size={13} className="text-emerald-600" />}
-                  required
-                />
-
-                <PhoneField
-                  value={form.phone ?? ""}
-                  onChange={(phone: string) =>
-                    setForm((prev) => ({ ...prev, phone }))
-                  }
-                  error={phoneError}
-                  disabled={!editingForm}
-                />
-
-                <FieldInput
-                  label="Birthdate"
-                  name="birthDate"
-                  type="date"
-                  value={form.birthDate ?? ""}
-                  onChange={handleChange}
-                  disabled={!editingForm}
-                  icon={<Calendar size={13} className="text-emerald-600" />}
-                />
-
-                <GenderSelect
-                  value={form.gender ?? ""}
-                  onChange={handleChange}
-                  disabled={!editingForm}
-                />
-
-                <FieldInput
-                  label="Age"
-                  value={calculateAge(form.birthDate)}
-                  disabled
-                  icon={<User size={13} className="text-slate-400" />}
-                />
-
-                <FieldInput
+              <div className="space-y-2.5 border-t border-slate-100 pt-4">
+                <InfoRow
+                  icon={<Mail size={13} className="text-emerald-600" />}
                   label="Email"
                   value={user.email}
-                  disabled
-                  icon={<Mail size={13} className="text-slate-400" />}
                 />
+                {user.phone && (
+                  <InfoRow
+                    icon={<Phone size={13} className="text-emerald-600" />}
+                    label="Phone"
+                    value={user.phone}
+                  />
+                )}
+                {user.birthDate && (
+                  <InfoRow
+                    icon={<Calendar size={13} className="text-emerald-600" />}
+                    label="Age"
+                    value={calculateAge(user.birthDate)}
+                  />
+                )}
+              </div>
+            </div>
+
+            {!editingForm ? (
+              <button
+                onClick={() => setEditingForm(true)}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+              >
+                <Pencil size={14} className="flex-shrink-0" />
+                Edit Profile
+              </button>
+            ) : (
+              <button
+                onClick={handleCancelEdit}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200"
+              >
+                <X size={14} className="flex-shrink-0" />
+                Cancel Edit
+              </button>
+            )}
+          </div>
+
+          {/* RIGHT — FORM */}
+          <div className="lg:col-span-8">
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="h-5 w-1 flex-shrink-0 rounded-full bg-emerald-600" />
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900">
+                    Personal Information
+                  </h3>
+                </div>
+                {editingForm && (
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700">
+                    Editing
+                  </span>
+                )}
               </div>
 
-              {editingForm && (
-                <div className="pt-5 border-t border-slate-50 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3">
-                  <button
-                    onClick={handleCancelEdit}
-                    disabled={saving}
-                    className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-bold rounded-xl transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveForm}
-                    disabled={phoneError || saving}
-                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-emerald-100 hover:shadow-md transition-all disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2
-                          size={15}
-                          className="animate-spin flex-shrink-0"
-                        />
-                        Saving…
-                      </>
-                    ) : (
-                      <>
-                        <Save size={15} className="flex-shrink-0" />
-                        Save Changes
-                      </>
-                    )}
-                  </button>
+              <div className="space-y-6 p-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FieldInput
+                    label="Full Name"
+                    name="fullName"
+                    value={form.fullName ?? ""}
+                    onChange={handleChange}
+                    disabled={!editingForm}
+                    icon={<User size={13} className="text-emerald-600" />}
+                    required
+                  />
+                  <PhoneField
+                    value={form.phone ?? ""}
+                    onChange={(phone: string) =>
+                      setForm((prev) => ({ ...prev, phone }))
+                    }
+                    error={phoneError}
+                    disabled={!editingForm}
+                  />
+                  <FieldInput
+                    label="Birthdate"
+                    name="birthDate"
+                    type="date"
+                    value={form.birthDate ?? ""}
+                    onChange={handleChange}
+                    disabled={!editingForm}
+                    icon={<Calendar size={13} className="text-emerald-600" />}
+                  />
+                  <GenderSelect
+                    value={form.gender ?? ""}
+                    onChange={handleChange}
+                    disabled={!editingForm}
+                  />
+                  <FieldInput
+                    label="Age"
+                    value={calculateAge(form.birthDate)}
+                    disabled
+                    icon={<User size={13} className="text-slate-400" />}
+                  />
+                  <FieldInput
+                    label="Email"
+                    value={user.email}
+                    disabled
+                    icon={<Mail size={13} className="text-slate-400" />}
+                  />
                 </div>
-              )}
+
+                {editingForm && (
+                  <div className="flex flex-col items-stretch justify-end gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center">
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={saving}
+                      className="rounded-xl bg-slate-100 px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveForm}
+                      disabled={phoneError || saving}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2
+                            size={15}
+                            className="flex-shrink-0 animate-spin"
+                          />
+                          Saving…
+                        </>
+                      ) : (
+                        <>
+                          <Save size={15} className="flex-shrink-0" />
+                          Save Changes
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {showImageCropper && (
         <ProfileImageUploader
@@ -363,6 +343,81 @@ export default function AccountPage() {
   );
 }
 
+/* SKELETON */
+function ProfileSkeleton() {
+  return (
+    <div className="grid items-start gap-6 lg:grid-cols-12">
+      <div className="space-y-4 lg:col-span-4">
+        <div className="animate-pulse rounded-2xl border border-slate-200 bg-white p-6">
+          <div className="mx-auto mb-5 h-32 w-32 rounded-full bg-slate-100" />
+          <div className="mx-auto mb-2 h-5 w-40 rounded bg-slate-100" />
+          <div className="mx-auto mb-5 h-5 w-32 rounded-full bg-slate-100" />
+          <div className="space-y-2.5 border-t border-slate-100 pt-4">
+            <div className="h-14 rounded-xl bg-slate-50" />
+            <div className="h-14 rounded-xl bg-slate-50" />
+          </div>
+        </div>
+        <div className="h-11 animate-pulse rounded-xl bg-slate-100" />
+      </div>
+      <div className="lg:col-span-8">
+        <div className="animate-pulse rounded-2xl border border-slate-200 bg-white p-6">
+          <div className="mb-6 h-5 w-48 rounded bg-slate-100" />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <div className="h-3 w-20 rounded bg-slate-100" />
+                <div className="h-10 rounded-xl bg-slate-50" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* INFO ROW */
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl bg-slate-50 p-3">
+      <div className="flex-shrink-0 rounded-lg bg-emerald-50 p-1.5">{icon}</div>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          {label}
+        </p>
+        <p className="truncate text-sm font-semibold text-slate-900">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+/* FIELD LABEL */
+function FieldLabel({
+  icon,
+  children,
+  required,
+}: {
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  required?: boolean;
+}) {
+  return (
+    <label className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      {icon}
+      {children}
+      {required && <span className="ml-0.5 text-rose-500">*</span>}
+    </label>
+  );
+}
+
 /* FIELD INPUT */
 interface FieldInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -379,26 +434,24 @@ function FieldInput({
 }: FieldInputProps) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-wide">
-        {icon}
+      <FieldLabel icon={icon} required={rest.required}>
         {label}
-        {rest.required && <span className="text-red-400 ml-0.5">*</span>}
-      </label>
+      </FieldLabel>
       <input
         {...rest}
         disabled={disabled}
-        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 ${
+        className={`w-full rounded-xl border px-3.5 py-2.5 text-sm font-medium transition-all focus:outline-none focus:ring-2 ${
           error
-            ? "border-red-300 focus:ring-red-200"
-            : "border-slate-200 focus:ring-emerald-100 focus:border-emerald-400"
+            ? "border-rose-300 focus:ring-rose-100"
+            : "border-slate-200 focus:border-emerald-400 focus:ring-emerald-100"
         } ${
           disabled
-            ? "bg-slate-50 text-slate-400 cursor-not-allowed"
-            : "bg-white text-slate-800"
+            ? "cursor-not-allowed bg-slate-50 text-slate-400"
+            : "bg-white text-slate-900"
         }`}
       />
       {error && (
-        <p className="text-[10px] text-red-500 font-semibold">
+        <p className="text-[11px] font-medium text-rose-600">
           Please enter a valid value
         </p>
       )}
@@ -418,19 +471,18 @@ function GenderSelect({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-wide">
-        <User size={13} className="text-emerald-600" />
+      <FieldLabel icon={<User size={13} className="text-emerald-600" />}>
         Gender
-      </label>
+      </FieldLabel>
       <select
         name="gender"
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className={`w-full px-3.5 py-2.5 rounded-xl border text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:border-emerald-400 ${
+        className={`w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium transition-all focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 ${
           disabled
-            ? "bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200"
-            : "bg-white text-slate-800 border-slate-200"
+            ? "cursor-not-allowed bg-slate-50 text-slate-400"
+            : "bg-white text-slate-900"
         }`}
       >
         <option value="">Select gender</option>
@@ -457,13 +509,14 @@ function PhoneField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 uppercase tracking-wide">
-        <Phone size={13} className="text-emerald-600" />
+      <FieldLabel icon={<Phone size={13} className="text-emerald-600" />}>
         Phone Number
-      </label>
+      </FieldLabel>
       <div
-        className={`phone-wrap rounded-xl border transition-all ${
-          error ? "border-red-300" : "border-slate-200"
+        className={`rounded-xl border transition-all focus-within:ring-2 ${
+          error
+            ? "border-rose-300 focus-within:ring-rose-100"
+            : "border-slate-200 focus-within:border-emerald-400 focus-within:ring-emerald-100"
         } ${disabled ? "bg-slate-50" : "bg-white"}`}
       >
         <PhoneInput
@@ -476,7 +529,7 @@ function PhoneField({
         />
       </div>
       {error && (
-        <p className="text-[10px] text-red-500 font-semibold">
+        <p className="text-[11px] font-medium text-rose-600">
           Please enter a valid phone number
         </p>
       )}
@@ -503,7 +556,7 @@ function PhoneField({
           background: transparent;
           font-size: 14px;
           font-weight: 500;
-          color: ${disabled ? "#94a3b8" : "#1e293b"};
+          color: ${disabled ? "#94a3b8" : "#0f172a"};
           cursor: ${disabled ? "not-allowed" : "text"};
         }
         .nutriwise-phone .PhoneInputInput::placeholder {

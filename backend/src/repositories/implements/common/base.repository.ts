@@ -53,8 +53,15 @@ export class BaseRepository<T> implements IBaseRepository<T> {
   async updateOne(
     filter: FilterQuery<T>,
     update: UpdateQuery<T>,
+    session?: ClientSession,
   ): Promise<number> {
-    const result = await this._model.updateOne(filter, update);
+    const query = this._model.updateOne(filter, update);
+
+    if (session) {
+      query.session(session);
+    }
+
+    const result = await query.exec();
 
     return result.modifiedCount;
   }

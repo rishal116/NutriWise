@@ -9,4 +9,5 @@ export interface INutriMeetingController {
     res: Response,
     next: NextFunction,
   ) => void;
+  updateMeeting: (req: Request, res: Response, next: NextFunction) => void;
 }

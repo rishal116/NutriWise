@@ -1,8 +1,23 @@
+"use client";
+
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { AUTH_ROUTES } from "@/routes/user/auth.routes";
-import { store } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
+import { store } from "@/redux/store";
 import { userAuthService } from "@/services/user/userAuth.service";
+import { redirectToLogin } from "@/lib/auth/authGuard";
+
+declare module "axios" {
+  export interface AxiosRequestConfig {
+    requiresAuth?: boolean;
+    _retry?: boolean;
+  }
+
+  export interface InternalAxiosRequestConfig {
+    requiresAuth?: boolean;
+    _retry?: boolean;
+  }
+}
 
 interface RetryRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -30,41 +45,106 @@ const ignoredRoutes = [
   AUTH_ROUTES.REFRESH_TOKEN,
 ];
 
+function isIgnoredRoute(url?: string): boolean {
+  if (!url) {
+    return false;
+  }
+
+  return ignoredRoutes.some((route) => url.includes(route));
+}
+
+clientApi.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    if (!config.requiresAuth) {
+      return config;
+    }
+
+    const authState = store.getState().auth;
+    if (!authState.initialized) {
+      return config;
+    }
+
+    if (!authState.isAuthenticated) {
+      redirectToLogin();
+
+      return Promise.reject(
+        new AxiosError(
+          "Action requires authentication.",
+          "ERR_UNAUTHENTICATED",
+          config,
+        ),
+      );
+    }
+
+    return config;
+  },
+  (error: unknown) => {
+    return Promise.reject(error);
+  },
+);
+
 clientApi.interceptors.response.use(
   (response) => response,
 
   async (error: AxiosError<ApiErrorResponse>) => {
-    const originalRequest = error.config as RetryRequestConfig;
+    const originalRequest = error.config as RetryRequestConfig | undefined;
 
     if (!originalRequest) {
       return Promise.reject(error);
     }
 
-    if (ignoredRoutes.some((route) => originalRequest.url?.includes(route))) {
+    if (isIgnoredRoute(originalRequest.url)) {
       return Promise.reject(error);
     }
 
     const status = error.response?.status;
+
     const code = error.response?.data?.code;
 
-    if (
-      status !== 401 ||
-      !["ACCESS_TOKEN_EXPIRED", "ACCESS_TOKEN_MISSING"].includes(code ?? "") ||
-      originalRequest._retry
-    ) {
+    let refreshPromise: Promise<void> | null = null;
+
+    if (status !== 401) {
       return Promise.reject(error);
     }
 
-    originalRequest._retry = true;
+    const shouldRefreshToken = [
+      "ACCESS_TOKEN_EXPIRED",
+      "ACCESS_TOKEN_MISSING",
+    ].includes(code ?? "");
 
-    try {
-      await userAuthService.refreshToken();
+    if (shouldRefreshToken && !originalRequest._retry) {
+      originalRequest._retry = true;
 
-      return clientApi(originalRequest);
-    } catch (refreshError) {
-      store.dispatch(logout());
+      try {
+        if (!refreshPromise) {
+          refreshPromise = userAuthService
+            .refreshToken()
+            .then(() => undefined)
+            .finally(() => {
+              refreshPromise = null;
+            });
+        }
 
-      return Promise.reject(refreshError);
+        await refreshPromise;
+
+        return clientApi(originalRequest);
+      } catch (refreshError: unknown) {
+        store.dispatch(logout());
+
+        if (originalRequest.requiresAuth) {
+          redirectToLogin();
+        }
+
+        return Promise.reject(refreshError);
+      }
     }
+
+    store.dispatch(logout());
+
+    if (originalRequest.requiresAuth) {
+      redirectToLogin();
+    }
+
+    return Promise.reject(error);
   },
 );

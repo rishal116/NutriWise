@@ -6,20 +6,30 @@ export class SessionCheckoutStripeMapper {
     session: ISession,
     userId: string,
   ): StripeCheckoutInputDTO {
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    if (!frontendUrl) {
+      throw new Error("FRONTEND_URL is not configured.");
+    }
+
+    const baseUrl = new URL(frontendUrl).origin;
+    const sessionPath = `/communities/sessions/${session._id}`;
+
     return {
       currency: session.pricing.currency,
       title: session.title,
       description: session.description,
       amount: session.pricing.amount,
 
-      successUrl: `${process.env.FRONTEND_URL}/communities/sessions/${session._id}/payment-success`,
-      cancelUrl: `${process.env.FRONTEND_URL}/communities/sessions/${session._id}`,
+      successUrl: `${baseUrl}${sessionPath}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${baseUrl}${sessionPath}/checkout`,
 
       metadata: {
+        paymentType: "session_registration",
+        resourceType: "session",
         userId,
         sessionId: session._id.toString(),
         nutritionistId: session.nutritionistId.toString(),
-        resourceType: "session",
       },
     };
   }

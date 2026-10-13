@@ -16,7 +16,8 @@ export interface IConversation {
   chatType: ChatType;
   visibility: ConversationVisibility;
   directKey?: string;
-  inviteTokenEncrypted?: string;
+  inviteToken?: string;
+  inviteTokenHash?: string;
   purpose: ConversationPurpose;
   status: ConversationStatus;
   title?: string;
@@ -52,13 +53,18 @@ const ConversationSchema = new Schema<IConversation>(
       trim: true,
       unique: true,
       sparse: true,
-      index: true,
     },
 
-    inviteTokenEncrypted: {
+    inviteToken: {
       type: String,
       trim: true,
-      sparse: true,
+      select: false,
+    },
+
+    inviteTokenHash: {
+      type: String,
+      trim: true,
+      select: false,
     },
 
     purpose: {
@@ -118,27 +124,6 @@ const ConversationSchema = new Schema<IConversation>(
   },
 );
 
-ConversationSchema.index({
-  status: 1,
-  lastActivityAt: -1,
-});
-
-ConversationSchema.index({
-  purpose: 1,
-  status: 1,
-});
-
-ConversationSchema.index({
-  chatType: 1,
-  status: 1,
-});
-
-ConversationSchema.index({
-  chatType: 1,
-  visibility: 1,
-  status: 1,
-});
-
 ConversationSchema.pre("validate", function (next) {
   if (this.chatType === "direct") {
     if (!this.directKey) {
@@ -149,9 +134,9 @@ ConversationSchema.pre("validate", function (next) {
       return next(new Error("Direct conversation must be private"));
     }
 
-    if (this.inviteTokenEncrypted) {
+    if (this.inviteToken || this.inviteTokenHash) {
       return next(
-        new Error("Direct conversation cannot have inviteTokenEncrypted"),
+        new Error("Direct conversation cannot have invitation tokens"),
       );
     }
 
@@ -181,20 +166,57 @@ ConversationSchema.pre("validate", function (next) {
       );
     }
 
-    if (this.visibility === "public" && this.inviteTokenEncrypted) {
+    if (
+      this.visibility === "public" &&
+      (this.inviteToken || this.inviteTokenHash)
+    ) {
       return next(
-        new Error("Public group conversation cannot have inviteTokenEncrypted"),
+        new Error("Public group conversation cannot have invitation tokens"),
       );
     }
 
-    if (this.visibility === "private" && !this.inviteTokenEncrypted) {
+    if (
+      this.visibility === "private" &&
+      (!this.inviteToken || !this.inviteTokenHash)
+    ) {
       return next(
-        new Error("Private group conversation requires inviteTokenEncrypted"),
+        new Error("Private group conversation requires both invitation tokens"),
       );
     }
   }
 
   next();
+});
+
+ConversationSchema.index(
+  { inviteTokenHash: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      inviteTokenHash: { $type: "string" },
+    },
+  },
+);
+
+ConversationSchema.index({
+  status: 1,
+  lastActivityAt: -1,
+});
+
+ConversationSchema.index({
+  purpose: 1,
+  status: 1,
+});
+
+ConversationSchema.index({
+  chatType: 1,
+  status: 1,
+});
+
+ConversationSchema.index({
+  chatType: 1,
+  visibility: 1,
+  status: 1,
 });
 
 export const ConversationModel = model<IConversation>(

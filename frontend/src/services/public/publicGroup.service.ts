@@ -42,7 +42,9 @@ export const publicGroupService = {
   ): Promise<ApiResponseDTO<PublicGroupDetailsDTO>> {
     const response = await clientApi.post<
       ApiResponseDTO<PublicGroupDetailsDTO>
-    >(PUBLIC_GROUP_ROUTES.JOIN(groupId));
+    >(PUBLIC_GROUP_ROUTES.JOIN(groupId), undefined, {
+      requiresAuth: true,
+    });
 
     return response.data;
   },

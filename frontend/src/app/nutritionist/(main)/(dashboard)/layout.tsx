@@ -17,13 +17,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      <div className="sticky top-16 z-30 flex h-12 items-center border-b border-slate-200/80 bg-white/80 px-4 backdrop-blur-md lg:hidden">
+    <div className="flex min-h-dvh flex-col bg-slate-50">
+      {/* Mobile menu bar */}
+      <div className="sticky top-16 z-30 flex h-12 items-center border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-sm sm:px-6 lg:hidden">
         <button
           onClick={() => setIsMobileOpen(true)}
-          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-600"
+          aria-label="Open dashboard menu"
+          className="-ml-2 flex h-full items-center gap-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-emerald-700 transition-colors duration-150 hover:text-emerald-800"
         >
-          <Menu size={14} />
+          <Menu size={16} />
           Dashboard Menu
         </button>
       </div>
@@ -36,22 +38,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm lg:hidden"
+          aria-hidden="true"
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs lg:hidden"
           onClick={handleMobileClose}
         />
       )}
 
       <main
-        className={`transition-all duration-300 ease-in-out pb-20 ${
+        className={`min-w-0 flex-1 px-4 py-6 transition-[margin] duration-300 ease-in-out sm:px-6 lg:px-8 lg:py-8 ${
           isCollapsed ? "lg:ml-20" : "lg:ml-64"
         }`}
       >
-        <div className="p-4 md:p-8 lg:p-10">
-          <div className="mx-auto max-w-7xl">
-            <div className="animate-in fade-in slide-in-from-bottom-3 duration-500">
-              {children}
-            </div>
-          </div>
+        <div className="mx-auto w-full max-w-7xl animate-in fade-in slide-in-from-bottom-3 duration-500">
+          {children}
         </div>
       </main>
     </div>

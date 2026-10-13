@@ -1,0 +1,1 @@
+export type ConversationListFilter = "all" | "personal" | "group";

@@ -3,6 +3,10 @@ import { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 import { CHECKOUT_ROUTES } from "@/routes/user";
 import { SessionCheckoutResponseDTO } from "@/dtos/public/session-registration/session-checkout-response.dto";
 
+export interface SessionPaymentStatusDTO {
+  status: "pending" | "completed" | "failed";
+}
+
 export const sessionCheckoutService = {
   createSessionRegistrationCheckout: async (
     sessionId: string,
@@ -12,6 +16,16 @@ export const sessionCheckoutService = {
     >(CHECKOUT_ROUTES.CREATE_SESSION_REGISTRATION, {
       sessionId,
     });
+
+    return data;
+  },
+
+  getSessionPaymentStatus: async (
+    checkoutSessionId: string,
+  ): Promise<ApiResponseDTO<SessionPaymentStatusDTO>> => {
+    const { data } = await clientApi.get<
+      ApiResponseDTO<SessionPaymentStatusDTO>
+    >(CHECKOUT_ROUTES.GET_STATUS(checkoutSessionId));
 
     return data;
   },

@@ -3,6 +3,7 @@ import { CreateMeetingDTO } from "../../../dtos/nutritionist/meeting/create-meet
 import { MeetingCardResponseDTO } from "../../../dtos/nutritionist/meeting/meeting-card-response.dto";
 import { MeetingDetailsResponseDTO } from "../../../dtos/nutritionist/meeting/meeting-details-response.dto";
 import { MeetingListQueryDTO } from "../../../dtos/nutritionist/meeting/meeting-list-query.dto";
+import { UpdateMeetingDTO } from "../../../dtos/nutritionist/meeting/update-meeting.dto";
 import { MeetingStatus } from "../../../models/meeting.model";
 
 export interface INutriMeetingService {
@@ -21,5 +22,11 @@ export interface INutriMeetingService {
   updateMeetingStatus(
     roomId: string,
     status: MeetingStatus,
+  ): Promise<MeetingDetailsResponseDTO>;
+
+  updateMeeting(
+    nutritionistId: string,
+    meetingId: string,
+    data: UpdateMeetingDTO,
   ): Promise<MeetingDetailsResponseDTO>;
 }

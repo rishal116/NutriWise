@@ -5,6 +5,7 @@ import type { PublicGroupDetailsDTO } from "../../../dtos/public/group/public-gr
 export const toPublicGroupDetailsDTO = (
   group: IConversation,
   memberCount: number,
+  isMember: boolean,
 ): PublicGroupDetailsDTO => ({
   id: group._id.toString(),
   title: group.title ?? "",
@@ -13,6 +14,7 @@ export const toPublicGroupDetailsDTO = (
   visibility: "public",
   status: "active",
   memberCount,
+  isMember,
   createdAt: group.createdAt,
   updatedAt: group.updatedAt,
 });

@@ -4,7 +4,7 @@ import { TYPES } from "../../types/types";
 import { IConversationMemberRepository } from "../../repositories/interfaces/chat/IConversationMemberRepository";
 import { IMessageService } from "../../services/interfaces/chat/IMessageService";
 import { SendMessageDTO } from "../../dtos/chat/sendMessage.dto";
-import { MessageResponseDTO } from "../../dtos/chat/messageResponse.dto";
+import { MessageResponseDTO } from "../../dtos/chat/message-response.dto";
 import { getOnlineUserIds } from "./socket.server";
 import logger from "../../utils/logger";
 

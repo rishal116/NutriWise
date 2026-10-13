@@ -30,5 +30,4 @@ export interface IPublicSessionListItemProjection {
 export interface IPublicSessionListProjectionWithCursor extends IPublicSessionListItemProjection {
   cursorId: string;
   cursorValue: string | number | Date;
-  createdAt?: Date;
 }

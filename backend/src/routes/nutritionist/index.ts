@@ -14,6 +14,8 @@ import programRoutes from "./program.route";
 import programDayRoutes from "./program-day.route";
 import resourceRoutes from "./resource.route";
 import sessionRoutes from "./session.route";
+import earningsRoutes from "./earnings.route";
+import credentialsRoutes from "./credentials.route";
 
 const router = Router();
 
@@ -31,5 +33,7 @@ router.use("/meetings", meetingRoutes);
 router.use("/groups", groupRoutes);
 router.use("/resources", resourceRoutes);
 router.use("/sessions", sessionRoutes);
+router.use("/earnings", earningsRoutes);
+router.use("/credentials", credentialsRoutes);
 
 export default router;

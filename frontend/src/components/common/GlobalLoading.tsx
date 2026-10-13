@@ -4,9 +4,9 @@ import { useAppSelector } from "@/redux/hooks";
 import LoadingOverlay from "./LoadingOverlay";
 
 export default function GlobalLoading() {
-  const { isLoading, loadingText } = useAppSelector((state) => state.ui);
+  const isLoading = useAppSelector((state) => state.ui.isLoading);
 
   if (!isLoading) return null;
 
-  return <LoadingOverlay text={loadingText} />;
+  return <LoadingOverlay />;
 }

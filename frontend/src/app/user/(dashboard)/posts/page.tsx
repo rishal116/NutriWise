@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { ArrowDownUp, Plus, Search, X } from "lucide-react";
 
@@ -24,6 +24,9 @@ const SORT_OPTIONS: { value: PostSortOption; label: string }[] = [
   { value: PostSortOption.MOST_BOOKMARKED, label: "Most bookmarked" },
 ];
 
+const fieldClass =
+  "w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 text-sm text-slate-700 transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
+
 export default function UserPostsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
@@ -38,7 +41,6 @@ export default function UserPostsPage() {
         limit: PAGE_SIZE,
         cursor: cursor ?? undefined,
         sortBy,
-        // Drop this line if the backend doesn't yet support `search`.
         ...(search ? { search } : {}),
       });
 
@@ -83,7 +85,7 @@ export default function UserPostsPage() {
       removeItem((p) => p._id === postPendingDelete._id);
       setPostPendingDelete(null);
     } catch {
-      // Keep the modal open so the user can see the failure and retry.
+      // Keep the modal open so the user can retry.
     } finally {
       setIsDeleting(false);
     }
@@ -92,65 +94,55 @@ export default function UserPostsPage() {
   const showInitialSkeleton = isLoading && items.length === 0;
   const showInitialError = !isLoading && error && items.length === 0;
   const showEmptyState = !isLoading && !error && items.length === 0;
-
-  const feed = useMemo(
-    () => (
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-        {items.map((post) => (
-          <PostCard
-            key={post._id}
-            post={post}
-            onDelete={setPostPendingDelete}
-          />
-        ))}
-      </div>
-    ),
-    [items],
-  );
+  const showFeed =
+    !showInitialSkeleton && !showInitialError && items.length > 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="h-5 w-1 rounded-full bg-emerald-600" />
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-              My Posts
-            </h1>
-          </div>
-          <p className="mt-1.5 text-xs font-medium text-slate-500 sm:text-sm">
-            Everything you&apos;ve shared, in one place — track engagement and
-            manage your posts.
+    // Single left-aligned column: header, toolbar and feed share one edge
+    <div className="flex w-full max-w-3xl flex-col gap-5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            My Posts
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            Track engagement and manage everything you&apos;ve shared.
           </p>
         </div>
 
         <Link
           href="/user/posts/create"
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2.5 text-xs font-semibold text-white shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:bg-emerald-800 sm:text-sm"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
         >
           <Plus className="h-4 w-4" />
-          Create Post
+          <span className="hidden sm:inline">Create Post</span>
+          <span className="sm:hidden">New</span>
         </Link>
       </div>
 
-      {/* Search + sort */}
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-3 sm:flex-row">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1">
+      {/* Toolbar */}
+      <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="relative flex-1"
+          role="search"
+        >
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search your posts..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-9 text-xs font-medium text-slate-700 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 sm:text-sm"
+            aria-label="Search your posts"
+            className={`${fieldClass} pl-9 pr-9`}
           />
           {searchInput && (
             <button
               type="button"
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600"
             >
               <X className="h-4 w-4" />
             </button>
@@ -162,11 +154,12 @@ export default function UserPostsPage() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as PostSortOption)}
-            className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-8 text-xs font-medium text-slate-700 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 sm:text-sm"
+            aria-label="Sort posts"
+            className={`${fieldClass} appearance-none pl-9 pr-8`}
           >
-            {SORT_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
               </option>
             ))}
           </select>
@@ -176,32 +169,32 @@ export default function UserPostsPage() {
       {/* Content */}
       {showInitialSkeleton && <PostCardSkeletonGrid count={PAGE_SIZE} />}
 
-      {showInitialError && (
-        <div className="mx-auto w-full max-w-xl">
-          <PostsErrorState onRetry={retry} />
-        </div>
-      )}
+      {showInitialError && <PostsErrorState onRetry={retry} />}
 
       {showEmptyState && (
-        <div className="mx-auto w-full max-w-xl">
-          <PostsEmptyState
-            isSearching={Boolean(search)}
-            onClearSearch={search ? clearSearch : undefined}
-          />
-        </div>
+        <PostsEmptyState
+          isSearching={Boolean(search)}
+          onClearSearch={search ? clearSearch : undefined}
+        />
       )}
 
-      {!showInitialSkeleton && !showInitialError && items.length > 0 && (
+      {showFeed && (
         <>
-          {feed}
+          <div className="flex flex-col gap-5">
+            {items.map((post) => (
+              <PostCard
+                key={post._id}
+                post={post}
+                onDelete={setPostPendingDelete}
+              />
+            ))}
+          </div>
 
           <div ref={sentinelRef} className="h-1 w-full" />
 
-          {isLoadingMore && <PostCardSkeletonGrid count={4} />}
+          {isLoadingMore && <PostCardSkeletonGrid count={2} />}
 
-          {error && items.length > 0 && (
-            <PostsErrorState onRetry={retry} compact />
-          )}
+          {error && <PostsErrorState onRetry={retry} compact />}
 
           {!hasMore && !isLoadingMore && (
             <p className="py-4 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400">

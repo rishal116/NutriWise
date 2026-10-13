@@ -1,19 +1,12 @@
 export * from "./application.routes";
-
 export * from "./dashboard.routes";
-
 export * from "./plan.routes";
-
 export * from "./client.routes";
-
 export * from "./program.routes";
-
 export * from "./program-day.routes";
-
 export * from "./meeting.routes";
-
 export * from "./resource.routes";
-
 export * from "./session.routes";
-
 export * from "./group.routes";
+export * from "./earnings.routes";
+export * from "./credentials.routes";

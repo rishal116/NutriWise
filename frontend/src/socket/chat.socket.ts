@@ -1,18 +1,19 @@
 import { Socket } from "socket.io-client";
-import { MessageResponseDTO } from "@/dtos/chat/message-response.dto";
+import { AttachmentDTO, MessageResponseDTO } from "@/dtos/chat/message-response.dto";
+import { MessageStatus, MessageType } from "@/types/chat/message.types";
 
 export interface IncomingMessagePayload {
   id: string;
+  conversationId: string;
   senderId: string;
-  conversationId?: string;
   text?: string;
   content?: string;
-  attachments?: MessageResponseDTO["attachments"];
-  messageType?: MessageResponseDTO["messageType"];
-  type?: MessageResponseDTO["messageType"];
-  status?: MessageResponseDTO["status"];
+  attachments?: AttachmentDTO[];
+  messageType?: MessageType;
+  type?: MessageType;
+  replyTo?: string;
+  status?: MessageStatus;
   createdAt?: string | Date;
-  updatedAt?: string | Date;
 }
 
 export interface TypingSocketPayload {

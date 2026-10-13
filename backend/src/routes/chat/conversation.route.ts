@@ -1,7 +1,7 @@
 import { Router } from "express";
+
 import { container } from "../../configs/inversify";
 import { TYPES } from "../../types/types";
-
 import { IConversationController } from "../../controllers/interfaces/chat/IConversationController";
 import { authMiddleware } from "../../middlewares/auth.middleware";
 
@@ -17,6 +17,12 @@ router.post(
   conversationController.createDirectConversation,
 );
 
-router.get("/", authMiddleware, conversationController.getUserChats);
+router.get("/", authMiddleware, conversationController.getUserConversations);
+
+router.get(
+  "/:conversationId",
+  authMiddleware,
+  conversationController.getUserConversationDetails,
+);
 
 export default router;
