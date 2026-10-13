@@ -72,6 +72,9 @@ export class SessionRegistrationService implements ISessionRegistrationService {
         userObjectId,
       );
 
+      console.log(existingRegistration);
+      
+
     if (existingRegistration?.status === "registered") {
       throw new CustomError(
         "You are already registered for this session",

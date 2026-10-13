@@ -16,6 +16,8 @@ router.get("/:meetingId", nutritionistMeetingController.getMeetingDetails);
 
 router.post("/", nutritionistMeetingController.createMeeting);
 
+router.patch("/:meetingId", nutritionistMeetingController.updateMeeting);
+
 router.patch(
   "/status/:roomId",
   nutritionistMeetingController.updateMeetingStatus,

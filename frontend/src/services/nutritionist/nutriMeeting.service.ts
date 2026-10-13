@@ -7,6 +7,7 @@ import { CreateMeetingDTO } from "@/dtos/nutritionist/meeting/create-meeting.dto
 import { MeetingCardResponseDTO } from "@/dtos/nutritionist/meeting/meeting-card-response.dto";
 import { MeetingDetailsResponseDTO } from "@/dtos/nutritionist/meeting/meeting-details-response.dto";
 import { MeetingListQueryDTO } from "@/dtos/nutritionist/meeting/meeting-list-query.dto";
+import { UpdateMeetingDTO } from "@/dtos/nutritionist/meeting/update-meeting.dto";
 
 export const nutriMeetingService = {
   getMeetings: async (
@@ -53,6 +54,17 @@ export const nutriMeetingService = {
     >(NUTRITIONIST_MEETING_ROUTES.UPDATE_STATUS(roomId), {
       status,
     });
+
+    return res.data;
+  },
+
+  updateMeeting: async (
+    meetingId: string,
+    data: UpdateMeetingDTO,
+  ): Promise<ApiResponseDTO<MeetingDetailsResponseDTO>> => {
+    const res = await clientApi.patch<
+      ApiResponseDTO<MeetingDetailsResponseDTO>
+    >(NUTRITIONIST_MEETING_ROUTES.UPDATE(meetingId), data);
 
     return res.data;
   },

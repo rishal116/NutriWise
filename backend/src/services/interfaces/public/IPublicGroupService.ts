@@ -11,7 +11,7 @@ export interface IPublicGroupService {
     query: PublicGroupListQueryDTO,
   ): Promise<InfiniteScrollResponseDTO<PublicGroupListItemDTO>>;
 
-  getGroup(groupId: string): Promise<PublicGroupDetailsDTO>;
+  getGroup(groupId: string, userId?: string): Promise<PublicGroupDetailsDTO>;
 
   joinGroup(userId: string, groupId: string): Promise<PublicGroupDetailsDTO>;
 }

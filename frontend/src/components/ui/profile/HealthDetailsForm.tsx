@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { healthDetailsService } from "@/services/user/healthDetails.service";
 import {
   Activity,
@@ -12,6 +13,7 @@ import {
   Loader2,
   Save,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 import { HealthDetailsRequestDto } from "@/dtos/user/health/health-details.request.dto";
 import {
@@ -29,6 +31,7 @@ import type {
 
 interface HealthDetailsFormProps {
   onSuccess: () => void;
+  onCancel?: () => void;
   initialData?: Partial<HealthDetailsRequestDto> | null;
 }
 
@@ -57,6 +60,7 @@ const formatLabel = (str: string) =>
 
 export default function HealthDetailsForm({
   onSuccess,
+  onCancel,
   initialData,
 }: HealthDetailsFormProps) {
   const [loading, setLoading] = useState(false);
@@ -85,6 +89,7 @@ export default function HealthDetailsForm({
     const e: Record<string, string> = {};
     const h = Number(form.heightCm);
     const w = Number(form.weightKg);
+    const t = Number(form.targetWeightKg);
 
     if (!h || h < 50 || h > 300) e.heightCm = "Enter valid height (50–300 cm)";
     if (!w || w < 20 || w > 300) e.weightKg = "Enter valid weight (20–300 kg)";
@@ -92,6 +97,8 @@ export default function HealthDetailsForm({
     if (!form.dietType) e.dietType = "Select diet type";
     if (!form.goal) e.goal = "Select your goal";
     if (!form.preferredTimeline) e.preferredTimeline = "Select timeline";
+    if (form.targetWeightKg && (!t || t < 20 || t > 300))
+      e.targetWeightKg = "Enter valid target weight (20–300 kg)";
 
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -115,113 +122,126 @@ export default function HealthDetailsForm({
 
       await healthDetailsService.saveHealthDetails(payload);
       onSuccess();
-    } catch (error) {
-      console.error("Save Error:", error);
+    } catch {
+      toast.error("Failed to save health profile");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6">
-      <div className="max-w-5xl mx-auto">
-        {/* Header Card */}
-        <div className="bg-emerald-600 p-8 rounded-2xl mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">Health Profile</h2>
-          <p className="text-emerald-50">
-            Tell us about yourself to personalize your wellness journey
-          </p>
-        </div>
+    <div className="mx-auto max-w-6xl p-6">
+      <div className="mb-6 flex items-center gap-2">
+        <span className="h-6 w-1 rounded-full bg-emerald-600" />
+        <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+          Health Profile
+        </h1>
+      </div>
+      <p className="-mt-3 mb-6 text-xs font-medium text-slate-500">
+        Tell us about yourself to personalize your wellness journey.
+      </p>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 md:p-10 space-y-10">
-          <Section title="Body Information" icon={<Ruler size={18} />}>
-            <Input
-              label="Height (cm)"
-              value={form.heightCm}
-              error={errors.heightCm}
-              onChange={(v) => handleChange("heightCm", v)}
-              icon={<Ruler size={16} className="text-emerald-600" />}
-              required
-            />
-            <Input
-              label="Weight (kg)"
-              value={form.weightKg}
-              error={errors.weightKg}
-              onChange={(v) => handleChange("weightKg", v)}
-              icon={<Weight size={16} className="text-emerald-600" />}
-              required
-            />
-          </Section>
+      <div className="space-y-8 rounded-2xl border border-slate-200 bg-white p-6">
+        <Section title="Body Information" icon={<Ruler size={16} />}>
+          <Input
+            label="Height (cm)"
+            value={form.heightCm}
+            error={errors.heightCm}
+            onChange={(v) => handleChange("heightCm", v)}
+            icon={<Ruler size={13} className="text-emerald-600" />}
+            required
+          />
+          <Input
+            label="Weight (kg)"
+            value={form.weightKg}
+            error={errors.weightKg}
+            onChange={(v) => handleChange("weightKg", v)}
+            icon={<Weight size={13} className="text-emerald-600" />}
+            required
+          />
+        </Section>
 
-          <Section title="Lifestyle" icon={<Activity size={18} />}>
-            <Select
-              label="Activity Level"
-              value={form.activityLevel}
-              error={errors.activityLevel}
-              options={ACTIVITY_LEVELS.map((a) => ({
-                label: formatLabel(a),
-                value: a,
-              }))}
-              onChange={(v) => handleChange("activityLevel", v)}
-              icon={<Activity size={16} className="text-emerald-600" />}
-              required
-            />
-          </Section>
+        <Section title="Lifestyle" icon={<Activity size={16} />}>
+          <Select
+            label="Activity Level"
+            value={form.activityLevel}
+            error={errors.activityLevel}
+            options={ACTIVITY_LEVELS.map((a) => ({
+              label: formatLabel(a),
+              value: a,
+            }))}
+            onChange={(v) => handleChange("activityLevel", v)}
+            icon={<Activity size={13} className="text-emerald-600" />}
+            required
+          />
+        </Section>
 
-          <Section title="Nutrition & Goals" icon={<Target size={18} />}>
-            <Select
-              label="Diet Type"
-              value={form.dietType}
-              error={errors.dietType}
-              options={DIET_TYPES.map((d) => ({
-                label: formatLabel(d),
-                value: d,
-              }))}
-              onChange={(v) => handleChange("dietType", v)}
-              icon={<UtensilsCrossed size={16} className="text-emerald-600" />}
-              required
-            />
-            <Select
-              label="Goal"
-              value={form.goal}
-              error={errors.goal}
-              options={GOALS.map((g) => ({ label: formatLabel(g), value: g }))}
-              onChange={(v) => handleChange("goal", v)}
-              icon={<Target size={16} className="text-emerald-600" />}
-              required
-            />
-            <Select
-              label="Timeline"
-              value={form.preferredTimeline}
-              error={errors.preferredTimeline}
-              options={TIMELINES.map((t) => ({
-                label: formatLabel(t),
-                value: t,
-              }))}
-              onChange={(v) => handleChange("preferredTimeline", v)}
-              required
-            />
-            <Input
-              label="Target Weight (kg)"
-              value={form.targetWeightKg}
-              error={errors.targetWeightKg}
-              onChange={(v) => handleChange("targetWeightKg", v)}
-              icon={<TrendingUp size={16} className="text-emerald-600" />}
-            />
-          </Section>
+        <Section title="Nutrition & Goals" icon={<Target size={16} />}>
+          <Select
+            label="Diet Type"
+            value={form.dietType}
+            error={errors.dietType}
+            options={DIET_TYPES.map((d) => ({
+              label: formatLabel(d),
+              value: d,
+            }))}
+            onChange={(v) => handleChange("dietType", v)}
+            icon={<UtensilsCrossed size={13} className="text-emerald-600" />}
+            required
+          />
+          <Select
+            label="Goal"
+            value={form.goal}
+            error={errors.goal}
+            options={GOALS.map((g) => ({ label: formatLabel(g), value: g }))}
+            onChange={(v) => handleChange("goal", v)}
+            icon={<Target size={13} className="text-emerald-600" />}
+            required
+          />
+          <Select
+            label="Timeline"
+            value={form.preferredTimeline}
+            error={errors.preferredTimeline}
+            options={TIMELINES.map((t) => ({
+              label: formatLabel(t),
+              value: t,
+            }))}
+            onChange={(v) => handleChange("preferredTimeline", v)}
+            icon={<TrendingUp size={13} className="text-emerald-600" />}
+            required
+          />
+          <Input
+            label="Target Weight (kg)"
+            value={form.targetWeightKg}
+            error={errors.targetWeightKg}
+            onChange={(v) => handleChange("targetWeightKg", v)}
+            icon={<Weight size={13} className="text-emerald-600" />}
+          />
+        </Section>
 
+        <div className="flex flex-col items-stretch justify-end gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className="rounded-xl bg-slate-100 px-5 py-2.5 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          )}
           <button
             type="button"
             disabled={loading}
             onClick={handleSubmit}
-            className="w-full py-4 rounded-xl text-white font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
           >
             {loading ? (
-              <Loader2 size={18} className="animate-spin" />
+              <Loader2 size={15} className="flex-shrink-0 animate-spin" />
             ) : (
-              <Save size={18} />
+              <Save size={15} className="flex-shrink-0" />
             )}
-            <span>{loading ? "Saving..." : "Save Health Profile"}</span>
+            {loading ? "Saving…" : "Save Health Profile"}
           </button>
         </div>
       </div>
@@ -238,19 +258,61 @@ interface SectionProps {
 
 function Section({ title, children, icon }: SectionProps) {
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3 pb-3 border-b-2 border-slate-100">
-        <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 flex-shrink-0">
+    <div className="space-y-4">
+      <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+        <span className="h-5 w-1 flex-shrink-0 rounded-full bg-emerald-600" />
+        <div className="flex-shrink-0 rounded-lg bg-emerald-50 p-1.5 text-emerald-600">
           {icon}
         </div>
-        <h3 className="text-lg sm:text-xl font-bold text-slate-900">{title}</h3>
+        <h2 className="text-lg font-bold tracking-tight text-slate-900">
+          {title}
+        </h2>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-        {children}
-      </div>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{children}</div>
     </div>
   );
 }
+
+/* ── Field helpers ── */
+function FieldLabel({
+  htmlFor,
+  icon,
+  required,
+  children,
+}: {
+  htmlFor: string;
+  icon?: React.ReactNode;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <label
+      htmlFor={htmlFor}
+      className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500"
+    >
+      {icon}
+      {children}
+      {required && <span className="ml-0.5 text-rose-500">*</span>}
+    </label>
+  );
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="flex items-center gap-1 text-[11px] font-medium text-rose-600">
+      <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+      {message}
+    </p>
+  );
+}
+
+const controlClass = (error?: string) =>
+  `w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 transition-all focus:outline-none focus:ring-2 ${
+    error
+      ? "border-rose-300 focus:ring-rose-100"
+      : "border-slate-200 hover:border-emerald-300 focus:border-emerald-400 focus:ring-emerald-100"
+  }`;
 
 /* ── Input ── */
 interface InputProps {
@@ -276,33 +338,19 @@ function Input({
 }: InputProps) {
   const inputId = `input-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
-    <div className="space-y-2">
-      <label
-        htmlFor={inputId}
-        className="text-sm font-semibold text-slate-700 flex items-center gap-2"
-      >
-        {icon}
+    <div className="space-y-1.5">
+      <FieldLabel htmlFor={inputId} icon={icon} required={required}>
         {label}
-        {required && <span className="text-red-500">*</span>}
-      </label>
+      </FieldLabel>
       <input
         id={inputId}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full px-4 py-3 sm:px-5 sm:py-4 rounded-lg border-2 outline-none transition-colors bg-white font-medium text-sm sm:text-base ${
-          error
-            ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-            : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
-        }`}
+        className={controlClass(error)}
       />
-      {error && (
-        <p className="text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {error}
-        </p>
-      )}
+      <FieldError message={error} />
     </div>
   );
 }
@@ -334,25 +382,16 @@ function Select({
 }: SelectProps) {
   const selectId = `select-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
-    <div className="space-y-2">
-      <label
-        htmlFor={selectId}
-        className="text-sm font-semibold text-slate-700 flex items-center gap-2"
-      >
-        {icon}
+    <div className="space-y-1.5">
+      <FieldLabel htmlFor={selectId} icon={icon} required={required}>
         {label}
-        {required && <span className="text-red-500">*</span>}
-      </label>
+      </FieldLabel>
       <div className="relative">
         <select
           id={selectId}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full px-4 py-3 sm:px-5 sm:py-4 rounded-lg border-2 outline-none transition-colors bg-white font-medium appearance-none cursor-pointer text-sm sm:text-base ${
-            error
-              ? "border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100"
-              : "border-slate-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 hover:border-emerald-300"
-          }`}
+          className={`${controlClass(error)} cursor-pointer appearance-none pr-10`}
         >
           <option value="">Select {label}</option>
           {options.map((o) => (
@@ -361,29 +400,9 @@ function Select({
             </option>
           ))}
         </select>
-
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </div>
+        <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       </div>
-      {error && (
-        <p className="text-xs sm:text-sm text-red-600 font-medium flex items-center gap-1">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {error}
-        </p>
-      )}
+      <FieldError message={error} />
     </div>
   );
 }

@@ -23,4 +23,10 @@ export interface INutriMeetingRepository extends IBaseRepository<IMeeting> {
     status: MeetingStatus,
     extraFields?: Partial<IMeeting>,
   ): Promise<MeetingDetails | null>;
+
+  updateMeetingById(
+    nutritionistId: string,
+    meetingId: string,
+    data: Pick<IMeeting, "title" | "scheduledAt" | "durationInMinutes">,
+  ): Promise<IMeeting | null>;
 }

@@ -16,6 +16,7 @@ import { MeetingCardResponseDTO } from "../../../dtos/nutritionist/meeting/meeti
 import { MeetingDetailsResponseDTO } from "../../../dtos/nutritionist/meeting/meeting-details-response.dto";
 import { MeetingDetailsMapper } from "../../../mappers/nutritionist/meeting/meeting-details.mapper";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
+import { UpdateMeetingDTO } from "../../../dtos/nutritionist/meeting/update-meeting.dto";
 
 @injectable()
 export class NutriMeetingService implements INutriMeetingService {
@@ -251,5 +252,85 @@ export class NutriMeetingService implements INutriMeetingService {
         StatusCode.BAD_REQUEST,
       );
     }
+  }
+
+  async updateMeeting(
+    nutritionistId: string,
+    meetingId: string,
+    data: UpdateMeetingDTO,
+  ): Promise<MeetingDetailsResponseDTO> {
+    if (!Types.ObjectId.isValid(meetingId)) {
+      throw new CustomError("Invalid meeting ID.", StatusCode.BAD_REQUEST);
+    }
+
+    const validatedData = await validateDto(UpdateMeetingDTO, data);
+
+    const existingMeeting =
+      await this._nutriMeetingRepository.findMeetingDetailsById(
+        nutritionistId,
+        meetingId,
+      );
+
+    if (!existingMeeting) {
+      throw new CustomError("Meeting not found.", StatusCode.NOT_FOUND);
+    }
+
+    if (existingMeeting.status !== MeetingStatus.SCHEDULED) {
+      throw new CustomError(
+        "Only scheduled meetings can be updated.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const scheduledAt = new Date(validatedData.scheduledAt);
+
+    if (Number.isNaN(scheduledAt.getTime())) {
+      throw new CustomError("Invalid meeting date.", StatusCode.BAD_REQUEST);
+    }
+
+    if (scheduledAt <= new Date()) {
+      throw new CustomError(
+        "Meeting must be scheduled for a future date.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const updatedMeeting = await this._nutriMeetingRepository.updateMeetingById(
+      nutritionistId,
+      meetingId,
+      {
+        title: validatedData.title.trim(),
+        scheduledAt,
+        durationInMinutes: validatedData.durationInMinutes,
+      },
+    );
+
+    if (!updatedMeeting) {
+      throw new CustomError(
+        "Failed to update meeting.",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const meeting = await this._nutriMeetingRepository.findMeetingDetailsById(
+      nutritionistId,
+      meetingId,
+    );
+
+    if (!meeting) {
+      throw new CustomError(
+        "Meeting not found after update.",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    logger.info("Nutritionist meeting updated", {
+      nutritionistId,
+      meetingId,
+      scheduledAt,
+      durationInMinutes: validatedData.durationInMinutes,
+    });
+
+    return MeetingDetailsMapper.toResponseDTO(meeting);
   }
 }

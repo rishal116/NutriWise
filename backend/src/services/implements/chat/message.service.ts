@@ -11,7 +11,7 @@ import { IMessageReceiptRepository } from "../../../repositories/interfaces/chat
 import { IUserPlanRepository } from "../../../repositories/interfaces/user/program/IUserPlanRepository";
 
 import { SendMessageDTO } from "../../../dtos/chat/sendMessage.dto";
-import { MessageResponseDTO } from "../../../dtos/chat/messageResponse.dto";
+import { MessageResponseDTO } from "../../../dtos/chat/message-response.dto";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 
 import { ISocketService } from "../../interfaces/socket/ISocketService";
@@ -24,8 +24,6 @@ import { ReceiptStatus } from "../../../models/messageReceipt.model";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
-import { decodeCursor } from "../../../utils/cursor.util";
-
 import logger from "../../../utils/logger";
 
 @injectable()
@@ -224,12 +222,10 @@ export class MessageService implements IMessageService {
       throw new CustomError("Unauthorized", StatusCode.FORBIDDEN);
     }
 
-    const decodedCursor = decodeCursor(cursor);
-
     const result = await this._messageRepository.findMessagesByConversation(
       conversationId,
       limit,
-      decodedCursor ?? undefined,
+      cursor,
     );
 
     const items: MessageResponseDTO[] = result.items
@@ -248,7 +244,6 @@ export class MessageService implements IMessageService {
       hasMore: result.hasMore,
     };
   }
-
 
   async sendFile(dto: {
     conversationId: string;

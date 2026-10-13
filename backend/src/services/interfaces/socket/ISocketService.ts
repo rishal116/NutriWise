@@ -1,4 +1,5 @@
-import { MessageResponseDTO } from "../../../dtos/chat/messageResponse.dto";
+import { MessageResponseDTO } from "../../../dtos/chat/message-response.dto";
+import { ConversationUpdatePayload } from "../../../types/socketEvents";
 
 export interface ISocketService {
 
@@ -21,6 +22,11 @@ export interface ISocketService {
   emitMessagesRead(
     conversationId: string,
     userId: string
+  ): void;
+
+  emitConversationUpdated(
+    memberUserIds: string[],
+    data: ConversationUpdatePayload
   ): void;
 
 }

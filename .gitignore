@@ -9,6 +9,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+.env.local
+
 
 # =========================
 # Build output
@@ -46,3 +48,9 @@ Thumbs.db
 *.ps1
 *.cmd
 *.lock
+
+
+
+
+# SSL certificates and private keys
+certs/

@@ -1,53 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
+import axios from "axios";
 import {
   ArrowLeft,
   CalendarDays,
+  CheckCircle2,
   Clock,
+  CreditCard,
+  UserRound,
   Users,
   Video,
-  UserRound,
-  CheckCircle2,
-  CreditCard,
 } from "lucide-react";
 
 import { publicSessionService } from "@/services/public/publicSession.service";
-import { PublicSessionDetailsResponseDTO } from "@/dtos/public/session/public-session-details-response.dto";
 import { sessionRegistrationService } from "@/services/public/sessionRegistration.service";
-import { sessionCheckoutService } from "@/services/public/sessionCheckout.service";
-import { SessionRegistrationResponseDTO } from "@/dtos/public/session-registration/session-registration-response.dto";
+import type { PublicSessionDetailsResponseDTO } from "@/dtos/public/session/public-session-details-response.dto";
+import type { SessionRegistrationResponseDTO } from "@/dtos/public/session-registration/session-registration-response.dto";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import Image from "next/image";
+
+interface SessionRegistrationResult {
+  registration?: SessionRegistrationResponseDTO;
+  checkoutUrl?: string;
+}
 
 export default function PublicSessionDetailsPage() {
-  const params = useParams();
+  const params = useParams<{ sessionId: string }>();
   const router = useRouter();
-
-  const sessionId = params.sessionId as string;
+  const sessionId = params.sessionId;
 
   const [session, setSession] =
     useState<PublicSessionDetailsResponseDTO | null>(null);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [registering, setRegistering] = useState(false);
-  const [joining, setJoining] = useState(false);
   const [registration, setRegistration] =
     useState<SessionRegistrationResponseDTO | null>(null);
-
-  const [registrationLoading, setRegistrationLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [joining, setJoining] = useState(false);
 
   useEffect(() => {
-    if (!sessionId) return;
+    let cancelled = false;
 
     const fetchSession = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+      setLoading(true);
+      setError(null);
+      setSession(null);
+      setRegistration(null);
 
+      try {
         const response =
           await publicSessionService.getSessionDetails(sessionId);
+
+        if (cancelled) return;
 
         setSession(response.data);
 
@@ -57,90 +62,127 @@ export default function PublicSessionDetailsPage() {
               sessionId,
             );
 
-          setRegistration(registrationResponse.data);
-        } catch (registrationError: unknown) {}
-      } catch (error) {
-        console.error("Failed to fetch session:", error);
-        setError("Unable to load this session.");
+          if (!cancelled) {
+            setRegistration(registrationResponse.data);
+          }
+        } catch (registrationError: unknown) {
+          if (
+            axios.isAxiosError(registrationError) &&
+            registrationError.response?.status === 404
+          ) {
+            // No registration exists yet.
+          } else {
+            console.error(
+              "Failed to fetch session registration:",
+              getErrorMessage(registrationError),
+            );
+          }
+        }
+      } catch (fetchError: unknown) {
+        if (!cancelled) {
+          console.error(
+            "Failed to fetch session:",
+            getErrorMessage(fetchError),
+          );
+          setError("Unable to load this session.");
+        }
       } finally {
-        setLoading(false);
-        setRegistrationLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchSession();
+    if (sessionId) {
+      void fetchSession();
+    } else {
+      setError("Invalid session.");
+      setLoading(false);
+    }
+
+    return () => {
+      cancelled = true;
+    };
   }, [sessionId]);
 
-  const handleJoin = async () => {
+  const handleJoin = useCallback(async () => {
     if (!session || joining) return;
+
+    if (registration?.status === "registered") {
+      router.push(`/session-room/${session.sessionId}`);
+      return;
+    }
+
+    if (session.status !== "scheduled" && session.status !== "live") {
+      return;
+    }
+
+    if (session.pricing.type === "paid") {
+      router.push(`/communities/sessions/${session.sessionId}/checkout`);
+      return;
+    }
 
     try {
       setJoining(true);
+      setError(null);
 
-      // Already registered → go directly to room
-      if (registration?.status === "registered") {
-        router.push(`/session-room/${session.sessionId}`);
-        return;
-      }
-
-      // Not registered → register first
       const response = await sessionRegistrationService.registerForSession(
         session.sessionId,
       );
 
-      if (response.data.registration) {
-        setRegistration(response.data.registration);
+      const result = response.data as SessionRegistrationResult;
+
+      if (!result.registration) {
+        throw new Error("Registration response is missing registration data.");
       }
 
-      // After successful registration → go to room
+      setRegistration(result.registration);
       router.push(`/session-room/${session.sessionId}`);
-    } catch (error) {
-      const message = getErrorMessage(error);
+    } catch (joinError: unknown) {
+      const message = getErrorMessage(joinError);
       console.error("Failed to join session:", message);
+      setError(message);
     } finally {
       setJoining(false);
     }
-  };
+  }, [session, registration, joining, router]);
 
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8">
         <div className="animate-pulse space-y-5">
           <div className="h-8 w-32 rounded bg-gray-200" />
-
           <div className="h-72 rounded-3xl bg-gray-200" />
-
           <div className="h-8 w-2/3 rounded bg-gray-200" />
-
           <div className="h-24 rounded bg-gray-200" />
         </div>
       </div>
     );
   }
 
-  if (error || !session) {
+  if (error && !session) {
     return (
-      <div className="max-w-5xl mx-auto px-4 py-12">
+      <div className="mx-auto max-w-5xl px-4 py-12">
         <button
+          type="button"
           onClick={() => router.back()}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="h-4 w-4" />
           Back
         </button>
 
         <div className="mt-12 text-center">
           <h1 className="text-xl font-semibold text-gray-900">
-            Session not found
+            Session unavailable
           </h1>
-
-          <p className="mt-2 text-sm text-gray-500">
-            This session may no longer be available.
-          </p>
+          <p className="mt-2 text-sm text-gray-500">{error}</p>
         </div>
       </div>
     );
   }
+
+  if (!session) return null;
 
   const scheduledDate = new Date(session.scheduledAt);
 
@@ -157,31 +199,31 @@ export default function PublicSessionDetailsPage() {
   });
 
   const isPaid = session.pricing.type === "paid";
-
   const isLive = session.status === "live";
-
   const isCompleted = session.status === "completed";
+  const canJoin = session.status === "scheduled" || session.status === "live";
+  const isRegistered = registration?.status === "registered";
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-      {/* Back */}
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
       <button
+        type="button"
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition mb-5"
+        className="mb-5 flex items-center gap-2 text-sm text-gray-600 transition hover:text-gray-900"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="h-4 w-4" />
         Back to sessions
       </button>
 
-      {/* Main card */}
       <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm">
-        {/* Thumbnail */}
-        <div className="relative h-64 sm:h-80 bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100">
+        <div className="relative h-64 bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 sm:h-80">
           {session.thumbnailUrl ? (
-            <img
+            <Image
               src={session.thumbnailUrl}
               alt={session.title}
-              className="h-full w-full object-cover"
+              fill
+              sizes="(max-width: 640px) 100vw, 896px"
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full items-center justify-center">
@@ -189,7 +231,6 @@ export default function PublicSessionDetailsPage() {
             </div>
           )}
 
-          {/* Status */}
           <div className="absolute left-5 top-5">
             <span
               className={`rounded-full px-3 py-1.5 text-xs font-semibold backdrop-blur-sm ${
@@ -200,54 +241,42 @@ export default function PublicSessionDetailsPage() {
                     : "bg-white/90 text-emerald-700"
               }`}
             >
-              {isLive
-                ? "LIVE NOW"
-                : isCompleted
-                  ? "COMPLETED"
-                  : session.status.toUpperCase()}
+              {isLive ? "LIVE NOW" : session.status.toUpperCase()}
             </span>
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-5 sm:p-8">
-          {/* Type */}
           <div className="mb-3">
             <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
-              {session.type.replace("_", " ")}
+              {session.type.replaceAll("_", " ")}
             </span>
           </div>
 
-          {/* Title */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             {session.title}
           </h1>
 
-          {/* Description */}
-          <p className="mt-4 text-sm sm:text-base leading-7 text-gray-600">
+          <p className="mt-4 text-sm leading-7 text-gray-600 sm:text-base">
             {session.description}
           </p>
 
-          {/* Session information */}
-          <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <InfoItem
               icon={<CalendarDays className="h-5 w-5" />}
               label="Date"
               value={formattedDate}
             />
-
             <InfoItem
               icon={<Clock className="h-5 w-5" />}
               label="Time"
               value={formattedTime}
             />
-
             <InfoItem
               icon={<Clock className="h-5 w-5" />}
               label="Duration"
               value={`${session.durationInMinutes} minutes`}
             />
-
             <InfoItem
               icon={<Users className="h-5 w-5" />}
               label="Maximum participants"
@@ -259,7 +288,6 @@ export default function PublicSessionDetailsPage() {
             />
           </div>
 
-          {/* Nutritionist */}
           <div className="mt-8 rounded-2xl border border-gray-100 bg-gray-50 p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
               Hosted by
@@ -268,10 +296,12 @@ export default function PublicSessionDetailsPage() {
             <div className="mt-4 flex items-start gap-4">
               <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-emerald-100">
                 {session.nutritionist.profileImage ? (
-                  <img
+                  <Image
                     src={session.nutritionist.profileImage}
                     alt={session.nutritionist.name}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="56px"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
@@ -284,7 +314,6 @@ export default function PublicSessionDetailsPage() {
                 <h2 className="font-semibold text-gray-900">
                   {session.nutritionist.name}
                 </h2>
-
                 {session.nutritionist.bio && (
                   <p className="mt-1 text-sm leading-6 text-gray-500">
                     {session.nutritionist.bio}
@@ -294,35 +323,36 @@ export default function PublicSessionDetailsPage() {
             </div>
           </div>
 
-          {/* Bottom action */}
-          <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 border-t border-gray-100 pt-6">
+          <div className="mt-8 flex flex-col gap-5 border-t border-gray-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs text-gray-400">Session fee</p>
-
-              {isPaid ? (
-                <p className="mt-1 text-2xl font-bold text-gray-900">
-                  ₹{session.pricing.amount}
-                </p>
-              ) : (
-                <p className="mt-1 text-2xl font-bold text-emerald-600">Free</p>
-              )}
+              <p
+                className={`mt-1 text-2xl font-bold ${
+                  isPaid ? "text-gray-900" : "text-emerald-600"
+                }`}
+              >
+                {isPaid ? `₹${session.pricing.amount}` : "Free"}
+              </p>
             </div>
 
-            {!isCompleted && (
+            {canJoin && (
               <button
-                onClick={handleJoin}
-                disabled={registering}
+                type="button"
+                onClick={() => void handleJoin()}
+                disabled={joining}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLive ? (
+                {joining ? (
+                  "Processing..."
+                ) : isRegistered ? (
                   <>
                     <Video className="h-4 w-4" />
-                    Join Live Session
+                    {isLive ? "Join Live Session" : "Enter Session Room"}
                   </>
                 ) : isPaid ? (
                   <>
                     <CreditCard className="h-4 w-4" />
-                    Join for ₹{session.pricing.amount}
+                    {`Pay ₹${session.pricing.amount} & Join`}
                   </>
                 ) : (
                   <>
@@ -331,6 +361,12 @@ export default function PublicSessionDetailsPage() {
                   </>
                 )}
               </button>
+            )}
+
+            {error && session && (
+              <p role="alert" className="text-sm text-red-600">
+                {error}
+              </p>
             )}
           </div>
         </div>
@@ -344,7 +380,7 @@ function InfoItem({
   label,
   value,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 }) {
@@ -353,7 +389,6 @@ function InfoItem({
       <div className="mt-0.5 rounded-lg bg-emerald-50 p-2 text-emerald-600">
         {icon}
       </div>
-
       <div>
         <p className="text-xs text-gray-400">{label}</p>
         <p className="mt-1 text-sm font-medium text-gray-900">{value}</p>

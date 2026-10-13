@@ -8,7 +8,7 @@ import { TYPES } from "../../../types/types";
 
 import { StatusCode } from "../../../enums/statusCode.enum";
 
-import { IPublicGroupController } from "../../interfaces/public/IPublicGroupController"; 
+import { IPublicGroupController } from "../../interfaces/public/IPublicGroupController";
 
 import { IPublicGroupService } from "../../../services/interfaces/public/IPublicGroupService";
 
@@ -32,7 +32,9 @@ export class PublicGroupController implements IPublicGroupController {
   getGroup = asyncHandler(async (req: Request, res: Response) => {
     const { groupId } = req.params;
 
-    const result = await this._groupService.getGroup(groupId);
+    const userId = req.user?.userId;
+
+    const result = await this._groupService.getGroup(groupId, userId);
 
     return res.status(StatusCode.OK).json({
       success: true,
@@ -43,7 +45,6 @@ export class PublicGroupController implements IPublicGroupController {
 
   joinGroup = asyncHandler(async (req: Request, res: Response) => {
     const { groupId } = req.params;
-
     const userId = req.user!.userId;
 
     const result = await this._groupService.joinGroup(userId, groupId);

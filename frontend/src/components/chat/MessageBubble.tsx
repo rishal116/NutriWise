@@ -1,9 +1,13 @@
+
 "use client";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { CheckCheck } from "lucide-react";
+
 import { MessageResponseDTO } from "@/dtos/chat/message-response.dto";
 import { MessageType } from "@/types/chat/message.types";
-import { CheckCheck } from "lucide-react";
+
 import MessageAttachment from "./MessageAttachment";
 import MessageActions from "./MessageActions";
 
@@ -16,10 +20,57 @@ interface MessageBubbleProps {
   onDelete: (messageId: string) => void;
 }
 
-const formatMessageTime = (dateInput: Date | string) => {
+const formatMessageTime = (dateInput: Date | string): string => {
   const date = new Date(dateInput);
-  if (isNaN(date.getTime())) return "";
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+const renderMessageText = (text: string, isSender: boolean) => {
+  const urlRegex = /https?:\/\/[^\s<>"']+/g;
+  const parts = text.split(urlRegex);
+  const urls = text.match(urlRegex) ?? [];
+
+  let urlIndex = 0;
+
+  return parts.map((part, index) => {
+    if (index % 2 === 1) {
+      const rawUrl = urls[urlIndex++];
+      const trailingPunctuation = rawUrl.match(/[.,!?;:)\]]+$/)?.[0] ?? "";
+      const url = rawUrl.slice(0, rawUrl.length - trailingPunctuation.length);
+
+      return (
+        <span key={`${index}-${url}`}>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`break-all underline underline-offset-2 ${
+              isSender
+                ? "text-emerald-100 hover:text-white"
+                : "text-emerald-700 hover:text-emerald-900"
+            }`}
+          >
+            {url}
+          </a>
+          {trailingPunctuation}
+        </span>
+      );
+    }
+
+    return part ? (
+      <span key={`${index}-${part}`}>{part}</span>
+    ) : null;
+  });
 };
 
 export default function MessageBubble({
@@ -30,14 +81,24 @@ export default function MessageBubble({
   onEdit,
   onDelete,
 }: MessageBubbleProps) {
+  const [imageError, setImageError] = useState(false);
+
   const isSystem = message.messageType === MessageType.SYSTEM;
-  const isDeleted = message.status === "deleted" || Boolean(message.deletedAt);
-  const isEdited = message.status === "edited" || Boolean(message.editedAt);
+
+  const isDeleted =
+    message.status === "deleted" || Boolean(message.deletedAt);
+
+  const isEdited =
+    message.status === "edited" || Boolean(message.editedAt);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [senderAvatar]);
 
   if (isSystem) {
     return (
-      <div className="flex justify-center my-3 px-4">
-        <div className="px-3.5 py-1 bg-slate-100/90 text-slate-500 text-[11px] font-medium rounded-full border border-slate-200/50 shadow-2xs text-center max-w-md">
+      <div className="my-3 flex justify-center px-4">
+        <div className="max-w-md rounded-full border border-slate-200/50 bg-slate-100/90 px-3.5 py-1 text-center text-[11px] font-medium text-slate-500 shadow-2xs">
           {message.text}
         </div>
       </div>
@@ -45,26 +106,28 @@ export default function MessageBubble({
   }
 
   const messageTime = formatMessageTime(message.createdAt);
+  const showAvatar = Boolean(senderAvatar) && !imageError;
 
   return (
     <div
-      className={`flex w-full mb-3 group ${
+      className={`group mb-3 flex w-full ${
         isSender ? "justify-end" : "justify-start"
       }`}
     >
       {!isSender && (
-        <div className="relative w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mr-2.5 mt-1 border border-slate-200/60 bg-emerald-50 flex items-center justify-center">
-          {senderAvatar ? (
+        <div className="relative mr-2.5 mt-1 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200/60 bg-emerald-50">
+          {showAvatar ? (
             <Image
-              src={senderAvatar}
+              src={senderAvatar!}
               alt={senderName || "User"}
               fill
               sizes="32px"
               className="object-cover"
               unoptimized
+              onError={() => setImageError(true)}
             />
           ) : (
-            <span className="text-emerald-800 font-bold text-xs">
+            <span className="text-xs font-bold text-emerald-800">
               {(senderName || "U").charAt(0).toUpperCase()}
             </span>
           )}
@@ -72,13 +135,13 @@ export default function MessageBubble({
       )}
 
       <div
-        className={`relative max-w-[85%] sm:max-w-[70%] flex flex-col ${
+        className={`relative flex max-w-[85%] flex-col sm:max-w-[70%] ${
           isSender ? "items-end" : "items-start"
         }`}
       >
-        <div className="flex items-center gap-1.5 mb-0.5">
+        <div className="mb-0.5 flex items-center gap-1.5">
           {isSender && !isDeleted && (
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="opacity-0 transition-opacity group-hover:opacity-100">
               <MessageActions
                 messageId={message.id}
                 text={message.text}
@@ -91,10 +154,10 @@ export default function MessageBubble({
         </div>
 
         <div
-          className={`relative px-4 py-2.5 rounded-2xl shadow-2xs transition-all ${
+          className={`relative rounded-2xl px-4 py-2.5 shadow-2xs transition-all ${
             isSender
-              ? "bg-emerald-700 text-white rounded-tr-none"
-              : "bg-white text-slate-800 border border-slate-200/70 rounded-tl-none"
+              ? "rounded-tr-none bg-emerald-700 text-white"
+              : "rounded-tl-none border border-slate-200/70 bg-white text-slate-800"
           }`}
         >
           {isDeleted ? (
@@ -112,16 +175,15 @@ export default function MessageBubble({
               )}
 
               {message.text && (
-                <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words font-normal">
-                  {message.text}
+                <p className="whitespace-pre-wrap break-words text-xs font-normal leading-relaxed sm:text-sm">
+                  {renderMessageText(message.text, isSender)}
                 </p>
               )}
             </>
           )}
 
-          {/* Timestamp & Status */}
           <div
-            className={`flex items-center justify-end gap-1 mt-1 text-[10px] select-none ${
+            className={`mt-1 flex select-none items-center justify-end gap-1 text-[10px] ${
               isSender ? "text-emerald-100/90" : "text-slate-400"
             }`}
           >
@@ -130,11 +192,12 @@ export default function MessageBubble({
                 edited
               </span>
             )}
+
             <span>{messageTime}</span>
 
             {isSender && !isDeleted && (
               <div className="ml-0.5">
-                <CheckCheck className="w-3.5 h-3.5 text-emerald-200" />
+                <CheckCheck className="h-3.5 w-3.5 text-emerald-200" />
               </div>
             )}
           </div>

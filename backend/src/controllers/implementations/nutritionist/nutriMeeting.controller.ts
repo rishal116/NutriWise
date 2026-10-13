@@ -7,6 +7,7 @@ import { TYPES } from "../../../types/types";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { MeetingListQueryDTO } from "../../../dtos/nutritionist/meeting/meeting-list-query.dto";
+import { UpdateMeetingDTO } from "../../../dtos/nutritionist/meeting/update-meeting.dto";
 
 @injectable()
 export class NutriMeetingController implements INutriMeetingController {
@@ -67,6 +68,23 @@ export class NutriMeetingController implements INutriMeetingController {
     const updatedMeeting = await this._nutriMeetingsService.updateMeetingStatus(
       roomId,
       status,
+    );
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      data: updatedMeeting,
+    });
+  });
+
+  updateMeeting = asyncHandler(async (req: Request, res: Response) => {
+    const nutritionistId = req.user!.userId;
+    const { meetingId } = req.params;
+    const data = req.body as UpdateMeetingDTO;
+
+    const updatedMeeting = await this._nutriMeetingsService.updateMeeting(
+      nutritionistId,
+      meetingId,
+      data,
     );
 
     res.status(StatusCode.OK).json({

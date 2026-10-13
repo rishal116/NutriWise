@@ -1,14 +1,13 @@
 import { injectable } from "inversify";
 import { ClientSession, Types } from "mongoose";
-
 import { BaseRepository } from "../common/base.repository";
-
 import { IConversationMemberRepository } from "../../interfaces/chat/IConversationMemberRepository";
-
 import {
   ConversationMemberModel,
   IConversationMember,
 } from "../../../models/conversationMember.model";
+import { CustomError } from "../../../utils/customError";
+import { StatusCode } from "../../../enums/statusCode.enum";
 
 @injectable()
 export class ConversationMemberRepository
@@ -156,5 +155,102 @@ export class ConversationMemberRepository
         },
       },
     );
+  }
+
+  async joinGroup(
+    conversationId: string,
+    userId: string,
+  ): Promise<"joined" | "already-member" | "blocked"> {
+    const conversationObjectId = this.toObjectId(conversationId);
+    const userObjectId = this.toObjectId(userId);
+
+    const existingMember = await this._model
+      .findOne({
+        conversationId: conversationObjectId,
+        userId: userObjectId,
+      })
+      .lean<IConversationMember | null>()
+      .exec();
+
+    if (existingMember?.status === "active") {
+      return "already-member";
+    }
+
+    if (existingMember?.status === "blocked") {
+      return "blocked";
+    }
+
+    if (existingMember) {
+      await this._model.updateOne(
+        {
+          _id: existingMember._id,
+          status: { $in: ["left", "removed"] },
+        },
+        {
+          $set: {
+            status: "active",
+            role: "member",
+            joinedAt: new Date(),
+            unreadCount: 0,
+          },
+          $unset: {
+            leftAt: 1,
+          },
+        },
+      );
+
+      const updatedMember = await this._model
+        .findById(existingMember._id)
+        .lean<IConversationMember | null>()
+        .exec();
+
+      if (updatedMember?.status === "active") {
+        return "joined";
+      }
+
+      throw new CustomError(
+        "Unable to join this group. Please try again.",
+        StatusCode.CONFLICT,
+      );
+    }
+
+    try {
+      await this._model.create({
+        conversationId: conversationObjectId,
+        userId: userObjectId,
+        role: "member",
+        status: "active",
+        joinedAt: new Date(),
+        unreadCount: 0,
+      });
+
+      return "joined";
+    } catch (error: unknown) {
+      const memberAfterConflict = await this._model
+        .findOne({
+          conversationId: conversationObjectId,
+          userId: userObjectId,
+        })
+        .lean<IConversationMember | null>()
+        .exec();
+
+      if (memberAfterConflict?.status === "active") {
+        return "already-member";
+      }
+
+      if (memberAfterConflict?.status === "blocked") {
+        return "blocked";
+      }
+
+      throw error;
+    }
+  }
+  async countActiveMembers(conversationId: string): Promise<number> {
+    return this._model
+      .countDocuments({
+        conversationId: this.toObjectId(conversationId),
+        status: "active",
+      })
+      .exec();
   }
 }

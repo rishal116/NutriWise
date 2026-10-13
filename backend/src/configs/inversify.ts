@@ -13,7 +13,6 @@ import { OnboardingController } from "../controllers/implementations/user/onboar
 import { ReviewController } from "../controllers/implementations/user/review.controller";
 import { UserAccountController } from "../controllers/implementations/user/userAccount.controller";
 import { UserAuthController } from "../controllers/implementations/user/userAuth.controller";
-import { UserGroupController } from "../controllers/implementations/user/userGroup.controller";
 import { UserMeetingController } from "../controllers/implementations/user/userMeeting.controller";
 import { UserProfileController } from "../controllers/implementations/user/userProfile.controller";
 import { UserProgramController } from "../controllers/implementations/user/userProgram.controller";
@@ -27,10 +26,9 @@ import { HealthProgressService } from "../services/implements/user/healthProgres
 import { NutritionistBrowsingService } from "../services/implements/user/discovery/nutriBrowsing.service";
 import { NutritionistPlanBrowsingService } from "../services/implements/user/discovery/nutriPlanBrowsing.service";
 import { OnboardingService } from "../services/implements/user/onboarding.service";
-import { ReviewService } from "../services/implements/user/discovery/review.service"; 
+import { ReviewService } from "../services/implements/user/discovery/review.service";
 import { UserAccountService } from "../services/implements/user/userAccount.service";
 import { UserAuthService } from "../services/implements/user/userAuth.service";
-import { UserGroupService } from "../services/implements/user/userGroup.service";
 import { UserMeetingService } from "../services/implements/user/meeting/userMeeting.service";
 import { UserProfileService } from "../services/implements/user/userProfile.service";
 import { UserProgramService } from "../services/implements/user/program/userProgram.service";
@@ -71,7 +69,6 @@ import { IOnboardingController } from "../controllers/interfaces/user/IOnboardin
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
 import { IUserAuthController } from "../controllers/interfaces/user/IUserAuthController";
-import { IUserGroupController } from "../controllers/interfaces/user/IUserGroupController";
 import { IUserMeetingController } from "../controllers/interfaces/user/IUserMeetingController";
 import { IUserProfileController } from "../controllers/interfaces/user/IUserProfileController";
 import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
@@ -85,12 +82,11 @@ import { IHealthProgressService } from "../services/interfaces/user/account/IHea
 
 import { INutritionistBrowsingService } from "../services/interfaces/user/discovery/INutriBrowsingService";
 import { INutritionistPlanBrowsingService } from "../services/interfaces/user/discovery/INutritionistPlanBrowsingService";
-import { IReviewService } from "../services/interfaces/user/discovery/IReviewService"; 
+import { IReviewService } from "../services/interfaces/user/discovery/IReviewService";
 
 import { IOnboardingService } from "../services/interfaces/user/IOnboardingService";
 import { IUserAccountService } from "../services/interfaces/user/IUserAccountService";
 import { IUserAuthService } from "../services/interfaces/user/IUserAuthService";
-import { IUserGroupService } from "../services/interfaces/user/IUserGroupService";
 import { IUserMeetingService } from "../services/interfaces/user/IUserMeetingService";
 import { IUserProfileService } from "../services/interfaces/user/IUserProfileService";
 
@@ -453,6 +449,42 @@ import { NutriDashboardController } from "../controllers/implementations/nutriti
 import { INutriDashboardService } from "../services/interfaces/nutritionist/INutriDashboardService";
 import { NutriDashboardService } from "../services/implements/nutritionist/nutriDashboard.service";
 import { NutritionistDashboardRepository } from "../services/implements/nutritionist/nutriDashboard.repository";
+import { ISessionStripeCheckoutHandlerService } from "../services/interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
+import { SessionStripeCheckoutHandlerService } from "../services/implements/common/stripe/sessionStripeCheckoutHandler.service";
+import { IPublicPostController } from "../controllers/interfaces/public/IPublicPostController";
+import { PublicPostController } from "../controllers/implementations/public/publicPost.controller";
+import { IPublicPostService } from "../services/interfaces/public/IPublicPostService";
+import { PublicPostService } from "../services/implements/public/publicPost.service";
+import { IPublicPostRepository } from "../repositories/interfaces/public/IPublicPostRepository";
+import { PublicPostRepository } from "../repositories/implements/public/publicPost.repository";
+import { IPostLikeController } from "../controllers/interfaces/post/IPostLikeController";
+import { PostLikeController } from "../controllers/implementations/post/postLike.controller";
+import { IPostLikeService } from "../services/interfaces/post/IPostLikeService";
+import { PostLikeService } from "../services/implements/post/postLike.service";
+import { IPostLikeRepository } from "../repositories/interfaces/post/IPostLikeRepository";
+import { PostLikeRepository } from "../repositories/implements/post/postLike.repository";
+import { IPostRepository } from "../repositories/interfaces/post/IPostRepository";
+import { PostRepository } from "../repositories/implements/post/post.repository";
+import { IPostCommentController } from "../controllers/interfaces/post/IPostCommentController";
+import { PostCommentController } from "../controllers/implementations/post/postComment.controller";
+import { IPostCommentService } from "../services/interfaces/post/IPostCommentService";
+import { PostCommentService } from "../services/implements/post/postComment.service";
+import { IPostCommentRepository } from "../repositories/interfaces/post/IPostCommentRepository";
+import { PostCommentRepository } from "../repositories/implements/post/postComment.repository";
+import { IGroupController } from "../controllers/interfaces/chat/IGroupController";
+import { GroupController } from "../controllers/implementations/chat/group.controller";
+import { IGroupService } from "../services/interfaces/chat/IGroupService";
+import { GroupService } from "../services/implements/chat/group.service";
+import { INutriEarningsController } from "../controllers/interfaces/nutritionist/INutriEarningsController";
+import { NutriEarningsController } from "../controllers/implementations/nutritionist/nutriEarnings.controller";
+import { INutriEarningsService } from "../services/interfaces/nutritionist/INutriEarningsService";
+import { NutriEarningsService } from "../services/implements/nutritionist/nutriEarnings.service";
+import { INutriEarningsRepository } from "../repositories/interfaces/nutritionist/INutriEarningsRepository";
+import { NutriEarningsRepository } from "../repositories/implements/nutritionist/nutriEarnings.repository";
+import { INutriCredentialsController } from "../controllers/interfaces/nutritionist/INutriCredentialsController";
+import { NutritionistCredentialsController } from "../controllers/implementations/nutritionist/nutriCredentials.controller";
+import { INutritionistCredentialsService } from "../services/interfaces/nutritionist/INutriCredentialsService";
+import { NutritionistCredentialsService } from "../services/implements/nutritionist/nutriCredentials.service";
 
 const container = new Container();
 
@@ -511,10 +543,6 @@ container
 container
   .bind<IUserAuthController>(TYPES.IUserAuthController)
   .to(UserAuthController);
-
-container
-  .bind<IUserGroupController>(TYPES.IUserGroupController)
-  .to(UserGroupController);
 
 container
   .bind<IUserProfileController>(TYPES.IUserProfileController)
@@ -583,8 +611,6 @@ container
   .to(UserAccountService);
 
 container.bind<IUserAuthService>(TYPES.IUserAuthService).to(UserAuthService);
-
-container.bind<IUserGroupService>(TYPES.IUserGroupService).to(UserGroupService);
 
 container
   .bind<IUserMeetingService>(TYPES.IUserMeetingService)
@@ -1042,6 +1068,12 @@ container
 container.bind<ICheckoutService>(TYPES.ICheckoutService).to(CheckoutService);
 
 container
+  .bind<ISessionStripeCheckoutHandlerService>(
+    TYPES.ISessionStripeCheckoutHandlerService,
+  )
+  .to(SessionStripeCheckoutHandlerService);
+
+container
   .bind<INotificationService>(TYPES.INotificationService)
   .to(NotificationService);
 
@@ -1078,5 +1110,62 @@ container.bind<IWalletRepository>(TYPES.IWalletRepository).to(WalletRepository);
 // SOCKET BINDINGS
 
 container.bind<ISocketService>(TYPES.ISocketService).to(SocketService);
+
+container
+  .bind<IPublicPostController>(TYPES.IPublicPostController)
+  .to(PublicPostController);
+
+container
+  .bind<IPublicPostService>(TYPES.IPublicPostService)
+  .to(PublicPostService);
+
+container
+  .bind<IPublicPostRepository>(TYPES.IPublicPostRepository)
+  .to(PublicPostRepository);
+
+container
+  .bind<IPostLikeController>(TYPES.IPostLikeController)
+  .to(PostLikeController);
+
+container.bind<IPostLikeService>(TYPES.IPostLikeService).to(PostLikeService);
+
+container
+  .bind<IPostLikeRepository>(TYPES.IPostLikeRepository)
+  .to(PostLikeRepository);
+
+container.bind<IPostRepository>(TYPES.IPostRepository).to(PostRepository);
+
+container
+  .bind<IPostCommentController>(TYPES.IPostCommentController)
+  .to(PostCommentController);
+
+container
+  .bind<IPostCommentService>(TYPES.IPostCommentService)
+  .to(PostCommentService);
+
+container
+  .bind<IPostCommentRepository>(TYPES.IPostCommentRepository)
+  .to(PostCommentRepository);
+
+container.bind<IGroupController>(TYPES.IGroupController).to(GroupController);
+container.bind<IGroupService>(TYPES.IGroupService).to(GroupService);
+
+container
+  .bind<INutriEarningsController>(TYPES.INutriEarningsController)
+  .to(NutriEarningsController);
+container
+  .bind<INutriEarningsService>(TYPES.INutriEarningsService)
+  .to(NutriEarningsService);
+container
+  .bind<INutriEarningsRepository>(TYPES.INutriEarningsRepository)
+  .to(NutriEarningsRepository);
+
+container
+  .bind<INutriCredentialsController>(TYPES.INutriCredentialsController)
+  .to(NutritionistCredentialsController);
+
+container
+  .bind<INutritionistCredentialsService>(TYPES.INutriCredentialsService)
+  .to(NutritionistCredentialsService);
 
 export { container };

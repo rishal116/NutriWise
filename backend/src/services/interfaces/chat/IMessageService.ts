@@ -1,4 +1,4 @@
-import { MessageResponseDTO } from "../../../dtos/chat/messageResponse.dto";
+import { MessageResponseDTO } from "../../../dtos/chat/message-response.dto";
 import { SendMessageDTO } from "../../../dtos/chat/sendMessage.dto";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 

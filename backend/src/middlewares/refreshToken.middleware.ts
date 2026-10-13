@@ -26,8 +26,6 @@ export const refreshToken = async (
     if (!refreshToken) {
       logger.warn("Refresh token not found");
 
-      clearAuthCookies(res);
-
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: "No refresh token found",

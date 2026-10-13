@@ -10,6 +10,7 @@ import adminRoutes from "./routes/admin";
 import nutritionistRoutes from "./routes/nutritionist";
 import chatRoutes from "./routes/chat";
 import publicRoutes from "./routes/public";
+import postRoutes from "./routes/post";
 
 import { errorMiddleware } from "./middlewares/error.middleware";
 import stripeRoutes from "./routes/common/stripe.routes";
@@ -28,9 +29,11 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
+const allowedOrigins = process.env.FRONTEND_URL;
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -66,6 +69,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/nutritionists", nutritionistRoutes);
 
 app.use("/api/chat", chatRoutes);
+app.use("/api/posts", postRoutes);
 
 app.use(errorMiddleware);
 

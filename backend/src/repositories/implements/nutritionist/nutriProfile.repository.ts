@@ -81,4 +81,15 @@ export class NutritionistProfileRepository
       .populate("userId")
       .exec();
   }
+
+  async findApprovedByUserId(
+    userId: string,
+  ): Promise<INutritionistProfile | null> {
+    return this._model
+      .findOne({
+        userId,
+        applicationStatus: "approved",
+      })
+      .exec();
+  }
 }

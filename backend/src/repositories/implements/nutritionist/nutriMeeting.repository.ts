@@ -185,7 +185,7 @@ export class NutriMeetingRepository
             },
             fullName: "$user.fullName",
             email: "$user.email",
-            profileImage:"$user.profileImage",
+            profileImage: "$user.profileImage",
           },
 
           scheduledAt: 1,
@@ -378,5 +378,21 @@ export class NutriMeetingRepository
       )
       .lean<MeetingDetails | null>()
       .exec();
+  }
+
+  async updateMeetingById(
+    nutritionistId: string,
+    meetingId: string,
+    data: Pick<IMeeting, "title" | "scheduledAt" | "durationInMinutes">,
+  ): Promise<IMeeting | null> {
+    return this._model.findOneAndUpdate(
+      {
+        _id: new Types.ObjectId(meetingId),
+        nutritionistId: new Types.ObjectId(nutritionistId),
+        status: MeetingStatus.SCHEDULED,
+      },
+      { $set: data },
+      { new: true, runValidators: true },
+    ).exec();
   }
 }

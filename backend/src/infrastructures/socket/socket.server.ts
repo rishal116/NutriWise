@@ -100,6 +100,7 @@ export const initializeSocket = (server: HTTPServer) => {
         userSocketsMap.set(userId, socketSet);
       }
       socketSet.add(socket.id);
+      socket.join(`user:${userId}`);
 
       // Emit initial presence list to the connected client
       socket.emit("presence:init", { onlineUserIds: Array.from(userSocketsMap.keys()) });

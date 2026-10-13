@@ -84,9 +84,13 @@ export class PublicGroupService implements IPublicGroupService {
     );
   }
 
-  async getGroup(groupId: string): Promise<PublicGroupDetailsDTO> {
+  async getGroup(
+    groupId: string,
+    userId?: string,
+  ): Promise<PublicGroupDetailsDTO> {
     logger.info("Fetching public group details", {
       groupId,
+      userId,
     });
 
     this.validateGroupId(groupId);
@@ -100,7 +104,18 @@ export class PublicGroupService implements IPublicGroupService {
     const members =
       await this._conversationMemberRepository.findByConversationId(groupId);
 
-    return toPublicGroupDetailsDTO(group, members.length);
+    let isMember = false;
+
+    if (userId) {
+      const member = await this._conversationMemberRepository.findMember(
+        groupId,
+        userId,
+      );
+
+      isMember = !!member;
+    }
+
+    return toPublicGroupDetailsDTO(group, members.length, isMember);
   }
 
   async joinGroup(
@@ -148,6 +163,6 @@ export class PublicGroupService implements IPublicGroupService {
       groupId,
     });
 
-    return toPublicGroupDetailsDTO(group, members.length);
+    return toPublicGroupDetailsDTO(group, members.length, true);
   }
 }

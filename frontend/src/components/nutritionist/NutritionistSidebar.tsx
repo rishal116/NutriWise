@@ -11,27 +11,42 @@ import {
   Globe,
   Mail,
   DollarSign,
-  Settings,
   ChevronLeft,
   ChevronRight,
   X,
   ClipboardList,
   CalendarDays,
   BookOpen,
+  Award,
 } from "lucide-react";
 
 const menu = [
-  { label: "Dashboard", href: "/nutritionist/dashboard", icon: Home },
-  { label: "Live Sessions", href: "/nutritionist/sessions", icon: Video },
-  { label: "Meetings", href: "/nutritionist/meetings", icon: CalendarDays },
-  { label: "My Clients", href: "/nutritionist/clients", icon: Users },
-  { label: "Programs", href: "/nutritionist/programs", icon: ClipboardList },
-  { label: "Nutrition Plans", href: "/nutritionist/plans", icon: FileText },
-  { label: "Resources", href: "/nutritionist/resources", icon: BookOpen },
-  { label: "Groups", href: "/nutritionist/groups", icon: Globe },
-  { label: "Messages", href: "/nutritionist/messages", icon: Mail },
-  { label: "Earnings", href: "/nutritionist/earnings", icon: DollarSign },
-  { label: "Settings", href: "/nutritionist/settings", icon: Settings },
+  {
+    section: "Overview",
+    items: [
+      { label: "Dashboard", href: "/nutritionist/dashboard", icon: Home },
+    ],
+  },
+  {
+    section: "Management",
+    items: [
+      { label: "Live Sessions", href: "/nutritionist/sessions", icon: Video },
+      { label: "Meetings", href: "/nutritionist/meetings", icon: CalendarDays },
+      { label: "My Clients", href: "/nutritionist/clients", icon: Users },
+      { label: "Programs", href: "/nutritionist/programs", icon: ClipboardList },
+      { label: "Nutrition Plans", href: "/nutritionist/plans", icon: FileText },
+      { label: "Resources", href: "/nutritionist/resources", icon: BookOpen },
+      { label: "Groups", href: "/nutritionist/groups", icon: Globe },
+      { label: "Messages", href: "/nutritionist/messages", icon: Mail },
+    ],
+  },
+  {
+    section: "Account",
+    items: [
+      { label: "Earnings", href: "/nutritionist/earnings", icon: DollarSign },
+      { label: "Credentials", href: "/nutritionist/credentials", icon: Award },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -41,7 +56,7 @@ interface SidebarProps {
 }
 
 export default function NutritionistSidebar({
-  isMobileOpen,
+  isMobileOpen = false,
   onMobileClose,
   onCollapseChange,
 }: SidebarProps) {
@@ -49,12 +64,14 @@ export default function NutritionistSidebar({
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    // Messages needs more width; only force this on desktop — the mobile
-    // drawer must stay full width regardless of this route.
     const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
     if (isDesktop && pathname.startsWith("/nutritionist/messages")) {
       setCollapsed(true);
       onCollapseChange?.(true);
+    } else {
+      setCollapsed(false);
+      onCollapseChange?.(false);
     }
   }, [pathname, onCollapseChange]);
 
@@ -70,22 +87,29 @@ export default function NutritionistSidebar({
 
   return (
     <aside
-      className={`fixed left-0 top-16 z-50 flex h-[calc(100vh-64px)] flex-col border-r border-slate-200/80 bg-white transition-all duration-300 ease-in-out lg:z-30 ${
-        collapsed ? "w-20" : "w-64"
-      } ${isMobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full lg:translate-x-0"}`}
+      className={`fixed bottom-0 left-0 top-16 z-50 flex w-64 flex-col border-r border-slate-200/80 bg-white transition-[width,transform] duration-300 ease-in-out lg:z-30 lg:shadow-none ${
+        collapsed ? "lg:w-20" : ""
+      } ${
+        isMobileOpen
+          ? "translate-x-0 shadow-2xl"
+          : "-translate-x-full lg:translate-x-0"
+      }`}
     >
       <div
-        className={`flex h-14 items-center border-b border-slate-100 lg:h-16 ${
-          collapsed ? "justify-center px-0" : "justify-between px-6"
+        className={`flex h-14 shrink-0 items-center justify-between border-b border-slate-100 px-6 ${
+          collapsed ? "lg:justify-center lg:px-0" : ""
         }`}
       >
-        {!collapsed && (
-          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-            Navigation
-          </span>
-        )}
+        <span
+          className={`text-[11px] font-semibold uppercase tracking-wider text-slate-400 ${
+            collapsed ? "lg:hidden" : ""
+          }`}
+        >
+          Navigation
+        </span>
 
         <button
+          type="button"
           onClick={isMobileOpen ? onMobileClose : handleCollapse}
           aria-label={
             isMobileOpen
@@ -94,7 +118,7 @@ export default function NutritionistSidebar({
                 ? "Expand sidebar"
                 : "Collapse sidebar"
           }
-          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors duration-150 hover:bg-slate-50 hover:text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40"
         >
           {isMobileOpen ? (
             <X size={18} />
@@ -106,50 +130,68 @@ export default function NutritionistSidebar({
         </button>
       </div>
 
-      <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 py-4">
-        {menu.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(`${href}/`);
-
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={isActive ? "page" : undefined}
-              aria-label={collapsed ? label : undefined}
-              className={`group relative flex w-full items-center rounded-xl py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
-                collapsed ? "justify-center" : "gap-3.5 px-4"
-              } ${isActive ? "bg-emerald-50/50 text-emerald-700" : "text-slate-500 hover:bg-slate-50"}`}
+      <nav className="custom-scrollbar flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-3 py-4">
+        {menu.map((group) => (
+          <div key={group.section} className="space-y-1">
+            <h2
+              className={`px-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 ${
+                collapsed ? "lg:hidden" : ""
+              }`}
             >
-              {isActive && (
-                <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-emerald-600" />
-              )}
+              {group.section}
+            </h2>
 
-              <Icon
-                size={18}
-                strokeWidth={isActive ? 2.5 : 2}
-                className={
-                  isActive
-                    ? "text-emerald-600"
-                    : "text-slate-400 group-hover:text-slate-600"
-                }
-              />
+            {group.items.map(({ href, label, icon: Icon }) => {
+              const isActive =
+                pathname === href || pathname.startsWith(`${href}/`);
 
-              {!collapsed && (
-                <span
-                  className={`text-[13px] tracking-tight ${isActive ? "font-semibold" : "font-medium"}`}
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  title={collapsed ? label : undefined}
+                  aria-label={collapsed ? label : undefined}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`group relative flex w-full items-center gap-3.5 rounded-xl px-3 py-2.5 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+                    collapsed ? "lg:justify-center lg:gap-0 lg:px-0" : ""
+                  } ${
+                    isActive
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
                 >
-                  {label}
-                </span>
-              )}
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-emerald-600" />
+                  )}
 
-              {collapsed && (
-                <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-900 px-2 py-1 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-                  {label}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+                  <Icon
+                    size={18}
+                    strokeWidth={isActive ? 2.5 : 2}
+                    className={`shrink-0 ${
+                      isActive
+                        ? "text-emerald-600"
+                        : "text-slate-400 group-hover:text-slate-600"
+                    }`}
+                  />
+
+                  <span
+                    className={`truncate text-sm tracking-tight ${
+                      isActive ? "font-semibold" : "font-medium"
+                    } ${collapsed ? "lg:hidden" : ""}`}
+                  >
+                    {label}
+                  </span>
+
+                  {collapsed && (
+                    <span className="pointer-events-none absolute left-full z-50 ml-3 hidden whitespace-nowrap rounded-md bg-slate-800 px-2.5 py-1.5 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 lg:block">
+                      {label}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
     </aside>
   );

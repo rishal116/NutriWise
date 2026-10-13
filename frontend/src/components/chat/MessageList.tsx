@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useEffect, UIEvent } from "react";
+import { useRef, useEffect, type UIEvent } from "react";
+
 import { MessageResponseDTO } from "@/dtos/chat/message-response.dto";
+
 import MessageBubble from "./MessageBubble";
 import ChatLoading from "./ChatLoading";
 import EmptyChatState from "./EmptyChatState";
@@ -33,70 +35,86 @@ export default function MessageList({
 }: MessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const prevScrollHeightRef = useRef<number>(0);
-  const isInitialLoadRef = useRef<boolean>(true);
-  const isPrependingRef = useRef<boolean>(false);
-  const prevMessageCountRef = useRef<number>(0);
-  const prevConversationIdRef = useRef<string | undefined>(conversationId);
 
-  // Reset scroll state if conversation changes
+  const prevScrollHeightRef = useRef(0);
+  const isInitialLoadRef = useRef(true);
+  const isPrependingRef = useRef(false);
+  const prevMessageCountRef = useRef(0);
+  const prevConversationIdRef = useRef(conversationId);
+
   useEffect(() => {
-    if (conversationId !== prevConversationIdRef.current) {
-      isInitialLoadRef.current = true;
-      prevMessageCountRef.current = 0;
-      prevConversationIdRef.current = conversationId;
+    if (conversationId === prevConversationIdRef.current) return;
+
+    prevConversationIdRef.current = conversationId;
+    prevScrollHeightRef.current = 0;
+    isInitialLoadRef.current = true;
+    isPrependingRef.current = false;
+    prevMessageCountRef.current = 0;
+
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
     }
   }, [conversationId]);
 
+  const handleScroll = (event: UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
 
-  // Mark that the next messages update is an older-message prepend,
-  // so the scroll-preserving branch below knows to run instead of
-  // treating it as a new-message append.
-  const handleScroll = (e: UIEvent<HTMLDivElement>) => {
-    const { scrollTop } = e.currentTarget;
-    if (scrollTop < 80 && hasMoreOlder && !loadingOlder) {
-      if (containerRef.current) {
-        prevScrollHeightRef.current = containerRef.current.scrollHeight;
-        isPrependingRef.current = true;
-      }
+    if (
+      container.scrollTop <= 80 &&
+      hasMoreOlder &&
+      !loadingOlder &&
+      !isPrependingRef.current
+    ) {
+      prevScrollHeightRef.current = container.scrollHeight;
+      isPrependingRef.current = true;
       onLoadOlder();
     }
   };
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
 
-    // Initial load: jump to bottom, no animation.
+    if (!container) return;
+
+    // Wait until the initial messages have arrived, then scroll to the bottom.
     if (isInitialLoadRef.current && messages.length > 0) {
-      bottomRef.current?.scrollIntoView({ behavior: "auto" });
+      container.scrollTop = container.scrollHeight;
       isInitialLoadRef.current = false;
       prevMessageCountRef.current = messages.length;
       return;
     }
 
-    // Older messages prepended: preserve the user's viewport position
-    // instead of yanking them back to the top or bottom.
-    if (isPrependingRef.current && prevScrollHeightRef.current > 0) {
-      const currentScrollHeight = containerRef.current.scrollHeight;
-      const heightDifference = currentScrollHeight - prevScrollHeightRef.current;
-      containerRef.current.scrollTop = heightDifference;
+    // Preserve the viewport when older messages are prepended.
+    if (isPrependingRef.current) {
+      if (loadingOlder) return;
+
+      const previousHeight = prevScrollHeightRef.current;
+      const heightDifference = container.scrollHeight - previousHeight;
+
+      if (previousHeight > 0 && heightDifference >= 0) {
+        container.scrollTop += heightDifference;
+      }
+
       prevScrollHeightRef.current = 0;
       isPrependingRef.current = false;
       prevMessageCountRef.current = messages.length;
       return;
     }
 
-    // New message appended at the bottom (sent or received via socket):
-    // scroll it into view.
+    // Scroll down when new messages are appended.
     if (messages.length > prevMessageCountRef.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      bottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
     }
+
     prevMessageCountRef.current = messages.length;
-  }, [messages]);
+  }, [messages, loadingOlder]);
 
   if (messages.length === 0 && !loadingOlder) {
     return (
-      <div className="flex-1 flex items-center justify-center">
+      <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
         <EmptyChatState type="no-messages" />
       </div>
     );
@@ -106,12 +124,11 @@ export default function MessageList({
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 custom-scrollbar"
+      className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 custom-scrollbar sm:px-6"
     >
-      {/* Top Loading indicator for cursor pagination */}
       {loadingOlder && <ChatLoading type="inline" />}
 
-      <div className="max-w-4xl mx-auto flex flex-col gap-1">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-1">
         {messages.map((msg) => (
           <MessageBubble
             key={msg.id}
@@ -125,7 +142,7 @@ export default function MessageList({
         ))}
       </div>
 
-      <div ref={bottomRef} className="h-2" />
+      <div ref={bottomRef} className="h-2 shrink-0" />
     </div>
   );
 }

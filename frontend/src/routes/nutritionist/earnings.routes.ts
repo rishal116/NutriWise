@@ -1,0 +1,7 @@
+const NUTRITIONIST_EARNINGS_BASE = "/api/nutritionists/earnings";
+
+export const NUTRITIONIST_EARNINGS_ROUTES = {
+  SUMMARY: `${NUTRITIONIST_EARNINGS_BASE}/summary`,
+  TRANSACTIONS: `${NUTRITIONIST_EARNINGS_BASE}/transactions`,
+  PAYMENTS: `${NUTRITIONIST_EARNINGS_BASE}/payments`,
+} as const;

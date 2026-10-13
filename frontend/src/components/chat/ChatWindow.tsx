@@ -7,6 +7,7 @@ import { ConversationResponseDTO } from "@/dtos/chat/conversation-response.dto";
 import { MessageResponseDTO } from "@/dtos/chat/message-response.dto";
 import { MessageType } from "@/types/chat/message.types";
 import { getSocket } from "@/lib/socket";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 import {
   chatSocket,
   IncomingMessagePayload,
@@ -14,7 +15,6 @@ import {
   EditSocketPayload,
 } from "@/socket/chat.socket";
 import { toast } from "sonner";
-
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
@@ -26,22 +26,6 @@ interface ChatWindowProps {
   onBack: () => void;
   onMarkAsSeen?: (conversationId: string) => void;
   onLastMessageUpdate?: (conversationId: string, lastMessage: string) => void;
-}
-
-// Narrow an unknown error (axios-shaped or plain Error) into a message string.
-function getErrorMessage(err: unknown, fallback: string): string {
-  if (
-    typeof err === "object" &&
-    err !== null &&
-    "response" in err &&
-    typeof (err as { response?: { data?: { message?: unknown } } }).response
-      ?.data?.message === "string"
-  ) {
-    return (err as { response: { data: { message: string } } }).response.data
-      .message;
-  }
-  if (err instanceof Error) return err.message;
-  return fallback;
 }
 
 export default function ChatWindow({
@@ -66,88 +50,100 @@ export default function ChatWindow({
   const conversationId = conversation?.id;
   const isReadOnly = conversation ? conversation.status !== "active" : false;
 
-  // Socket instance
   const socket = getSocket();
 
-  // Mark as read and fetch initial messages on conversation selection
   const fetchInitialMessages = useCallback(async () => {
     if (!conversationId) return;
+
     setLoading(true);
     setError(null);
     setIsPlanExpired(false);
-    try {
-      // 1. Mark as read on backend & update local state
-      MessageService.markAsRead(conversationId).catch(() => {});
-      if (onMarkAsSeen) onMarkAsSeen(conversationId);
+    setMessages([]);
 
-      // 2. Get initial messages
+    try {
+      MessageService.markAsRead(conversationId).catch(() => {});
+      onMarkAsSeen?.(conversationId);
+
       const res = await MessageService.getMessages(conversationId, 30);
+
       if (res.success && res.data) {
-        const items = res.data.items || [];
-        setMessages(items);
+        setMessages(res.data.items || []);
         setNextCursor(res.data.nextCursor ?? undefined);
         setHasMoreOlder(res.data.hasMore);
       } else {
         setError(res.message || "Failed to load messages");
       }
     } catch (err: unknown) {
-      const msg = getErrorMessage(err, "Failed to load messages");
-      if (msg.includes("expired")) {
+      const message = getErrorMessage(err);
+
+      if (message.toLowerCase().includes("expired")) {
         setIsPlanExpired(true);
       }
-      setError(msg);
+
+      setError(message);
     } finally {
       setLoading(false);
     }
   }, [conversationId, onMarkAsSeen]);
 
   useEffect(() => {
-    fetchInitialMessages();
+    void fetchInitialMessages();
     setEditingMessage(null);
   }, [fetchInitialMessages]);
 
-  // Load older messages (Cursor pagination when scrolling top)
   const handleLoadOlderMessages = useCallback(async () => {
-    if (loadingOlder || !hasMoreOlder || !nextCursor || !conversationId) return;
+    if (loadingOlder || !hasMoreOlder || !nextCursor || !conversationId) {
+      return;
+    }
+
     setLoadingOlder(true);
+
     try {
       const res = await MessageService.getMessages(
         conversationId,
         30,
         nextCursor,
       );
+
       if (res.success && res.data) {
         const olderItems = res.data.items || [];
-        setMessages((prev) => {
-          const existingIds = new Set(prev.map((m) => m.id));
-          const filtered = olderItems.filter((m) => !existingIds.has(m.id));
-          return [...filtered, ...prev];
+
+        setMessages((previous) => {
+          const existingIds = new Set(previous.map((message) => message.id));
+          const filtered = olderItems.filter(
+            (message) => !existingIds.has(message.id),
+          );
+
+          return [...filtered, ...previous];
         });
+
         setNextCursor(res.data.nextCursor ?? undefined);
         setHasMoreOlder(res.data.hasMore);
       }
     } catch (err: unknown) {
-      console.error(
-        "Failed to load older messages:",
-        getErrorMessage(err, "Unknown error"),
-      );
+      console.error("Failed to load older messages:", getErrorMessage(err));
     } finally {
       setLoadingOlder(false);
     }
   }, [loadingOlder, hasMoreOlder, nextCursor, conversationId]);
 
-  // Socket setup
   useEffect(() => {
     if (!conversationId || !socket) return;
+
     chatSocket.join(socket, conversationId);
 
     const cleanup = chatSocket.register(socket, {
       onReceive: (incoming: IncomingMessagePayload) => {
         if (!incoming?.id) return;
-        const msgText = incoming.text || incoming.content || "📎 Attachment";
 
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === incoming.id)) return prev;
+        const messagePreview =
+          incoming.text || incoming.content || "📎 Attachment";
+
+        setMessages((previous) => {
+          if (previous.some((message) => message.id === incoming.id)) {
+            return previous;
+          }
+
           const formatted: MessageResponseDTO = {
             id: incoming.id,
             conversationId,
@@ -156,36 +152,43 @@ export default function ChatWindow({
             attachments: incoming.attachments || [],
             messageType:
               incoming.messageType || incoming.type || MessageType.TEXT,
+            replyTo: incoming.replyTo,
             status: incoming.status || "active",
             createdAt: incoming.createdAt
               ? new Date(incoming.createdAt)
               : new Date(),
-            updatedAt: incoming.updatedAt
-              ? new Date(incoming.updatedAt)
-              : new Date(),
           };
-          return [...prev, formatted];
+
+          return [...previous, formatted];
         });
 
-        if (onLastMessageUpdate) {
-          onLastMessageUpdate(conversationId, msgText);
-        }
+        onLastMessageUpdate?.(conversationId, messagePreview);
       },
+
       onDelete: (data: DeleteSocketPayload) => {
         if (!data?.messageId) return;
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === data.messageId ? { ...m, status: "deleted" } : m,
+
+        setMessages((previous) =>
+          previous.map((message) =>
+            message.id === data.messageId
+              ? { ...message, status: "deleted" }
+              : message,
           ),
         );
       },
+
       onEdit: (data: EditSocketPayload) => {
         if (!data?.messageId) return;
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === data.messageId
-              ? { ...m, text: data.content || data.text, status: "edited" }
-              : m,
+
+        setMessages((previous) =>
+          previous.map((message) =>
+            message.id === data.messageId
+              ? {
+                  ...message,
+                  text: data.content || data.text,
+                  status: "edited",
+                }
+              : message,
           ),
         );
       },
@@ -197,98 +200,128 @@ export default function ChatWindow({
     };
   }, [conversationId, socket, onLastMessageUpdate]);
 
-  // Action Handlers
   const handleSendMessage = async (text: string) => {
     if (!conversationId) return;
-    try {
-      let newMsg: MessageResponseDTO | null = null;
 
-      if (socket && socket.connected) {
+    try {
+      let newMessage: MessageResponseDTO | null = null;
+
+      if (socket?.connected) {
         try {
-          newMsg = await chatSocket.sendMessage(socket, {
+          newMessage = await chatSocket.sendMessage(socket, {
             conversationId,
             text,
-            // Required by SendMessagePayload/SendMessageDTO. Defaulting to
-            // TEXT since this handler only ever sends plain text (file
-            // sends go through handleSendFile/MessageService.sendFile
-            // below, not this socket path) — confirm that assumption holds.
             messageType: MessageType.TEXT,
           });
-        } catch (socketErr: unknown) {
-          const socketErrMsg = getErrorMessage(socketErr, "");
-          if (socketErrMsg.includes("expired")) {
+        } catch (socketError: unknown) {
+          const message = getErrorMessage(socketError);
+
+          if (message.toLowerCase().includes("expired")) {
             setIsPlanExpired(true);
-            toast.error(socketErrMsg);
-            throw socketErr;
+            toast.error(message);
+            throw socketError;
           }
-          // Socket failed, fallback to REST API
-          const res = await MessageService.sendMessage(conversationId, text);
-          if (res.success && res.data) newMsg = res.data;
+
+          const response = await MessageService.sendMessage(
+            conversationId,
+            text,
+          );
+
+          if (response.success && response.data) {
+            newMessage = response.data;
+          } else {
+            throw new Error(response.message || "Failed to send message");
+          }
         }
       } else {
-        const res = await MessageService.sendMessage(conversationId, text);
-        if (res.success && res.data) newMsg = res.data;
-      }
+        const response = await MessageService.sendMessage(conversationId, text);
 
-      if (newMsg) {
-        const messageToAppend = newMsg;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === messageToAppend.id)) return prev;
-          return [...prev, messageToAppend];
-        });
-        if (onLastMessageUpdate) {
-          onLastMessageUpdate(
-            conversationId,
-            messageToAppend.text || "📎 Attachment",
-          );
+        if (response.success && response.data) {
+          newMessage = response.data;
+        } else {
+          throw new Error(response.message || "Failed to send message");
         }
       }
+
+      if (newMessage) {
+        setMessages((previous) => {
+          if (previous.some((message) => message.id === newMessage.id)) {
+            return previous;
+          }
+
+          return [...previous, newMessage];
+        });
+
+        onLastMessageUpdate?.(
+          conversationId,
+          newMessage.text || "📎 Attachment",
+        );
+      }
     } catch (err: unknown) {
-      const errMsg = getErrorMessage(err, "Failed to send message");
-      if (errMsg.includes("expired")) {
+      const message = getErrorMessage(err);
+
+      if (message.toLowerCase().includes("expired")) {
         setIsPlanExpired(true);
       }
-      toast.error(errMsg);
+
+      toast.error(message);
       throw err;
     }
   };
 
   const handleSendFile = async (file: File) => {
     if (!conversationId) return;
+
     try {
-      const res = await MessageService.sendFile(conversationId, file);
-      if (res.success && res.data) {
-        const newMsg = res.data;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === newMsg.id)) return prev;
-          return [...prev, newMsg];
+      const response = await MessageService.sendFile(conversationId, file);
+
+      if (response.success && response.data) {
+        const newMessage = response.data;
+
+        setMessages((previous) => {
+          if (previous.some((message) => message.id === newMessage.id)) {
+            return previous;
+          }
+
+          return [...previous, newMessage];
         });
-        if (onLastMessageUpdate) {
-          onLastMessageUpdate(conversationId, "📎 Attachment");
-        }
+
+        onLastMessageUpdate?.(
+          conversationId,
+          file.type.startsWith("audio/") ? "🎤 Voice message" : "📎 Attachment",
+        );
+      } else {
+        throw new Error(response.message || "Failed to send attachment");
       }
     } catch (err: unknown) {
-      const errMsg = getErrorMessage(err, "Failed to upload file");
-      if (errMsg.includes("expired")) {
+      const message = getErrorMessage(err);
+
+      if (message.toLowerCase().includes("expired")) {
         setIsPlanExpired(true);
       }
-      toast.error(errMsg);
+
+      toast.error(message);
       throw err;
     }
   };
 
   const handleSaveEdit = async (messageId: string, newText: string) => {
     try {
-      const res = await MessageService.editMessage(messageId, newText);
-      if (res.success && res.data) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === messageId ? { ...m, text: newText, status: "edited" } : m,
+      const response = await MessageService.editMessage(messageId, newText);
+
+      if (response.success && response.data) {
+        setMessages((previous) =>
+          previous.map((message) =>
+            message.id === messageId
+              ? { ...message, text: newText, status: "edited" }
+              : message,
           ),
         );
+      } else {
+        throw new Error(response.message || "Failed to edit message");
       }
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to edit message"));
+      toast.error(getErrorMessage(err));
       throw err;
     }
   };
@@ -296,56 +329,67 @@ export default function ChatWindow({
   const handleDeleteMessage = async (messageId: string) => {
     try {
       await MessageService.deleteMessage(messageId);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, status: "deleted" } : m)),
+
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === messageId
+            ? { ...message, status: "deleted" }
+            : message,
+        ),
       );
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to delete message"));
+      toast.error(getErrorMessage(err));
     }
   };
 
   if (!conversation) return null;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50 relative overflow-hidden">
-      {/* Header */}
-      <ChatHeader conversation={conversation} onBack={onBack} />
+    <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-50">
+      {/* Fixed-height header: never scrolls with messages */}
+      <div className="relative z-20 shrink-0 bg-white">
+        <ChatHeader conversation={conversation} onBack={onBack} />
+      </div>
 
-      {/* Message List / States */}
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <ChatLoading type="messages" />
-        </div>
-      ) : error ? (
-        <div className="flex-1 flex items-center justify-center">
-          <ChatError message={error} onRetry={fetchInitialMessages} />
-        </div>
-      ) : (
-        <MessageList
+      {/* Only the message area can shrink and scroll */}
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        {loading ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+            <ChatLoading type="messages" />
+          </div>
+        ) : error ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+            <ChatError message={error} onRetry={fetchInitialMessages} />
+          </div>
+        ) : (
+          <MessageList
+            conversationId={conversation.id}
+            messages={messages}
+            currentUserId={currentUserId}
+            loadingOlder={loadingOlder}
+            hasMoreOlder={hasMoreOlder}
+            senderAvatar={conversation.participant?.profileImage}
+            senderName={conversation.participant?.name}
+            onLoadOlder={handleLoadOlderMessages}
+            onEditMessage={setEditingMessage}
+            onDeleteMessage={handleDeleteMessage}
+          />
+        )}
+      </div>
+
+      {/* Fixed-height composer: stays visible at the bottom */}
+      <div className="relative z-10 shrink-0 bg-white">
+        <MessageInput
           conversationId={conversation.id}
-          messages={messages}
-          currentUserId={currentUserId}
-          loadingOlder={loadingOlder}
-          hasMoreOlder={hasMoreOlder}
-          senderAvatar={conversation.participant?.profileImage}
-          senderName={conversation.participant?.name}
-          onLoadOlder={handleLoadOlderMessages}
-          onEditMessage={setEditingMessage}
-          onDeleteMessage={handleDeleteMessage}
+          isReadOnly={isReadOnly}
+          isPlanExpired={isPlanExpired}
+          editingMessage={editingMessage}
+          onCancelEdit={() => setEditingMessage(null)}
+          onSendMessage={handleSendMessage}
+          onSendFile={handleSendFile}
+          onSaveEdit={handleSaveEdit}
         />
-      )}
-
-      {/* Composer Input */}
-      <MessageInput
-        conversationId={conversation.id}
-        isReadOnly={isReadOnly}
-        isPlanExpired={isPlanExpired}
-        editingMessage={editingMessage}
-        onCancelEdit={() => setEditingMessage(null)}
-        onSendMessage={handleSendMessage}
-        onSendFile={handleSendFile}
-        onSaveEdit={handleSaveEdit}
-      />
+      </div>
     </div>
   );
 }

@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { ReactNode, useEffect } from "react";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
 import { useDispatch, useSelector } from "react-redux";
 
 import { logout, setUser } from "@/redux/slices/authSlice";
+
 import { RootState } from "@/redux/store";
+
 import { userAuthService } from "@/services/user/userAuth.service";
+
+import { isAuthPage } from "@/lib/auth/authGuard";
 
 const SKIP_AUTH_ROUTES = [
   "/login",
@@ -16,35 +22,35 @@ const SKIP_AUTH_ROUTES = [
   "/reset-password",
 ];
 
-export default function AuthProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const user = useSelector((state: RootState) => state.auth.user);
+  const initialized = useSelector((state: RootState) => state.auth.initialized);
 
   useEffect(() => {
-    const shouldSkip = SKIP_AUTH_ROUTES.some(
-      (route) => pathname === route || pathname.startsWith(`${route}/`),
-    );
-
-    if (shouldSkip) return;
+    if (initialized) {
+      return;
+    }
 
     let isMounted = true;
 
     const initializeAuth = async () => {
       try {
-        const res = await userAuthService.getMe();
+        const response = await userAuthService.getMe();
 
-        if (!isMounted) return;
+        if (!isMounted) {
+          return;
+        }
 
-        dispatch(setUser(res.data));
+        dispatch(setUser(response.data));
       } catch {
-        if (!isMounted) return;
+        if (!isMounted) {
+          return;
+        }
 
         dispatch(logout());
       }
@@ -55,18 +61,34 @@ export default function AuthProvider({
     return () => {
       isMounted = false;
     };
-  }, [dispatch, pathname]);
+  }, [dispatch, initialized]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!initialized || !user) {
+      return;
+    }
 
-    const isAuthRoute =
-      pathname === "/" ||
-      SKIP_AUTH_ROUTES.some(
-        (route) => pathname === route || pathname.startsWith(`${route}/`),
-      );
+    const isAuthRoute = SKIP_AUTH_ROUTES.some(
+      (route) => pathname === route || pathname.startsWith(`${route}/`),
+    );
 
-    if (!isAuthRoute) return;
+    const isPublicHomeRoute = pathname === "/";
+
+    if (!isAuthRoute && !isPublicHomeRoute) {
+      return;
+    }
+
+    const redirectParam = searchParams.get("redirect");
+
+    if (
+      redirectParam &&
+      redirectParam.startsWith("/") &&
+      !redirectParam.startsWith("//") &&
+      !isAuthPage(redirectParam)
+    ) {
+      router.replace(redirectParam);
+      return;
+    }
 
     switch (user.activeRole) {
       case "admin":
@@ -77,10 +99,12 @@ export default function AuthProvider({
         router.replace("/nutritionist/dashboard");
         break;
 
+      case "user":
       default:
-        router.replace("/");
+        router.replace("/user/dashboard");
+        break;
     }
-  }, [user, pathname, router]);
+  }, [initialized, user, pathname, router, searchParams]);
 
   return <>{children}</>;
 }

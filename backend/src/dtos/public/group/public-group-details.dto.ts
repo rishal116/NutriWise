@@ -6,6 +6,7 @@ export interface PublicGroupDetailsDTO {
   visibility: "public";
   status: "active";
   memberCount: number;
+  isMember: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

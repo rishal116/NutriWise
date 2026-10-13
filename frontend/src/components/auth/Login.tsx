@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, LogIn, Loader2 } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import toast from "react-hot-toast";
@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { loginSchema } from "@/validations/auth.validation";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import { isAuthPage } from "@/lib/auth/authGuard";
 import Logo from "../common/Logo";
 
 interface FormErrors {
@@ -18,6 +19,7 @@ interface FormErrors {
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -26,6 +28,29 @@ export default function LoginForm() {
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isNavigating, setIsNavigating] = useState(false);
+
+  const redirectAfterAuth = (activeRole: string) => {
+    const redirectParam = searchParams.get("redirect");
+    if (
+      redirectParam &&
+      redirectParam.startsWith("/") &&
+      !isAuthPage(redirectParam)
+    ) {
+      router.replace(redirectParam);
+      return;
+    }
+
+    switch (activeRole) {
+      case "admin":
+        router.replace("/admin/dashboard");
+        break;
+      case "nutritionist":
+        router.replace("/nutritionist/dashboard");
+        break;
+      default:
+        router.replace("/");
+    }
+  };
 
   const handleSignup = () => {
     setIsNavigating(true);
@@ -59,16 +84,7 @@ export default function LoginForm() {
         return;
       }
 
-      switch (res.activeRole) {
-        case "admin":
-          router.replace("/admin/dashboard");
-          break;
-        case "nutritionist":
-          router.replace("/nutritionist/dashboard");
-          break;
-        default:
-          router.replace("/");
-      }
+      redirectAfterAuth(res.activeRole);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -94,18 +110,7 @@ export default function LoginForm() {
         return;
       }
 
-      switch (res.activeRole) {
-        case "admin":
-          router.replace("/admin/dashboard");
-          break;
-
-        case "nutritionist":
-          router.replace("/nutritionist/dashboard");
-          break;
-
-        default:
-          router.replace("/");
-      }
+      redirectAfterAuth(res.activeRole);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     }

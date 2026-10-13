@@ -1,6 +1,7 @@
 import { model, Schema, Types } from "mongoose";
 
 export interface IPostComment {
+  _id: Types.ObjectId;
   postId: Types.ObjectId;
   userId: Types.ObjectId;
   content: string;

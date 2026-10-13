@@ -14,6 +14,7 @@ export const TYPES = {
   ISessionRoomController: Symbol.for("ISessionRoomController"),
   IPublicChallengeController: Symbol.for("IPublicChallengeController"),
   IPublicGroupController: Symbol.for("IPublicGroupController"),
+  IPublicPostController: Symbol.for("IPublicPostController"),
 
   // Services
   IStripeService: Symbol.for("IStripeService"),
@@ -30,6 +31,10 @@ export const TYPES = {
   ISessionRoomService: Symbol.for("ISessionRoomService"),
   IPublicChallengeService: Symbol.for("IPublicChallengeService"),
   IPublicGroupService: Symbol.for("IPublicGroupService"),
+  ISessionStripeCheckoutHandlerService: Symbol.for(
+    "ISessionStripeCheckoutHandlerService",
+  ),
+  IPublicPostService: Symbol.for("IPublicPostService"),
 
   // Repositories
   IWalletRepository: Symbol.for("IWalletRepository"),
@@ -49,6 +54,7 @@ export const TYPES = {
   IResourceCommentRepository: Symbol.for("IResourceCommentRepository"),
   IPublicChallengeRepository: Symbol.for("IPublicChallengeRepository"),
   IPublicGroupRepository: Symbol.for("IPublicGroupRepository"),
+  IPublicPostRepository: Symbol.for("IPublicPostRepository"),
 
   // Shared Services
   INotificationService: Symbol.for("INotificationService"),
@@ -63,6 +69,7 @@ export const TYPES = {
   // ======================================================
 
   // Controllers
+  IUserConversationController: Symbol.for("IUserConversationController"),
   IUserAuthController: Symbol.for("IUserAuthController"),
   IUserProfileController: Symbol.for("IUserProfileController"),
   IHealthDetailsController: Symbol.for("IHealthDetailsController"),
@@ -91,9 +98,10 @@ export const TYPES = {
     "IUserChallengeTrackingController",
   ),
   IUserPostController: Symbol.for("IUserPostController"),
-  IUserDashboardController:Symbol.for("IUserDashboardController"),
+  IUserDashboardController: Symbol.for("IUserDashboardController"),
 
   // Services
+  IUserConversationService: Symbol.for("IUserConversationService"),
   IUserAuthService: Symbol.for("IUserAuthService"),
   IUserProfileService: Symbol.for("IUserProfileService"),
   IHealthDetailsService: Symbol.for("IHealthDetailsService"),
@@ -117,7 +125,7 @@ export const TYPES = {
   IUserChallengeService: Symbol.for("IUserChallengeService"),
   IUserChallengeTrackingService: Symbol.for("IUserChallengeTrackingService"),
   IUserPostService: Symbol.for("IUserPostService"),
-  IUserDashboardService:Symbol.for("IUserDashboardService"),
+  IUserDashboardService: Symbol.for("IUserDashboardService"),
 
   // Repositories
   IUserRepository: Symbol.for("IUserRepository"),
@@ -146,7 +154,7 @@ export const TYPES = {
   IUserChallengeProgressRepository: Symbol.for(
     "IUserChallengeProgressRepository",
   ),
-  IUserDashboardRepository:Symbol.for("IUserDashboardRepository"),
+  IUserDashboardRepository: Symbol.for("IUserDashboardRepository"),
 
   // ======================================================
   // ADMIN
@@ -162,7 +170,7 @@ export const TYPES = {
   IAdminPlanController: Symbol.for("IAdminPlanController"),
   IAdminChallengeController: Symbol.for("IAdminChallengeController"),
   IAdminChallengeDayController: Symbol.for("IAdminChallengeDayController"),
-  IAdminDashboardController:Symbol.for("IAdminDashboardController"),
+  IAdminDashboardController: Symbol.for("IAdminDashboardController"),
 
   // Services
   IAdminUserService: Symbol.for("IAdminUserService"),
@@ -173,7 +181,7 @@ export const TYPES = {
   IAdminPlanService: Symbol.for("IAdminPlanService"),
   IAdminChallengeService: Symbol.for("IAdminChallengeService"),
   IAdminChallengeDayService: Symbol.for("IAdminChallengeDayService"),
-  IAdminDashboardService:Symbol.for("IAdminDashboardService"),
+  IAdminDashboardService: Symbol.for("IAdminDashboardService"),
 
   // Repositories
   IAdminUserRepository: Symbol.for("IAdminUserRepository"),
@@ -184,7 +192,7 @@ export const TYPES = {
   IAdminChallengeRepository: Symbol.for("IAdminChallengeRepository"),
   IAdminChallengeDayRepository: Symbol.for("IAdminChallengeDayRepository"),
   IAdminDashboardRepository: Symbol.for("IAdminDashboardRepository"),
-  IAdminPlanRepository:Symbol.for("IAdminPlanRepository"),
+  IAdminPlanRepository: Symbol.for("IAdminPlanRepository"),
 
   // ======================================================
   // NUTRITIONIST
@@ -202,7 +210,7 @@ export const TYPES = {
   INutriProgramDayController: Symbol.for("INutriProgramDayController"),
   INutriResourceController: Symbol.for("INutriResourceController"),
   INutriSessionController: Symbol.for("INutriSessionController"),
-  INutriDashboardController:Symbol.for("INutriDashboardController"),
+  INutriDashboardController: Symbol.for("INutriDashboardController"),
 
   // Services
   INutritionistApplicationService: Symbol.for(
@@ -216,7 +224,7 @@ export const TYPES = {
   INutriProgramDayService: Symbol.for("INutriProgramDayService"),
   INutriResourceService: Symbol.for("INutriResourceService"),
   INutriSessionService: Symbol.for("INutriSessionService"),
-  INutriDashboardService:Symbol.for("INutriDashboardService"),
+  INutriDashboardService: Symbol.for("INutriDashboardService"),
 
   // Repositories
   INutritionistAuthRepository: Symbol.for("INutritionistAuthRepository"),
@@ -230,5 +238,23 @@ export const TYPES = {
   INutriResourceRepository: Symbol.for("INutriResourceRepository"),
   INutriSessionRepository: Symbol.for("INutriSessionRepository"),
   INutriGroupRepository: Symbol.for("INutriGroupRepository"),
-  INutriDashboardRepository:Symbol.for("INutriDashboardRepository"),
+  INutriDashboardRepository: Symbol.for("INutriDashboardRepository"),
+
+  // post
+  IPostLikeRepository: Symbol.for("IPostLikeRepository"),
+  IPostRepository: Symbol.for("IPostRepository"),
+  IPostLikeService: Symbol.for("IPostLikeService"),
+  IPostLikeController: Symbol.for("IPostLikeController"),
+  IPostCommentRepository: Symbol.for("IPostCommentRepository"),
+  IPostCommentService: Symbol.for("IPostCommentService"),
+  IPostCommentController: Symbol.for("IPostCommentController"),
+
+  IGroupService: Symbol.for("IGroupService"),
+  IGroupController: Symbol.for("IGroupController"),
+
+  INutriEarningsRepository:Symbol.for("INutriEarningsRepository"),
+  INutriEarningsService:Symbol.for("INutriEarningsService"),
+  INutriEarningsController:Symbol.for("INutriEarningsController"),
+  INutriCredentialsService:Symbol.for("INutriCredentialsService"),
+  INutriCredentialsController:Symbol.for("INutriCredentialsController"),
 } as const;

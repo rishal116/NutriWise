@@ -5,6 +5,7 @@ export enum MessageType {
   IMAGE = "image",
   FILE = "file",
   VIDEO = "video",
+  AUDIO = "audio",
   SYSTEM = "system",
 }
 
@@ -15,6 +16,7 @@ interface IMessageAttachment {
   fileName?: string;
   size?: number;
   mimeType?: string;
+  duration?: number;
 }
 
 export interface IMessage {
@@ -131,9 +133,12 @@ MessageSchema.pre("validate", function (next) {
   }
 
   if (
-    [MessageType.IMAGE, MessageType.FILE, MessageType.VIDEO].includes(
-      this.messageType,
-    ) &&
+    [
+      MessageType.IMAGE,
+      MessageType.FILE,
+      MessageType.VIDEO,
+      MessageType.AUDIO,
+    ].includes(this.messageType) &&
     !hasAttachments
   ) {
     return next(new Error("Media message requires attachment"));
@@ -150,11 +155,12 @@ MessageSchema.index(
   {
     conversationId: 1,
     createdAt: -1,
+    _id: -1,
   },
   {
     partialFilterExpression: {
       status: {
-        $ne: "deleted",
+        $in: ["active", "edited"],
       },
     },
   },

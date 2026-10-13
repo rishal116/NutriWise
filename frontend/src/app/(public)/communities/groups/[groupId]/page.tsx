@@ -1,16 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import Image from "next/image";
 import Link from "next/link";
-
-import { ArrowLeft, Check, Globe2, Loader2, Users } from "lucide-react";
-
+import { ArrowLeft, ArrowRight, Globe2, Loader2, Users } from "lucide-react";
 import { publicGroupService } from "@/services/public/publicGroup.service";
-
 import type { PublicGroupDetailsDTO } from "@/dtos/public/group/public-group-details.dto";
-
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
 interface GroupDetailsPageProps {
@@ -116,7 +111,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
       <section className="min-h-screen bg-slate-50 px-4 py-8 md:px-8 md:py-10">
         <div className="mx-auto max-w-5xl">
           <Link
-            href="/groups"
+            href="/communities/groups"
             className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600"
           >
             <ArrowLeft
@@ -140,7 +135,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
             </p>
 
             <Link
-              href="/groups"
+              href="/communities/groups"
               className="mt-6 inline-flex items-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
             >
               Browse groups
@@ -156,7 +151,7 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
       <div className="mx-auto max-w-6xl">
         {/* Back */}
         <Link
-          href="/groups"
+          href="/communities/groups"
           className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600"
         >
           <ArrowLeft
@@ -266,40 +261,43 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
                   </div>
                 </div>
 
-                {/* Join */}
+                {/* Join / Continue */}
                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
                   <p className="text-sm font-semibold text-slate-900">
-                    Ready to join?
+                    {group.isMember ? "You're a member" : "Ready to join?"}
                   </p>
 
                   <p className="mt-1.5 text-xs leading-5 text-slate-500">
-                    Become part of this public community.
+                    {group.isMember
+                      ? "Jump back into the conversation."
+                      : "Become part of this public community."}
                   </p>
 
-                  <button
-                    type="button"
-                    onClick={handleJoinGroup}
-                    disabled={joining || joined}
-                    className={`mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition ${
-                      joined
-                        ? "cursor-default bg-emerald-100 text-emerald-700"
-                        : "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-                    }`}
-                  >
-                    {joining ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Joining...
-                      </>
-                    ) : joined ? (
-                      <>
-                        <Check size={16} />
-                        Joined
-                      </>
-                    ) : (
-                      "Join Group"
-                    )}
-                  </button>
+                  {group.isMember ? (
+                    <Link
+                      href={`/user/messages/group/${group.id}`}
+                      className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                    >
+                      Continue to Chat
+                      <ArrowRight size={16} />
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleJoinGroup}
+                      disabled={joining}
+                      className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {joining ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          Joining...
+                        </>
+                      ) : (
+                        "Join Group"
+                      )}
+                    </button>
+                  )}
 
                   {joinError && (
                     <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs leading-5 text-rose-600">

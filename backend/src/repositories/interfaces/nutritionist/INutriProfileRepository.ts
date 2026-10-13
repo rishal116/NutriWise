@@ -17,4 +17,5 @@ export interface INutritionistProfileRepository extends IBaseRepository<INutriti
   ): Promise<INutritionistProfile | null>;
 
   findCompleteProfile(userId: string): Promise<INutritionistProfile | null>;
+  findApprovedByUserId(userId: string): Promise<INutritionistProfile | null>;
 }

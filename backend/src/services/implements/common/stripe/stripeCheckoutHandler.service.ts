@@ -236,7 +236,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       console.log("Nutritionist:", nutritionistId.toString());
 
       const conversation =
-        await this._conversationService.createDirectConversationWithSession(
+        await this._conversationService.createDirectConversation(
           {
             currentUserId: userId.toString(),
             otherUserId: nutritionistId.toString(),

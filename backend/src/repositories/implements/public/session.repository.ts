@@ -43,6 +43,38 @@ export class SessionRepository
 
     const now = new Date();
 
+    const sortConfig = {
+      latest: {
+        field: "createdAt",
+        direction: -1,
+      },
+      oldest: {
+        field: "createdAt",
+        direction: 1,
+      },
+      upcoming: {
+        field: "scheduledAt",
+        direction: 1,
+      },
+      price_low_to_high: {
+        field: "pricing.amount",
+        direction: 1,
+      },
+      price_high_to_low: {
+        field: "pricing.amount",
+        direction: -1,
+      },
+    } as const;
+
+    const { field: sortField, direction: sortDirection } = sortConfig[sortBy];
+
+    const sortStage: Record<string, 1 | -1> = {
+      [sortField]: sortDirection,
+      _id: sortDirection,
+    };
+
+    const cursorSortKey = `${sortBy}:${sortField}:${sortDirection}`;
+
     const pipeline: PipelineStage[] = [
       {
         $match: {
@@ -53,21 +85,33 @@ export class SessionRepository
       },
     ];
 
+    if (sortBy === "upcoming") {
+      pipeline.push({
+        $match: {
+          scheduledAt: {
+            $gte: now,
+          },
+        },
+      });
+    }
+
     if (search?.trim()) {
-      const searchTerm = search.trim();
+      const escapedSearch = search
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       pipeline.push({
         $match: {
           $or: [
             {
               title: {
-                $regex: searchTerm,
+                $regex: escapedSearch,
                 $options: "i",
               },
             },
             {
               description: {
-                $regex: searchTerm,
+                $regex: escapedSearch,
                 $options: "i",
               },
             },
@@ -92,71 +136,29 @@ export class SessionRepository
       });
     }
 
-    let sortStage: Record<string, 1 | -1>;
-
-    switch (sortBy) {
-      case "latest":
-        sortStage = {
-          createdAt: -1,
-          _id: -1,
-        };
-        break;
-
-      case "oldest":
-        sortStage = {
-          createdAt: 1,
-          _id: 1,
-        };
-        break;
-
-      case "price_low_to_high":
-        sortStage = {
-          "pricing.amount": 1,
-          _id: 1,
-        };
-        break;
-
-      case "price_high_to_low":
-        sortStage = {
-          "pricing.amount": -1,
-          _id: -1,
-        };
-        break;
-
-      case "upcoming":
-      default:
-        sortStage = {
-          scheduledAt: 1,
-          _id: 1,
-        };
-
-        pipeline.push({
-          $match: {
-            scheduledAt: {
-              $gte: now,
-            },
-          },
-        });
-
-        break;
-    }
-
-    const sortField = Object.keys(sortStage)[0];
-    const sortDirection = sortStage[sortField];
-
-    const cursorData = cursor ? decodeCursor(cursor) : null;
-
-    const cursorSortKey = `${sortBy}:${sortDirection}`;
-
-    if (cursorData?.sortKey && cursorData.sortKey !== cursorSortKey) {
-      throw new Error("Invalid cursor");
-    }
+    const cursorData = decodeCursor(cursor);
 
     if (cursorData) {
-      let cursorValue: string | number | Date = cursorData.value;
+      if (
+        cursorData.sortKey !== cursorSortKey ||
+        !Types.ObjectId.isValid(cursorData.id)
+      ) {
+        throw new Error("Invalid cursor");
+      }
+
+      let cursorValue: Date | number | string = cursorData.value;
 
       if (sortField === "createdAt" || sortField === "scheduledAt") {
+        if (
+          typeof cursorData.value !== "string" ||
+          Number.isNaN(Date.parse(cursorData.value))
+        ) {
+          throw new Error("Invalid cursor");
+        }
+
         cursorValue = new Date(cursorData.value);
+      } else if (typeof cursorData.value !== "number") {
+        throw new Error("Invalid cursor");
       }
 
       const comparisonOperator = sortDirection === -1 ? "$lt" : "$gt";
@@ -228,12 +230,7 @@ export class SessionRepository
             $toString: "$_id",
           },
 
-          cursorValue:
-            sortField === "pricing.amount"
-              ? "$pricing.amount"
-              : sortField === "scheduledAt"
-                ? "$scheduledAt"
-                : "$createdAt",
+          cursorValue: `$${sortField}`,
         },
       },
     );
@@ -244,7 +241,6 @@ export class SessionRepository
       );
 
     const hasMore = result.length > limit;
-
     const items = hasMore ? result.slice(0, limit) : result;
 
     let nextCursor: string | null = null;
@@ -252,11 +248,10 @@ export class SessionRepository
     if (hasMore && items.length > 0) {
       const lastItem = items[items.length - 1];
 
-      let cursorValue = lastItem.cursorValue;
-
-      if (cursorValue instanceof Date) {
-        cursorValue = cursorValue.toISOString();
-      }
+      const cursorValue =
+        lastItem.cursorValue instanceof Date
+          ? lastItem.cursorValue.toISOString()
+          : lastItem.cursorValue;
 
       nextCursor = encodeCursor({
         id: lastItem.cursorId,

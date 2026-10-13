@@ -32,4 +32,10 @@ export interface IConversationMemberRepository extends IBaseRepository<IConversa
   incrementUnread(conversationId: string, senderId: string): Promise<void>;
 
   resetUnread(conversationId: string, userId: string): Promise<void>;
+
+  joinGroup(
+    conversationId: string,
+    userId: string,
+  ): Promise<"joined" | "already-member" | "blocked" | "conflict">;
+  countActiveMembers(conversationId: string): Promise<number>;
 }
