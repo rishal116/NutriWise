@@ -98,10 +98,6 @@ export const registerChatSocket = (io: Server, socket: Socket) => {
           return;
         }
 
-        // NOTE: message:send trusts data.conversationId with no membership
-        // check here, unlike join_chat. Confirm IMessageService.sendMessage
-        // enforces membership internally — otherwise add a memberRepo check
-        // before calling it, same as join_chat does.
         const message = await messageService.sendMessage({
           conversationId: data.conversationId,
           senderId,
@@ -110,10 +106,6 @@ export const registerChatSocket = (io: Server, socket: Socket) => {
           messageType: data.messageType,
         });
 
-        // NOTE: this only acks the sender. Other participants in
-        // `chat:${data.conversationId}` are never notified of the new
-        // message. If IMessageService doesn't emit internally, add:
-        // io.to(`chat:${data.conversationId}`).emit("message:new", message);
         if (callback) callback({ success: true, data: message });
       } catch (error: unknown) {
         logger.warn("Socket message:send failed", {

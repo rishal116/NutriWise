@@ -1,4 +1,4 @@
-// Server component: NO "use client" -> Header/Footer/children stay server-rendered
+
 import Header from "@/components/common/Header";
 import Footer from "@/components/common/Footer";
 import DashboardShell from "./DashboardShell";

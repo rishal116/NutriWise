@@ -1,25 +1,19 @@
 import { clientApi } from "@/lib/axios/clientApi";
-
-import { ApiResponseDTO } from "@/dtos/common/api-response.dto";
-
-import { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
-
 import { PUBLIC_SESSION_ROUTES } from "@/routes/public/session.routes";
-
-import { GetPublicSessionsQueryDTO } from "@/dtos/public/session/public-session-list-query.dto";
-
-import { PublicSessionListItemResponseDTO } from "@/dtos/public/session/public-session-list-response.dto";
-
-import { PublicSessionDetailsResponseDTO } from "@/dtos/public/session/public-session-details-response.dto";
-import { SessionRoomJoinResponseDTO } from "@/dtos/public/session/session-room-join-response.dto";
+import type { ApiResponseDTO } from "@/dtos/common/api-response.dto";
+import type { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
+import type { GetPublicSessionsQueryDTO } from "@/dtos/public/session/public-session-list-query.dto";
+import type { PublicSessionListItemResponseDTO } from "@/dtos/public/session/public-session-list-response.dto";
+import type { PublicSessionDetailsResponseDTO } from "@/dtos/public/session/public-session-details-response.dto";
+import type { SessionRoomJoinResponseDTO } from "@/dtos/public/session/session-room-join-response.dto";
 
 export const publicSessionService = {
-  getSessions: async (
+  async getSessions(
     query?: GetPublicSessionsQueryDTO,
   ): Promise<
     ApiResponseDTO<InfiniteScrollResponseDTO<PublicSessionListItemResponseDTO>>
-  > => {
-    const res = await clientApi.get<
+  > {
+    const { data } = await clientApi.get<
       ApiResponseDTO<
         InfiniteScrollResponseDTO<PublicSessionListItemResponseDTO>
       >
@@ -27,26 +21,42 @@ export const publicSessionService = {
       params: query,
     });
 
-    return res.data;
+    return data;
   },
 
-  getSessionDetails: async (
+  async getSessionDetails(
     sessionId: string,
-  ): Promise<ApiResponseDTO<PublicSessionDetailsResponseDTO>> => {
-    const res = await clientApi.get<
+  ): Promise<ApiResponseDTO<PublicSessionDetailsResponseDTO>> {
+    const { data } = await clientApi.get<
       ApiResponseDTO<PublicSessionDetailsResponseDTO>
     >(PUBLIC_SESSION_ROUTES.DETAILS(sessionId));
 
-    return res.data;
+    return data;
   },
 
-  joinSession: async (
+  async joinSession(
     sessionId: string,
-  ): Promise<ApiResponseDTO<SessionRoomJoinResponseDTO>> => {
-    const res = await clientApi.post<
+  ): Promise<ApiResponseDTO<SessionRoomJoinResponseDTO>> {
+    const { data } = await clientApi.post<
       ApiResponseDTO<SessionRoomJoinResponseDTO>
     >(PUBLIC_SESSION_ROUTES.JOIN(sessionId));
 
-    return res.data;
+    return data;
+  },
+
+  async startSession(sessionId: string): Promise<ApiResponseDTO<null>> {
+    const { data } = await clientApi.post<ApiResponseDTO<null>>(
+      PUBLIC_SESSION_ROUTES.START(sessionId),
+    );
+
+    return data;
+  },
+
+  async endSession(sessionId: string): Promise<ApiResponseDTO<null>> {
+    const { data } = await clientApi.post<ApiResponseDTO<null>>(
+      PUBLIC_SESSION_ROUTES.END(sessionId),
+    );
+
+    return data;
   },
 };

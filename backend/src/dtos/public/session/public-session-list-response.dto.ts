@@ -1,9 +1,9 @@
-import {
+import type {
   SessionPricingType,
   SessionStatus,
   SessionType,
 } from "../../../models/session.model";
-import { Currency } from "../../../constants/currency.constants";
+import type { Currency } from "../../../constants/currency.constants";
 
 export interface PublicSessionListItemResponseDTO {
   sessionId: string;

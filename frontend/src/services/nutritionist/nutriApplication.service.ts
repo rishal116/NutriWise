@@ -1,39 +1,35 @@
 import { clientApi } from "@/lib/axios/clientApi";
-
-import { NutritionistApplicationDetailsDto } from "@/dtos/nutritionist/application/nutritionist-application-details.dto";
-
-import { ApiResponse } from "@/types/api/apiResponse";
-
+import type { NutritionistApplicationDetailsDto } from "@/dtos/nutritionist/application/nutritionist-application-details.dto";
+import type { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 import { NUTRITIONIST_APPLICATION_ROUTES } from "@/routes/nutritionist";
 
 export const nutritionistApplicationService = {
-  async submitApplication(data: FormData) {
-    const response = await clientApi.post(
+  async submitApplication(payload: FormData): Promise<ApiResponseDTO> {
+    const { data } = await clientApi.post<ApiResponseDTO>(
       NUTRITIONIST_APPLICATION_ROUTES.SUBMIT,
-      data,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      },
+      payload,
     );
 
-    return response.data;
+    return data;
   },
 
   async getApplicationDetails(): Promise<NutritionistApplicationDetailsDto> {
-    const response = await clientApi.get<
-      ApiResponse<NutritionistApplicationDetailsDto>
+    const { data } = await clientApi.get<
+      ApiResponseDTO<NutritionistApplicationDetailsDto>
     >(NUTRITIONIST_APPLICATION_ROUTES.DETAILS);
 
-    return response.data.data;
+    if (!data.data) {
+      throw new Error("Nutritionist application details not found.");
+    }
+
+    return data.data;
   },
 
-  async getApplicationStatus() {
-    const response = await clientApi.get(
+  async getApplicationStatus(): Promise<ApiResponseDTO> {
+    const { data } = await clientApi.get<ApiResponseDTO>(
       NUTRITIONIST_APPLICATION_ROUTES.STATUS,
     );
 
-    return response.data;
+    return data;
   },
 };

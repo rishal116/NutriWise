@@ -1,8 +1,7 @@
-import { ClientSession, Types, UpdateQuery } from "mongoose";
+import type { ClientSession, Types, UpdateQuery } from "mongoose";
 
-import { IBaseRepository } from "../common/IBaseRepository";
-
-import { ISessionRegistration } from "../../../models/sessionRegistration.model";
+import type { IBaseRepository } from "../common/IBaseRepository";
+import type { ISessionRegistration } from "../../../models/sessionRegistration.model";
 
 export interface ISessionRegistrationRepository extends IBaseRepository<ISessionRegistration> {
   findBySessionAndUser(

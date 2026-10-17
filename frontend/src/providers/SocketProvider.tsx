@@ -1,7 +1,15 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { connectSocket } from "@/lib/socket";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+
+import { connectSocket, disconnectSocket } from "@/lib/socket";
 import { useAppSelector } from "@/redux/hooks";
 
 interface SocketContextType {
@@ -10,66 +18,86 @@ interface SocketContextType {
   isConnected: boolean;
 }
 
+interface PresenceResponse {
+  onlineUserIds: string[];
+}
+
+interface PresenceUserPayload {
+  userId: string;
+}
+
 const SocketContext = createContext<SocketContextType>({
-  onlineUserIds: new Set(),
+  onlineUserIds: new Set<string>(),
   isUserOnline: () => false,
   isConnected: false,
 });
 
 export const usePresence = () => useContext(SocketContext);
 
-export default function SocketProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const user = useAppSelector((state) => state.auth.user);
-  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
+export default function SocketProvider({ children }: { children: ReactNode }) {
+  const userId = useAppSelector((state) => state.auth.user?.id);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const initialized = useAppSelector((state) => state.auth.initialized);
+
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(
+    () => new Set<string>(),
+  );
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!initialized || !userId || !accessToken) {
+      disconnectSocket();
+      setIsConnected(false);
+      setOnlineUserIds(new Set<string>());
+      return;
+    }
 
-    const socket = connectSocket();
+    let active = true;
+    const socket = connectSocket(accessToken);
 
     const handleConnect = () => {
+      if (!active) return;
+
       setIsConnected(true);
-      socket.emit("presence:get_online", (res: { onlineUserIds: string[] }) => {
-        if (res?.onlineUserIds) {
-          setOnlineUserIds(new Set(res.onlineUserIds));
-        }
+
+      socket.emit("presence:get_online", (response: PresenceResponse) => {
+        if (!active || !response?.onlineUserIds) return;
+
+        setOnlineUserIds(new Set(response.onlineUserIds));
       });
     };
 
     const handleDisconnect = () => {
+      if (!active) return;
+
       setIsConnected(false);
     };
 
-    const handlePresenceInit = (data: { onlineUserIds: string[] }) => {
-      if (data?.onlineUserIds) {
-        setOnlineUserIds(new Set(data.onlineUserIds));
-      }
+    const handlePresenceInit = (data: PresenceResponse) => {
+      if (!active || !data?.onlineUserIds) return;
+
+      setOnlineUserIds(new Set(data.onlineUserIds));
     };
 
-    const handleUserOnline = (data: { userId: string }) => {
-      if (data?.userId) {
-        setOnlineUserIds((prev) => new Set([...prev, data.userId]));
-      }
+    const handleUserOnline = (data: PresenceUserPayload) => {
+      if (!active || !data?.userId) return;
+
+      setOnlineUserIds((previous) => {
+        const next = new Set(previous);
+        next.add(data.userId);
+        return next;
+      });
     };
 
-    const handleUserOffline = (data: { userId: string }) => {
-      if (data?.userId) {
-        setOnlineUserIds((prev) => {
-          const next = new Set(prev);
-          next.delete(data.userId);
-          return next;
-        });
-      }
-    };
+    const handleUserOffline = (data: PresenceUserPayload) => {
+      if (!active || !data?.userId) return;
 
-    if (socket.connected) {
-      handleConnect();
-    }
+      setOnlineUserIds((previous) => {
+        const next = new Set(previous);
+        next.delete(data.userId);
+        return next;
+      });
+    };
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
@@ -77,24 +105,35 @@ export default function SocketProvider({
     socket.on("user:online", handleUserOnline);
     socket.on("user:offline", handleUserOffline);
 
+    if (socket.connected) {
+      handleConnect();
+    }
+
     return () => {
+      active = false;
+
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("presence:init", handlePresenceInit);
       socket.off("user:online", handleUserOnline);
       socket.off("user:offline", handleUserOffline);
-    };
-  }, [user]);
 
-  const isUserOnline = (userId?: string): boolean => {
-    if (!userId) return false;
-    return onlineUserIds.has(userId);
-  };
+      disconnectSocket();
+    };
+  }, [initialized, userId, accessToken]);
+
+  const isUserOnline = useCallback(
+    (targetUserId?: string): boolean => {
+      return targetUserId ? onlineUserIds.has(targetUserId) : false;
+    },
+    [onlineUserIds],
+  );
 
   return (
-    <SocketContext.Provider value={{ onlineUserIds, isUserOnline, isConnected }}>
+    <SocketContext.Provider
+      value={{ onlineUserIds, isUserOnline, isConnected }}
+    >
       {children}
     </SocketContext.Provider>
   );
 }
-

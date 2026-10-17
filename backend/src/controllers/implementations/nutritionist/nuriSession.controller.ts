@@ -23,14 +23,14 @@ export class NutriSessionController implements INutriSessionController {
     const nutritionistId = req.user!.userId;
     const dto = req.body as CreateNutriSessionDTO;
     const thumbnail = req.file;
-    const session = await this._nutriSessionService.createSession(
+    await this._nutriSessionService.createSession(
       nutritionistId,
       dto,
       thumbnail,
     );
     res.status(StatusCode.CREATED).json({
       success: true,
-      data: session,
+      message: "Session created successfully",
     });
   });
 
@@ -61,7 +61,6 @@ export class NutriSessionController implements INutriSessionController {
       sessionId,
       nutritionistId,
     );
-
     res.status(StatusCode.OK).json({
       success: true,
       data: session,
@@ -70,22 +69,25 @@ export class NutriSessionController implements INutriSessionController {
 
   updateSession = asyncHandler(async (req: Request, res: Response) => {
     const { sessionId } = req.params;
+    const nutritionistId = req.user!.userId;
     const dto = req.body as UpdateNutriSessionDTO;
     const thumbnail = req.file;
-    const session = await this._nutriSessionService.updateSession(
+    await this._nutriSessionService.updateSession(
       sessionId,
+      nutritionistId,
       dto,
       thumbnail,
     );
     res.status(StatusCode.OK).json({
       success: true,
-      data: session,
+      message: "Session updated successfully",
     });
   });
 
   deleteSession = asyncHandler(async (req: Request, res: Response) => {
     const { sessionId } = req.params;
-    await this._nutriSessionService.deleteSession(sessionId);
+    const nutritionistId = req.user!.userId;
+    await this._nutriSessionService.deleteSession(sessionId, nutritionistId);
     res.status(StatusCode.OK).json({
       success: true,
       message: "Session deleted successfully",
@@ -95,13 +97,9 @@ export class NutriSessionController implements INutriSessionController {
   publishSession = asyncHandler(async (req: Request, res: Response) => {
     const { sessionId } = req.params;
     const nutritionistId = req.user!.userId;
-    const session = await this._nutriSessionService.publishSession(
-      sessionId,
-      nutritionistId,
-    );
+    await this._nutriSessionService.publishSession(sessionId, nutritionistId);
     res.status(StatusCode.OK).json({
       success: true,
-      data: session,
       message: "Session published successfully",
     });
   });

@@ -149,6 +149,8 @@ export default function HealthProgressPage() {
         setLoading(true);
         setError(false);
         const res = await healthProgressService.getHealthProgress(days);
+        console.log(res);
+        
         if (!cancelled) setData(res);
       } catch {
         if (!cancelled) setError(true);

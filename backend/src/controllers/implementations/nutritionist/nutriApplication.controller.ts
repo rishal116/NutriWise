@@ -45,6 +45,7 @@ export class NutritionistApplicationController implements INutritionistApplicati
     const dto =
       await this._nutritionistAuthService.getApplicationStatus(userId);
     res.status(StatusCode.OK).json({
+      messaage: "Resu",
       success: true,
       data: dto,
     });

@@ -1,11 +1,13 @@
 "use client";
 
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+
 import { AUTH_ROUTES } from "@/routes/user/auth.routes";
-import { logout } from "@/redux/slices/authSlice";
+import { logout, setAccessToken } from "@/redux/slices/authSlice";
 import { store } from "@/redux/store";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { redirectToLogin } from "@/lib/auth/authGuard";
+import { tokenStorage } from "@/lib/auth/tokenStorage";
 
 declare module "axios" {
   export interface AxiosRequestConfig {
@@ -53,34 +55,57 @@ function isIgnoredRoute(url?: string): boolean {
   return ignoredRoutes.some((route) => url.includes(route));
 }
 
+let refreshPromise: Promise<string> | null = null;
+
+export function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = userAuthService
+      .refreshToken()
+      .then((response) => {
+        if (!response.accessToken) {
+          throw new Error("Refresh response did not contain an access token.");
+        }
+
+        store.dispatch(setAccessToken(response.accessToken));
+
+        return response.accessToken;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
 clientApi.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (!config.requiresAuth) {
-      return config;
-    }
-
     const authState = store.getState().auth;
-    if (!authState.initialized) {
-      return config;
+    const accessToken = authState.accessToken ?? tokenStorage.get();
+
+    if (accessToken) {
+      config.headers.set("Authorization", `Bearer ${accessToken}`);
+    } else {
+      config.headers.delete("Authorization");
     }
 
-    if (!authState.isAuthenticated) {
-      redirectToLogin();
+    if (config.requiresAuth && authState.initialized) {
+      if (!authState.isAuthenticated) {
+        redirectToLogin();
 
-      return Promise.reject(
-        new AxiosError(
-          "Action requires authentication.",
-          "ERR_UNAUTHENTICATED",
-          config,
-        ),
-      );
+        return Promise.reject(
+          new AxiosError(
+            "Action requires authentication.",
+            "ERR_UNAUTHENTICATED",
+            config,
+          ),
+        );
+      }
     }
 
     return config;
   },
-  (error: unknown) => {
-    return Promise.reject(error);
-  },
+  (error: unknown) => Promise.reject(error),
 );
 
 clientApi.interceptors.response.use(
@@ -89,24 +114,15 @@ clientApi.interceptors.response.use(
   async (error: AxiosError<ApiErrorResponse>) => {
     const originalRequest = error.config as RetryRequestConfig | undefined;
 
-    if (!originalRequest) {
+    if (!originalRequest || isIgnoredRoute(originalRequest.url)) {
       return Promise.reject(error);
     }
 
-    if (isIgnoredRoute(originalRequest.url)) {
+    if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    const status = error.response?.status;
-
-    const code = error.response?.data?.code;
-
-    let refreshPromise: Promise<void> | null = null;
-
-    if (status !== 401) {
-      return Promise.reject(error);
-    }
-
+    const code = error.response.data?.code;
     const shouldRefreshToken = [
       "ACCESS_TOKEN_EXPIRED",
       "ACCESS_TOKEN_MISSING",
@@ -116,33 +132,34 @@ clientApi.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        if (!refreshPromise) {
-          refreshPromise = userAuthService
-            .refreshToken()
-            .then(() => undefined)
-            .finally(() => {
-              refreshPromise = null;
-            });
-        }
+        const accessToken = await refreshAccessToken();
 
-        await refreshPromise;
+        originalRequest.headers.set("Authorization", `Bearer ${accessToken}`);
 
         return clientApi(originalRequest);
       } catch (refreshError: unknown) {
-        store.dispatch(logout());
+        const authState = store.getState().auth;
 
-        if (originalRequest.requiresAuth) {
-          redirectToLogin();
+        if (authState.isAuthenticated || originalRequest.requiresAuth) {
+          store.dispatch(logout());
+
+          if (originalRequest.requiresAuth) {
+            redirectToLogin();
+          }
         }
 
         return Promise.reject(refreshError);
       }
     }
 
-    store.dispatch(logout());
+    const authState = store.getState().auth;
 
-    if (originalRequest.requiresAuth) {
-      redirectToLogin();
+    if (authState.isAuthenticated || originalRequest.requiresAuth) {
+      store.dispatch(logout());
+
+      if (originalRequest.requiresAuth) {
+        redirectToLogin();
+      }
     }
 
     return Promise.reject(error);

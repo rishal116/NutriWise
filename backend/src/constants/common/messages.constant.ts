@@ -19,8 +19,15 @@ export const AUTH_MESSAGES = {
   UNAUTHORIZED: "Unauthorized",
   FORBIDDEN: "Forbidden",
 
+  SIGNUP_SUCCESS: "Account created successfully",
+  OTP_RESENT_SUCCESS: "OTP resent successfully",
+  OTP_VERIFIED_SUCCESS: "OTP verified successfully",
+  PASSWORD_RESET_OTP_SENT: "Password reset OTP sent successfully",
+  PASSWORD_RESET_SUCCESS: "Password reset successfully",
+
   LOGIN_SUCCESS: "Login successful",
   LOGOUT_SUCCESS: "Logout successful",
+  ROLE_SWITCH_SUCCESS: "Role switched successfully",
 } as const;
 
 export const PAYMENT_MESSAGES = {
@@ -36,4 +43,4 @@ export const POST_MESSAGES = {
   FETCHED_DETAILS: "Post details fetched successfully",
   UPDATED: "Post updated successfully",
   DELETED: "Post deleted successfully",
-};
+} as const;

@@ -1,5 +1,5 @@
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { UserModel } from "../models/user.model";
 import { jwtConfig } from "../configs/jwt.config";
 import {
@@ -8,12 +8,11 @@ import {
   setAuthCookies,
 } from "../utils/token.util";
 import { StatusCode } from "../enums/statusCode.enum";
-import { UserRole } from "../enums/user.enum";
 import logger from "../utils/logger";
 
 interface JwtPayload {
   userId: string;
-  activeRole: UserRole;
+  activeRole: string;
 }
 
 export const refreshToken = async (
@@ -21,23 +20,26 @@ export const refreshToken = async (
   res: Response,
 ): Promise<Response> => {
   try {
-    const refreshToken = req.cookies.refreshToken;
+    const refreshTokenValue = req.cookies?.refreshToken;
 
-    if (!refreshToken) {
+    if (!refreshTokenValue) {
       logger.warn("Refresh token not found");
 
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: "No refresh token found",
+        code: "REFRESH_TOKEN_MISSING",
       });
     }
 
     const decoded = jwt.verify(
-      refreshToken,
+      refreshTokenValue,
       jwtConfig.refreshToken.secret,
     ) as JwtPayload;
 
-    const user = await UserModel.findById(decoded.userId);
+    const user = await UserModel.findById(decoded.userId)
+      .select("_id activeRole roles isBlocked deletedAt")
+      .lean();
 
     if (!user) {
       logger.warn("Refresh token used for non-existent user", {
@@ -49,6 +51,7 @@ export const refreshToken = async (
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: "User not found",
+        code: "USER_NOT_FOUND",
       });
     }
 
@@ -62,6 +65,7 @@ export const refreshToken = async (
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: "Account has been deleted",
+        code: "ACCOUNT_DELETED",
       });
     }
 
@@ -75,12 +79,13 @@ export const refreshToken = async (
       return res.status(StatusCode.FORBIDDEN).json({
         success: false,
         message: "Account has been blocked",
+        code: "USER_BLOCKED",
       });
     }
 
     const tokens = generateTokens(user._id.toString(), user.activeRole);
 
-    setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+    setAuthCookies(res, tokens.refreshToken);
 
     logger.info("Tokens refreshed", {
       userId: user._id.toString(),
@@ -90,6 +95,7 @@ export const refreshToken = async (
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Tokens refreshed successfully",
+      accessToken: tokens.accessToken,
     });
   } catch (error: unknown) {
     clearAuthCookies(res);
@@ -100,6 +106,7 @@ export const refreshToken = async (
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: "Refresh token expired",
+        code: "REFRESH_TOKEN_EXPIRED",
       });
     }
 
@@ -109,12 +116,11 @@ export const refreshToken = async (
       return res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: "Invalid refresh token",
+        code: "INVALID_REFRESH_TOKEN",
       });
     }
 
-    logger.error("Failed to refresh tokens", {
-      error,
-    });
+    logger.error("Failed to refresh tokens", { error });
 
     return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
       success: false,

@@ -17,7 +17,6 @@ export interface INutriSessionListProjection {
   };
   scheduledAt: Date;
   durationInMinutes: number;
-  maxParticipants: number;
   thumbnailUrl?: string;
   status: SessionStatus;
   registeredCount: number;

@@ -12,4 +12,7 @@ export const NUTRITIONIST_SESSION_ROUTES = {
   DELETE: (sessionId: string) => `${NUTRITIONIST_BASE}/${sessionId}`,
 
   PUBLISH: (sessionId: string) => `${NUTRITIONIST_BASE}/${sessionId}/publish`,
+
+  PARTICIPANTS: (sessionId: string) =>
+    `${NUTRITIONIST_BASE}/${sessionId}/participants`,
 } as const;

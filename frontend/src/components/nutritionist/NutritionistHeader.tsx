@@ -4,13 +4,20 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { Bell, LogOut, CheckCircle2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+
 import { userAuthService } from "@/services/user/userAuth.service";
-import type { User } from "@/types/user/user.types";
+import { logout, setAccessToken, setUser } from "@/redux/slices/authSlice";
+import type { RootState } from "@/redux/store";
 import Logo from "../common/Logo";
 
 export default function NutritionistHeader() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const router = useRouter();
+
+  const user = useSelector((state: RootState) => state.auth.user);
+  const initialized = useSelector((state: RootState) => state.auth.initialized);
+
   const [switching, setSwitching] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,44 +26,52 @@ export default function NutritionistHeader() {
   const notifRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const router = useRouter();
-
   useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const res = await userAuthService.getMe();
-        setUser(res.data);
-      } catch (err) {
-        console.error("Header fetch error:", err);
-      } finally {
-        setLoading(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (notifRef.current && !notifRef.current.contains(target)) {
+        setNotifOpen(false);
+      }
+
+      if (menuRef.current && !menuRef.current.contains(target)) {
+        setMenuOpen(false);
       }
     };
-    fetchMe();
-  }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node))
-        setNotifOpen(false);
-      if (menuRef.current && !menuRef.current.contains(e.target as Node))
-        setMenuOpen(false);
-    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const handleSwitchRole = async (role: "user" | "nutritionist") => {
-    if (!user || role === user.activeRole || switching) return;
+    if (!user || role === user.activeRole || switching) {
+      return;
+    }
+
     setSwitching(true);
+
     try {
-      await userAuthService.switchRole(role);
-      setUser((prev) => (prev ? { ...prev, activeRole: role } : prev));
+      const response = await userAuthService.switchRole(role);
+
+      if (response.accessToken) {
+        dispatch(setAccessToken(response.accessToken));
+      }
+
+      dispatch(
+        setUser({
+          ...user,
+          activeRole: role,
+        }),
+      );
+
       router.push(
         role === "user" ? "/user/dashboard" : "/nutritionist/dashboard",
       );
-    } catch (err) {
-      console.error("Role switch error:", err);
+    } catch {
+      // Keep the current role and user state if switching fails.
     } finally {
       setSwitching(false);
       setMenuOpen(false);
@@ -64,21 +79,24 @@ export default function NutritionistHeader() {
   };
 
   const handleLogout = async () => {
-    if (loggingOut) return;
+    if (loggingOut) {
+      return;
+    }
+
     setLoggingOut(true);
+
     try {
       await userAuthService.logout();
-      router.push("/login");
-    } catch (err) {
-      console.error("Logout failed:", err);
     } finally {
+      dispatch(logout());
+      router.replace("/login");
       setLoggingOut(false);
     }
   };
 
   const canSwitchToUser = user?.roles.includes("user");
 
-  if (loading) {
+  if (!initialized) {
     return (
       <header className="sticky top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-sm">
         <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -92,19 +110,20 @@ export default function NutritionistHeader() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-sm">
       <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
         <Logo href="/nutritionist/dashboard" />
 
-        {/* Right: tools + profile */}
         <div className="flex items-center gap-2">
-          {/* Notifications — wire a real service here when the endpoint exists */}
-          {/* Static below sm so the dropdown anchors to the full-width header */}
           <div className="sm:relative" ref={notifRef}>
             <button
-              onClick={() => setNotifOpen(!notifOpen)}
+              type="button"
+              onClick={() => setNotifOpen((open) => !open)}
               aria-label="Notifications"
               aria-haspopup="true"
               aria-expanded={notifOpen}
@@ -137,10 +156,10 @@ export default function NutritionistHeader() {
             )}
           </div>
 
-          {/* Profile */}
           <div className="relative" ref={menuRef}>
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              type="button"
+              onClick={() => setMenuOpen((open) => !open)}
               aria-label="Account menu"
               aria-haspopup="true"
               aria-expanded={menuOpen}
@@ -148,15 +167,16 @@ export default function NutritionistHeader() {
             >
               <div className="hidden min-w-0 text-right lg:block">
                 <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900">
-                  {user?.fullName ? `Dr. ${user.fullName}` : "Nutritionist"}
+                  {user.fullName ? `Dr. ${user.fullName}` : "Nutritionist"}
                 </p>
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">
                   Expert
                 </p>
               </div>
+
               <div className="relative h-9 w-9 shrink-0">
                 <Image
-                  src={user?.profileImage || "/images/images.jpg"}
+                  src={user.profileImage || "/images/images.jpg"}
                   fill
                   className="rounded-full border-2 border-white object-cover shadow-xs"
                   alt="Profile"
@@ -170,10 +190,10 @@ export default function NutritionistHeader() {
               <div className="absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg">
                 <div className="border-b border-slate-100 bg-emerald-50/40 px-4 py-3">
                   <p className="truncate text-sm font-semibold text-slate-900">
-                    {user?.fullName}
+                    {user.fullName}
                   </p>
                   <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
-                    {user?.email}
+                    {user.email}
                   </p>
                 </div>
 
@@ -186,15 +206,16 @@ export default function NutritionistHeader() {
                       {(["nutritionist", "user"] as const).map((role) => (
                         <button
                           key={role}
+                          type="button"
                           onClick={() => handleSwitchRole(role)}
                           disabled={switching}
                           className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                            user?.activeRole === role
+                            user.activeRole === role
                               ? "bg-emerald-700 text-white shadow-xs"
                               : "text-slate-500 hover:bg-white hover:text-slate-800"
                           }`}
                         >
-                          {user?.activeRole === role && (
+                          {user.activeRole === role && (
                             <Check className="h-3 w-3" />
                           )}
                           {role === "user" ? "User" : "Nutritionist"}
@@ -206,6 +227,7 @@ export default function NutritionistHeader() {
 
                 <div className="p-1.5">
                   <button
+                    type="button"
                     onClick={handleLogout}
                     disabled={loggingOut}
                     className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50"

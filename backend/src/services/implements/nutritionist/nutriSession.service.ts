@@ -23,67 +23,6 @@ export class NutriSessionService implements INutriSessionService {
     private readonly _nutriSessionRepository: INutriSessionRepository,
   ) {}
 
-  async createSession(
-    nutritionistId: string,
-    dto: CreateNutriSessionDTO,
-    thumbnail?: Express.Multer.File,
-  ): Promise<NutriSessionDetailsResponseDTO> {
-    const validatedDto = await validateDto(CreateNutriSessionDTO, dto);
-
-    if (
-      validatedDto.pricing.type === "free" &&
-      validatedDto.pricing.amount !== 0
-    ) {
-      throw new CustomError(
-        "Free session price must be 0",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (
-      validatedDto.pricing.type === "paid" &&
-      validatedDto.pricing.amount <= 0
-    ) {
-      throw new CustomError(
-        "Paid session price must be greater than 0",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    let thumbnailUrl: string | undefined;
-
-    if (thumbnail) {
-      const uploadRes = await uploadToCloudinary(thumbnail, "nutriwise/sessions");
-      thumbnailUrl = uploadRes.secureUrl;
-    }
-
-    const roomId = `session_${uuidv4()}`;
-
-    const session = await this._nutriSessionRepository.create(
-      NutriSessionPersistenceMapper.toCreateModel(
-        nutritionistId,
-        validatedDto,
-        thumbnailUrl,
-        roomId,
-      ),
-    );
-
-    const sessionDetails =
-      await this._nutriSessionRepository.findSessionDetails(
-        session._id.toString(),
-        nutritionistId,
-      );
-
-    if (!sessionDetails) {
-      throw new CustomError(
-        "Failed to retrieve created session",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    return NutriSessionMapper.toDetailsResponse(sessionDetails);
-  }
-
   async getSessions(
     nutritionistId: string,
     query: GetNutriSessionsQueryDTO,
@@ -92,11 +31,9 @@ export class NutriSessionService implements INutriSessionService {
       nutritionistId,
       query,
     );
-
     const items: NutriSessionListResponseDTO[] = result.items.map((item) =>
       NutriSessionMapper.toListResponse(item),
     );
-
     return new InfiniteScrollResponseDTO(
       items,
       result.nextCursor,
@@ -112,49 +49,49 @@ export class NutriSessionService implements INutriSessionService {
       sessionId,
       nutritionistId,
     );
-
     if (!session) {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
-
     return NutriSessionMapper.toDetailsResponse(session);
+  }
+
+  async createSession(
+    nutritionistId: string,
+    dto: CreateNutriSessionDTO,
+    thumbnail?: Express.Multer.File,
+  ): Promise<void> {
+    const validatedDto = await validateDto(CreateNutriSessionDTO, dto);
+    let thumbnailUrl: string | undefined;
+    if (thumbnail) {
+      const uploadRes = await uploadToCloudinary(
+        thumbnail,
+        "nutriwise/sessions",
+      );
+      thumbnailUrl = uploadRes.secureUrl;
+    }
+    const roomId = `session_${uuidv4()}`;
+    await this._nutriSessionRepository.create(
+      NutriSessionPersistenceMapper.toCreateModel(
+        nutritionistId,
+        validatedDto,
+        thumbnailUrl,
+        roomId,
+      ),
+    );
   }
 
   async updateSession(
     sessionId: string,
+    nutritionistId: string,
     dto: UpdateNutriSessionDTO,
     thumbnail?: Express.Multer.File,
-  ): Promise<NutriSessionDetailsResponseDTO> {
+  ): Promise<void> {
     const validatedDto = await validateDto(UpdateNutriSessionDTO, dto);
-
-    if (validatedDto.pricing) {
-      if (
-        validatedDto.pricing.type === "free" &&
-        validatedDto.pricing.amount !== 0
-      ) {
-        throw new CustomError(
-          "Free session price must be 0",
-          StatusCode.BAD_REQUEST,
-        );
-      }
-
-      if (
-        validatedDto.pricing.type === "paid" &&
-        validatedDto.pricing.amount <= 0
-      ) {
-        throw new CustomError(
-          "Paid session price must be greater than 0",
-          StatusCode.BAD_REQUEST,
-        );
-      }
-    }
-
     const updateData: UpdateNutriSessionDTO & {
       thumbnailUrl?: string;
     } = {
       ...validatedDto,
     };
-
     if (thumbnail) {
       const uploadRes = await uploadToCloudinary(
         thumbnail,
@@ -162,36 +99,28 @@ export class NutriSessionService implements INutriSessionService {
       );
       updateData.thumbnailUrl = uploadRes.secureUrl;
     }
-
-    const session = await this._nutriSessionRepository.updateById(sessionId, {
-      $set: updateData,
-    });
-
+    const session = await this._nutriSessionRepository.updateOne(
+      {
+        _id: sessionId,
+        nutritionistId,
+      },
+      {
+        $set: updateData,
+      },
+    );
     if (!session) {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
-
-    const sessionDetails =
-      await this._nutriSessionRepository.findSessionDetails(
-        sessionId,
-        session.nutritionistId.toString(),
-      );
-
-    if (!sessionDetails) {
-      throw new CustomError(
-        "Failed to retrieve updated session",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    return NutriSessionMapper.toDetailsResponse(sessionDetails);
   }
 
-  async deleteSession(sessionId: string): Promise<void> {
+  async deleteSession(
+    sessionId: string,
+    nutritionistId: string,
+  ): Promise<void> {
     const deleted = await this._nutriSessionRepository.deleteOne({
       _id: sessionId,
+      nutritionistId,
     });
-
     if (!deleted) {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
@@ -200,40 +129,33 @@ export class NutriSessionService implements INutriSessionService {
   async publishSession(
     sessionId: string,
     nutritionistId: string,
-  ): Promise<NutriSessionDetailsResponseDTO> {
+  ): Promise<void> {
     const session = await this._nutriSessionRepository.findById(sessionId);
-
     if (!session) {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
-
     if (session.nutritionistId.toString() !== nutritionistId) {
       throw new CustomError(
         "You are not authorized to publish this session",
         StatusCode.FORBIDDEN,
       );
     }
-
     if (session.status !== "draft") {
       throw new CustomError(
         "Only draft sessions can be published",
         StatusCode.BAD_REQUEST,
       );
     }
-
     if (session.scheduledAt <= new Date()) {
       throw new CustomError(
         "Session scheduled time must be in the future",
         StatusCode.BAD_REQUEST,
       );
     }
-
     const updatedSession = await this._nutriSessionRepository.updateById(
       sessionId,
       {
-        $set: {
-          status: "scheduled",
-        },
+        $set: { status: "scheduled" },
       },
     );
 
@@ -243,20 +165,5 @@ export class NutriSessionService implements INutriSessionService {
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
-
-    const sessionDetails =
-      await this._nutriSessionRepository.findSessionDetails(
-        sessionId,
-        nutritionistId,
-      );
-
-    if (!sessionDetails) {
-      throw new CustomError(
-        "Failed to retrieve published session",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    return NutriSessionMapper.toDetailsResponse(sessionDetails);
   }
 }

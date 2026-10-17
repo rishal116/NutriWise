@@ -1,19 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-
+import type { Request, Response, NextFunction } from "express";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
-
 import { jwtConfig } from "../configs/jwt.config";
-
-import { StatusCode } from "../enums/statusCode.enum";
-
-import { AUTH_MESSAGES } from "../constants";
-
 import { UserModel } from "../models/user.model";
-
 import { UserRole } from "../enums/user.enum";
-
-import { clearAuthCookies } from "../utils/token.util";
-
 import logger from "../utils/logger";
 
 interface JwtPayload {
@@ -25,12 +14,13 @@ export const optionalAuthMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): Promise<Response | void> => {
-  const token =
-    req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+): Promise<void> => {
+  const authorization = req.headers.authorization;
+  const [scheme, token] = authorization?.split(" ") ?? [];
 
-  if (!token) {
-    return next();
+  if (scheme !== "Bearer" || !token) {
+    next();
+    return;
   }
 
   try {
@@ -39,36 +29,24 @@ export const optionalAuthMiddleware = async (
       jwtConfig.accessToken.secret,
     ) as JwtPayload;
 
-    const user = await UserModel.findById(decoded.userId);
+    const user = await UserModel.findById(decoded.userId)
+      .select("_id activeRole roles isBlocked")
+      .lean();
 
-    if (!user) {
-      return next();
-    }
-
-    if (user.isBlocked) {
-      clearAuthCookies(res);
-
-      return res.status(StatusCode.FORBIDDEN).json({
-        success: false,
-        message: AUTH_MESSAGES.USER_BLOCKED,
-        code: "USER_BLOCKED",
-      });
+    if (!user || user.isBlocked) {
+      next();
+      return;
     }
 
     if (decoded.activeRole !== user.activeRole) {
-      logger.warn("User role changed. Clearing authentication.", {
+      logger.warn("Optional authentication role mismatch.", {
         userId: user._id.toString(),
         tokenRole: decoded.activeRole,
         currentRole: user.activeRole,
       });
 
-      clearAuthCookies(res);
-
-      return res.status(StatusCode.UNAUTHORIZED).json({
-        success: false,
-        message: AUTH_MESSAGES.INVALID_ROLE,
-        code: "INVALID_ROLE",
-      });
+      next();
+      return;
     }
 
     req.user = {
@@ -78,19 +56,19 @@ export const optionalAuthMiddleware = async (
     };
 
     next();
-  } catch (error) {
-    if (error instanceof TokenExpiredError) {
-      return next();
-    }
-
-    if (error instanceof JsonWebTokenError) {
-      return next();
+  } catch (error: unknown) {
+    if (
+      error instanceof TokenExpiredError ||
+      error instanceof JsonWebTokenError
+    ) {
+      next();
+      return;
     }
 
     logger.error("Optional authentication middleware failed", {
       error,
     });
 
-    return next();
+    next();
   }
 };

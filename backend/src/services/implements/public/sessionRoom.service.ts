@@ -1,28 +1,21 @@
+import { randomUUID } from "node:crypto";
 import { inject, injectable } from "inversify";
-
 import { Types } from "mongoose";
 
 import { TYPES } from "../../../types/types";
-
-import { ISessionRoomService } from "../../interfaces/public/ISessionRoomService";
-
-import { ISessionRepository } from "../../../repositories/interfaces/public/ISessionRepository";
-
-import { ISessionRegistrationRepository } from "../../../repositories/interfaces/public/ISessionRegistrationRepository";
-
-import { ILiveKitService } from "../../interfaces/livekit/ILiveKitService";
-
-import { SessionRoomJoinResponseDTO } from "../../../dtos/public/session/session-room-join-response.dto";
-
+import type { ISessionRoomService } from "../../interfaces/public/ISessionRoomService";
+import type { IPublicSessionRepository } from "../../../repositories/interfaces/public/IPublicSessionRepository";
+import type { ISessionRegistrationRepository } from "../../../repositories/interfaces/public/ISessionRegistrationRepository";
+import type { ILiveKitService } from "../../interfaces/livekit/ILiveKitService";
+import type { SessionRoomJoinResponseDTO } from "../../../dtos/public/session/session-room-join-response.dto";
 import { CustomError } from "../../../utils/customError";
-
 import { StatusCode } from "../../../enums/statusCode.enum";
 
 @injectable()
 export class SessionRoomService implements ISessionRoomService {
   constructor(
-    @inject(TYPES.ISessionRepository)
-    private readonly _sessionRepository: ISessionRepository,
+    @inject(TYPES.IPublicSessionRepository)
+    private readonly _sessionRepository: IPublicSessionRepository,
 
     @inject(TYPES.ISessionRegistrationRepository)
     private readonly _sessionRegistrationRepository: ISessionRegistrationRepository,
@@ -46,84 +39,156 @@ export class SessionRoomService implements ISessionRoomService {
     const userObjectId = new Types.ObjectId(userId);
     const sessionObjectId = new Types.ObjectId(sessionId);
 
-    // 1. Find session
     const session = await this._sessionRepository.findById(sessionObjectId);
 
     if (!session) {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
 
-    // 2. Find user's registration
-    const registration =
-      await this._sessionRegistrationRepository.findBySessionAndUser(
-        sessionObjectId,
-        userObjectId,
-      );
+    const isSessionOwner =
+      session.nutritionistId.toString() === userObjectId.toString();
 
-    if (!registration) {
-      throw new CustomError(
-        "You are not registered for this session",
-        StatusCode.NOT_FOUND,
-      );
+    if (!isSessionOwner) {
+      const registration =
+        await this._sessionRegistrationRepository.findBySessionAndUser(
+          sessionObjectId,
+          userObjectId,
+        );
+
+      if (!registration) {
+        throw new CustomError(
+          "You are not registered for this session",
+          StatusCode.FORBIDDEN,
+        );
+      }
+
+      if (registration.status !== "registered") {
+        throw new CustomError(
+          "Your registration is not active",
+          StatusCode.FORBIDDEN,
+        );
+      }
+
+      if (
+        session.pricing.type === "paid" &&
+        registration.paymentStatus !== "paid"
+      ) {
+        throw new CustomError(
+          "Payment is required before joining this session",
+          StatusCode.FORBIDDEN,
+        );
+      }
     }
-
-    // 3. Registration must be active
-    if (registration.status !== "registered") {
-      throw new CustomError(
-        "Your registration is not active",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    // 4. Paid sessions must have successful payment
-    if (
-      session.pricing.type === "paid" &&
-      registration.paymentStatus !== "paid"
-    ) {
-      throw new CustomError(
-        "Payment is required before joining this session",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    // 5. Determine participant permissions
-
-    const canPublish = true;
-    const canSubscribe = true;
-
-    // 6. Generate LiveKit token
-    const token = await this._liveKitService.generateParticipantToken({
-      identity: `user:${userId}`,
-      roomId: session.roomId,
-      canPublish,
-      canSubscribe,
-    });
 
     const serverUrl = process.env.LIVEKIT_URL;
 
     if (!serverUrl) {
-      throw new Error("LIVEKIT_URL is not configured");
+      throw new CustomError(
+        "LiveKit server URL is not configured",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
     }
+
+    const identity = `${isSessionOwner ? "nutritionist" : "user"}:${userId}`;
+    const requestId = randomUUID();
+
+    console.info("[LiveKit] Generating participant token", {
+      requestId,
+      sessionId,
+      userId,
+      identity,
+      roomId: session.roomId,
+      role: isSessionOwner ? "host" : "participant",
+    });
+
+    const canPublish = true;
+    const canSubscribe = true;
+
+    const token = await this._liveKitService.generateParticipantToken({
+      identity,
+      roomId: session.roomId,
+      canPublish,
+      canSubscribe,
+    });
 
     return {
       roomId: session.roomId,
       token,
       serverUrl,
       canPublish,
+      role: isSessionOwner ? "host" : "participant",
     };
   }
 
-  private canUserPublish(sessionType: string): boolean {
-    switch (sessionType) {
-      case "workshop":
-      case "group_consultation":
-        return true;
+  async startSession(userId: string, sessionId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(sessionId)) {
+      throw new CustomError(
+        "Invalid user or session ID",
+        StatusCode.BAD_REQUEST,
+      );
+    }
 
-      case "webinar":
-      case "seminar":
-      case "qna":
-      default:
-        return false;
+    const sessionObjectId = new Types.ObjectId(sessionId);
+    const session = await this._sessionRepository.findById(sessionObjectId);
+
+    if (!session) {
+      throw new CustomError("Session not found", StatusCode.NOT_FOUND);
+    }
+
+    if (session.nutritionistId.toString() !== userId) {
+      throw new CustomError(
+        "Only the session nutritionist can start this session",
+        StatusCode.FORBIDDEN,
+      );
+    }
+
+    const updated = await this._sessionRepository.updateSessionStatus(
+      sessionObjectId,
+      "scheduled",
+      "live",
+    );
+
+    if (!updated) {
+      throw new CustomError(
+        "Session is no longer scheduled or its status has changed",
+        StatusCode.CONFLICT,
+      );
+    }
+  }
+
+  async endSession(userId: string, sessionId: string): Promise<void> {
+    if (!Types.ObjectId.isValid(userId) || !Types.ObjectId.isValid(sessionId)) {
+      throw new CustomError(
+        "Invalid user or session ID",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const sessionObjectId = new Types.ObjectId(sessionId);
+    const session = await this._sessionRepository.findById(sessionObjectId);
+
+    if (!session) {
+      throw new CustomError("Session not found", StatusCode.NOT_FOUND);
+    }
+
+    if (session.nutritionistId.toString() !== userId) {
+      throw new CustomError(
+        "Only the session nutritionist can end this session",
+        StatusCode.FORBIDDEN,
+      );
+    }
+
+    const updated = await this._sessionRepository.updateSessionStatus(
+      sessionObjectId,
+      "live",
+      "completed",
+    );
+
+    if (!updated) {
+      throw new CustomError(
+        "Session is no longer live or its status has changed",
+        StatusCode.CONFLICT,
+      );
     }
   }
 }

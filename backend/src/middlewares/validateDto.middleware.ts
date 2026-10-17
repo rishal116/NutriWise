@@ -1,11 +1,7 @@
 import { ClassConstructor, plainToInstance } from "class-transformer";
-
 import { validate } from "class-validator";
-
 import { Request, Response, NextFunction } from "express";
-
 import { CustomError } from "../utils/customError";
-
 import { StatusCode } from "../enums/statusCode.enum";
 
 export const validateDtoMiddleware = <T extends object>(

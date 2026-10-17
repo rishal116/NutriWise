@@ -3,4 +3,5 @@ export interface SessionRoomJoinResponseDTO {
   token: string;
   serverUrl: string;
   canPublish: boolean;
+  role: "host" | "participant";
 }

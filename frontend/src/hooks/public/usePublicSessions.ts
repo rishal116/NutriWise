@@ -18,8 +18,8 @@ import type {
 } from "@/types/public/session/session.types";
 
 import { publicSessionService } from "@/services/public/publicSession.service";
-import { getErrorMessage } from "@/utils/getErrorMessage";
 import { PUBLIC_SESSION_LIMIT } from "@/constants/public/session.constants";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 export function usePublicSessions() {
   const [sessions, setSessions] = useState<PublicSessionListItemResponseDTO[]>(
@@ -32,7 +32,7 @@ export function usePublicSessions() {
   const [pricingType, setPricingType] = useState<
     SessionPricingType | undefined
   >();
-  const [sortBy, setSortBy] = useState<PublicSessionSortOption>("upcoming");
+  const [sortBy, setSortBy] = useState<PublicSessionSortOption>("all");
 
   const [hasMore, setHasMore] = useState(true);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -53,9 +53,9 @@ export function usePublicSessions() {
     let cancelled = false;
 
     fetchingRef.current = true;
-    paginationErrorRef.current = false;
     cursorRef.current = undefined;
     hasMoreRef.current = true;
+    paginationErrorRef.current = false;
 
     setSessions([]);
     setHasMore(true);
@@ -82,8 +82,13 @@ export function usePublicSessions() {
 
         const data = response.data;
 
+        if (!data) {
+          throw new Error("Session data was not returned by the server.");
+        }
+
         setSessions(data.items);
         setHasMore(data.hasMore);
+
         hasMoreRef.current = data.hasMore;
         cursorRef.current = data.nextCursor ?? undefined;
       } catch (error) {
@@ -93,12 +98,9 @@ export function usePublicSessions() {
 
         setInitialError(getErrorMessage(error));
       } finally {
-        if (requestId === requestIdRef.current) {
+        if (!cancelled && requestId === requestIdRef.current) {
           fetchingRef.current = false;
-
-          if (!cancelled) {
-            setInitialLoading(false);
-          }
+          setInitialLoading(false);
         }
       }
     };
@@ -145,19 +147,38 @@ export function usePublicSessions() {
 
       const data = response.data;
 
+      if (!data) {
+        throw new Error("Session data was not returned by the server.");
+      }
+
+      const nextCursor = data.nextCursor ?? undefined;
+
+      if (data.hasMore && (!nextCursor || nextCursor === cursor)) {
+        paginationErrorRef.current = true;
+        setPaginationError(
+          "Unable to continue loading sessions. Please try again later.",
+        );
+        return;
+      }
+
       setSessions((previous) => {
         const existingIds = new Set(
           previous.map((session) => session.sessionId),
         );
 
-        const newSessions = data.items.filter(
-          (session) => !existingIds.has(session.sessionId),
-        );
+        const newSessions = data.items.filter((session) => {
+          if (existingIds.has(session.sessionId)) {
+            return false;
+          }
+
+          existingIds.add(session.sessionId);
+          return true;
+        });
 
         return [...previous, ...newSessions];
       });
 
-      cursorRef.current = data.nextCursor ?? undefined;
+      cursorRef.current = nextCursor;
       hasMoreRef.current = data.hasMore;
       setHasMore(data.hasMore);
     } catch (error) {
@@ -190,7 +211,7 @@ export function usePublicSessions() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry?.isIntersecting) {
           void loadMore();
         }
       },
@@ -213,27 +234,27 @@ export function usePublicSessions() {
     sessions.length,
   ]);
 
-  const submitSearch = (value: string) => {
+  const submitSearch = useCallback((value: string) => {
     setSearch(value.trim());
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSearchInput("");
     setSearch("");
     setType(undefined);
     setPricingType(undefined);
-    setSortBy("upcoming");
-  };
+    setSortBy("all");
+  }, []);
 
-  const retryInitialLoad = () => {
+  const retryInitialLoad = useCallback(() => {
     setRetryKey((previous) => previous + 1);
-  };
+  }, []);
 
-  const retryPagination = () => {
+  const retryPagination = useCallback(() => {
     paginationErrorRef.current = false;
     setPaginationError(null);
     void loadMore();
-  };
+  }, [loadMore]);
 
   return {
     sessions,

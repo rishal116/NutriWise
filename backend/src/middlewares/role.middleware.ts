@@ -7,8 +7,6 @@ import { AUTH_MESSAGES } from "../constants";
 export const authorize =
   (...allowedRoles: UserRole[]) =>
   (req: Request, res: Response, next: NextFunction) => {
-    console.log("Current Role:", req.user?.activeRole);
-    console.log("Allowed Roles:", allowedRoles);
 
     if (!req.user) {
       return next(

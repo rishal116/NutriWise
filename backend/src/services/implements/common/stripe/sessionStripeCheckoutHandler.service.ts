@@ -8,7 +8,7 @@ import { Currency } from "../../../../constants/currency.constants";
 
 import { ISessionStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
 
-import { ISessionRepository } from "../../../../repositories/interfaces/public/ISessionRepository";
+import { IPublicSessionRepository } from "../../../../repositories/interfaces/public/IPublicSessionRepository";
 
 import { ISessionRegistrationRepository } from "../../../../repositories/interfaces/public/ISessionRegistrationRepository";
 
@@ -19,8 +19,8 @@ import { IWalletRepository } from "../../../../repositories/interfaces/common/IW
 @injectable()
 export class SessionStripeCheckoutHandlerService implements ISessionStripeCheckoutHandlerService {
   constructor(
-    @inject(TYPES.ISessionRepository)
-    private readonly _sessionRepository: ISessionRepository,
+    @inject(TYPES.IPublicSessionRepository)
+    private readonly _sessionRepository: IPublicSessionRepository,
 
     @inject(TYPES.ISessionRegistrationRepository)
     private readonly _sessionRegistrationRepository: ISessionRegistrationRepository,

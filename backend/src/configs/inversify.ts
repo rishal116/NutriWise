@@ -136,7 +136,7 @@ import { SessionRegistrationService } from "../services/implements/public/sessio
 // ---------- Repositories ----------
 
 import { ResourceRepository } from "../repositories/implements/public/resource.repository";
-import { SessionRepository } from "../repositories/implements/public/session.repository";
+import { PublicSessionRepository } from "../repositories/implements/public/publicSession.repository";
 import { SessionRegistrationRepository } from "../repositories/implements/public/sessionRegistration.repository";
 
 // ---------- Interfaces ----------
@@ -153,7 +153,7 @@ import { IPublicSessionService } from "../services/interfaces/public/IPublicSess
 // Repositories
 
 import { IResourceRepository } from "../repositories/interfaces/public/IResourceRepository";
-import { ISessionRepository } from "../repositories/interfaces/public/ISessionRepository";
+import { IPublicSessionRepository } from "../repositories/interfaces/public/IPublicSessionRepository";
 
 // ADMIN MODULE
 
@@ -448,7 +448,7 @@ import { INutriDashboardController } from "../controllers/interfaces/nutritionis
 import { NutriDashboardController } from "../controllers/implementations/nutritionist/nutriDashboard.controller";
 import { INutriDashboardService } from "../services/interfaces/nutritionist/INutriDashboardService";
 import { NutriDashboardService } from "../services/implements/nutritionist/nutriDashboard.service";
-import { NutritionistDashboardRepository } from "../services/implements/nutritionist/nutriDashboard.repository";
+import { NutritionistDashboardRepository } from "../repositories/implements/nutritionist/nutriDashboard.repository";
 import { ISessionStripeCheckoutHandlerService } from "../services/interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
 import { SessionStripeCheckoutHandlerService } from "../services/implements/common/stripe/sessionStripeCheckoutHandler.service";
 import { IPublicPostController } from "../controllers/interfaces/public/IPublicPostController";
@@ -485,6 +485,12 @@ import { INutriCredentialsController } from "../controllers/interfaces/nutrition
 import { NutritionistCredentialsController } from "../controllers/implementations/nutritionist/nutriCredentials.controller";
 import { INutritionistCredentialsService } from "../services/interfaces/nutritionist/INutriCredentialsService";
 import { NutritionistCredentialsService } from "../services/implements/nutritionist/nutriCredentials.service";
+import { INutriSessionRegistrationController } from "../controllers/interfaces/nutritionist/INutriSessionRegistrationController";
+import { NutriSessionRegistrationController } from "../controllers/implementations/nutritionist/nutriSessionRegistration.controller";
+import { INutriSessionRegistrationService } from "../services/interfaces/nutritionist/INutriSessionRegistrationService";
+import { NutriSessionRegistrationService } from "../services/implements/nutritionist/nutriRegistration.service";
+import { INutriSessionRegistrationRepository } from "../repositories/interfaces/nutritionist/INutriSessionRegistrationRepository";
+import { NutriSessionRegistrationRepository } from "../repositories/implements/nutritionist/nutriSessionRegistration.repository";
 
 const container = new Container();
 
@@ -772,8 +778,8 @@ container
   .to(ResourceRepository);
 
 container
-  .bind<ISessionRepository>(TYPES.ISessionRepository)
-  .to(SessionRepository);
+  .bind<IPublicSessionRepository>(TYPES.IPublicSessionRepository)
+  .to(PublicSessionRepository);
 
 container
   .bind<ISessionRegistrationRepository>(TYPES.ISessionRegistrationRepository)
@@ -1167,5 +1173,23 @@ container
 container
   .bind<INutritionistCredentialsService>(TYPES.INutriCredentialsService)
   .to(NutritionistCredentialsService);
+
+container
+  .bind<INutriSessionRegistrationController>(
+    TYPES.INutriSessionRegistrationController,
+  )
+  .to(NutriSessionRegistrationController);
+
+container
+  .bind<INutriSessionRegistrationService>(
+    TYPES.INutriSessionRegistrationService,
+  )
+  .to(NutriSessionRegistrationService);
+
+container
+  .bind<INutriSessionRegistrationRepository>(
+    TYPES.INutriSessionRegistrationRepository,
+  )
+  .to(NutriSessionRegistrationRepository);
 
 export { container };

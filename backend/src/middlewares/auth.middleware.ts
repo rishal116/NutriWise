@@ -1,11 +1,11 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+
 import { jwtConfig } from "../configs/jwt.config";
 import { StatusCode } from "../enums/statusCode.enum";
 import { AUTH_MESSAGES } from "../constants";
 import { UserModel } from "../models/user.model";
 import { UserRole } from "../enums/user.enum";
-import { clearAuthCookies } from "../utils/token.util";
 import logger from "../utils/logger";
 
 interface JwtPayload {
@@ -17,18 +17,19 @@ export const authMiddleware = async (
   req: Request,
   res: Response,
   next: NextFunction,
-): Promise<Response | void> => {
-  const token =
-    req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+): Promise<void> => {
+  const authorization = req.headers.authorization;
+  const [scheme, token] = authorization?.split(" ") ?? [];
 
-  if (!token) {
+  if (scheme !== "Bearer" || !token) {
     logger.warn(AUTH_MESSAGES.ACCESS_TOKEN_MISSING);
 
-    return res.status(StatusCode.UNAUTHORIZED).json({
+    res.status(StatusCode.UNAUTHORIZED).json({
       success: false,
       message: AUTH_MESSAGES.ACCESS_TOKEN_MISSING,
       code: "ACCESS_TOKEN_MISSING",
     });
+    return;
   }
 
   try {
@@ -37,38 +38,41 @@ export const authMiddleware = async (
       jwtConfig.accessToken.secret,
     ) as JwtPayload;
 
-    const user = await UserModel.findById(decoded.userId);
+    const user = await UserModel.findById(decoded.userId)
+      .select("_id activeRole roles isBlocked")
+      .lean();
 
     if (!user) {
-      return res.status(StatusCode.UNAUTHORIZED).json({
+      res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.USER_NOT_FOUND,
         code: "USER_NOT_FOUND",
       });
+      return;
     }
 
     if (user.isBlocked) {
-      return res.status(StatusCode.FORBIDDEN).json({
+      res.status(StatusCode.FORBIDDEN).json({
         success: false,
         message: AUTH_MESSAGES.USER_BLOCKED,
         code: "USER_BLOCKED",
       });
+      return;
     }
 
     if (decoded.activeRole !== user.activeRole) {
-      logger.warn("User role changed. Clearing authentication.", {
+      logger.warn("User role changed.", {
         userId: user._id.toString(),
         tokenRole: decoded.activeRole,
         currentRole: user.activeRole,
       });
 
-      clearAuthCookies(res);
-
-      return res.status(StatusCode.UNAUTHORIZED).json({
+      res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.INVALID_ROLE,
         code: "INVALID_ROLE",
       });
+      return;
     }
 
     req.user = {
@@ -78,26 +82,28 @@ export const authMiddleware = async (
     };
 
     next();
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof TokenExpiredError) {
-      return res.status(StatusCode.UNAUTHORIZED).json({
+      res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.TOKEN_EXPIRED,
         code: "ACCESS_TOKEN_EXPIRED",
       });
+      return;
     }
 
     if (error instanceof JsonWebTokenError) {
-      return res.status(StatusCode.UNAUTHORIZED).json({
+      res.status(StatusCode.UNAUTHORIZED).json({
         success: false,
         message: AUTH_MESSAGES.INVALID_TOKEN,
         code: "INVALID_ACCESS_TOKEN",
       });
+      return;
     }
 
     logger.error("Authentication middleware failed", { error });
 
-    return res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCode.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Internal server error",
     });

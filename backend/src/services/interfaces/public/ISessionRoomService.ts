@@ -5,4 +5,8 @@ export interface ISessionRoomService {
     userId: string,
     sessionId: string,
   ): Promise<SessionRoomJoinResponseDTO>;
+
+  startSession(userId: string, sessionId: string): Promise<void>;
+
+  endSession(userId: string, sessionId: string): Promise<void>;
 }

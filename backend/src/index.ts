@@ -1,7 +1,5 @@
 import dotenv from "dotenv";
-import https, { Server as HTTPSServer } from "https";
-import fs from "node:fs";
-import path from "node:path";
+import http, { Server as HTTPServer } from "node:http";
 import app from "./app";
 import connectDB from "./configs/db";
 import { initializeSocket } from "./infrastructures/socket/socket.server";
@@ -13,13 +11,6 @@ dotenv.config();
 
 const PORT = Number(process.env.PORT) || 5000;
 
-const certsPath = path.resolve(process.cwd(), "../certs");
-
-const httpsOptions = {
-  key: fs.readFileSync(path.join(certsPath, "localhost-key.pem")),
-  cert: fs.readFileSync(path.join(certsPath, "localhost.pem")),
-};
-
 startCrons();
 
 app.use(
@@ -30,10 +21,10 @@ app.use(
 
 connectDB();
 
-const server: HTTPSServer = https.createServer(httpsOptions, app);
+const server: HTTPServer = http.createServer(app);
 
 initializeSocket(server);
 
 server.listen(PORT, () => {
-  console.log(`HTTPS server running at https://localhost:${PORT}`);
+  console.log(`HTTP server running at http://localhost:${PORT}`);
 });

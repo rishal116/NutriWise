@@ -1,33 +1,22 @@
 import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
-
 import { TYPES } from "../../../types/types";
-
 import { ISessionRegistrationService } from "../../interfaces/public/ISessionRegistrationService";
-
-import { ISessionRepository } from "../../../repositories/interfaces/public/ISessionRepository";
-
+import { IPublicSessionRepository } from "../../../repositories/interfaces/public/IPublicSessionRepository";
 import { ISessionRegistrationRepository } from "../../../repositories/interfaces/public/ISessionRegistrationRepository";
-
 import { SessionRegistrationResponseDTO } from "../../../dtos/public/session-registration/session-registration-response.dto";
-
 import { SessionRegistrationCheckoutResponseDTO } from "../../../dtos/public/session-registration/session-registration-checkout-response.dto";
-
 import { SessionRegistrationMapper } from "../../../mappers/public/session-registration/session-registration.mapper";
-
 import { CustomError } from "../../../utils/customError";
-
 import { StatusCode } from "../../../enums/statusCode.enum";
-
 import logger from "../../../utils/logger";
-
 import { ISessionCheckoutService } from "../../interfaces/public/ISessionCheckoutService";
 
 @injectable()
 export class SessionRegistrationService implements ISessionRegistrationService {
   constructor(
-    @inject(TYPES.ISessionRepository)
-    private readonly _sessionRepository: ISessionRepository,
+    @inject(TYPES.IPublicSessionRepository)
+    private readonly _sessionRepository: IPublicSessionRepository,
 
     @inject(TYPES.ISessionRegistrationRepository)
     private readonly _sessionRegistrationRepository: ISessionRegistrationRepository,
@@ -59,6 +48,13 @@ export class SessionRegistrationService implements ISessionRegistrationService {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
 
+    if (session.nutritionistId.toString() === userId) {
+      throw new CustomError(
+        "You are the host of this session and do not need to register",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
     if (session.status !== "scheduled" && session.status !== "live") {
       throw new CustomError(
         "Session is not available for registration",
@@ -72,13 +68,10 @@ export class SessionRegistrationService implements ISessionRegistrationService {
         userObjectId,
       );
 
-      console.log(existingRegistration);
-      
-
     if (existingRegistration?.status === "registered") {
       throw new CustomError(
         "You are already registered for this session",
-        StatusCode.BAD_REQUEST,
+        StatusCode.CONFLICT,
       );
     }
 
@@ -113,9 +106,7 @@ export class SessionRegistrationService implements ISessionRegistrationService {
         sessionId,
       });
 
-      return {
-        checkoutUrl,
-      };
+      return { checkoutUrl };
     }
 
     if (existingRegistration?.status === "cancelled") {
@@ -160,34 +151,6 @@ export class SessionRegistrationService implements ISessionRegistrationService {
       sessionId,
       registrationId: registration._id.toString(),
     });
-
-    return SessionRegistrationMapper.toResponse(registration);
-  }
-
-  async getMySessionRegistration(
-    userId: string,
-    sessionId: string,
-  ): Promise<SessionRegistrationResponseDTO> {
-    if (!Types.ObjectId.isValid(userId)) {
-      throw new CustomError("Invalid user ID", StatusCode.BAD_REQUEST);
-    }
-
-    if (!Types.ObjectId.isValid(sessionId)) {
-      throw new CustomError("Invalid session ID", StatusCode.BAD_REQUEST);
-    }
-
-    const registration =
-      await this._sessionRegistrationRepository.findBySessionAndUser(
-        new Types.ObjectId(sessionId),
-        new Types.ObjectId(userId),
-      );
-
-    if (!registration) {
-      throw new CustomError(
-        "Session registration not found",
-        StatusCode.NOT_FOUND,
-      );
-    }
 
     return SessionRegistrationMapper.toResponse(registration);
   }

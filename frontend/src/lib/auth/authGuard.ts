@@ -9,7 +9,6 @@ export interface PendingAction {
 }
 
 const PENDING_ACTION_STORAGE_KEY = "nutriwise_pending_action";
-
 const PENDING_ACTION_TTL_MS = 15 * 60 * 1000;
 
 const AUTH_PAGES = [
@@ -34,27 +33,13 @@ export function getCurrentUrl(): string {
   return window.location.pathname + window.location.search;
 }
 
-export function savePendingAction(
-  actionKey: string,
-  payload?: unknown,
-  targetUrl?: string,
-): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const pending: PendingAction = {
-    actionKey,
-    payload,
-    targetUrl: targetUrl || getCurrentUrl(),
-    timestamp: Date.now(),
-  };
-
-  try {
-    sessionStorage.setItem(PENDING_ACTION_STORAGE_KEY, JSON.stringify(pending));
-  } catch (error) {
-    console.error("Failed to save pending action to sessionStorage", error);
-  }
+function isSafeInternalUrl(url: string): boolean {
+  return (
+    url.startsWith("/") &&
+    !url.startsWith("//") &&
+    !url.includes("\\") &&
+    !/[\u0000-\u001f]/.test(url)
+  );
 }
 
 export function getAndClearPendingAction(): PendingAction | null {
@@ -71,16 +56,11 @@ export function getAndClearPendingAction(): PendingAction | null {
 
     sessionStorage.removeItem(PENDING_ACTION_STORAGE_KEY);
 
-    const pending: PendingAction = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
 
-    if (Date.now() - pending.timestamp > PENDING_ACTION_TTL_MS) {
-      return null;
-    }
-
-    return pending;
-  } catch (error) {
-    console.error("Failed to parse pending action from sessionStorage", error);
-
+    return isPendingAction(parsed) ? parsed : null;
+  } catch (error: unknown) {
+    console.error("Failed to read pending action from sessionStorage", error);
     return null;
   }
 }
@@ -90,21 +70,65 @@ export function redirectToLogin(redirectUrl?: string): void {
     return;
   }
 
-  const currentPath = window.location.pathname;
-
-  if (isAuthPage(currentPath)) {
+  if (isAuthPage(window.location.pathname)) {
     return;
   }
 
   const target = redirectUrl || getCurrentUrl();
+  const safeTarget = isSafeInternalUrl(target) ? target : "/";
 
-  const loginUrl = `/login?redirect=${encodeURIComponent(target)}`;
-
-  window.location.href = loginUrl;
+  window.location.href = `/login?redirect=${encodeURIComponent(safeTarget)}`;
 }
 
 export function handleUnauthorizedResponse(): void {
   store.dispatch(logout());
-
   redirectToLogin();
+}
+
+function isPendingAction(value: unknown): value is PendingAction {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const action = value as Record<string, unknown>;
+
+  return (
+    typeof action.actionKey === "string" &&
+    action.actionKey.trim().length > 0 &&
+    typeof action.targetUrl === "string" &&
+    isSafeInternalUrl(action.targetUrl) &&
+    typeof action.timestamp === "number" &&
+    Number.isFinite(action.timestamp) &&
+    action.timestamp <= Date.now() &&
+    Date.now() - action.timestamp <= PENDING_ACTION_TTL_MS
+  );
+}
+
+export function savePendingAction(
+  actionKey: string,
+  payload?: unknown,
+  targetUrl?: string,
+): void {
+  if (typeof window === "undefined" || !actionKey.trim()) {
+    return;
+  }
+
+  const resolvedTarget = targetUrl || getCurrentUrl();
+
+  if (!isSafeInternalUrl(resolvedTarget)) {
+    return;
+  }
+
+  const pending: PendingAction = {
+    actionKey,
+    payload,
+    targetUrl: resolvedTarget,
+    timestamp: Date.now(),
+  };
+
+  try {
+    sessionStorage.setItem(PENDING_ACTION_STORAGE_KEY, JSON.stringify(pending));
+  } catch (error: unknown) {
+    console.error("Failed to save pending action to sessionStorage", error);
+  }
 }
