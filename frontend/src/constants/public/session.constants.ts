@@ -15,6 +15,7 @@ export const SESSION_SORT_OPTIONS: {
   value: PublicSessionSortOption;
   label: string;
 }[] = [
+  { value: "all", label: "All Sessions" },
   { value: "upcoming", label: "Upcoming" },
   { value: "latest", label: "Latest" },
   { value: "oldest", label: "Oldest" },

@@ -1,3 +1,4 @@
+
 import UserTable from "@/components/admin/UserTable";
 
 import { adminUserServerService } from "@/services/server/admin/adminUserServer.service";
@@ -7,6 +8,9 @@ export default async function UsersPage() {
     limit: 10,
     sortBy: "newest",
   });
+
+  console.log(initialData);
+  
 
   return (
     <div className="space-y-6">

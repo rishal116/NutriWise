@@ -1,9 +1,10 @@
-import {
+import type {
   SessionPricingType,
   SessionType,
 } from "@/types/public/session/session.types";
 
 export const PUBLIC_SESSION_SORT_OPTIONS = [
+  "all",
   "latest",
   "oldest",
   "upcoming",

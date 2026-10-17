@@ -9,11 +9,6 @@ export interface ISessionRegistrationService {
     SessionRegistrationResponseDTO | SessionRegistrationCheckoutResponseDTO
   >;
 
-  getMySessionRegistration(
-    userId: string,
-    sessionId: string,
-  ): Promise<SessionRegistrationResponseDTO>;
-
   cancelSessionRegistration(
     userId: string,
     sessionId: string,

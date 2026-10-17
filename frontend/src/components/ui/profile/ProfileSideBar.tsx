@@ -9,7 +9,6 @@ import {
   Video,
   Trophy,
   MessageCircle,
-  BookOpen,
   CreditCard,
   Settings,
   X,
@@ -41,7 +40,9 @@ interface ProfileSidebarProps {
 const navSections: NavSection[] = [
   {
     title: "Overview",
-    items: [{ name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard }],
+    items: [
+      { name: "Dashboard", href: "/user/dashboard", icon: LayoutDashboard },
+    ],
   },
   {
     title: "Account",
@@ -65,10 +66,6 @@ const navSections: NavSection[] = [
       { name: "My Posts", href: "/user/posts", icon: FileText },
       { name: "Messages", href: "/user/messages", icon: MessageCircle },
     ],
-  },
-  {
-    title: "Learn",
-    items: [{ name: "Resources", href: "/user/resources", icon: BookOpen }],
   },
   {
     title: "Billing & Settings",

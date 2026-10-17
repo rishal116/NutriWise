@@ -1,4 +1,4 @@
-import {
+import type {
   SessionCurrency,
   SessionPricingType,
   SessionStatus,
@@ -8,7 +8,6 @@ import {
 export interface NutriSessionListResponseDTO {
   sessionId: string;
   title: string;
-  description: string;
   type: SessionType;
   pricing: {
     type: SessionPricingType;
@@ -17,9 +16,8 @@ export interface NutriSessionListResponseDTO {
   };
   scheduledAt: string;
   durationInMinutes: number;
-  maxParticipants: number;
   thumbnailUrl?: string;
   status: SessionStatus;
+  registeredCount: number;
   createdAt: string;
-  updatedAt: string;
 }

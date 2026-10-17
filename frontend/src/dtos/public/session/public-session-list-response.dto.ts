@@ -1,4 +1,4 @@
-import {
+import type {
   SessionCurrency,
   SessionPricingType,
   SessionStatus,
@@ -7,24 +7,19 @@ import {
 
 export interface PublicSessionListItemResponseDTO {
   sessionId: string;
-
   title: string;
   description: string;
   type: SessionType;
-
   pricing: {
     type: SessionPricingType;
     amount: number;
     currency: SessionCurrency;
   };
-
   scheduledAt: string;
   durationInMinutes: number;
   maxParticipants: number;
-
   thumbnailUrl?: string;
   status: SessionStatus;
-
   nutritionist: {
     nutritionistId: string;
     name: string;

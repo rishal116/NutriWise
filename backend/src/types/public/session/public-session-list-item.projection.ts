@@ -27,7 +27,8 @@ export interface IPublicSessionListItemProjection {
   };
 }
 
-export interface IPublicSessionListProjectionWithCursor extends IPublicSessionListItemProjection {
+export interface IPublicSessionListProjectionWithCursor {
+  item: IPublicSessionListItemProjection;
   cursorId: string;
   cursorValue: string | number | Date;
 }

@@ -1,0 +1,8 @@
+
+const USER_HEALTH_PROGRESS_BASE = "/api/users/health/progress";
+
+export const HEALTH_PROGRESS_ROUTES = {
+  GET_PROGRESS: USER_HEALTH_PROGRESS_BASE,
+  GET_BY_DATE: `${USER_HEALTH_PROGRESS_BASE}/date`,
+  GET_LATEST: `${USER_HEALTH_PROGRESS_BASE}/latest`,
+} as const;

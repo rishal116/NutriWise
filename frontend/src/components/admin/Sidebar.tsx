@@ -88,25 +88,15 @@ const NAV_SECTIONS: NavSection[] = [
         icon: Trophy,
         path: "/admin/challenges",
       },
-      {
-        name: "Posts",
-        icon: FileText,
-        path: "/admin/posts",
-      },
     ],
   },
   {
-    title: "Finance & Community",
+    title: "Finance",
     items: [
       {
         name: "Payments",
         icon: CreditCard,
         path: "/admin/payments",
-      },
-      {
-        name: "Communities",
-        icon: MessagesSquare,
-        path: "/admin/community",
       },
     ],
   },

@@ -1,6 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 
-export const SESSION_REGISTRATION_STATUS = [
+export const SESSION_REGISTRATION_STATUSES = [
   "registered",
   "cancelled",
   "attended",
@@ -8,9 +8,9 @@ export const SESSION_REGISTRATION_STATUS = [
 ] as const;
 
 export type SessionRegistrationStatus =
-  (typeof SESSION_REGISTRATION_STATUS)[number];
+  (typeof SESSION_REGISTRATION_STATUSES)[number];
 
-export const SESSION_REGISTRATION_PAYMENT_STATUS = [
+export const SESSION_REGISTRATION_PAYMENT_STATUSES = [
   "not_required",
   "pending",
   "paid",
@@ -19,31 +19,20 @@ export const SESSION_REGISTRATION_PAYMENT_STATUS = [
 ] as const;
 
 export type SessionRegistrationPaymentStatus =
-  (typeof SESSION_REGISTRATION_PAYMENT_STATUS)[number];
+  (typeof SESSION_REGISTRATION_PAYMENT_STATUSES)[number];
 
 export interface ISessionRegistration {
   _id: Types.ObjectId;
-
   sessionId: Types.ObjectId;
-
   userId: Types.ObjectId;
-
   status: SessionRegistrationStatus;
-
   paymentStatus: SessionRegistrationPaymentStatus;
-
   checkoutSessionId?: string;
-
   paymentIntentId?: string;
-
   registeredAt: Date;
-
-  cancelledAt?: Date;
-
-  attendedAt?: Date;
-
+  cancelledAt?: Date | null;
+  attendedAt?: Date | null;
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -53,44 +42,34 @@ const SessionRegistrationSchema = new Schema<ISessionRegistration>(
       type: Schema.Types.ObjectId,
       ref: "Session",
       required: true,
-      index: true,
     },
 
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     status: {
       type: String,
-      enum: SESSION_REGISTRATION_STATUS,
+      enum: SESSION_REGISTRATION_STATUSES,
       required: true,
       default: "registered",
-      index: true,
     },
 
     paymentStatus: {
       type: String,
-      enum: SESSION_REGISTRATION_PAYMENT_STATUS,
+      enum: SESSION_REGISTRATION_PAYMENT_STATUSES,
       required: true,
       default: "not_required",
-      index: true,
     },
 
     checkoutSessionId: {
       type: String,
-      default: null,
-      sparse: true,
-      index: true,
     },
 
     paymentIntentId: {
       type: String,
-      default: null,
-      sparse: true,
-      index: true,
     },
 
     registeredAt: {
@@ -110,17 +89,28 @@ const SessionRegistrationSchema = new Schema<ISessionRegistration>(
   },
   {
     timestamps: true,
+    collection: "sessionregistrations",
   },
 );
 
+SessionRegistrationSchema.index({ sessionId: 1, userId: 1 }, { unique: true });
+
+SessionRegistrationSchema.index({
+  sessionId: 1,
+  status: 1,
+  paymentStatus: 1,
+});
+
+SessionRegistrationSchema.index({ userId: 1 });
+
 SessionRegistrationSchema.index(
-  {
-    sessionId: 1,
-    userId: 1,
-  },
-  {
-    unique: true,
-  },
+  { checkoutSessionId: 1 },
+  { unique: true, sparse: true },
+);
+
+SessionRegistrationSchema.index(
+  { paymentIntentId: 1 },
+  { unique: true, sparse: true },
 );
 
 export const SessionRegistrationModel = model<ISessionRegistration>(

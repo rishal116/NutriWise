@@ -8,7 +8,7 @@ import { ISessionCheckoutService } from "../../interfaces/public/ISessionCheckou
 
 import { IStripeService } from "../../interfaces/common/stripe/IStripeService";
 
-import { ISessionRepository } from "../../../repositories/interfaces/public/ISessionRepository";
+import { IPublicSessionRepository } from "../../../repositories/interfaces/public/IPublicSessionRepository";
 
 import { CreateSessionCheckoutDTO } from "../../../dtos/public/session-registration/create-session-checkout.dto";
 
@@ -24,8 +24,8 @@ export class SessionCheckoutService implements ISessionCheckoutService {
     @inject(TYPES.IStripeService)
     private readonly _stripeService: IStripeService,
 
-    @inject(TYPES.ISessionRepository)
-    private readonly _sessionRepository: ISessionRepository,
+    @inject(TYPES.IPublicSessionRepository)
+    private readonly _sessionRepository: IPublicSessionRepository,
   ) {}
 
   async createCheckoutSession(dto: CreateSessionCheckoutDTO): Promise<string> {

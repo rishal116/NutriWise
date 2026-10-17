@@ -4,11 +4,12 @@ import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 import {
   SESSION_PRICING_TYPES,
   SESSION_TYPES,
-  SessionPricingType,
-  SessionType,
+  type SessionPricingType,
+  type SessionType,
 } from "../../../models/session.model";
 
 export const PUBLIC_SESSION_SORT_OPTIONS = [
+  "all",
   "latest",
   "oldest",
   "upcoming",
@@ -42,8 +43,8 @@ export class PublicSessionListQueryDTO {
   @Min(1)
   @Max(50)
   limit: number = 12;
-
+  
   @IsOptional()
   @IsEnum(PUBLIC_SESSION_SORT_OPTIONS)
-  sortBy: PublicSessionSortOption = "upcoming";
+  sortBy: PublicSessionSortOption = "all";
 }

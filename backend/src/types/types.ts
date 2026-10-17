@@ -46,6 +46,7 @@ export const TYPES = {
   INotificationRepository: Symbol.for("INotificationRepository"),
   IResourceRepository: Symbol.for("IResourceRepository"),
   ISessionRepository: Symbol.for("ISessionRepository"),
+  IPublicSessionRepository: Symbol.for("IPublicSessionRepository"),
   ISessionRegistrationRepository: Symbol.for("ISessionRegistrationRepository"),
   IResourceViewRepository: Symbol.for("IResourceViewRepository"),
   IResourceDownloadRepository: Symbol.for("IResourceDownloadRepository"),
@@ -252,9 +253,19 @@ export const TYPES = {
   IGroupService: Symbol.for("IGroupService"),
   IGroupController: Symbol.for("IGroupController"),
 
-  INutriEarningsRepository:Symbol.for("INutriEarningsRepository"),
-  INutriEarningsService:Symbol.for("INutriEarningsService"),
-  INutriEarningsController:Symbol.for("INutriEarningsController"),
-  INutriCredentialsService:Symbol.for("INutriCredentialsService"),
-  INutriCredentialsController:Symbol.for("INutriCredentialsController"),
+  INutriEarningsRepository: Symbol.for("INutriEarningsRepository"),
+  INutriEarningsService: Symbol.for("INutriEarningsService"),
+  INutriEarningsController: Symbol.for("INutriEarningsController"),
+  INutriCredentialsService: Symbol.for("INutriCredentialsService"),
+  INutriCredentialsController: Symbol.for("INutriCredentialsController"),
+  INutriSessionRegistrationService: Symbol.for(
+    "INutriSessionRegistrationService",
+  ),
+  INutriSessionRegistrationRepository: Symbol.for(
+    "INutriSessionRegistrationRepository",
+  ),
+  INutriSessionRegistrationController: Symbol.for(
+    "INutriSessionRegistrationController",
+  ),
+
 } as const;

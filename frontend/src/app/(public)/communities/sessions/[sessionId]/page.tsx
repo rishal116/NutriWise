@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
+import Image from "next/image";
 import {
   ArrowLeft,
   CalendarDays,
@@ -19,7 +19,7 @@ import { sessionRegistrationService } from "@/services/public/sessionRegistratio
 import type { PublicSessionDetailsResponseDTO } from "@/dtos/public/session/public-session-details-response.dto";
 import type { SessionRegistrationResponseDTO } from "@/dtos/public/session-registration/session-registration-response.dto";
 import { getErrorMessage } from "@/utils/getErrorMessage";
-import Image from "next/image";
+import { useAppSelector } from "@/redux/hooks";
 
 interface SessionRegistrationResult {
   registration?: SessionRegistrationResponseDTO;
@@ -33,20 +33,30 @@ export default function PublicSessionDetailsPage() {
 
   const [session, setSession] =
     useState<PublicSessionDetailsResponseDTO | null>(null);
-  const [registration, setRegistration] =
-    useState<SessionRegistrationResponseDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+
+  const initialized = useAppSelector((state) => state.auth.initialized);
+
+  // Update the countdown without repeatedly requesting session details.
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 15_000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
+    if (!initialized || !sessionId) return;
     let cancelled = false;
 
     const fetchSession = async () => {
       setLoading(true);
       setError(null);
       setSession(null);
-      setRegistration(null);
 
       try {
         const response =
@@ -54,37 +64,18 @@ export default function PublicSessionDetailsPage() {
 
         if (cancelled) return;
 
-        setSession(response.data);
-
-        try {
-          const registrationResponse =
-            await sessionRegistrationService.getMySessionRegistration(
-              sessionId,
-            );
-
-          if (!cancelled) {
-            setRegistration(registrationResponse.data);
-          }
-        } catch (registrationError: unknown) {
-          if (
-            axios.isAxiosError(registrationError) &&
-            registrationError.response?.status === 404
-          ) {
-            // No registration exists yet.
-          } else {
-            console.error(
-              "Failed to fetch session registration:",
-              getErrorMessage(registrationError),
-            );
-          }
+        if (!response.data) {
+          throw new Error("Session details were not returned by the server.");
         }
+
+        setSession(response.data);
       } catch (fetchError: unknown) {
         if (!cancelled) {
           console.error(
             "Failed to fetch session:",
             getErrorMessage(fetchError),
           );
-          setError("Unable to load this session.");
+          setError("Unable to load this session. Please try again.");
         }
       } finally {
         if (!cancelled) {
@@ -93,30 +84,49 @@ export default function PublicSessionDetailsPage() {
       }
     };
 
-    if (sessionId) {
-      void fetchSession();
-    } else {
+    if (!sessionId) {
       setError("Invalid session.");
       setLoading(false);
+
+      return () => {
+        cancelled = true;
+      };
     }
+
+    void fetchSession();
 
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [initialized, sessionId]);
 
   const handleJoin = useCallback(async () => {
     if (!session || joining) return;
 
-    if (registration?.status === "registered") {
-      router.push(`/session-room/${session.sessionId}`);
+    const currentTime = Date.now();
+    const scheduledTime = new Date(session.scheduledAt).getTime();
+    const joinOpensAt = scheduledTime - 5 * 60 * 1000;
+
+    const isLive = session.status === "live";
+    const isScheduled = session.status === "scheduled";
+    const isFinished =
+      session.status === "completed" || session.status === "cancelled";
+
+    // The backend is the source of truth for registration.
+    if (session.isRegistered) {
+      if (isFinished) return;
+
+      if (isLive || (isScheduled && currentTime >= joinOpensAt)) {
+        router.push(`/session-room/${session.sessionId}`);
+      }
+
       return;
     }
 
-    if (session.status !== "scheduled" && session.status !== "live") {
-      return;
-    }
+    // Only scheduled or live sessions accept new registrations.
+    if ((!isScheduled && !isLive) || isFinished) return;
 
+    // Paid sessions must complete checkout before registration is confirmed.
     if (session.pricing.type === "paid") {
       router.push(`/communities/sessions/${session.sessionId}/checkout`);
       return;
@@ -130,22 +140,29 @@ export default function PublicSessionDetailsPage() {
         session.sessionId,
       );
 
-      const result = response.data as SessionRegistrationResult;
+      const result = response.data as SessionRegistrationResult | undefined;
 
-      if (!result.registration) {
+      if (!result?.registration) {
         throw new Error("Registration response is missing registration data.");
       }
 
-      setRegistration(result.registration);
-      router.push(`/session-room/${session.sessionId}`);
+      // Update the local UI after successful registration.
+      setSession((currentSession) =>
+        currentSession
+          ? {
+              ...currentSession,
+              isRegistered: true,
+            }
+          : currentSession,
+      );
     } catch (joinError: unknown) {
       const message = getErrorMessage(joinError);
-      console.error("Failed to join session:", message);
+      console.error("Failed to register for session:", message);
       setError(message);
     } finally {
       setJoining(false);
     }
-  }, [session, registration, joining, router]);
+  }, [session, joining, router]);
 
   if (loading) {
     return (
@@ -166,7 +183,7 @@ export default function PublicSessionDetailsPage() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          className="flex items-center gap-2 text-sm text-gray-600 transition hover:text-gray-900"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
@@ -177,6 +194,14 @@ export default function PublicSessionDetailsPage() {
             Session unavailable
           </h1>
           <p className="mt-2 text-sm text-gray-500">{error}</p>
+
+          <button
+            type="button"
+            onClick={() => router.refresh()}
+            className="mt-5 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+          >
+            Try again
+          </button>
         </div>
       </div>
     );
@@ -185,6 +210,8 @@ export default function PublicSessionDetailsPage() {
   if (!session) return null;
 
   const scheduledDate = new Date(session.scheduledAt);
+  const scheduledTime = scheduledDate.getTime();
+  const joinOpensAt = scheduledTime - 5 * 60 * 1000;
 
   const formattedDate = scheduledDate.toLocaleDateString("en-IN", {
     weekday: "long",
@@ -201,8 +228,22 @@ export default function PublicSessionDetailsPage() {
   const isPaid = session.pricing.type === "paid";
   const isLive = session.status === "live";
   const isCompleted = session.status === "completed";
-  const canJoin = session.status === "scheduled" || session.status === "live";
-  const isRegistered = registration?.status === "registered";
+  const isCancelled = session.status === "cancelled";
+  const isScheduled = session.status === "scheduled";
+  const isRegistered = session.isRegistered;
+
+  const canRegister = (isScheduled || isLive) && !isRegistered;
+
+  const canJoin =
+    isRegistered &&
+    !isCompleted &&
+    !isCancelled &&
+    (isLive || (isScheduled && now >= joinOpensAt));
+
+  const minutesUntilJoin = Math.max(0, Math.ceil((joinOpensAt - now) / 60_000));
+
+  const showSessionAction =
+    !isCompleted && !isCancelled && (canRegister || isRegistered);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
@@ -236,7 +277,7 @@ export default function PublicSessionDetailsPage() {
               className={`rounded-full px-3 py-1.5 text-xs font-semibold backdrop-blur-sm ${
                 isLive
                   ? "bg-red-500 text-white"
-                  : isCompleted
+                  : isCompleted || isCancelled
                     ? "bg-gray-800 text-white"
                     : "bg-white/90 text-emerald-700"
               }`}
@@ -267,16 +308,19 @@ export default function PublicSessionDetailsPage() {
               label="Date"
               value={formattedDate}
             />
+
             <InfoItem
               icon={<Clock className="h-5 w-5" />}
               label="Time"
               value={formattedTime}
             />
+
             <InfoItem
               icon={<Clock className="h-5 w-5" />}
               label="Duration"
               value={`${session.durationInMinutes} minutes`}
             />
+
             <InfoItem
               icon={<Users className="h-5 w-5" />}
               label="Maximum participants"
@@ -294,7 +338,7 @@ export default function PublicSessionDetailsPage() {
             </p>
 
             <div className="mt-4 flex items-start gap-4">
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full bg-emerald-100">
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-emerald-100">
                 {session.nutritionist.profileImage ? (
                   <Image
                     src={session.nutritionist.profileImage}
@@ -314,6 +358,7 @@ export default function PublicSessionDetailsPage() {
                 <h2 className="font-semibold text-gray-900">
                   {session.nutritionist.name}
                 </h2>
+
                 {session.nutritionist.bio && (
                   <p className="mt-1 text-sm leading-6 text-gray-500">
                     {session.nutritionist.bio}
@@ -335,32 +380,51 @@ export default function PublicSessionDetailsPage() {
               </p>
             </div>
 
-            {canJoin && (
+            {showSessionAction && (
               <button
                 type="button"
                 onClick={() => void handleJoin()}
-                disabled={joining}
+                disabled={joining || (isRegistered && !canJoin)}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {joining ? (
                   "Processing..."
-                ) : isRegistered ? (
+                ) : isRegistered && canJoin ? (
                   <>
                     <Video className="h-4 w-4" />
-                    {isLive ? "Join Live Session" : "Enter Session Room"}
+                    {isLive ? "Join Live Session" : "Join Session"}
+                  </>
+                ) : isRegistered ? (
+                  <>
+                    <Clock className="h-4 w-4" />
+                    {now < joinOpensAt
+                      ? `Join opens in ${minutesUntilJoin} min`
+                      : "Waiting for session to go live"}
                   </>
                 ) : isPaid ? (
                   <>
                     <CreditCard className="h-4 w-4" />
-                    {`Pay ₹${session.pricing.amount} & Join`}
+                    {`Pay ₹${session.pricing.amount} & Register`}
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    Register & Join
+                    Register for Session
                   </>
                 )}
               </button>
+            )}
+
+            {isCompleted && (
+              <p className="text-sm font-medium text-gray-500">
+                This session has ended.
+              </p>
+            )}
+
+            {isCancelled && (
+              <p className="text-sm font-medium text-red-600">
+                This session has been cancelled.
+              </p>
             )}
 
             {error && session && (

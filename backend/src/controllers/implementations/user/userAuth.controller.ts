@@ -1,8 +1,10 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { inject, injectable } from "inversify";
+
 import { TYPES } from "../../../types/types";
-import { IUserAuthService } from "../../../services/interfaces/user/IUserAuthService";
-import { IUserAuthController } from "../../interfaces/user/IUserAuthController";
+import type { IUserAuthService } from "../../../services/interfaces/user/IUserAuthService";
+import type { IUserAuthController } from "../../interfaces/user/IUserAuthController";
+
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
 import { asyncHandler } from "../../../utils/asyncHandler";
@@ -13,126 +15,143 @@ import { AUTH_MESSAGES } from "../../../constants";
 export class UserAuthController implements IUserAuthController {
   constructor(
     @inject(TYPES.IUserAuthService)
-    private _userAuthService: IUserAuthService,
+    private readonly _userAuthService: IUserAuthService,
   ) {}
 
   signup = asyncHandler(async (req: Request, res: Response) => {
     const { fullName, email, password, confirmPassword } = req.body;
-    const response = await this._userAuthService.signup(req, {
+
+    await this._userAuthService.signup(req, {
       fullName,
       email,
       password,
       confirmPassword,
     });
+
     return res.status(StatusCode.OK).json({
       success: true,
-      message: response.message,
-    });
-  });
-
-  verifyOtp = asyncHandler(async (req: Request, res: Response) => {
-    const { email, otp } = req.body;
-    const response = await this._userAuthService.verifyOtp(req, {
-      email,
-      otp,
-    });
-    setAuthCookies(res, response.accessToken, response.refreshToken);
-    return res.status(StatusCode.CREATED).json({
-      success: true,
-      message: response.message,
+      message: AUTH_MESSAGES.SIGNUP_SUCCESS,
     });
   });
 
   resendOtp = asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;
-    const response = await this._userAuthService.resendOtp({
-      email,
-    });
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: response.message,
-    });
-  });
 
-  login = asyncHandler(async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-    const response = await this._userAuthService.login({
-      email,
-      password,
-    });
-    setAuthCookies(res, response.accessToken, response.refreshToken);
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: response.message,
-      activeRole: response.activeRole,
-      isProfileCompleted: response.isProfileCompleted,
-    });
-  });
+    await this._userAuthService.resendOtp({ email });
 
-  googleAuth = asyncHandler(async (req: Request, res: Response) => {
-    const { credential } = req.body;
-    const response = await this._userAuthService.googleAuth({
-      credential,
-    });
-    setAuthCookies(res, response.accessToken, response.refreshToken);
     return res.status(StatusCode.OK).json({
       success: true,
-      message: response.message,
-      activeRole: response.activeRole,
-      isProfileCompleted: response.isProfileCompleted,
+      message: AUTH_MESSAGES.OTP_RESENT_SUCCESS,
     });
   });
 
   forgotPassword = asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;
-    const response = await this._userAuthService.requestPasswordReset({
-      email,
-    });
+
+    await this._userAuthService.requestPasswordReset({ email });
+
     return res.status(StatusCode.OK).json({
       success: true,
-      message: response.message,
+      message: AUTH_MESSAGES.PASSWORD_RESET_OTP_SENT,
     });
   });
 
   resetPassword = asyncHandler(async (req: Request, res: Response) => {
     const { token, newPassword, confirmPassword } = req.body;
-    const response = await this._userAuthService.resetPassword({
+
+    await this._userAuthService.resetPassword({
       token,
       newPassword,
       confirmPassword,
     });
+
     return res.status(StatusCode.OK).json({
       success: true,
-      message: response.message,
+      message: AUTH_MESSAGES.PASSWORD_RESET_SUCCESS,
     });
   });
 
   getMe = asyncHandler(async (req: Request, res: Response) => {
     const response = await this._userAuthService.getMe(req.user!.userId);
+
     return res.status(StatusCode.OK).json({
       success: true,
       data: response,
     });
   });
 
-  logout = asyncHandler(async (req: Request, res: Response) => {
+  logout = asyncHandler(async (_req: Request, res: Response) => {
     clearAuthCookies(res);
     logger.info("User logged out");
+
     return res.status(StatusCode.OK).json({
       success: true,
       message: AUTH_MESSAGES.LOGOUT_SUCCESS,
     });
   });
 
+  verifyOtp = asyncHandler(async (req: Request, res: Response) => {
+    const { email, otp } = req.body;
+
+    const response = await this._userAuthService.verifyOtp(req, {
+      email,
+      otp,
+    });
+
+    setAuthCookies(res, response.refreshToken);
+
+    return res.status(StatusCode.CREATED).json({
+      success: true,
+      message: AUTH_MESSAGES.OTP_VERIFIED_SUCCESS,
+      accessToken: response.accessToken,
+    });
+  });
+
+  login = asyncHandler(async (req: Request, res: Response) => {
+    const { email, password } = req.body;
+
+    const response = await this._userAuthService.login({
+      email,
+      password,
+    });
+
+    setAuthCookies(res, response.refreshToken);
+
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: AUTH_MESSAGES.LOGIN_SUCCESS,
+      activeRole: response.activeRole,
+      isProfileCompleted: response.isProfileCompleted,
+      accessToken: response.accessToken,
+    });
+  });
+
+  googleAuth = asyncHandler(async (req: Request, res: Response) => {
+    const { credential } = req.body;
+
+    const response = await this._userAuthService.googleAuth({ credential });
+
+    setAuthCookies(res, response.refreshToken);
+
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: AUTH_MESSAGES.LOGIN_SUCCESS,
+      activeRole: response.activeRole,
+      isProfileCompleted: response.isProfileCompleted,
+      accessToken: response.accessToken,
+    });
+  });
+
   switchRole = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
-    const dto = req.body;
-    const { accessToken, refreshToken } =
-      await this._userAuthService.switchRole(userId, dto);
-    setAuthCookies(res, accessToken, refreshToken);
-    res.status(StatusCode.OK).json({
+    const response = await this._userAuthService.switchRole(userId, req.body);
+
+    setAuthCookies(res, response.refreshToken);
+
+    return res.status(StatusCode.OK).json({
       success: true,
-      message: "Role switched successfully",
+      message: AUTH_MESSAGES.ROLE_SWITCH_SUCCESS,
+      accessToken: response.accessToken,
     });
   });
 }

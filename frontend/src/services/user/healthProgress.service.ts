@@ -1,4 +1,5 @@
 import { clientApi } from "@/lib/axios/clientApi";
+import { HEALTH_PROGRESS_ROUTES } from "@/routes/user";
 
 export interface IProgressPoint {
   date: string;
@@ -21,18 +22,34 @@ export interface IHealthProgressData {
 }
 
 export const healthProgressService = {
-    getHealthProgress: async (days: number = 30): Promise<HealthProgressResponse> => {
-        const res = await clientApi.get(`/health-progress?days=${days}`);
-        return res.data.data;
-    },
-    
-    getProgressByDate: async (date: string): Promise<IHealthProgressData | null> => {
-        const res = await clientApi.get(`/health-progress/date?date=${date}`);
-        return res.data.data;
-    },
-    
-    getLatestProgress: async (): Promise<IHealthProgressData | null> => {
-        const res = await clientApi.get(`/health-progress/latest`);
-        return res.data.data;
-    },
+  async getHealthProgress(days: number = 30): Promise<HealthProgressResponse> {
+    const res = await clientApi.get<{
+      success: boolean;
+      data: HealthProgressResponse;
+    }>(HEALTH_PROGRESS_ROUTES.GET_PROGRESS, {
+      params: { days },
+    });
+
+    return res.data.data;
+  },
+
+  async getProgressByDate(date: string): Promise<IHealthProgressData | null> {
+    const res = await clientApi.get<{
+      success: boolean;
+      data: IHealthProgressData | null;
+    }>(HEALTH_PROGRESS_ROUTES.GET_BY_DATE, {
+      params: { date },
+    });
+
+    return res.data.data;
+  },
+
+  async getLatestProgress(): Promise<IHealthProgressData | null> {
+    const res = await clientApi.get<{
+      success: boolean;
+      data: IHealthProgressData | null;
+    }>(HEALTH_PROGRESS_ROUTES.GET_LATEST);
+
+    return res.data.data;
+  },
 };

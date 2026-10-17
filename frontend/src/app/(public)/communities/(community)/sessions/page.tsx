@@ -7,6 +7,8 @@ import SessionGrid from "@/components/public/sessions/SessionGrid";
 import SessionSkeleton from "@/components/public/sessions/SessionSkeleton";
 import { usePublicSessions } from "@/hooks/public/usePublicSessions";
 
+const SKELETON_COUNT = 6;
+
 export default function PublicSessionsPage() {
   const {
     sessions,
@@ -33,12 +35,17 @@ export default function PublicSessionsPage() {
     pricingTypes,
   } = usePublicSessions();
 
+  const showInitialError = !initialLoading && Boolean(initialError);
+  const showEmptyState =
+    !initialLoading && !initialError && sessions.length === 0;
+  const showSessions = !initialLoading && !initialError && sessions.length > 0;
+
   return (
     <section className="space-y-6">
       <header className="space-y-1">
-        <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
           Sessions
-        </h2>
+        </h1>
 
         <p className="text-sm leading-6 text-slate-500">
           Learn, connect, and grow with live sessions from nutritionists.
@@ -67,29 +74,35 @@ export default function PublicSessionsPage() {
           aria-busy="true"
           className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
         >
-          {Array.from({ length: 6 }, (_, index) => (
+          {Array.from({ length: SKELETON_COUNT }, (_, index) => (
             <SessionSkeleton key={index} />
           ))}
         </div>
       )}
 
-      {!initialLoading && initialError && (
-        <SessionErrorState message={initialError} onRetry={retryInitialLoad} />
+      {showInitialError && (
+        <SessionErrorState
+          message={initialError ?? "Unable to load sessions."}
+          onRetry={retryInitialLoad}
+        />
       )}
 
-      {!initialLoading && !initialError && sessions.length === 0 && (
+      {showEmptyState && (
         <SessionEmptyState
           hasActiveFilters={hasActiveFilters}
           onClearFilters={clearFilters}
         />
       )}
 
-      {!initialLoading && sessions.length > 0 && (
+      {showSessions && (
         <>
           <SessionGrid sessions={sessions} />
 
           {paginationError && (
-            <div className="flex flex-col items-center gap-2 py-4 text-center">
+            <div
+              className="flex flex-col items-center gap-2 py-4 text-center"
+              role="alert"
+            >
               <p className="text-sm text-rose-600">{paginationError}</p>
 
               <button
@@ -108,6 +121,7 @@ export default function PublicSessionsPage() {
               ref={observerRef}
               className="flex min-h-12 items-center justify-center py-4"
               aria-live="polite"
+              aria-busy={loadingMore}
             >
               {loadingMore && (
                 <p className="text-sm text-slate-400">

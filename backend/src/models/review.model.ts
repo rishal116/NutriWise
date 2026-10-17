@@ -1,6 +1,6 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
-export interface IReview extends Document {
+export interface IReview {
   _id: Types.ObjectId;
   user: Types.ObjectId;
   nutritionist: Types.ObjectId;

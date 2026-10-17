@@ -1,11 +1,7 @@
 import { Router } from "express";
-
 import { container } from "../../configs/inversify";
-
 import { TYPES } from "../../types/types";
-
 import { authMiddleware } from "../../middlewares/auth.middleware";
-
 import { ISessionRegistrationController } from "../../controllers/interfaces/public/ISessionRegistrationController";
 
 const router = Router();

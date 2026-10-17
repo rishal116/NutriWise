@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-   "dev": "node --trace-deprecation ./node_modules/next/dist/bin/next dev --experimental-https --experimental-https-key ../certs/localhost-key.pem --experimental-https-cert ../certs/localhost.pem",
+    "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "next lint",

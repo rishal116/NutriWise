@@ -16,6 +16,7 @@ import userChallengeRoutes from "./user-challenge.route";
 import userChallengeTrackingRoutes from "./user-challenge-tracking.route";
 import userDashboardRouter from "./dashboard.route";
 import reviewRoutes from "./review.route";
+import healthProgressRoutes from "./health-progress.route";
 
 const router = express.Router();
 
@@ -50,5 +51,7 @@ router.use("/challenges", userChallengeTrackingRoutes);
 router.use("/dashboard", userDashboardRouter);
 
 router.use("/reviews", reviewRoutes);
+
+router.use("/health/progress", healthProgressRoutes);
 
 export default router;

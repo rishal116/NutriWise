@@ -19,7 +19,7 @@ import { signupSchema } from "@/validations/auth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
-import { SignupRequest } from "@/types/auth/auth-request.types";
+import { SignupRequest } from "@/dtos/auth/auth-request.dto";
 import Logo from "../common/Logo";
 
 export default function SignupForm() {

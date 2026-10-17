@@ -6,4 +6,8 @@ export const PUBLIC_SESSION_ROUTES = {
   DETAILS: (sessionId: string) => `${SESSION_BASE}/${sessionId}`,
 
   JOIN: (sessionId: string) => `${SESSION_BASE}/${sessionId}/join`,
+
+  START: (sessionId: string) => `${SESSION_BASE}/${sessionId}/start`,
+
+  END: (sessionId: string) => `${SESSION_BASE}/${sessionId}/end`,
 } as const;

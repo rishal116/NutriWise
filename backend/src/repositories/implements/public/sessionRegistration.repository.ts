@@ -1,15 +1,12 @@
 import { injectable } from "inversify";
-
-import { ClientSession, Types, UpdateQuery } from "mongoose";
+import { Types, type ClientSession, type UpdateQuery } from "mongoose";
 
 import { BaseRepository } from "../common/base.repository";
-
 import {
-  ISessionRegistration,
   SessionRegistrationModel,
+  type ISessionRegistration,
 } from "../../../models/sessionRegistration.model";
-
-import { ISessionRegistrationRepository } from "../../interfaces/public/ISessionRegistrationRepository";
+import type { ISessionRegistrationRepository } from "../../interfaces/public/ISessionRegistrationRepository";
 
 @injectable()
 export class SessionRegistrationRepository
@@ -25,42 +22,36 @@ export class SessionRegistrationRepository
     userId: Types.ObjectId,
   ): Promise<ISessionRegistration | null> {
     return this._model
-      .findOne({
-        sessionId,
-        userId,
-      })
-      .lean<ISessionRegistration | null>();
+      .findOne({ sessionId, userId })
+      .lean<ISessionRegistration | null>()
+      .exec();
   }
 
   async countActiveRegistrations(sessionId: Types.ObjectId): Promise<number> {
-    return this._model.countDocuments({
-      sessionId,
-      status: "registered",
-    });
+    return this._model
+      .countDocuments({
+        sessionId,
+        status: "registered",
+      })
+      .exec();
   }
 
   async findBySession(
     sessionId: Types.ObjectId,
   ): Promise<ISessionRegistration[]> {
     return this._model
-      .find({
-        sessionId,
-      })
-      .sort({
-        registeredAt: 1,
-      })
-      .lean<ISessionRegistration[]>();
+      .find({ sessionId })
+      .sort({ registeredAt: 1 })
+      .lean<ISessionRegistration[]>()
+      .exec();
   }
 
   async findByUser(userId: Types.ObjectId): Promise<ISessionRegistration[]> {
     return this._model
-      .find({
-        userId,
-      })
-      .sort({
-        registeredAt: -1,
-      })
-      .lean<ISessionRegistration[]>();
+      .find({ userId })
+      .sort({ registeredAt: -1 })
+      .lean<ISessionRegistration[]>()
+      .exec();
   }
 
   async updateRegistration(
@@ -71,8 +62,9 @@ export class SessionRegistrationRepository
     return this._model
       .findByIdAndUpdate(registrationId, update, {
         new: true,
-        session,
+        ...(session ? { session } : {}),
       })
-      .lean<ISessionRegistration | null>();
+      .lean<ISessionRegistration | null>()
+      .exec();
   }
 }

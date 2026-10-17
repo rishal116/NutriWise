@@ -1,15 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ReduxProvider } from "@/redux/provider";
 import SocketProvider from "@/providers/SocketProvider";
 import { Toaster } from "sonner";
 import { ThemeProviders } from "@/providers/ThemeProvider";
 import AuthProvider from "@/providers/AuthProvider";
-import GlobalLoading from "@/components/common/GlobalLoading";
 import QueryProvider from "@/providers/QueryProvider";
-import InitialPageLoader from "@/components/common/InitialPageLoader";
-import NavigationLoading from "@/components/common/NavigationLoading";
 
 export const metadata: Metadata = {
   title: {
@@ -34,9 +31,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AuthProvider>
               <ThemeProviders>
                 <SocketProvider>
-                  <InitialPageLoader />
-                  <NavigationLoading />
-                  <GlobalLoading />
                   {children}
                   <Toaster
                     position="top-right"

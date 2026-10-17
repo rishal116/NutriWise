@@ -110,15 +110,11 @@ export default function CompleteProfilePage() {
       }
 
       const res = await onboardingService.completeProfile(validation.data);
-      console.log(res);
-      
       toast.success(res.message || "Profile completed!");
       router.push("/");
     } catch (error: unknown) {
-      
-      const message = getErrorMessage(error)
-      console.log("messsage: ",message);
-      toast.error(message)
+      const message = getErrorMessage(error);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -30,4 +30,28 @@ export class SessionRoomController implements ISessionRoomController {
       data: result,
     });
   });
+
+  startSession = asyncHandler(async (req: Request, res: Response) => {
+    const { sessionId } = req.params;
+    const { userId } = req.user!;
+
+    await this._sessionRoomService.startSession(userId, sessionId);
+
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: "Session started successfully",
+    });
+  });
+
+  endSession = asyncHandler(async (req: Request, res: Response) => {
+    const { sessionId } = req.params;
+    const { userId } = req.user!;
+
+    await this._sessionRoomService.endSession(userId, sessionId);
+
+    return res.status(StatusCode.OK).json({
+      success: true,
+      message: "Session ended successfully",
+    });
+  });
 }

@@ -1,4 +1,4 @@
-import { IncomingMessage, Server as HTTPServer } from "http";
+import { Server as HTTPServer } from "http";
 import { Server, Socket } from "socket.io";
 import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
 
@@ -27,26 +27,6 @@ export const getOnlineUserIds = (): string[] => {
   return Array.from(userSocketsMap.keys());
 };
 
-function getCookie(request: IncomingMessage, name: string): string | undefined {
-  const cookieHeader = request.headers.cookie;
-
-  if (!cookieHeader) {
-    return undefined;
-  }
-
-  const cookies = cookieHeader.split(";");
-
-  for (const cookie of cookies) {
-    const [key, ...value] = cookie.trim().split("=");
-
-    if (key === name) {
-      return decodeURIComponent(value.join("="));
-    }
-  }
-
-  return undefined;
-}
-
 export const initializeSocket = (server: HTTPServer) => {
   io = new Server(server, {
     cors: {
@@ -57,9 +37,9 @@ export const initializeSocket = (server: HTTPServer) => {
 
   io.use((socket: Socket, next) => {
     try {
-      const accessToken = getCookie(socket.request, "accessToken");
+      const accessToken = socket.handshake.auth?.accessToken;
 
-      if (!accessToken) {
+      if (typeof accessToken !== "string" || !accessToken) {
         return next(new Error("ACCESS_TOKEN_MISSING"));
       }
 
@@ -74,7 +54,7 @@ export const initializeSocket = (server: HTTPServer) => {
       };
 
       next();
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof TokenExpiredError) {
         return next(new Error("ACCESS_TOKEN_EXPIRED"));
       }
@@ -103,7 +83,9 @@ export const initializeSocket = (server: HTTPServer) => {
       socket.join(`user:${userId}`);
 
       // Emit initial presence list to the connected client
-      socket.emit("presence:init", { onlineUserIds: Array.from(userSocketsMap.keys()) });
+      socket.emit("presence:init", {
+        onlineUserIds: Array.from(userSocketsMap.keys()),
+      });
 
       // Notify others if user transitioned to online
       if (isFirstConnection) {
@@ -116,7 +98,10 @@ export const initializeSocket = (server: HTTPServer) => {
     registerVideoSocket(io, socket);
 
     socket.on("disconnect", () => {
-      logger.info("Socket client disconnected", { socketId: socket.id, userId });
+      logger.info("Socket client disconnected", {
+        socketId: socket.id,
+        userId,
+      });
 
       if (userId) {
         const socketSet = userSocketsMap.get(userId);
@@ -142,4 +127,3 @@ export const getIO = () => {
 
   return io;
 };
-
