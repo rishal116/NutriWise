@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { injectable, inject } from "inversify";
+import { inject, injectable } from "inversify";
 
 import { INutriMeetingController } from "../../interfaces/nutritionist/INutriMeetingController";
 import { INutriMeetingService } from "../../../services/interfaces/nutritionist/INutriMeetingService";
@@ -7,18 +7,19 @@ import { TYPES } from "../../../types/types";
 import { asyncHandler } from "../../../utils/asyncHandler";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { MeetingListQueryDTO } from "../../../dtos/nutritionist/meeting/meeting-list-query.dto";
+import { CreateMeetingDTO } from "../../../dtos/nutritionist/meeting/create-meeting.dto";
 import { UpdateMeetingDTO } from "../../../dtos/nutritionist/meeting/update-meeting.dto";
+import { MeetingStatus } from "../../../models/meeting.model";
 
 @injectable()
 export class NutriMeetingController implements INutriMeetingController {
   constructor(
     @inject(TYPES.INutriMeetingService)
-    private _nutriMeetingsService: INutriMeetingService,
+    private readonly _nutriMeetingsService: INutriMeetingService,
   ) {}
 
   getMeetings = asyncHandler(async (req: Request, res: Response) => {
     const nutritionistId = req.user!.userId;
-
     const query = req.query as unknown as MeetingListQueryDTO;
 
     const meetings = await this._nutriMeetingsService.getMeetings(
@@ -28,6 +29,7 @@ export class NutriMeetingController implements INutriMeetingController {
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Meetings retrieved successfully",
       data: meetings,
     });
   });
@@ -43,36 +45,32 @@ export class NutriMeetingController implements INutriMeetingController {
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Meeting details retrieved successfully",
       data: meeting,
     });
   });
 
   createMeeting = asyncHandler(async (req: Request, res: Response) => {
     const nutritionistId = req.user!.userId;
+    const data = req.body as CreateMeetingDTO;
 
-    const meeting = await this._nutriMeetingsService.createMeeting({
-      ...req.body,
-      nutritionistId,
-    });
+    await this._nutriMeetingsService.createMeeting(nutritionistId, data);
 
     res.status(StatusCode.CREATED).json({
       success: true,
-      data: meeting,
+      message: "Meeting created successfully",
     });
   });
 
   updateMeetingStatus = asyncHandler(async (req: Request, res: Response) => {
     const { roomId } = req.params;
-    const { status } = req.body;
+    const { status } = req.body as { status: MeetingStatus };
 
-    const updatedMeeting = await this._nutriMeetingsService.updateMeetingStatus(
-      roomId,
-      status,
-    );
+    await this._nutriMeetingsService.updateMeetingStatus(roomId, status);
 
     res.status(StatusCode.OK).json({
       success: true,
-      data: updatedMeeting,
+      message: "Meeting status updated successfully",
     });
   });
 
@@ -81,7 +79,7 @@ export class NutriMeetingController implements INutriMeetingController {
     const { meetingId } = req.params;
     const data = req.body as UpdateMeetingDTO;
 
-    const updatedMeeting = await this._nutriMeetingsService.updateMeeting(
+    await this._nutriMeetingsService.updateMeeting(
       nutritionistId,
       meetingId,
       data,
@@ -89,7 +87,24 @@ export class NutriMeetingController implements INutriMeetingController {
 
     res.status(StatusCode.OK).json({
       success: true,
-      data: updatedMeeting,
+      message: "Meeting updated successfully",
+    });
+  });
+
+  cancelMeeting = asyncHandler(async (req: Request, res: Response) => {
+    const nutritionistId = req.user!.userId;
+    const { meetingId } = req.params;
+    const { cancellationReason } = req.body;
+
+    await this._nutriMeetingsService.cancelMeeting(
+      nutritionistId,
+      meetingId,
+      cancellationReason,
+    );
+
+    res.status(StatusCode.OK).json({
+      success: true,
+      message: "Meeting cancelled successfully",
     });
   });
 }

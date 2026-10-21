@@ -90,25 +90,23 @@ const CATEGORY_DEFAULT_VALUE_TYPE: Record<
   appointment: "boolean",
   measurement: "number",
   task: "boolean",
-  custom: "boolean",
 };
 
 const CATEGORY_VALUE_TYPE_OPTIONS: Record<
   ProgramActivityCategory,
   ActivityValueType[]
 > = {
-  meal: ["boolean", "text"],
-  exercise: ["boolean", "duration", "number"],
+  meal: ["boolean", "text", "photo"],
+  exercise: ["boolean", "duration", "number", "photo"],
   habit: ["boolean", "text"],
   water: ["number"],
-  supplement: ["boolean", "number"],
+  supplement: ["boolean", "number", "photo"],
   meditation: ["boolean", "duration"],
-  sleep: ["boolean", "duration", "number"],
-  reading: ["boolean", "duration"],
+  sleep: ["duration", "number"],
+  reading: ["boolean", "duration", "text", "photo"],
   appointment: ["boolean", "text"],
-  measurement: ["number", "text"],
-  task: ["boolean", "text"],
-  custom: ["boolean", "number", "duration", "photo", "text"],
+  measurement: ["number", "photo"],
+  task: ["boolean", "text", "photo"],
 };
 
 const CATEGORY_LABELS: Record<ProgramActivityCategory, string> = {
@@ -123,7 +121,6 @@ const CATEGORY_LABELS: Record<ProgramActivityCategory, string> = {
   appointment: "Appointment",
   measurement: "Measurement",
   task: "Task",
-  custom: "Custom",
 };
 
 const VALUE_TYPE_LABELS: Record<ActivityValueType, string> = {
@@ -200,8 +197,7 @@ function WaterConfiguration({ control, index }: ConfigurationProps) {
                   field.onChange({
                     ...config,
                     trackingMethod: e.target.value as
-                      | "daily_total"
-                      | "per_serving",
+                      "daily_total" | "per_serving",
                   })
                 }
                 className={`${inputClass} mt-1`}

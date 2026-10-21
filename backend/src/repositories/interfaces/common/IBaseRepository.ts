@@ -9,11 +9,15 @@ export interface IBaseRepository<T> {
 
   findById(id: string | Types.ObjectId): Promise<T | null>;
 
-  findByIds(ids: string[] | Types.ObjectId[]): Promise<T[]>;
+  findByIds(ids: (string | Types.ObjectId)[]): Promise<T[]>;
 
   find(filter: FilterQuery<T>): Promise<T[]>;
 
-  updateOne(filter: FilterQuery<T>, update: UpdateQuery<T>): Promise<number>;
+  updateOne(
+    filter: FilterQuery<T>,
+    update: UpdateQuery<T>,
+    session?: ClientSession,
+  ): Promise<number>;
 
   updateById(
     id: string | Types.ObjectId,

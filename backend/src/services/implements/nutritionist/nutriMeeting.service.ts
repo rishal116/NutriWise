@@ -6,7 +6,11 @@ import { INutriMeetingService } from "../../interfaces/nutritionist/INutriMeetin
 import { INutriMeetingRepository } from "../../../repositories/interfaces/nutritionist/INutriMeetingRepository";
 import { CreateMeetingDTO } from "../../../dtos/nutritionist/meeting/create-meeting.dto";
 import { MeetingMapper } from "../../../mappers/nutritionist/meeting/meeting-list.mapper";
-import { IMeeting, MeetingStatus } from "../../../models/meeting.model";
+import {
+  IMeeting,
+  MeetingCancelledBy,
+  MeetingStatus,
+} from "../../../models/meeting.model";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
@@ -29,6 +33,8 @@ export class NutriMeetingService implements INutriMeetingService {
     nutritionistId: string,
     query: MeetingListQueryDTO,
   ): Promise<InfiniteScrollResponseDTO<MeetingCardResponseDTO>> {
+    this.validateObjectId(nutritionistId, "nutritionist");
+
     logger.debug("Fetching nutritionist meetings", {
       nutritionistId,
       query,
@@ -36,17 +42,16 @@ export class NutriMeetingService implements INutriMeetingService {
 
     const validatedQuery = await validateDto(MeetingListQueryDTO, query);
 
-    const result = await this._nutriMeetingRepository.findByNutritionistId(
-      nutritionistId,
-      validatedQuery,
-    );
-
-    const items = MeetingMapper.toCardResponseDTOList(result.items);
+    const { items, nextCursor, hasMore } =
+      await this._nutriMeetingRepository.findByNutritionistId(
+        nutritionistId,
+        validatedQuery,
+      );
 
     return new InfiniteScrollResponseDTO(
-      items,
-      result.nextCursor,
-      result.hasMore,
+      MeetingMapper.toCardResponseDTOList(items),
+      nextCursor,
+      hasMore,
     );
   }
 
@@ -54,14 +59,13 @@ export class NutriMeetingService implements INutriMeetingService {
     nutritionistId: string,
     meetingId: string,
   ): Promise<MeetingDetailsResponseDTO> {
+    this.validateObjectId(nutritionistId, "nutritionist");
+    this.validateObjectId(meetingId, "meeting");
+
     logger.debug("Fetching meeting details", {
       nutritionistId,
       meetingId,
     });
-
-    if (!Types.ObjectId.isValid(meetingId)) {
-      throw new CustomError("Invalid meeting ID.", StatusCode.BAD_REQUEST);
-    }
 
     const meeting = await this._nutriMeetingRepository.findMeetingDetailsById(
       nutritionistId,
@@ -86,75 +90,49 @@ export class NutriMeetingService implements INutriMeetingService {
   }
 
   async createMeeting(
+    nutritionistId: string,
     data: CreateMeetingDTO,
-  ): Promise<MeetingDetailsResponseDTO> {
+  ): Promise<void> {
+    this.validateObjectId(nutritionistId, "nutritionist");
+
+    const validatedData = await validateDto(CreateMeetingDTO, data);
+
+    this.validateObjectId(validatedData.userId, "user");
+
+    const scheduledAt = new Date(validatedData.scheduledAt);
+
+    this.validateFutureDate(scheduledAt);
+
     const roomId = randomUUID();
 
-    const scheduledAt = new Date(data.scheduledAt);
-
-    if (Number.isNaN(scheduledAt.getTime())) {
-      throw new CustomError("Invalid meeting date.", StatusCode.BAD_REQUEST);
-    }
-
-    if (scheduledAt <= new Date()) {
-      throw new CustomError(
-        "Meeting must be scheduled for a future date.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    logger.info("Creating nutritionist meeting", {
-      nutritionistId: data.nutritionistId,
-      userId: data.userId,
-      roomId,
-      scheduledAt,
-      durationInMinutes: data.durationInMinutes,
-      type: data.type,
-    });
-
     await this._nutriMeetingRepository.create({
-      title: data.title.trim(),
+      title: validatedData.title.trim(),
       roomId,
       scheduledAt,
-      durationInMinutes: data.durationInMinutes,
-      type: data.type,
-      userId: new Types.ObjectId(data.userId),
-      nutritionistId: new Types.ObjectId(data.nutritionistId),
+      durationInMinutes: validatedData.durationInMinutes,
+      userId: new Types.ObjectId(validatedData.userId),
+      nutritionistId: new Types.ObjectId(nutritionistId),
       status: MeetingStatus.SCHEDULED,
     });
 
-    const meeting = await this._nutriMeetingRepository.findByRoomId(roomId);
-
-    if (!meeting) {
-      logger.error("Created meeting could not be retrieved", {
-        roomId,
-      });
-
-      throw new CustomError(
-        "Meeting could not be retrieved after creation.",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
     logger.info("Nutritionist meeting created", {
-      meetingId: meeting._id.toString(),
-      roomId: meeting.roomId,
+      nutritionistId,
+      userId: validatedData.userId,
+      roomId,
     });
-
-    return MeetingDetailsMapper.toResponseDTO(meeting);
   }
 
   async updateMeetingStatus(
     roomId: string,
     status: MeetingStatus,
-  ): Promise<MeetingDetailsResponseDTO> {
+  ): Promise<void> {
     logger.info("Updating meeting status", {
       roomId,
       status,
     });
 
     const existingMeeting =
-      await this._nutriMeetingRepository.findByRoomId(roomId);
+      await this._nutriMeetingRepository.findMeetingByRoomId(roomId);
 
     if (!existingMeeting) {
       throw new CustomError("Meeting not found.", StatusCode.NOT_FOUND);
@@ -162,9 +140,7 @@ export class NutriMeetingService implements INutriMeetingService {
 
     this.validateStatusTransition(existingMeeting.status, status);
 
-    const updateData: Partial<IMeeting> = {
-      status,
-    };
+    const updateData: Partial<IMeeting> = { status };
 
     if (status === MeetingStatus.ONGOING) {
       updateData.startedAt = existingMeeting.startedAt ?? new Date();
@@ -175,7 +151,7 @@ export class NutriMeetingService implements INutriMeetingService {
     }
 
     if (status === MeetingStatus.CANCELLED) {
-      updateData.isCancelledByNutritionist = true;
+      updateData.cancelledBy = MeetingCancelledBy.NUTRITIONIST;
     }
 
     const updatedMeeting =
@@ -197,27 +173,154 @@ export class NutriMeetingService implements INutriMeetingService {
       );
     }
 
-    const populatedMeeting =
-      await this._nutriMeetingRepository.findByRoomId(roomId);
+    logger.info("Meeting status updated", {
+      roomId,
+      from: existingMeeting.status,
+      to: updatedMeeting.status,
+    });
+  }
 
-    if (!populatedMeeting) {
-      logger.error("Meeting not found after status update", {
-        roomId,
-      });
+  async updateMeeting(
+    nutritionistId: string,
+    meetingId: string,
+    data: UpdateMeetingDTO,
+  ): Promise<void> {
+    this.validateObjectId(nutritionistId, "nutritionist");
+    this.validateObjectId(meetingId, "meeting");
+
+    const validatedData = await validateDto(UpdateMeetingDTO, data);
+    const scheduledAt = new Date(validatedData.scheduledAt);
+
+    this.validateFutureDate(scheduledAt);
+
+    const updatedMeeting = await this._nutriMeetingRepository.updateMeetingById(
+      nutritionistId,
+      meetingId,
+      {
+        title: validatedData.title.trim(),
+        scheduledAt,
+        durationInMinutes: validatedData.durationInMinutes,
+      },
+    );
+
+    if (!updatedMeeting) {
+      const existingMeeting =
+        await this._nutriMeetingRepository.findMeetingDetailsById(
+          nutritionistId,
+          meetingId,
+        );
+
+      if (!existingMeeting) {
+        throw new CustomError("Meeting not found.", StatusCode.NOT_FOUND);
+      }
+
+      if (existingMeeting.status !== MeetingStatus.SCHEDULED) {
+        throw new CustomError(
+          "Only scheduled meetings can be updated.",
+          StatusCode.BAD_REQUEST,
+        );
+      }
 
       throw new CustomError(
-        "Meeting not found after status update.",
+        "Failed to update meeting.",
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
 
-    logger.info("Meeting status updated", {
-      roomId,
-      from: existingMeeting.status,
-      to: populatedMeeting.status,
+    logger.info("Nutritionist meeting updated", {
+      nutritionistId,
+      meetingId,
+      scheduledAt,
+      durationInMinutes: validatedData.durationInMinutes,
     });
+  }
 
-    return MeetingDetailsMapper.toResponseDTO(populatedMeeting);
+  async cancelMeeting(
+    nutritionistId: string,
+    meetingId: string,
+    cancellationReason: string,
+  ): Promise<void> {
+    this.validateObjectId(nutritionistId, "nutritionist");
+    this.validateObjectId(meetingId, "meeting");
+
+    if (typeof cancellationReason !== "string" || !cancellationReason.trim()) {
+      throw new CustomError(
+        "Cancellation reason is required.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const trimmedReason = cancellationReason.trim();
+
+    if (trimmedReason.length > 500) {
+      throw new CustomError(
+        "Cancellation reason cannot exceed 500 characters.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const existingMeeting =
+      await this._nutriMeetingRepository.findMeetingDetailsById(
+        nutritionistId,
+        meetingId,
+      );
+
+    if (!existingMeeting) {
+      throw new CustomError("Meeting not found.", StatusCode.NOT_FOUND);
+    }
+
+    if (existingMeeting.status !== MeetingStatus.SCHEDULED) {
+      throw new CustomError(
+        "Only scheduled meetings can be cancelled.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const updateData: Partial<IMeeting> = {
+      status: MeetingStatus.CANCELLED,
+      cancelledBy: MeetingCancelledBy.NUTRITIONIST,
+      cancellationReason: trimmedReason,
+    };
+
+    const updatedMeeting =
+      await this._nutriMeetingRepository.updateStatusByRoomId(
+        existingMeeting.roomId,
+        MeetingStatus.CANCELLED,
+        updateData,
+      );
+
+    if (!updatedMeeting) {
+      logger.error("Meeting cancellation failed", {
+        nutritionistId,
+        meetingId,
+      });
+
+      throw new CustomError(
+        "Failed to cancel meeting.",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    logger.info("Nutritionist cancelled meeting", {
+      nutritionistId,
+      meetingId,
+      roomId: existingMeeting.roomId,
+    });
+  }
+
+  private validateObjectId(value: string, label: string): void {
+    if (!Types.ObjectId.isValid(value)) {
+      throw new CustomError(`Invalid ${label} ID.`, StatusCode.BAD_REQUEST);
+    }
+  }
+
+  private validateFutureDate(date: Date): void {
+    if (Number.isNaN(date.getTime()) || date <= new Date()) {
+      throw new CustomError(
+        "Meeting must be scheduled for a valid future date.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
   }
 
   private validateStatusTransition(
@@ -236,101 +339,16 @@ export class NutriMeetingService implements INutriMeetingService {
         MeetingStatus.ONGOING,
         MeetingStatus.CANCELLED,
       ],
-
       [MeetingStatus.ONGOING]: [MeetingStatus.COMPLETED],
-
       [MeetingStatus.COMPLETED]: [],
-
       [MeetingStatus.CANCELLED]: [],
     };
 
-    const allowedNextStatuses = allowedTransitions[currentStatus];
-
-    if (!allowedNextStatuses.includes(nextStatus)) {
+    if (!allowedTransitions[currentStatus].includes(nextStatus)) {
       throw new CustomError(
         `Cannot change meeting status from ${currentStatus} to ${nextStatus}.`,
         StatusCode.BAD_REQUEST,
       );
     }
-  }
-
-  async updateMeeting(
-    nutritionistId: string,
-    meetingId: string,
-    data: UpdateMeetingDTO,
-  ): Promise<MeetingDetailsResponseDTO> {
-    if (!Types.ObjectId.isValid(meetingId)) {
-      throw new CustomError("Invalid meeting ID.", StatusCode.BAD_REQUEST);
-    }
-
-    const validatedData = await validateDto(UpdateMeetingDTO, data);
-
-    const existingMeeting =
-      await this._nutriMeetingRepository.findMeetingDetailsById(
-        nutritionistId,
-        meetingId,
-      );
-
-    if (!existingMeeting) {
-      throw new CustomError("Meeting not found.", StatusCode.NOT_FOUND);
-    }
-
-    if (existingMeeting.status !== MeetingStatus.SCHEDULED) {
-      throw new CustomError(
-        "Only scheduled meetings can be updated.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    const scheduledAt = new Date(validatedData.scheduledAt);
-
-    if (Number.isNaN(scheduledAt.getTime())) {
-      throw new CustomError("Invalid meeting date.", StatusCode.BAD_REQUEST);
-    }
-
-    if (scheduledAt <= new Date()) {
-      throw new CustomError(
-        "Meeting must be scheduled for a future date.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    const updatedMeeting = await this._nutriMeetingRepository.updateMeetingById(
-      nutritionistId,
-      meetingId,
-      {
-        title: validatedData.title.trim(),
-        scheduledAt,
-        durationInMinutes: validatedData.durationInMinutes,
-      },
-    );
-
-    if (!updatedMeeting) {
-      throw new CustomError(
-        "Failed to update meeting.",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    const meeting = await this._nutriMeetingRepository.findMeetingDetailsById(
-      nutritionistId,
-      meetingId,
-    );
-
-    if (!meeting) {
-      throw new CustomError(
-        "Meeting not found after update.",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    logger.info("Nutritionist meeting updated", {
-      nutritionistId,
-      meetingId,
-      scheduledAt,
-      durationInMinutes: validatedData.durationInMinutes,
-    });
-
-    return MeetingDetailsMapper.toResponseDTO(meeting);
   }
 }

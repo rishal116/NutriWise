@@ -1,7 +1,7 @@
-import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
-import { UserMeetingDetailsResponseDTO } from "../../../dtos/user/meeting/user-meeting-details-response.dto";
 import { UserMeetingListQueryDTO } from "../../../dtos/user/meeting/user-meeting-list-query.dto";
 import { UserMeetingListResponseDTO } from "../../../dtos/user/meeting/user-meeting-list-response.dto";
+import { UserMeetingDetailsResponseDTO } from "../../../dtos/user/meeting/user-meeting-details-response.dto";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 
 export interface IUserMeetingService {
   getMeetings(
@@ -13,4 +13,6 @@ export interface IUserMeetingService {
     userId: string,
     meetingId: string,
   ): Promise<UserMeetingDetailsResponseDTO>;
+
+  cancelMeeting(userId: string, meetingId: string): Promise<void>;
 }

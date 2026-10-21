@@ -58,7 +58,7 @@ export default function EditMeetingPage() {
       const response = await nutriMeetingService.getMeetingDetails(meetingId);
       const data = response.data;
 
-      if (data.status !== MeetingStatus.SCHEDULED) {
+      if (data?.status !== MeetingStatus.SCHEDULED) {
         toast.error("Only scheduled meetings can be edited");
         router.replace(
           `/nutritionist/meetings/${encodeURIComponent(meetingId)}`,

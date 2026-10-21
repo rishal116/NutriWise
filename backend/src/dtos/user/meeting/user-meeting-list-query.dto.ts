@@ -1,6 +1,6 @@
 import { Type } from "class-transformer";
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
-import { MeetingStatus, MeetingType } from "../../../models/meeting.model";
+import { MeetingStatus } from "../../../models/meeting.model";
 
 export enum MeetingSortBy {
   SCHEDULED_AT = "scheduledAt",
@@ -32,10 +32,6 @@ export class UserMeetingListQueryDTO {
   @IsOptional()
   @IsEnum(MeetingStatus)
   status?: MeetingStatus;
-
-  @IsOptional()
-  @IsEnum(MeetingType)
-  type?: MeetingType;
 
   @IsOptional()
   @IsEnum(MeetingSortBy)

@@ -12,15 +12,17 @@ const nutritionistMeetingController = container.get<INutriMeetingController>(
 
 router.get("/", nutritionistMeetingController.getMeetings);
 
-router.get("/:meetingId", nutritionistMeetingController.getMeetingDetails);
-
 router.post("/", nutritionistMeetingController.createMeeting);
-
-router.patch("/:meetingId", nutritionistMeetingController.updateMeeting);
 
 router.patch(
   "/status/:roomId",
   nutritionistMeetingController.updateMeetingStatus,
 );
+
+router.patch("/:meetingId/cancel", nutritionistMeetingController.cancelMeeting);
+
+router.patch("/:meetingId", nutritionistMeetingController.updateMeeting);
+
+router.get("/:meetingId", nutritionistMeetingController.getMeetingDetails);
 
 export default router;

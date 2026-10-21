@@ -10,7 +10,6 @@ export const PROGRAM_ACTIVITY_CATEGORIES = [
   "appointment",
   "measurement",
   "task",
-  "custom",
 ] as const;
 
 export type ProgramActivityCategory =
@@ -44,7 +43,7 @@ export interface ProgramActivityResponseDTO {
   unit?: string;
 
   estimatedDurationMinutes?: number;
-  
+
   scheduledTime?: string;
 
   isRequired: boolean;

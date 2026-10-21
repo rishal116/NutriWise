@@ -4,6 +4,11 @@ import { MeetingListQueryDTO } from "../../../dtos/nutritionist/meeting/meeting-
 import { IBaseRepository } from "../common/IBaseRepository";
 import { MeetingDetails } from "../../../types/nutritionist/meeting/meeting-details.type";
 import { MeetingCard } from "../../../types/nutritionist/meeting/meeting-card.type";
+import {
+  MeetingByRoomRecord,
+  MeetingRoomRecord,
+  MeetingStatusUpdateFields,
+} from "../../../types/nutritionist/meeting/meeting-repository.types";
 
 export interface INutriMeetingRepository extends IBaseRepository<IMeeting> {
   findByNutritionistId(
@@ -16,13 +21,13 @@ export interface INutriMeetingRepository extends IBaseRepository<IMeeting> {
     meetingId: string,
   ): Promise<MeetingDetails | null>;
 
-  findByRoomId(roomId: string): Promise<MeetingDetails | null>;
+  findMeetingByRoomId(roomId: string): Promise<MeetingByRoomRecord | null>;
 
   updateStatusByRoomId(
     roomId: string,
     status: MeetingStatus,
-    extraFields?: Partial<IMeeting>,
-  ): Promise<MeetingDetails | null>;
+    extraFields?: MeetingStatusUpdateFields,
+  ): Promise<MeetingRoomRecord | null>;
 
   updateMeetingById(
     nutritionistId: string,

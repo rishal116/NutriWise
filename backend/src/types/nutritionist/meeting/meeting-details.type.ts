@@ -1,41 +1,29 @@
 import { Types } from "mongoose";
-import { MeetingStatus, MeetingType } from "../../../models/meeting.model";
+import {
+  MeetingCancelledBy,
+  MeetingStatus,
+} from "../../../models/meeting.model";
+
+export interface MeetingParticipantDetails {
+  _id: Types.ObjectId;
+  fullName: string;
+  email: string;
+  profileImage?: string;
+}
 
 export interface MeetingDetails {
   _id: Types.ObjectId;
-
   title: string;
-
   nutritionistId: Types.ObjectId;
-
-  user: {
-    _id: Types.ObjectId;
-    fullName: string;
-    email: string;
-    profileImage?: string;
-  };
-
+  user: MeetingParticipantDetails;
   roomId: string;
-
   scheduledAt: Date;
-
   durationInMinutes: number;
-
   status: MeetingStatus;
-
-  type: MeetingType;
-
   startedAt?: Date;
   endedAt?: Date;
-
-  nutritionistJoinedAt?: Date;
-  userJoinedAt?: Date;
-
-  isCancelledByUser: boolean;
-  isCancelledByNutritionist: boolean;
-
-  isDeleted: boolean;
-
+  cancelledBy?: MeetingCancelledBy;
+  cancellationReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }

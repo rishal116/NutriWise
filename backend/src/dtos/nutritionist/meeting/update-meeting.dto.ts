@@ -1,16 +1,30 @@
-import { IsDateString, IsInt, IsString, Max, MaxLength, Min, MinLength } from "class-validator";
+import {
+  IsDateString,
+  IsInt,
+  IsNotEmpty,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from "class-validator";
+import {
+  MAX_MEETING_DURATION,
+  MIN_MEETING_DURATION,
+} from "../../../models/meeting.model";
 
 export class UpdateMeetingDTO {
   @IsString()
-  @MinLength(1)
-  @MaxLength(150)
+  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(100)
   title!: string;
 
   @IsDateString()
   scheduledAt!: string;
 
   @IsInt()
-  @Min(15)
-  @Max(180)
+  @Min(MIN_MEETING_DURATION)
+  @Max(MAX_MEETING_DURATION)
   durationInMinutes!: number;
 }

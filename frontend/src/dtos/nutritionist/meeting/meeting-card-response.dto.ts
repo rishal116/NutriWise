@@ -1,7 +1,4 @@
-import {
-  MeetingStatus,
-  MeetingType,
-} from "@/enums/nutritionist/meeting/meeting.enum";
+import { MeetingStatus } from "@/enums/nutritionist/meeting/meeting.enum";
 
 export interface MeetingCardResponseDTO {
   id: string;
@@ -10,10 +7,9 @@ export interface MeetingCardResponseDTO {
     id: string;
     fullName: string;
     email: string;
-    profileImage:string;
+    profileImage?: string;
   };
   scheduledAt: string;
   durationInMinutes: number;
   status: MeetingStatus;
-  type: MeetingType;
 }

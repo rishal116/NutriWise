@@ -7,38 +7,28 @@ export enum MeetingStatus {
   CANCELLED = "cancelled",
 }
 
-export enum MeetingType {
-  VIDEO = "video",
-  AUDIO = "audio",
+export const MIN_MEETING_DURATION = 30;
+export const MAX_MEETING_DURATION = 60;
+
+export enum MeetingCancelledBy {
+  USER = "user",
+  NUTRITIONIST = "nutritionist",
 }
 
 export interface IMeeting {
   _id: Types.ObjectId;
-
   title: string;
-
   nutritionistId: Types.ObjectId;
   userId: Types.ObjectId;
-
   roomId: string;
-
   scheduledAt: Date;
   durationInMinutes: number;
-
   status: MeetingStatus;
-  type: MeetingType;
-
   startedAt?: Date;
   endedAt?: Date;
-
-  nutritionistJoinedAt?: Date;
-  userJoinedAt?: Date;
-
-  isCancelledByUser: boolean;
-  isCancelledByNutritionist: boolean;
-
+  cancelledBy?: MeetingCancelledBy;
+  cancellationReason?: string;
   isDeleted: boolean;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,14 +46,12 @@ const meetingSchema = new Schema<IMeeting>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     roomId: {
@@ -77,14 +65,11 @@ const meetingSchema = new Schema<IMeeting>(
     scheduledAt: {
       type: Date,
       required: true,
-      index: true,
     },
 
     durationInMinutes: {
       type: Number,
       required: true,
-      min: 1,
-      max: 480,
     },
 
     status: {
@@ -92,14 +77,6 @@ const meetingSchema = new Schema<IMeeting>(
       enum: Object.values(MeetingStatus),
       required: true,
       default: MeetingStatus.SCHEDULED,
-      index: true,
-    },
-
-    type: {
-      type: String,
-      enum: Object.values(MeetingType),
-      required: true,
-      default: MeetingType.VIDEO,
     },
 
     startedAt: {
@@ -110,28 +87,20 @@ const meetingSchema = new Schema<IMeeting>(
       type: Date,
     },
 
-    nutritionistJoinedAt: {
-      type: Date,
+    cancelledBy: {
+      type: String,
+      enum: Object.values(MeetingCancelledBy),
     },
 
-    userJoinedAt: {
-      type: Date,
-    },
-
-    isCancelledByUser: {
-      type: Boolean,
-      default: false,
-    },
-
-    isCancelledByNutritionist: {
-      type: Boolean,
-      default: false,
+    cancellationReason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
     },
 
     isDeleted: {
       type: Boolean,
       default: false,
-      index: true,
     },
   },
   {
@@ -139,9 +108,6 @@ const meetingSchema = new Schema<IMeeting>(
   },
 );
 
-/**
- * Common query indexes
- */
 meetingSchema.index({
   nutritionistId: 1,
   scheduledAt: 1,

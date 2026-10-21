@@ -1,203 +1,149 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useWebRTC } from "@/hooks/common/useWebRTC";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import {
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  PhoneOff,
-  Play,
-  Smile,
-} from "lucide-react";
+import { useAppSelector } from "@/redux/hooks";
 import { nutriMeetingService } from "@/services/nutritionist/nutriMeeting.service";
 import { MeetingStatus } from "@/enums/nutritionist/meeting/meeting.enum";
-import { useAppSelector } from "@/redux/hooks";
+import { useVideoCall, type CallStatus } from "@/hooks/video-call/useVideoCall";
+import { useCallChat } from "@/hooks/video-call/useCallChat";
+import VideoGrid from "@/components/video-call/VideoGrid";
+import ControlBar from "@/components/video-call/ControlBar";
+import ChatPanel from "@/components/video-call/ChatPanel";
+import PreJoin from "@/components/video-call/PreJoin";
+import LeftScreen from "@/components/video-call/LeftScreen";
+
+const STATUS_LABEL: Partial<Record<CallStatus, string>> = {
+  joining: "Joining…",
+  waiting: "Waiting for the other participant…",
+  connecting: "Connecting…",
+  reconnecting: "Reconnecting…",
+};
 
 const VideoCallPage = () => {
-  const params = useParams();
+  const params = useParams<{ roomId: string }>();
   const router = useRouter();
-  const roomId = params?.roomId as string;
+  const roomId = params?.roomId ?? "";
   const activeRole = useAppSelector((state) => state.auth.user?.activeRole);
   const isNutritionist = activeRole === "nutritionist";
 
-  const [showReactions, setShowReactions] = useState(false);
-  const [joining, setJoining] = useState(false);
-  const reactions = useMemo(() => ["💖", "👍", "👏", "😂", "🔥"], []);
+  const call = useVideoCall(roomId);
+  const { messages, send } = useCallChat(call.socket, roomId);
 
-  const {
-    localVideoRef,
-    remoteVideoRef,
-    startCall,
-    endCall,
-    toggleAudio,
-    toggleVideo,
-    isAudioOn,
-    isVideoOn,
-    isJoined,
-    hasRemoteStream,
-  } = useWebRTC(roomId);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [seenCount, setSeenCount] = useState(0);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [hasLeft, setHasLeft] = useState(false);
 
-  const handleJoin = async () => {
-    setJoining(true);
+  useEffect(() => {
+    if (isChatOpen) setSeenCount(messages.length);
+  }, [isChatOpen, messages.length]);
 
-    try {
-      await startCall();
-    } catch (err) {
-      console.error(err);
-    }
+  const unreadCount = isChatOpen ? 0 : Math.max(0, messages.length - seenCount);
 
-    setJoining(false);
+  const handleLeave = () => {
+    call.leave();
+    setIsChatOpen(false);
+    setSeenCount(0);
+    setHasLeft(true);
   };
 
-  const handleLeave = async () => {
+  const handleEndMeeting = async () => {
     try {
-      if (isNutritionist) {
-        await nutriMeetingService.updateMeetingStatus(
-          roomId,
-          MeetingStatus.COMPLETED,
-        );
-      }
-    } catch (error) {
-      console.error("Failed to update meeting status:", error);
-    } finally {
-      endCall();
-      router.back();
+      await nutriMeetingService.updateMeetingStatus(
+        roomId,
+        MeetingStatus.COMPLETED,
+      );
+    } catch {
+      setActionError("Could not end the meeting. Please try again.");
+      return;
     }
+    call.leave();
+    router.back();
   };
 
   if (!roomId) return null;
 
+  const banner = call.error ?? actionError ?? STATUS_LABEL[call.status] ?? null;
+  const isBannerError = Boolean(call.error ?? actionError);
+
   return (
-    <div className="fixed inset-0 bg-[#020617] flex flex-col items-center justify-center overflow-hidden font-sans selection:bg-emerald-500/30">
-      {/* MINIMAL TOP INFO */}
-      <div className="absolute top-6 left-6 z-50 flex items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-900/60 backdrop-blur-md border border-white/5 rounded-xl">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] font-mono text-emerald-50/70 tracking-wider uppercase">
-            {roomId}
-          </span>
-        </div>
-      </div>
-
-      {/* VIDEO LAYOUT */}
-      <div className="relative w-full h-full p-4 flex flex-col md:flex-row items-center justify-center gap-4">
-        {/* LOCAL FEED */}
-        <div
-          className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-900 transition-all duration-500 shadow-2xl ${
-            hasRemoteStream
-              ? "w-full md:w-1/2 h-1/2 md:h-[70%]"
-              : "w-full max-w-5xl h-[80%]"
-          }`}
-        >
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            className={`w-full h-full object-cover scale-x-[-1] ${!isVideoOn ? "opacity-0" : "opacity-100"}`}
-          />
-          {!isVideoOn && (
-            <div className="absolute inset-0 flex items-center justify-center bg-neutral-800">
-              <VideoOff size={32} className="text-neutral-600" />
-            </div>
-          )}
-          <div className="absolute bottom-4 left-4 text-[10px] font-bold text-white/50 uppercase tracking-widest bg-black/20 px-2 py-1 rounded">
-            You
-          </div>
-        </div>
-
-        {/* REMOTE FEED */}
-        <div
-          className={`relative overflow-hidden rounded-2xl border border-white/5 bg-neutral-950 transition-all duration-500 ${
-            hasRemoteStream ? "w-full md:w-1/2 h-1/2 md:h-[70%]" : "hidden"
-          }`}
-        >
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute bottom-4 left-4 text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded">
-            Partner
-          </div>
-        </div>
-      </div>
-
-      {/* SLIM CONTROL BAR */}
-      <div className="absolute bottom-8 flex items-center gap-2 px-3 py-2 bg-neutral-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl z-50">
-        {!isJoined ? (
-          <button
-            onClick={handleJoin}
-            disabled={joining}
-            className="flex items-center gap-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all text-sm font-bold disabled:opacity-50"
-          >
-            {joining ? "..." : <Play size={16} fill="currentColor" />}
-            {joining ? "Joining" : "Join"}
-          </button>
-        ) : (
+    <div className="fixed inset-0 flex h-dvh overflow-hidden bg-[#111] font-sans text-white selection:bg-emerald-500/30">
+      <main className="relative min-w-0 flex-1">
+        {call.isJoined ? (
           <>
-            <button
-              onClick={toggleAudio}
-              className={`p-2.5 rounded-xl transition-colors ${
-                isAudioOn
-                  ? "text-neutral-400 hover:bg-neutral-800 hover:text-white"
-                  : "bg-red-500/20 text-red-500"
-              }`}
-            >
-              {isAudioOn ? <Mic size={20} /> : <MicOff size={20} />}
-            </button>
-
-            <button
-              onClick={toggleVideo}
-              className={`p-2.5 rounded-xl transition-colors ${
-                isVideoOn
-                  ? "text-neutral-400 hover:bg-neutral-800 hover:text-white"
-                  : "bg-red-500/20 text-red-500"
-              }`}
-            >
-              {isVideoOn ? <Video size={20} /> : <VideoOff size={20} />}
-            </button>
-
-            <div className="relative">
-              <button
-                onClick={() => setShowReactions(!showReactions)}
-                className={`p-2.5 rounded-xl transition-colors ${showReactions ? "bg-emerald-600/20 text-emerald-400" : "text-neutral-400 hover:bg-neutral-800"}`}
-              >
-                <Smile size={20} />
-              </button>
-              {showReactions && (
-                <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-1 bg-neutral-900 border border-white/10 p-1.5 rounded-xl shadow-2xl">
-                  {reactions.map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => {
-                        console.log(emoji);
-                        setShowReactions(false);
-                      }}
-                      className="p-1.5 hover:bg-white/5 rounded-lg text-lg transition-transform hover:scale-125"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
-                </div>
+            <div className="absolute left-3 top-3 z-20 flex items-center gap-2 md:left-6 md:top-5">
+              <span className="max-w-40 truncate font-mono text-xs uppercase tracking-wider text-neutral-300">
+                {roomId}
+              </span>
+              {banner && (
+                <span
+                  role="status"
+                  className={`rounded-full px-3 py-1 text-xs ${
+                    isBannerError
+                      ? "bg-red-500/20 text-red-300"
+                      : "bg-neutral-800 text-neutral-300"
+                  }`}
+                >
+                  {banner}
+                </span>
               )}
             </div>
 
-            <div className="w-[1px] h-5 bg-white/10 mx-1" />
+            <VideoGrid
+              localStream={call.localStream}
+              remoteStream={call.remoteStream}
+              isVideoOn={call.isVideoOn}
+            />
 
-            <button
-              onClick={handleLeave}
-              className="p-2.5 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all"
-            >
-              <PhoneOff size={20} />
-            </button>
+            <div className="absolute inset-x-0 bottom-4 z-30 flex justify-center pb-[env(safe-area-inset-bottom)]">
+              <ControlBar
+                isAudioOn={call.isAudioOn}
+                isVideoOn={call.isVideoOn}
+                isChatOpen={isChatOpen}
+                unreadCount={unreadCount}
+                canEndMeeting={isNutritionist}
+                onToggleAudio={call.toggleAudio}
+                onToggleVideo={call.toggleVideo}
+                onToggleChat={() => setIsChatOpen((open) => !open)}
+                onReact={send}
+                onLeave={handleLeave}
+                onEndMeeting={handleEndMeeting}
+              />
+            </div>
           </>
+        ) : hasLeft ? (
+          <LeftScreen
+            onRejoin={() => {
+              setActionError(null);
+              setHasLeft(false);
+            }}
+            onBack={() => router.back()}
+          />
+        ) : (
+          <PreJoin
+            roomId={roomId}
+            stream={call.localStream}
+            isAudioOn={call.isAudioOn}
+            isVideoOn={call.isVideoOn}
+            isJoining={call.status === "joining"}
+            error={call.error}
+            onToggleAudio={call.toggleAudio}
+            onToggleVideo={call.toggleVideo}
+            onJoin={call.join}
+            onBack={() => router.back()}
+          />
         )}
-      </div>
+      </main>
+
+      {call.isJoined && isChatOpen && (
+        <ChatPanel
+          messages={messages}
+          selfId={call.socket?.id}
+          onSend={send}
+          onClose={() => setIsChatOpen(false)}
+        />
+      )}
     </div>
   );
 };
