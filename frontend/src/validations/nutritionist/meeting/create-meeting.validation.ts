@@ -1,39 +1,47 @@
 import { z } from "zod";
 
-import { MeetingType } from "@/enums/nutritionist/meeting/meeting.enum";
+import {
+  MAX_MEETING_DURATION,
+  MIN_MEETING_DURATION,
+} from "@/constants/meeting";
+
+const isFutureDateTime = (value: string): boolean => {
+  if (!value) {
+    return false;
+  }
+
+  const scheduledAt = new Date(value);
+
+  return (
+    Number.isFinite(scheduledAt.getTime()) && scheduledAt.getTime() > Date.now()
+  );
+};
 
 export const createMeetingSchema = z.object({
   title: z
     .string()
     .trim()
-    .min(1, "Title is required")
-    .max(120, "Title must not exceed 120 characters"),
+    .min(3, "Session title must be at least 3 characters.")
+    .max(100, "Session title cannot exceed 100 characters."),
 
-  userId: z.string().trim().min(1, "Please select a client"),
+  userId: z.string().regex(/^[a-f\d]{24}$/i, "Please select a valid client."),
 
   scheduledAt: z
     .string()
-    .min(1, "Please choose a date and time")
-    .refine((value) => {
-      const timestamp = new Date(value).getTime();
-      return Number.isFinite(timestamp);
-    }, "Please enter a valid date and time")
-    .refine((value) => {
-      const timestamp = new Date(value).getTime();
-      return Number.isFinite(timestamp) && timestamp > Date.now();
-    }, "Session time must be in the future"),
+    .min(1, "Please select a date and time.")
+    .refine(isFutureDateTime, "Please select a future date and time."),
 
   durationInMinutes: z
-    .number({
-      error: "Duration must be a number",
-    })
-    .int("Duration must be a whole number")
-    .min(5, "Minimum duration is 5 minutes")
-    .max(240, "Maximum duration is 240 minutes"),
-
-  type: z.nativeEnum(MeetingType, {
-    error: "Please select a valid session type",
-  }),
+    .number()
+    .int("Duration must be a whole number.")
+    .min(
+      MIN_MEETING_DURATION,
+      `Duration must be at least ${MIN_MEETING_DURATION} minutes.`,
+    )
+    .max(
+      MAX_MEETING_DURATION,
+      `Duration cannot exceed ${MAX_MEETING_DURATION} minutes.`,
+    ),
 });
 
 export type CreateMeetingFormValues = z.infer<typeof createMeetingSchema>;

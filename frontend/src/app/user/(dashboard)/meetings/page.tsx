@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Video,
-  Mic,
   Clock,
   ArrowRight,
   CheckCircle2,
@@ -21,7 +20,6 @@ import { userMeetingService } from "@/services/user/userMeeting.service";
 import { useDebounce } from "@/hooks/common/debounce.hooks";
 import {
   MeetingStatus,
-  MeetingType,
   MeetingSortBy,
   MeetingSortOrder,
 } from "@/enums/user/meeting/user-meeting.enum";
@@ -29,9 +27,12 @@ import type { UserMeetingListQueryDTO } from "@/dtos/user/meeting/user-meeting-l
 import type { UserMeetingListResponseDTO } from "@/dtos/user/meeting/user-meeting-list-response.dto";
 
 const PAGE_LIMIT = 12;
-const EARLY_JOIN_MS = 15 * 60 * 1000; // client can join 15 min before scheduled time
+const EARLY_JOIN_MS = 15 * 60 * 1000;
 
-const STATUS_OPTIONS: { label: string; value: MeetingStatus | "all" }[] = [
+const STATUS_OPTIONS: {
+  label: string;
+  value: MeetingStatus | "all";
+}[] = [
   { label: "All", value: "all" },
   { label: "Scheduled", value: MeetingStatus.SCHEDULED },
   { label: "Ongoing", value: MeetingStatus.ONGOING },
@@ -39,13 +40,10 @@ const STATUS_OPTIONS: { label: string; value: MeetingStatus | "all" }[] = [
   { label: "Cancelled", value: MeetingStatus.CANCELLED },
 ];
 
-const TYPE_OPTIONS: { label: string; value: MeetingType | "all" }[] = [
-  { label: "All types", value: "all" },
-  { label: "Video", value: MeetingType.VIDEO },
-  { label: "Audio", value: MeetingType.AUDIO },
-];
-
-const SORT_OPTIONS: { label: string; value: MeetingSortBy }[] = [
+const SORT_OPTIONS: {
+  label: string;
+  value: MeetingSortBy;
+}[] = [
   { label: "Scheduled date", value: MeetingSortBy.SCHEDULED_AT },
   { label: "Created date", value: MeetingSortBy.CREATED_AT },
   { label: "Title", value: MeetingSortBy.TITLE },
@@ -70,12 +68,11 @@ function getInitial(fullName: string): string {
   return fullName.trim().charAt(0).toUpperCase() || "?";
 }
 
-/* Countdown to join-window opening. Ticks every second under an hour away,
-   every 30s otherwise, to avoid needless re-renders on far-out sessions. */
 function useJoinCountdown(scheduledAt: string, status: MeetingStatus) {
   const [now, setNow] = useState(() => Date.now());
   const target = new Date(scheduledAt).getTime();
   const diff = target - now;
+
   const fastTick =
     status === MeetingStatus.SCHEDULED && diff > 0 && diff < 3_600_000;
 
@@ -84,30 +81,48 @@ function useJoinCountdown(scheduledAt: string, status: MeetingStatus) {
       () => setNow(Date.now()),
       fastTick ? 1000 : 30_000,
     );
+
     return () => clearInterval(interval);
   }, [fastTick]);
 
   if (status === MeetingStatus.ONGOING) {
     return { label: "Join Live", canJoin: true };
   }
+
   if (status !== MeetingStatus.SCHEDULED) {
     return { label: "", canJoin: false };
   }
 
-  if (diff <= 0) return { label: "Join Session", canJoin: true };
+  if (diff <= 0) {
+    return { label: "Join Session", canJoin: true };
+  }
+
   const canJoin = diff <= EARLY_JOIN_MS;
 
   if (diff < 60_000) {
-    return { label: `${Math.ceil(diff / 1000)}s`, canJoin };
+    return {
+      label: `${Math.ceil(diff / 1000)}s`,
+      canJoin,
+    };
   }
+
   if (diff < 3_600_000) {
-    const m = Math.floor(diff / 60_000);
-    const s = Math.floor((diff % 60_000) / 1000);
-    return { label: `${m}m ${s}s`, canJoin };
+    const minutes = Math.floor(diff / 60_000);
+    const seconds = Math.floor((diff % 60_000) / 1000);
+
+    return {
+      label: `${minutes}m ${seconds}s`,
+      canJoin,
+    };
   }
-  const h = Math.floor(diff / 3_600_000);
-  const m = Math.floor((diff % 3_600_000) / 60_000);
-  return { label: `${h}h ${m}m`, canJoin };
+
+  const hours = Math.floor(diff / 3_600_000);
+  const minutes = Math.floor((diff % 3_600_000) / 60_000);
+
+  return {
+    label: `${hours}h ${minutes}m`,
+    canJoin,
+  };
 }
 
 export default function UserMeetingsPage() {
@@ -121,21 +136,17 @@ export default function UserMeetingsPage() {
 
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebounce(searchInput, 400);
-
   const [status, setStatus] = useState<MeetingStatus | "all">("all");
-  const [type, setType] = useState<MeetingType | "all">("all");
+
   const [sortBy, setSortBy] = useState<MeetingSortBy>(
     MeetingSortBy.SCHEDULED_AT,
   );
   const [sortOrder, setSortOrder] = useState<MeetingSortOrder>(
-    MeetingSortOrder.ASC, // default ascending — nearest upcoming session first
+    MeetingSortOrder.ASC,
   );
 
-  // Refs mirroring current filter state so the IntersectionObserver
-  // callback never closes over stale values.
   const searchRef = useRef(debouncedSearch);
   const statusRef = useRef(status);
-  const typeRef = useRef(type);
   const sortByRef = useRef(sortBy);
   const sortOrderRef = useRef(sortOrder);
 
@@ -150,10 +161,9 @@ export default function UserMeetingsPage() {
   useEffect(() => {
     searchRef.current = debouncedSearch;
     statusRef.current = status;
-    typeRef.current = type;
     sortByRef.current = sortBy;
     sortOrderRef.current = sortOrder;
-  }, [debouncedSearch, status, type, sortBy, sortOrder]);
+  }, [debouncedSearch, status, sortBy, sortOrder]);
 
   const buildQuery = useCallback(
     (cursor: string | null): UserMeetingListQueryDTO => {
@@ -162,10 +172,19 @@ export default function UserMeetingsPage() {
         sortBy: sortByRef.current,
         sortOrder: sortOrderRef.current,
       };
-      if (cursor) query.cursor = cursor;
-      if (searchRef.current.trim()) query.search = searchRef.current.trim();
-      if (statusRef.current !== "all") query.status = statusRef.current;
-      if (typeRef.current !== "all") query.type = typeRef.current;
+
+      if (cursor) {
+        query.cursor = cursor;
+      }
+
+      if (searchRef.current.trim()) {
+        query.search = searchRef.current.trim();
+      }
+
+      if (statusRef.current !== "all") {
+        query.status = statusRef.current;
+      }
+
       return query;
     },
     [],
@@ -175,30 +194,44 @@ export default function UserMeetingsPage() {
     async (reset: boolean) => {
       if (reset) {
         if (resettingRef.current) return;
+
         resettingRef.current = true;
         fetchingMoreRef.current = true;
         cursorRef.current = null;
         hasMoreRef.current = true;
+
         setInitialLoading(true);
         setError(null);
       } else {
         if (fetchingMoreRef.current || !hasMoreRef.current) return;
+
         fetchingMoreRef.current = true;
         setLoadingMore(true);
       }
 
       try {
-        const res = await userMeetingService.getMeetings(
+        const response = await userMeetingService.getMeetings(
           buildQuery(cursorRef.current),
         );
-        const { items, nextCursor, hasMore } = res.data;
 
-        setMeetings((prev) => (reset ? items : [...prev, ...items]));
+        const pagination = response.data;
+
+        if (!pagination) {
+          throw new Error("Meetings data is missing from the API response.");
+        }
+
+        const { items, nextCursor, hasMore } = pagination;
+
+        setMeetings((previous) => (reset ? items : [...previous, ...items]));
+
         cursorRef.current = nextCursor;
         hasMoreRef.current = hasMore;
       } catch {
         setError("Couldn't load your sessions. Please try again.");
-        if (reset) setMeetings([]);
+
+        if (reset) {
+          setMeetings([]);
+        }
       } finally {
         fetchingMoreRef.current = false;
         resettingRef.current = false;
@@ -210,126 +243,124 @@ export default function UserMeetingsPage() {
   );
 
   useEffect(() => {
-    fetchMeetings(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, status, type, sortBy, sortOrder]);
+    void fetchMeetings(true);
+  }, [fetchMeetings, debouncedSearch, status, sortBy, sortOrder]);
 
   useEffect(() => {
     const node = sentinelRef.current;
+
     if (!node) return;
 
     observerRef.current?.disconnect();
+
     observerRef.current = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
+
         if (
           entry.isIntersecting &&
           hasMoreRef.current &&
           !fetchingMoreRef.current
         ) {
-          fetchMeetings(false);
+          void fetchMeetings(false);
         }
       },
       { rootMargin: "200px" },
     );
+
     observerRef.current.observe(node);
 
     return () => observerRef.current?.disconnect();
   }, [fetchMeetings, meetings.length]);
 
-  const markImageBroken = (id: string) => {
-    setBrokenImageIds((prev) => {
-      const next = new Set(prev);
+  const markImageBroken = useCallback((id: string) => {
+    setBrokenImageIds((previous) => {
+      const next = new Set(previous);
       next.add(id);
       return next;
     });
-  };
+  }, []);
 
   const isEmpty = !initialLoading && !error && meetings.length === 0;
-  const activeFilterCount =
-    (status !== "all" ? 1 : 0) + (type !== "all" ? 1 : 0);
+  const activeFilterCount = status !== "all" ? 1 : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
-        {/* HEADER */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-            My Sessions
+      <div className="mx-auto max-w-6xl px-4 pt-8 sm:px-6 sm:pt-10">
+        <header className="mb-8">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            My Meetings
           </h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">
+          <p className="mt-1 text-sm font-medium text-slate-500">
             Track and join your nutrition consultations
           </p>
-        </div>
+        </header>
 
-        {/* FILTER BAR */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 mb-8 shadow-xs">
-          <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
+        <section
+          aria-label="Meeting filters"
+          className="mb-8 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs"
+        >
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
             <div className="relative flex-1">
               <Search
                 size={16}
+                aria-hidden="true"
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
-                type="text"
+                type="search"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="Search by title or nutritionist name"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                aria-label="Search meetings"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm font-medium outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
-            <div className="hidden lg:block h-8 w-px bg-slate-200" />
+            <div className="hidden h-8 w-px bg-slate-200 lg:block" />
 
             {activeFilterCount > 0 && (
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 shrink-0">
-                {activeFilterCount} active
+              <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                {activeFilterCount} active filter
               </span>
             )}
 
             <div className="flex flex-wrap gap-3">
               <select
                 value={status}
-                onChange={(e) =>
-                  setStatus(e.target.value as MeetingStatus | "all")
+                onChange={(event) =>
+                  setStatus(event.target.value as MeetingStatus | "all")
                 }
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
+                aria-label="Filter by status"
+                className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as MeetingType | "all")}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
-              >
-                {TYPE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
 
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as MeetingSortBy)}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
+                onChange={(event) =>
+                  setSortBy(event.target.value as MeetingSortBy)
+                }
+                aria-label="Sort meetings by"
+                className="cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
               >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>
 
               <button
+                type="button"
                 onClick={() =>
-                  setSortOrder((prev) =>
-                    prev === MeetingSortOrder.ASC
+                  setSortOrder((previous) =>
+                    previous === MeetingSortOrder.ASC
                       ? MeetingSortOrder.DESC
                       : MeetingSortOrder.ASC,
                   )
@@ -339,12 +370,15 @@ export default function UserMeetingsPage() {
                     ? "ascending"
                     : "descending"
                 }`}
-                className="inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-white hover:border-emerald-500 transition-all"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 transition-all hover:border-emerald-500 hover:bg-white"
               >
                 <ArrowUpDown
                   size={13}
+                  aria-hidden="true"
                   className={
-                    sortOrder === MeetingSortOrder.ASC ? "" : "rotate-180"
+                    sortOrder === MeetingSortOrder.DESC
+                      ? "rotate-180"
+                      : undefined
                   }
                 />
                 {sortOrder === MeetingSortOrder.ASC
@@ -353,25 +387,27 @@ export default function UserMeetingsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* CONTENT */}
         {initialLoading ? (
           <LoadingGrid />
         ) : error ? (
-          <ErrorState onRetry={() => fetchMeetings(true)} message={error} />
+          <ErrorState
+            message={error}
+            onRetry={() => void fetchMeetings(true)}
+          />
         ) : isEmpty ? (
           <EmptyState />
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {meetings.map((m) => (
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {meetings.map((meeting) => (
                 <MeetingCard
-                  key={m.id}
-                  meeting={m}
+                  key={meeting.id}
+                  meeting={meeting}
                   router={router}
-                  imageBroken={brokenImageIds.has(m.id)}
-                  onImageError={() => markImageBroken(m.id)}
+                  imageBroken={brokenImageIds.has(meeting.id)}
+                  onImageError={() => markImageBroken(meeting.id)}
                 />
               ))}
             </div>
@@ -379,7 +415,10 @@ export default function UserMeetingsPage() {
             <div ref={sentinelRef} className="h-1" />
 
             {loadingMore && (
-              <div className="flex justify-center py-8">
+              <div
+                className="flex justify-center py-8"
+                aria-label="Loading more meetings"
+              >
                 <RefreshCw
                   className="animate-spin text-emerald-600"
                   size={22}
@@ -388,8 +427,8 @@ export default function UserMeetingsPage() {
             )}
 
             {!hasMoreRef.current && meetings.length > 0 && (
-              <p className="text-center text-xs font-semibold text-slate-400 uppercase tracking-wider py-8">
-                {"You've reached the end"}
+              <p className="py-8 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
+                You&apos;ve reached the end
               </p>
             )}
           </>
@@ -414,39 +453,34 @@ function MeetingCard({
     meeting.scheduledAt,
     meeting.status,
   );
+
   const isOngoing = meeting.status === MeetingStatus.ONGOING;
-  const isPast =
-    meeting.status === MeetingStatus.COMPLETED ||
-    meeting.status === MeetingStatus.CANCELLED;
   const isCancelled = meeting.status === MeetingStatus.CANCELLED;
+  const isPast = meeting.status === MeetingStatus.COMPLETED || isCancelled;
+
   const dateObj = new Date(meeting.scheduledAt);
-  const showImage = meeting.nutritionist.profileImage && !imageBroken;
-  const TypeIcon = meeting.type === MeetingType.VIDEO ? Video : Mic;
+  const isValidDate = !Number.isNaN(dateObj.getTime());
+  const profileImage = meeting.nutritionist.profileImage;
+  const showImage = Boolean(profileImage) && !imageBroken;
 
   const goToDetails = () => router.push(`/user/meetings/${meeting.id}`);
 
   return (
-    <div
-      className={`group rounded-2xl border p-5 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between ${
+    <article
+      className={`group flex flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all hover:shadow-lg ${
         isOngoing
-          ? "bg-emerald-50/60 border-emerald-200"
-          : "bg-white border-slate-200/80"
+          ? "border-emerald-200 bg-emerald-50/60"
+          : "border-slate-200/80 bg-white"
       }`}
     >
       <div>
-        {/* TYPE ICON + STATUS */}
-        <div className="flex justify-between items-start mb-4">
-          <div
-            className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-              meeting.type === MeetingType.VIDEO
-                ? "bg-emerald-100/80 text-emerald-700"
-                : "bg-sky-100/80 text-sky-700"
-            }`}
-          >
-            <TypeIcon size={18} />
+        <div className="mb-4 flex items-start justify-between">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100/80 text-emerald-700">
+            <Video size={18} aria-hidden="true" />
           </div>
+
           <span
-            className={`text-[11px] font-semibold px-3 py-1 rounded-full border capitalize ${statusPillClasses(
+            className={`rounded-full border px-3 py-1 text-[11px] font-semibold capitalize ${statusPillClasses(
               meeting.status,
             )} ${isOngoing ? "animate-pulse" : ""}`}
           >
@@ -454,17 +488,15 @@ function MeetingCard({
           </span>
         </div>
 
-        {/* TITLE */}
-        <h3 className="font-bold text-base text-slate-900 mb-3 line-clamp-1">
+        <h2 className="mb-3 line-clamp-1 text-base font-bold text-slate-900">
           {meeting.title}
-        </h3>
+        </h2>
 
-        {/* NUTRITIONIST */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 bg-emerald-100/80 flex items-center justify-center border border-emerald-100">
+        <div className="mb-4 flex items-center gap-2.5">
+          <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-100 bg-emerald-100/80">
             {showImage ? (
               <Image
-                src={meeting.nutritionist.profileImage as string}
+                src={profileImage as string}
                 alt={meeting.nutritionist.fullName}
                 fill
                 sizes="32px"
@@ -473,16 +505,17 @@ function MeetingCard({
                 onError={onImageError}
               />
             ) : (
-              <span className="text-emerald-700 font-bold text-xs">
+              <span className="text-xs font-bold text-emerald-700">
                 {getInitial(meeting.nutritionist.fullName)}
               </span>
             )}
           </div>
+
           <div className="min-w-0">
-            <p className="text-xs font-bold text-slate-800 truncate">
+            <p className="truncate text-xs font-bold text-slate-800">
               {meeting.nutritionist.fullName}
             </p>
-            <p className="text-[11px] text-slate-400 truncate">
+            <p className="truncate text-[11px] text-slate-400">
               {meeting.nutritionist.email}
             </p>
           </div>
@@ -490,35 +523,43 @@ function MeetingCard({
       </div>
 
       <div className="space-y-3">
-        {/* DATE / TIME / DURATION STRIP */}
-        <div className="flex items-center justify-between px-3 py-2.5 bg-slate-50 rounded-xl border border-slate-200/80">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2.5">
           <div className="text-center">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Date
             </p>
             <p className="text-xs font-bold text-slate-700">
-              {dateObj.toLocaleDateString("en-IN", {
-                month: "short",
-                day: "numeric",
-              })}
+              {isValidDate
+                ? dateObj.toLocaleDateString("en-IN", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Not available"}
             </p>
           </div>
+
           <div className="h-6 w-px bg-slate-200" />
+
           <div className="text-center">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Time
             </p>
             <p className="text-xs font-bold text-slate-700">
-              {dateObj.toLocaleTimeString("en-IN", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {isValidDate
+                ? dateObj.toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "Not available"}
             </p>
           </div>
+
           <div className="h-6 w-px bg-slate-200" />
+
           <div className="text-center">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-              Mins
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Minutes
             </p>
             <p className="text-xs font-bold text-emerald-700">
               {meeting.durationInMinutes}
@@ -526,66 +567,86 @@ function MeetingCard({
           </div>
         </div>
 
-        {/* ACTION */}
         {!isPast ? (
           <div className="space-y-1.5">
-            {!canJoin && (
-              <div className="flex items-center justify-center gap-1.5 text-[11px] font-semibold text-slate-500 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200/80">
-                <Clock size={12} className="text-emerald-600 shrink-0" />
-                Starts in&nbsp;
-                <span className="font-bold text-slate-800 tabular-nums">
+            {!canJoin && countdownLabel && (
+              <div className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2 text-[11px] font-semibold text-slate-500">
+                <Clock
+                  size={12}
+                  aria-hidden="true"
+                  className="shrink-0 text-emerald-600"
+                />
+                Starts in
+                <span className="tabular-nums font-bold text-slate-800">
                   {countdownLabel}
                 </span>
               </div>
             )}
 
             <button
+              type="button"
               onClick={goToDetails}
-              className={`w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all hover:-translate-y-0.5 ${
+              className={`inline-flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all hover:-translate-y-0.5 ${
                 isOngoing
-                  ? "bg-emerald-700 hover:bg-emerald-800 text-white shadow-xs"
-                  : "bg-slate-900 hover:bg-emerald-700 text-white shadow-xs"
+                  ? "bg-emerald-700 text-white shadow-xs hover:bg-emerald-800"
+                  : "bg-slate-900 text-white shadow-xs hover:bg-emerald-700"
               }`}
             >
-              {isOngoing ? "Join Live" : "View Session"}
-              <ArrowRight size={15} />
+              {isOngoing
+                ? "Join Live"
+                : canJoin
+                  ? "Join Session"
+                  : "View Meeting"}
+              <ArrowRight size={15} aria-hidden="true" />
             </button>
 
             {canJoin && !isOngoing && (
-              <p className="text-[10px] text-emerald-700 font-semibold text-center">
-                Room is open — session starts soon
+              <p className="text-center text-[10px] font-semibold text-emerald-700">
+                The meeting room is open
               </p>
             )}
           </div>
         ) : (
           <div
-            className={`w-full inline-flex items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider px-4 py-2.5 rounded-xl border ${
+            className={`inline-flex w-full items-center justify-center gap-1.5 rounded-xl border px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider ${
               isCancelled
-                ? "bg-rose-50 text-rose-600 border-rose-200"
-                : "bg-slate-100 text-slate-500 border-slate-200"
+                ? "border-rose-200 bg-rose-50 text-rose-600"
+                : "border-slate-200 bg-slate-100 text-slate-500"
             }`}
           >
             {isCancelled ? (
-              <XCircle size={13} className="shrink-0" />
+              <XCircle size={13} aria-hidden="true" />
             ) : (
-              <CheckCircle2 size={13} className="shrink-0" />
+              <CheckCircle2 size={13} aria-hidden="true" />
             )}
             {isCancelled ? "Cancelled" : "Completed"}
           </div>
         )}
+
+        {isCancelled && (
+          <button
+            type="button"
+            onClick={goToDetails}
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+          >
+            View cancellation details
+          </button>
+        )}
       </div>
-    </div>
+    </article>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="bg-white rounded-2xl py-20 text-center border border-dashed border-slate-300">
-      <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+    <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-20 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
         <Inbox className="text-emerald-600" size={24} />
       </div>
-      <h3 className="text-base font-bold text-slate-600">No sessions found</h3>
-      <p className="text-sm text-slate-400 mt-1">
+
+      <h2 className="text-base font-bold text-slate-600">No meetings found</h2>
+
+      <p className="mt-1 text-sm text-slate-400">
         Try adjusting your filters or search
       </p>
     </div>
@@ -600,16 +661,19 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="bg-white rounded-2xl py-20 text-center border border-slate-200/80">
-      <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
+    <div className="rounded-2xl border border-slate-200/80 bg-white py-20 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-50">
         <AlertCircle className="text-rose-600" size={24} />
       </div>
-      <h3 className="text-base font-bold text-slate-600">{message}</h3>
+
+      <h2 className="text-base font-bold text-slate-600">{message}</h2>
+
       <button
+        type="button"
         onClick={onRetry}
-        className="mt-4 inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 hover:-translate-y-0.5 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
+        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-emerald-800"
       >
-        <RefreshCw size={14} />
+        <RefreshCw size={14} aria-hidden="true" />
         Retry
       </button>
     </div>
@@ -618,26 +682,32 @@ function ErrorState({
 
 function LoadingGrid() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      {Array.from({ length: 6 }).map((_, i) => (
+    <div
+      className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+      aria-label="Loading meetings"
+    >
+      {Array.from({ length: 6 }, (_, index) => (
         <div
-          key={i}
-          className="bg-white rounded-2xl border border-slate-200/80 p-5 h-64 animate-pulse"
+          key={index}
+          className="h-64 animate-pulse rounded-2xl border border-slate-200/80 bg-white p-5"
         >
-          <div className="flex justify-between mb-4">
-            <div className="w-11 h-11 rounded-xl bg-slate-200" />
-            <div className="w-16 h-5 rounded-full bg-slate-200" />
+          <div className="mb-4 flex justify-between">
+            <div className="h-11 w-11 rounded-xl bg-slate-200" />
+            <div className="h-5 w-16 rounded-full bg-slate-200" />
           </div>
-          <div className="h-4 bg-slate-200 rounded w-3/4 mb-3" />
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0" />
+
+          <div className="mb-3 h-4 w-3/4 rounded bg-slate-200" />
+
+          <div className="mb-4 flex items-center gap-2.5">
+            <div className="h-8 w-8 shrink-0 rounded-full bg-slate-200" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-2.5 bg-slate-200 rounded w-2/3" />
-              <div className="h-2.5 bg-slate-200 rounded w-1/2" />
+              <div className="h-2.5 w-2/3 rounded bg-slate-200" />
+              <div className="h-2.5 w-1/2 rounded bg-slate-200" />
             </div>
           </div>
-          <div className="h-16 bg-slate-100 rounded-xl mb-3" />
-          <div className="h-11 bg-slate-100 rounded-xl" />
+
+          <div className="mb-3 h-16 rounded-xl bg-slate-100" />
+          <div className="h-11 rounded-xl bg-slate-100" />
         </div>
       ))}
     </div>

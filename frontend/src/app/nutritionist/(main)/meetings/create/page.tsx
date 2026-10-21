@@ -21,17 +21,24 @@ import {
 } from "@/validations/nutritionist/meeting/create-meeting.validation";
 import { nutriMeetingService } from "@/services/nutritionist/nutriMeeting.service";
 import { nutriClientService } from "@/services/nutritionist/nutriClient.service";
-import { MeetingType } from "@/enums/nutritionist/meeting/meeting.enum";
 import type { CreateMeetingDTO } from "@/dtos/nutritionist/meeting/create-meeting.dto";
 import type { MeetingClientOptionDTO } from "@/dtos/nutritionist/client/client-response.dto";
+import {
+  MAX_MEETING_DURATION,
+  MIN_MEETING_DURATION,
+} from "@/constants/meeting";
 
 const getMinDateTimeLocal = (): string => {
   const now = new Date();
+
+  // Round up to the next minute to avoid selecting a time that is
+  // already in the past.
   now.setSeconds(0, 0);
+  now.setMinutes(now.getMinutes() + 1);
 
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
 
-  return local.toISOString().slice(0, 16);
+  return localDate.toISOString().slice(0, 16);
 };
 
 const getFieldClassName = (hasError: boolean): string =>
@@ -49,15 +56,17 @@ export default function CreateMeetingPage() {
   const [clients, setClients] = useState<MeetingClientOptionDTO[]>([]);
   const [clientsLoading, setClientsLoading] = useState(true);
   const [clientsError, setClientsError] = useState(false);
+  const [minDateTime, setMinDateTime] = useState("");
   const [brokenImageIds, setBrokenImageIds] = useState<Set<string>>(
     () => new Set(),
   );
-  const [minDateTime, setMinDateTime] = useState(getMinDateTimeLocal);
 
   const {
     register,
     handleSubmit,
     control,
+    trigger,
+    getValues,
     formState: { errors, isValid, isSubmitting },
   } = useForm<CreateMeetingFormValues>({
     resolver: zodResolver(createMeetingSchema),
@@ -67,78 +76,63 @@ export default function CreateMeetingPage() {
       title: "",
       userId: "",
       scheduledAt: "",
-      durationInMinutes: 30,
-      type: MeetingType.VIDEO,
+      durationInMinutes: MIN_MEETING_DURATION,
     },
   });
 
+  // Fetch clients once and reuse the same function for retries.
   const loadClients = useCallback(async () => {
     setClientsLoading(true);
     setClientsError(false);
 
     try {
       const items = await nutriClientService.getMeetingEligibleClients();
+      console.log(items);
+      
       setClients(items);
     } catch {
+      setClients([]);
       setClientsError(true);
-      toast.error("Couldn't load your clients");
+      toast.error("Couldn't load your clients.");
     } finally {
       setClientsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
+    void loadClients();
+  }, [loadClients]);
 
-    const fetchClients = async () => {
-      setClientsLoading(true);
-      setClientsError(false);
-
-      try {
-        const items = await nutriClientService.getMeetingEligibleClients();
-
-        if (!cancelled) {
-          setClients(items);
-        }
-      } catch {
-        if (!cancelled) {
-          setClientsError(true);
-          toast.error("Couldn't load your clients");
-        }
-      } finally {
-        if (!cancelled) {
-          setClientsLoading(false);
-        }
-      }
-    };
-
-    void fetchClients();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+  // Keep the calendar's minimum date current and revalidate the selected
+  // date so it cannot remain valid after its time has passed.
   useEffect(() => {
     const updateMinDateTime = () => {
       setMinDateTime(getMinDateTimeLocal());
+
+      if (getValues("scheduledAt")) {
+        void trigger("scheduledAt");
+      }
     };
+
+    updateMinDateTime();
 
     const intervalId = window.setInterval(updateMinDateTime, 30_000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, []);
+  }, [getValues, trigger]);
 
   const onSubmit = async (values: CreateMeetingFormValues) => {
     const scheduledAt = new Date(values.scheduledAt);
 
+    // Final client-side check. The backend must enforce this rule too.
     if (
       !Number.isFinite(scheduledAt.getTime()) ||
       scheduledAt.getTime() <= Date.now()
     ) {
-      toast.error("Please select a future session time");
+      toast.error("Please select a future date and time.");
+      await trigger("scheduledAt");
       return;
     }
 
@@ -148,15 +142,14 @@ export default function CreateMeetingPage() {
         userId: values.userId,
         scheduledAt: scheduledAt.toISOString(),
         durationInMinutes: values.durationInMinutes,
-        type: values.type,
       };
 
       await nutriMeetingService.createMeeting(payload);
 
-      toast.success("Session scheduled!");
+      toast.success("Session scheduled successfully!");
       router.push("/nutritionist/meetings");
     } catch {
-      toast.error("Failed to schedule the session");
+      toast.error("Failed to schedule the session.");
     }
   };
 
@@ -174,9 +167,17 @@ export default function CreateMeetingPage() {
 
       const next = new Set(previous);
       next.add(id);
+
       return next;
     });
   };
+
+  const isSubmitDisabled =
+    isSubmitting ||
+    !isValid ||
+    clientsLoading ||
+    clientsError ||
+    noClientsAvailable;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -196,7 +197,7 @@ export default function CreateMeetingPage() {
           </h1>
 
           <p className="mb-8 text-sm font-medium text-slate-500">
-            Set up a new consultation with your client
+            Set up a new consultation with your client.
           </p>
 
           <form
@@ -249,6 +250,7 @@ export default function CreateMeetingPage() {
                     return (
                       <div
                         aria-label="Loading clients"
+                        aria-busy="true"
                         className="grid grid-cols-1 gap-3 sm:grid-cols-2"
                       >
                         {Array.from({ length: 4 }, (_, index) => (
@@ -257,6 +259,7 @@ export default function CreateMeetingPage() {
                             className="flex animate-pulse items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3.5"
                           >
                             <div className="h-10 w-10 shrink-0 rounded-full bg-slate-200" />
+
                             <div className="flex-1 space-y-2">
                               <div className="h-3 w-2/3 rounded bg-slate-200" />
                               <div className="h-2.5 w-4/5 rounded bg-slate-200" />
@@ -313,9 +316,9 @@ export default function CreateMeetingPage() {
                       aria-describedby={
                         errors.userId ? "meeting-client-error" : undefined
                       }
-                      className={`grid max-h-80 grid-cols-1 gap-3 overflow-y-auto rounded-xl pr-1 sm:grid-cols-2 ${
-                        errors.userId ? "rounded-xl ring-1 ring-rose-300" : ""
-                      }`}
+                      className={`grid max-h-80 grid-cols-1 gap-3 overflow-y-auto rounded-xl pr-1 ${
+                        errors.userId ? "ring-1 ring-rose-300" : ""
+                      } sm:grid-cols-2`}
                     >
                       {clients.map((client) => {
                         const isSelected = field.value === client.id;
@@ -358,6 +361,7 @@ export default function CreateMeetingPage() {
                               <p className="truncate text-sm font-bold text-slate-800">
                                 {client.fullName}
                               </p>
+
                               <p className="truncate text-xs text-slate-400">
                                 {client.email}
                               </p>
@@ -391,11 +395,11 @@ export default function CreateMeetingPage() {
               )}
             </div>
 
-            {/* Session type */}
+            {/* Session type is informational; it is not submitted as a field. */}
             <div className="space-y-1.5">
-              <label className="ml-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              <p className="ml-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Session Type
-              </label>
+              </p>
 
               <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
@@ -406,6 +410,7 @@ export default function CreateMeetingPage() {
                   <p className="text-sm font-semibold text-slate-800">
                     Video Consultation
                   </p>
+
                   <p className="text-xs text-slate-500">
                     Meet your client face-to-face online.
                   </p>
@@ -438,7 +443,7 @@ export default function CreateMeetingPage() {
                   <input
                     id="meeting-scheduled-at"
                     type="datetime-local"
-                    min={minDateTime}
+                    min={minDateTime || undefined}
                     {...register("scheduledAt")}
                     aria-invalid={Boolean(errors.scheduledAt)}
                     aria-describedby={
@@ -480,8 +485,8 @@ export default function CreateMeetingPage() {
                   <input
                     id="meeting-duration"
                     type="number"
-                    min={5}
-                    max={240}
+                    min={MIN_MEETING_DURATION}
+                    max={MAX_MEETING_DURATION}
                     step={1}
                     {...register("durationInMinutes", {
                       valueAsNumber: true,
@@ -497,6 +502,11 @@ export default function CreateMeetingPage() {
                     )} pl-10`}
                   />
                 </div>
+
+                <p className="ml-1 text-xs text-slate-400">
+                  Choose between {MIN_MEETING_DURATION} and{" "}
+                  {MAX_MEETING_DURATION} minutes.
+                </p>
 
                 {errors.durationInMinutes && (
                   <p
@@ -523,13 +533,7 @@ export default function CreateMeetingPage() {
 
               <button
                 type="submit"
-                disabled={
-                  isSubmitting ||
-                  !isValid ||
-                  clientsLoading ||
-                  clientsError ||
-                  noClientsAvailable
-                }
+                disabled={isSubmitDisabled}
                 className="flex-1 rounded-xl bg-emerald-700 py-3.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? "Scheduling..." : "Create Session"}

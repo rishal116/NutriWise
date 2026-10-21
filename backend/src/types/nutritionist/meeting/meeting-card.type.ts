@@ -1,5 +1,4 @@
-import { Types } from "mongoose";
-import { MeetingStatus, MeetingType } from "../../../models/meeting.model";
+import { MeetingStatus } from "../../../models/meeting.model";
 
 export interface MeetingCard {
   _id: string;
@@ -8,15 +7,14 @@ export interface MeetingCard {
     _id: string;
     fullName: string;
     email: string;
-    profileImage:string;
+    profileImage?: string;
   };
   scheduledAt: Date;
   durationInMinutes: number;
   status: MeetingStatus;
-  type: MeetingType;
 }
 
 export interface MeetingCardWithCursor extends MeetingCard {
-  cursorId: Types.ObjectId;
+  cursorId: string;
   cursorValue: string | Date;
 }

@@ -10,12 +10,11 @@ export class MeetingMapper {
         id: meeting.user._id,
         fullName: meeting.user.fullName,
         email: meeting.user.email,
-        profileImage:meeting.user.profileImage
+        profileImage: meeting.user.profileImage,
       },
       scheduledAt: meeting.scheduledAt,
       durationInMinutes: meeting.durationInMinutes,
       status: meeting.status,
-      type: meeting.type,
     };
   }
 

@@ -1,4 +1,4 @@
-import { MeetingStatus, MeetingType } from "../../../models/meeting.model";
+import { MeetingStatus } from "../../../models/meeting.model";
 
 export interface MeetingCardResponseDTO {
   id: string;
@@ -7,10 +7,9 @@ export interface MeetingCardResponseDTO {
     id: string;
     fullName: string;
     email: string;
-    profileImage: string;
+    profileImage?: string;
   };
   scheduledAt: Date;
   durationInMinutes: number;
   status: MeetingStatus;
-  type: MeetingType;
 }

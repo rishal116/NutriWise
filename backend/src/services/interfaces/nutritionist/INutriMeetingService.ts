@@ -17,16 +17,19 @@ export interface INutriMeetingService {
     meetingId: string,
   ): Promise<MeetingDetailsResponseDTO>;
 
-  createMeeting(data: CreateMeetingDTO): Promise<MeetingDetailsResponseDTO>;
+  createMeeting(nutritionistId: string, data: CreateMeetingDTO): Promise<void>;
 
-  updateMeetingStatus(
-    roomId: string,
-    status: MeetingStatus,
-  ): Promise<MeetingDetailsResponseDTO>;
+  updateMeetingStatus(roomId: string, status: MeetingStatus): Promise<void>;
 
   updateMeeting(
     nutritionistId: string,
     meetingId: string,
     data: UpdateMeetingDTO,
-  ): Promise<MeetingDetailsResponseDTO>;
+  ): Promise<void>;
+
+  cancelMeeting(
+    nutritionistId: string,
+    meetingId: string,
+    cancellationReason: string,
+  ): Promise<void>;
 }

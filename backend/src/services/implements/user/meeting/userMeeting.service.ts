@@ -1,21 +1,12 @@
 import { inject, injectable } from "inversify";
-
 import { TYPES } from "../../../../types/types";
-
 import { IUserMeetingRepository } from "../../../../repositories/interfaces/user/meeting/IUserMeetingRepository";
-
 import { IUserMeetingService } from "../../../interfaces/user/IUserMeetingService";
-
 import { UserMeetingListQueryDTO } from "../../../../dtos/user/meeting/user-meeting-list-query.dto";
-
 import { UserMeetingListResponseDTO } from "../../../../dtos/user/meeting/user-meeting-list-response.dto";
-
 import { UserMeetingDetailsResponseDTO } from "../../../../dtos/user/meeting/user-meeting-details-response.dto";
-
 import { UserMeetingListMapper } from "../../../../mappers/user/meeting/user-meeting-list.mapper";
-
 import { UserMeetingDetailsMapper } from "../../../../mappers/user/meeting/user-meeting-details.mapper";
-
 import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 import { InfiniteScrollResponseDTO } from "../../../../dtos/common/infinite-scroll-response.dto";
@@ -68,5 +59,24 @@ export class UserMeetingService implements IUserMeetingService {
     }
 
     return UserMeetingDetailsMapper.toResponseDTO(meeting);
+  }
+
+  async cancelMeeting(userId: string, meetingId: string): Promise<void> {
+    const cancelled = await this._userMeetingRepository.cancelMeeting(
+      userId,
+      meetingId,
+    );
+
+    if (!cancelled) {
+      throw new CustomError(
+        "Meeting cannot be cancelled because it was not found or is no longer scheduled.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    logger.info("User cancelled meeting", {
+      userId,
+      meetingId,
+    });
   }
 }

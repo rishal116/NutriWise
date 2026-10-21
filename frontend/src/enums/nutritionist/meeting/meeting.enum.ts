@@ -5,11 +5,6 @@ export enum MeetingStatus {
   CANCELLED = "cancelled",
 }
 
-export enum MeetingType {
-  VIDEO = "video",
-  AUDIO = "audio",
-}
-
 export enum MeetingSortBy {
   SCHEDULED_AT = "scheduledAt",
   CREATED_AT = "createdAt",

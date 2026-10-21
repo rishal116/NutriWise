@@ -1,13 +1,8 @@
 import { Types } from "mongoose";
-
-import {
-  MeetingStatus,
-  MeetingType,
-} from "../../../models/meeting.model";
+import { MeetingStatus } from "../../../models/meeting.model";
 
 export interface MeetingCard {
   _id: string;
-
   title: string;
 
   nutritionist: {
@@ -18,12 +13,8 @@ export interface MeetingCard {
   };
 
   scheduledAt: Date;
-
   durationInMinutes: number;
-
   status: MeetingStatus;
-
-  type: MeetingType;
 }
 
 export interface MeetingCardWithCursor extends MeetingCard {

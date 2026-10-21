@@ -18,6 +18,11 @@ import {
   MeetingCard,
   MeetingCardWithCursor,
 } from "../../../types/nutritionist/meeting/meeting-card.type";
+import {
+  MeetingByRoomRecord,
+  MeetingRoomRecord,
+  MeetingStatusUpdateFields,
+} from "../../../types/nutritionist/meeting/meeting-repository.types";
 
 export class NutriMeetingRepository
   extends BaseRepository<IMeeting>
@@ -36,22 +41,39 @@ export class NutriMeetingRepository
       cursor,
       search,
       status,
-      type,
       sortBy = MeetingSortBy.SCHEDULED_AT,
-      sortOrder = MeetingSortOrder.DESC,
+      sortOrder = MeetingSortOrder.ASC,
     } = query;
 
+    if (!Types.ObjectId.isValid(nutritionistId)) {
+      throw new Error("Invalid nutritionist ID");
+    }
+
+    const nutritionistObjectId = new Types.ObjectId(nutritionistId);
     const searchText = search?.trim();
     const cursorData = decodeCursor(cursor);
 
-    const nutritionistObjectId = new Types.ObjectId(nutritionistId);
-
     const sortOrderValue = sortOrder === MeetingSortOrder.DESC ? -1 : 1;
-
+    const comparisonOperator = sortOrderValue === -1 ? "$lt" : "$gt";
     const cursorSortKey = `${sortBy}:${sortOrder}`;
 
-    if (cursorData?.sortKey && cursorData.sortKey !== cursorSortKey) {
+    if (cursorData && cursorData.sortKey !== cursorSortKey) {
       throw new Error("Invalid cursor");
+    }
+
+    let sortField: "scheduledAt" | "createdAt" | "title";
+
+    switch (sortBy) {
+      case MeetingSortBy.CREATED_AT:
+        sortField = "createdAt";
+        break;
+      case MeetingSortBy.TITLE:
+        sortField = "title";
+        break;
+      case MeetingSortBy.SCHEDULED_AT:
+      default:
+        sortField = "scheduledAt";
+        break;
     }
 
     const pipeline: PipelineStage[] = [
@@ -59,17 +81,57 @@ export class NutriMeetingRepository
         $match: {
           nutritionistId: nutritionistObjectId,
           isDeleted: false,
-
-          ...(status && {
-            status,
-          }),
-
-          ...(type && {
-            type,
-          }),
+          ...(status && { status }),
         },
       },
+    ];
 
+    if (cursorData) {
+      let cursorValue: Date | string;
+
+      if (
+        sortBy === MeetingSortBy.SCHEDULED_AT ||
+        sortBy === MeetingSortBy.CREATED_AT
+      ) {
+        if (typeof cursorData.value !== "string") {
+          throw new Error("Invalid cursor");
+        }
+
+        const parsedDate = new Date(cursorData.value);
+
+        if (Number.isNaN(parsedDate.getTime())) {
+          throw new Error("Invalid cursor");
+        }
+
+        cursorValue = parsedDate;
+      } else {
+        if (typeof cursorData.value !== "string") {
+          throw new Error("Invalid cursor");
+        }
+
+        cursorValue = cursorData.value;
+      }
+
+      pipeline.push({
+        $match: {
+          $or: [
+            {
+              [sortField]: {
+                [comparisonOperator]: cursorValue,
+              },
+            },
+            {
+              [sortField]: cursorValue,
+              _id: {
+                [comparisonOperator]: new Types.ObjectId(cursorData.id),
+              },
+            },
+          ],
+        },
+      });
+    }
+
+    const userLookup: PipelineStage[] = [
       {
         $lookup: {
           from: "users",
@@ -78,81 +140,34 @@ export class NutriMeetingRepository
           as: "user",
         },
       },
-
       {
         $unwind: "$user",
       },
     ];
 
     if (searchText) {
-      pipeline.push({
+      const escapedSearch = searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      pipeline.push(...userLookup, {
         $match: {
           $or: [
             {
               title: {
-                $regex: searchText,
+                $regex: escapedSearch,
                 $options: "i",
               },
             },
             {
               "user.fullName": {
-                $regex: searchText,
+                $regex: escapedSearch,
                 $options: "i",
               },
             },
             {
               "user.email": {
-                $regex: searchText,
+                $regex: escapedSearch,
                 $options: "i",
               },
-            },
-          ],
-        },
-      });
-    }
-
-    let sortField: string;
-
-    switch (sortBy) {
-      case MeetingSortBy.CREATED_AT:
-        sortField = "createdAt";
-        break;
-
-      case MeetingSortBy.TITLE:
-        sortField = "title";
-        break;
-
-      case MeetingSortBy.SCHEDULED_AT:
-      default:
-        sortField = "scheduledAt";
-        break;
-    }
-
-    if (cursorData) {
-      let cursorValue: string | Date = cursorData.value as string;
-
-      if (
-        sortBy === MeetingSortBy.SCHEDULED_AT ||
-        sortBy === MeetingSortBy.CREATED_AT
-      ) {
-        cursorValue = new Date(cursorData.value as string);
-      }
-
-      pipeline.push({
-        $match: {
-          $or: [
-            {
-              [sortField]:
-                sortOrderValue === -1
-                  ? { $lt: cursorValue }
-                  : { $gt: cursorValue },
-            },
-            {
-              [sortField]: cursorValue,
-              _id:
-                sortOrderValue === -1
-                  ? { $lt: new Types.ObjectId(cursorData.id) }
-                  : { $gt: new Types.ObjectId(cursorData.id) },
             },
           ],
         },
@@ -166,61 +181,49 @@ export class NutriMeetingRepository
           _id: sortOrderValue,
         },
       },
-
       {
         $limit: limit + 1,
       },
-
-      {
-        $project: {
-          _id: {
-            $toString: "$_id",
-          },
-
-          title: 1,
-
-          user: {
-            _id: {
-              $toString: "$user._id",
-            },
-            fullName: "$user.fullName",
-            email: "$user.email",
-            profileImage: "$user.profileImage",
-          },
-
-          scheduledAt: 1,
-
-          durationInMinutes: 1,
-
-          status: 1,
-
-          type: 1,
-
-          cursorId: "$_id",
-
-          cursorValue: `$${sortField}`,
-        },
-      },
     );
 
-    const result = await this._model.aggregate<MeetingCardWithCursor>(pipeline);
+    if (!searchText) {
+      pipeline.push(...userLookup);
+    }
+
+    pipeline.push({
+      $project: {
+        _id: { $toString: "$_id" },
+        title: 1,
+        user: {
+          _id: { $toString: "$user._id" },
+          fullName: "$user.fullName",
+          email: "$user.email",
+          profileImage: "$user.profileImage",
+        },
+        scheduledAt: 1,
+        durationInMinutes: 1,
+        status: 1,
+        cursorId: "$_id",
+        cursorValue: `$${sortField}`,
+      },
+    });
+
+    const result = await this._model
+      .aggregate<MeetingCardWithCursor>(pipeline)
+      .exec();
 
     const hasMore = result.length > limit;
-
     const items = hasMore ? result.slice(0, limit) : result;
-
     const lastItem = items[items.length - 1];
 
     const nextCursor =
       hasMore && lastItem
         ? encodeCursor({
             id: lastItem.cursorId.toString(),
-
             value:
               lastItem.cursorValue instanceof Date
                 ? lastItem.cursorValue.toISOString()
                 : lastItem.cursorValue,
-
             sortKey: cursorSortKey,
           })
         : null;
@@ -240,126 +243,86 @@ export class NutriMeetingRepository
     nutritionistId: string,
     meetingId: string,
   ): Promise<MeetingDetails | null> {
-    const meetingObjectId = new Types.ObjectId(meetingId);
-    const nutritionistObjectId = new Types.ObjectId(nutritionistId);
+    if (
+      !Types.ObjectId.isValid(nutritionistId) ||
+      !Types.ObjectId.isValid(meetingId)
+    ) {
+      return null;
+    }
+
+    type PopulatedMeeting = Omit<IMeeting, "userId"> & {
+      userId: {
+        _id: Types.ObjectId;
+        fullName: string;
+        email: string;
+        profileImage?: string;
+      };
+    };
 
     const meeting = await this._model
       .findOne({
-        _id: meetingObjectId,
-        nutritionistId: nutritionistObjectId,
+        _id: new Types.ObjectId(meetingId),
+        nutritionistId: new Types.ObjectId(nutritionistId),
         isDeleted: false,
       })
-      .populate("userId", "_id fullName email profileImage")
-      .lean()
+      .select(
+        "_id title nutritionistId userId roomId scheduledAt durationInMinutes status startedAt endedAt cancelledBy cancellationReason createdAt updatedAt",
+      )
+      .populate<{ userId: PopulatedMeeting["userId"] }>({
+        path: "userId",
+        select: "_id fullName email profileImage",
+      })
+      .lean<PopulatedMeeting>()
       .exec();
 
-    if (!meeting) {
+    if (!meeting?.userId || !("fullName" in meeting.userId)) {
       return null;
     }
-    const populatedUser = meeting.userId as unknown as {
-      _id: Types.ObjectId;
-      fullName: string;
-      email: string;
-      profileImage?: string;
-    };
 
     return {
       _id: meeting._id,
       title: meeting.title,
       nutritionistId: meeting.nutritionistId,
-
       user: {
-        _id: populatedUser._id,
-        fullName: populatedUser.fullName,
-        email: populatedUser.email,
-        ...(populatedUser.profileImage && {
-          profileImage: populatedUser.profileImage,
-        }),
+        _id: meeting.userId._id,
+        fullName: meeting.userId.fullName,
+        email: meeting.userId.email,
+        ...(meeting.userId.profileImage
+          ? { profileImage: meeting.userId.profileImage }
+          : {}),
       },
-
       roomId: meeting.roomId,
       scheduledAt: meeting.scheduledAt,
       durationInMinutes: meeting.durationInMinutes,
       status: meeting.status,
-      type: meeting.type,
-
-      startedAt: meeting.startedAt,
-      endedAt: meeting.endedAt,
-
-      nutritionistJoinedAt: meeting.nutritionistJoinedAt,
-      userJoinedAt: meeting.userJoinedAt,
-
-      isCancelledByUser: meeting.isCancelledByUser,
-      isCancelledByNutritionist: meeting.isCancelledByNutritionist,
-
-      isDeleted: meeting.isDeleted,
-
+      ...(meeting.startedAt ? { startedAt: meeting.startedAt } : {}),
+      ...(meeting.endedAt ? { endedAt: meeting.endedAt } : {}),
+      ...(meeting.cancelledBy ? { cancelledBy: meeting.cancelledBy } : {}),
+      ...(meeting.cancellationReason
+        ? { cancellationReason: meeting.cancellationReason }
+        : {}),
       createdAt: meeting.createdAt,
       updatedAt: meeting.updatedAt,
     };
   }
 
-  async findByRoomId(roomId: string): Promise<MeetingDetails | null> {
-    const meeting = await this._model
-      .findOne({
-        roomId,
-        isDeleted: false,
-      })
-      .populate("userId", "_id fullName email profileImage")
-      .lean()
+  async findMeetingByRoomId(
+    roomId: string,
+  ): Promise<MeetingByRoomRecord | null> {
+    return this._model
+      .findOne({ roomId, isDeleted: false })
+      .select(
+        "_id nutritionistId userId roomId status durationInMinutes startedAt endedAt",
+      )
+      .lean<MeetingByRoomRecord | null>()
       .exec();
-
-    if (!meeting) {
-      return null;
-    }
-
-    const populatedUser = meeting.userId as unknown as {
-      _id: Types.ObjectId;
-      fullName: string;
-      email: string;
-      profileImage?: string;
-    };
-
-    return {
-      _id: meeting._id,
-      title: meeting.title,
-      nutritionistId: meeting.nutritionistId,
-      user: {
-        _id: populatedUser._id,
-        fullName: populatedUser.fullName,
-        email: populatedUser.email,
-        ...(populatedUser.profileImage && {
-          profileImage: populatedUser.profileImage,
-        }),
-      },
-
-      roomId: meeting.roomId,
-      scheduledAt: meeting.scheduledAt,
-      durationInMinutes: meeting.durationInMinutes,
-      status: meeting.status,
-      type: meeting.type,
-
-      startedAt: meeting.startedAt,
-      endedAt: meeting.endedAt,
-
-      nutritionistJoinedAt: meeting.nutritionistJoinedAt,
-      userJoinedAt: meeting.userJoinedAt,
-
-      isCancelledByUser: meeting.isCancelledByUser,
-      isCancelledByNutritionist: meeting.isCancelledByNutritionist,
-
-      isDeleted: meeting.isDeleted,
-
-      createdAt: meeting.createdAt,
-      updatedAt: meeting.updatedAt,
-    };
   }
 
   async updateStatusByRoomId(
     roomId: string,
     status: MeetingStatus,
-    extraFields?: Partial<IMeeting>,
-  ): Promise<MeetingDetails | null> {
+    extraFields?: MeetingStatusUpdateFields,
+  ): Promise<MeetingRoomRecord | null> {
     return this._model
       .findOneAndUpdate(
         {
@@ -368,15 +331,19 @@ export class NutriMeetingRepository
         },
         {
           $set: {
-            status,
             ...extraFields,
+            status,
           },
         },
         {
           new: true,
+          runValidators: true,
         },
       )
-      .lean<MeetingDetails | null>()
+      .select(
+        "_id nutritionistId userId roomId status durationInMinutes startedAt endedAt cancelledBy",
+      )
+      .lean<MeetingRoomRecord | null>()
       .exec();
   }
 
@@ -385,14 +352,30 @@ export class NutriMeetingRepository
     meetingId: string,
     data: Pick<IMeeting, "title" | "scheduledAt" | "durationInMinutes">,
   ): Promise<IMeeting | null> {
-    return this._model.findOneAndUpdate(
-      {
-        _id: new Types.ObjectId(meetingId),
-        nutritionistId: new Types.ObjectId(nutritionistId),
-        status: MeetingStatus.SCHEDULED,
-      },
-      { $set: data },
-      { new: true, runValidators: true },
-    ).exec();
+    if (
+      !Types.ObjectId.isValid(nutritionistId) ||
+      !Types.ObjectId.isValid(meetingId)
+    ) {
+      return null;
+    }
+
+    return this._model
+      .findOneAndUpdate(
+        {
+          _id: new Types.ObjectId(meetingId),
+          nutritionistId: new Types.ObjectId(nutritionistId),
+          status: MeetingStatus.SCHEDULED,
+          isDeleted: false,
+        },
+        {
+          $set: data,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      )
+      .lean<IMeeting | null>()
+      .exec();
   }
 }

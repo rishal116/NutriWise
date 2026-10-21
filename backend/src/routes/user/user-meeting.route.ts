@@ -18,4 +18,6 @@ router.get("/", userMeetingController.getMeetings);
 
 router.get("/:meetingId", userMeetingController.getMeetingDetails);
 
+router.patch("/:meetingId/cancel", userMeetingController.cancelMeeting);
+
 export default router;

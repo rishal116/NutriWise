@@ -5,10 +5,15 @@ export const NUTRITIONIST_MEETING_ROUTES = {
 
   CREATE: `${NUTRITIONIST_BASE}/meetings`,
 
-  DETAILS: (meetingId: string) => `${NUTRITIONIST_BASE}/meetings/${meetingId}`,
+  DETAILS: (meetingId: string) =>
+    `${NUTRITIONIST_BASE}/meetings/${encodeURIComponent(meetingId)}`,
 
   UPDATE_STATUS: (roomId: string) =>
-    `${NUTRITIONIST_BASE}/meetings/status/${roomId}`,
+    `${NUTRITIONIST_BASE}/meetings/status/${encodeURIComponent(roomId)}`,
+
+  CANCEL: (meetingId: string) =>
+    `${NUTRITIONIST_BASE}/meetings/${encodeURIComponent(meetingId)}/cancel`,
+
   UPDATE: (meetingId: string) =>
-    `/api/nutritionists/meetings/${encodeURIComponent(meetingId)}`,
+    `${NUTRITIONIST_BASE}/meetings/${encodeURIComponent(meetingId)}`,
 } as const;

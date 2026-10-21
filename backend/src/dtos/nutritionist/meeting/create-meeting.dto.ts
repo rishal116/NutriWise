@@ -1,34 +1,34 @@
 import {
   IsDateString,
-  IsEnum,
   IsInt,
   IsMongoId,
   IsNotEmpty,
   IsString,
   Max,
+  MaxLength,
   Min,
+  MinLength,
 } from "class-validator";
-import { MeetingType } from "../../../models/meeting.model";
+import {
+  MAX_MEETING_DURATION,
+  MIN_MEETING_DURATION,
+} from "../../../models/meeting.model";
 
 export class CreateMeetingDTO {
   @IsString()
   @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(100)
   title!: string;
 
   @IsMongoId()
   userId!: string;
 
-  @IsMongoId()
-  nutritionistId!: string;
-
   @IsDateString()
   scheduledAt!: string;
 
   @IsInt()
-  @Min(1)
-  @Max(480)
+  @Min(MIN_MEETING_DURATION)
+  @Max(MAX_MEETING_DURATION)
   durationInMinutes!: number;
-
-  @IsEnum(MeetingType)
-  type!: MeetingType;
 }

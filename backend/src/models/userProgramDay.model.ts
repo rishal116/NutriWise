@@ -12,7 +12,6 @@ export const PROGRAM_ACTIVITY_CATEGORIES = [
   "appointment",
   "measurement",
   "task",
-  "custom",
 ] as const;
 export type ProgramActivityCategory =
   (typeof PROGRAM_ACTIVITY_CATEGORIES)[number];

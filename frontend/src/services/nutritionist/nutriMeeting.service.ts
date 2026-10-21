@@ -21,6 +21,10 @@ export const nutriMeetingService = {
       params: query,
     });
 
+    if (!res.data.data) {
+      throw new Error("Meetings data is missing from the API response.");
+    }
+
     return res.data;
   },
 
@@ -30,6 +34,10 @@ export const nutriMeetingService = {
     const res = await clientApi.get<ApiResponseDTO<MeetingDetailsResponseDTO>>(
       NUTRITIONIST_MEETING_ROUTES.DETAILS(meetingId),
     );
+
+    if (!res.data.data) {
+      throw new Error("Meetings data is missing from the API response.");
+    }
 
     return res.data;
   },
@@ -65,6 +73,18 @@ export const nutriMeetingService = {
     const res = await clientApi.patch<
       ApiResponseDTO<MeetingDetailsResponseDTO>
     >(NUTRITIONIST_MEETING_ROUTES.UPDATE(meetingId), data);
+
+    return res.data;
+  },
+
+  cancelMeeting: async (
+    meetingId: string,
+    cancellationReason: string,
+  ): Promise<ApiResponseDTO> => {
+    const res = await clientApi.patch<ApiResponseDTO>(
+      NUTRITIONIST_MEETING_ROUTES.CANCEL(meetingId),
+      { cancellationReason },
+    );
 
     return res.data;
   },
