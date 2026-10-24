@@ -23,12 +23,8 @@ export class UserActivityTrackingRepository
     userDayTrackingId: string | Types.ObjectId,
   ): Promise<IUserActivityTracking[]> {
     return this._model
-      .find({
-        userDayTrackingId,
-      })
-      .sort({
-        createdAt: 1,
-      })
+      .find({ userDayTrackingId })
+      .sort({ createdAt: 1, _id: 1 })
       .lean<IUserActivityTracking[]>();
   }
 
@@ -36,21 +32,17 @@ export class UserActivityTrackingRepository
     userProgramId: string | Types.ObjectId,
   ): Promise<IUserActivityTracking[]> {
     return this._model
-      .find({
-        userProgramId,
-      })
+      .find({ userProgramId })
+      .sort({ createdAt: 1, _id: 1 })
       .lean<IUserActivityTracking[]>();
   }
 
   async findByDayAndActivity(
-    userProgramDayId: string | Types.ObjectId,
+    userDayTrackingId: string | Types.ObjectId,
     activityId: string | Types.ObjectId,
   ): Promise<IUserActivityTracking | null> {
     return this._model
-      .findOne({
-        userProgramDayId,
-        activityId,
-      })
+      .findOne({ userDayTrackingId, activityId })
       .lean<IUserActivityTracking | null>();
   }
 
@@ -59,13 +51,8 @@ export class UserActivityTrackingRepository
     status: UserActivityTrackingStatus,
   ): Promise<IUserActivityTracking[]> {
     return this._model
-      .find({
-        userProgramId,
-        status,
-      })
-      .sort({
-        createdAt: 1,
-      })
+      .find({ userProgramId, status })
+      .sort({ createdAt: 1, _id: 1 })
       .lean<IUserActivityTracking[]>();
   }
 
@@ -74,19 +61,38 @@ export class UserActivityTrackingRepository
     category: ProgramActivityCategory,
   ): Promise<IUserActivityTracking[]> {
     return this._model
-      .find({
-        userProgramId,
-        category,
-      })
-      .sort({
-        createdAt: 1,
-      })
+      .find({ userProgramId, category })
+      .sort({ createdAt: 1, _id: 1 })
       .lean<IUserActivityTracking[]>();
   }
 
   async initializeForDay(
     activities: CreateUserActivityTrackingData[],
   ): Promise<IUserActivityTracking[]> {
-    return this._model.insertMany(activities);
+    if (activities.length === 0) {
+      return [];
+    }
+
+    const operations = activities.map((activity) => ({
+      updateOne: {
+        filter: {
+          userDayTrackingId: activity.userDayTrackingId,
+          activityId: activity.activityId,
+        },
+        update: {
+          $setOnInsert: activity,
+        },
+        upsert: true,
+      },
+    }));
+
+    await this._model.bulkWrite(operations, { ordered: true });
+
+    return this._model
+      .find({
+        userDayTrackingId: activities[0].userDayTrackingId,
+      })
+      .sort({ createdAt: 1, _id: 1 })
+      .lean<IUserActivityTracking[]>();
   }
 }

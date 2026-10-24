@@ -1,27 +1,15 @@
-import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
-import { ProgramDayCardResponseDTO } from "../../../dtos/nutritionist/program/program-day-card-response.dto";
-import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-import { IProgramDayCardProjection } from "../../../types/nutritionist/program/program-day-card.projection";
+import type { INutriProgramDayCardResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-day-card-response.dto";
+import type { INutriProgramDayCardProjection } from "../../../types/nutritionist/program/nutri-program-day-card.projection";
 
-export class ProgramDayCardMapper {
+export class NutriProgramDayCardMapper {
   static toProgramDayCardDTO(
-    day: IProgramDayCardProjection,
-  ): ProgramDayCardResponseDTO {
+    day: INutriProgramDayCardProjection,
+  ): INutriProgramDayCardResponseDTO {
     return {
       userProgramDayId: day.userProgramDayId,
       userProgramId: day.userProgramId,
       dayNumber: day.dayNumber,
       activityCount: day.activityCount,
     };
-  }
-
-  static toInfiniteScrollDTO(
-    result: CursorPaginationResult<IProgramDayCardProjection>,
-  ): InfiniteScrollResponseDTO<ProgramDayCardResponseDTO> {
-    return new InfiniteScrollResponseDTO(
-      result.items.map(this.toProgramDayCardDTO),
-      result.nextCursor,
-      result.hasMore,
-    );
   }
 }

@@ -8,10 +8,29 @@ import {
 } from "../models/userDayTracking.model";
 import logger from "../utils/logger";
 
-const getStartOfDay = (date: Date): Date => {
-  const result = new Date(date);
-  result.setHours(0, 0, 0, 0);
-  return result;
+const TIME_ZONE = "Asia/Kolkata";
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+const getDateKey = (date: Date): string => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const values = Object.fromEntries(
+    parts.map(({ type, value }) => [type, value]),
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
+const getDayDifference = (startDate: Date, today: Date): number => {
+  const startTimestamp = Date.parse(`${getDateKey(startDate)}T00:00:00.000Z`);
+  const todayTimestamp = Date.parse(`${getDateKey(today)}T00:00:00.000Z`);
+
+  return Math.floor((todayTimestamp - startTimestamp) / MILLISECONDS_PER_DAY);
 };
 
 const calculateCurrentDay = (
@@ -19,14 +38,9 @@ const calculateCurrentDay = (
   durationDays: number,
   now: Date,
 ): number => {
-  const start = getStartOfDay(startDate);
-  const today = getStartOfDay(now);
+  const elapsedDays = getDayDifference(startDate, now);
 
-  const diffMs = today.getTime() - start.getTime();
-
-  const elapsedDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  return Math.min(Math.max(elapsedDays + 1, 1), durationDays);
+  return Math.min(elapsedDays + 1, durationDays);
 };
 
 const syncProgramProgress = async (): Promise<void> => {
@@ -34,41 +48,71 @@ const syncProgramProgress = async (): Promise<void> => {
 
   const activePrograms = await UserProgramModel.find({
     status: "active",
-    isDeleted: false,
-    startDate: {
-      $lte: now,
-    },
-    endDate: {
-      $gt: now,
-    },
-  }).select("_id userId startDate durationDays");
+    startDate: { $lte: now },
+    endDate: { $gt: now },
+  })
+    .select("_id userId startDate durationDays")
+    .lean();
+
+  let synchronizedPrograms = 0;
+  let updatedProgressRecords = 0;
+  let markedMissedDays = 0;
+  let missingProgressRecords = 0;
 
   for (const program of activePrograms) {
+    const startDate = new Date(program.startDate);
+
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      !Number.isInteger(program.durationDays) ||
+      program.durationDays < 1
+    ) {
+      logger.warn("Skipping program with invalid date or duration", {
+        userProgramId: program._id.toString(),
+      });
+      continue;
+    }
+
+    const elapsedDays = getDayDifference(startDate, now);
+
+    if (elapsedDays < 0) {
+      continue;
+    }
+
     const currentDay = calculateCurrentDay(
-      program.startDate,
+      startDate,
       program.durationDays,
       now,
     );
 
-    await UserProgramProgressModel.updateOne(
+    const progressResult = await UserProgramProgressModel.updateOne(
       {
         userProgramId: program._id,
         userId: program.userId,
       },
       {
-        $set: {
-          currentDay,
-        },
+        $set: { currentDay },
       },
     );
 
-    await UserDayTrackingModel.updateMany(
+    if (progressResult.matchedCount === 0) {
+      missingProgressRecords += 1;
+
+      logger.warn("Program progress record not found", {
+        userProgramId: program._id.toString(),
+        userId: program.userId.toString(),
+      });
+
+      continue;
+    }
+
+    updatedProgressRecords += progressResult.modifiedCount;
+
+    const missedResult = await UserDayTrackingModel.updateMany(
       {
         userProgramId: program._id,
         userId: program.userId,
-        dayNumber: {
-          $lt: currentDay,
-        },
+        dayNumber: { $lt: currentDay },
         status: {
           $in: [
             UserDayTrackingStatus.NOT_STARTED,
@@ -82,13 +126,18 @@ const syncProgramProgress = async (): Promise<void> => {
         },
       },
     );
+
+    markedMissedDays += missedResult.modifiedCount;
+    synchronizedPrograms += 1;
   }
 
-  if (activePrograms.length > 0) {
-    logger.info("Program progress synchronized", {
-      count: activePrograms.length,
-    });
-  }
+  logger.info("Program progress synchronization completed", {
+    activePrograms: activePrograms.length,
+    synchronizedPrograms,
+    updatedProgressRecords,
+    markedMissedDays,
+    missingProgressRecords,
+  });
 };
 
 export const runProgramProgressSync = async (): Promise<void> => {
@@ -102,9 +151,18 @@ export const runProgramProgressSync = async (): Promise<void> => {
 };
 
 export const startProgramProgressCron = (): void => {
-  cron.schedule("0 * * * *", async () => {
-    await runProgramProgressSync();
-  });
+  cron.schedule(
+    "0 0 * * *",
+    async () => {
+      await runProgramProgressSync();
+    },
+    {
+      timezone: TIME_ZONE,
+    },
+  );
 
-  logger.info("Program progress cron started");
+  logger.info("Program progress cron scheduled", {
+    timezone: TIME_ZONE,
+    schedule: "0 0 * * *",
+  });
 };

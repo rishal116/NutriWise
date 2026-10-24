@@ -1,5 +1,15 @@
-import { ProgramStatus } from "../../../models/userProgram.model";
-import { SubscriptionStatus } from "../../../models/userPlan.model";
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  MinLength,
+  MaxLength,
+} from "class-validator";
+
+import type { ProgramStatus } from "../../../models/userProgram.model";
 
 export enum UserProgramSort {
   NEWEST = "newest",
@@ -8,11 +18,28 @@ export enum UserProgramSort {
   END_DATE = "end_date",
 }
 
-export interface UserProgramListQueryDTO {
-  limit: number;
+export class UserProgramListQueryDTO {
+  @IsInt()
+  @Min(1)
+  @Max(50)
+  limit: number = 10;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
   cursor?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
   search?: string;
+
+  @IsOptional()
+  @IsEnum(["upcoming", "active", "paused", "completed", "cancelled"])
   programStatus?: ProgramStatus;
-  subscriptionStatus?: SubscriptionStatus;
-  sort?: UserProgramSort;
+
+  @IsOptional()
+  @IsEnum(UserProgramSort)
+  sort?: UserProgramSort = UserProgramSort.NEWEST;
 }

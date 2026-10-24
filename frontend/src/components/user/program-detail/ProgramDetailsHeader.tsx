@@ -1,32 +1,22 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+import type { ProgramStatus } from "@/dtos/user/program/user-program-request.dto";
+
 interface ProgramDetailsHeaderProps {
   title: string;
   nutritionistName: string;
   username: string;
-  status: string;
+  status: ProgramStatus;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  active:
-    "border-emerald-200 bg-emerald-50 text-emerald-700",
-  completed:
-    "border-sky-200 bg-sky-50 text-sky-700",
-  paused:
-    "border-amber-200 bg-amber-50 text-amber-700",
-  cancelled:
-    "border-rose-200 bg-rose-50 text-rose-700",
-  pending:
-    "border-slate-200 bg-slate-100 text-slate-700",
+const STATUS_STYLES: Record<ProgramStatus, string> = {
+  upcoming: "border-violet-200 bg-violet-50 text-violet-700",
+  active: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  paused: "border-amber-200 bg-amber-50 text-amber-700",
+  completed: "border-sky-200 bg-sky-50 text-sky-700",
+  cancelled: "border-rose-200 bg-rose-50 text-rose-700",
 };
-
-function getStatusStyle(status: string): string {
-  return (
-    STATUS_STYLES[status.toLowerCase()] ??
-    STATUS_STYLES.pending
-  );
-}
 
 export default function ProgramDetailsHeader({
   title,
@@ -63,9 +53,7 @@ export default function ProgramDetailsHeader({
           </div>
 
           <span
-            className={`inline-flex w-fit shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold capitalize ${getStatusStyle(
-              status,
-            )}`}
+            className={`inline-flex w-fit shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold capitalize ${STATUS_STYLES[status]}`}
           >
             {status}
           </span>

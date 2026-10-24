@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 export enum UserMeasurementType {
   WEIGHT = "weight",
@@ -46,7 +46,7 @@ export enum MeasurementRecordedBy {
 export interface IUserMeasurement {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  userProgramId?: Types.ObjectId;
+  userProgramId?: Types.ObjectId | null;
   type: UserMeasurementType;
   customName?: string;
   value: number;
@@ -66,32 +66,38 @@ const UserMeasurementSchema = new Schema<IUserMeasurement>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     userProgramId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       default: null,
-      index: true,
     },
 
     type: {
       type: String,
       enum: Object.values(UserMeasurementType),
       required: true,
-      index: true,
     },
 
     customName: {
       type: String,
       trim: true,
       maxlength: 100,
+      validate: {
+        validator(this: IUserMeasurement, value?: string) {
+          return (
+            this.type !== UserMeasurementType.CUSTOM || Boolean(value?.trim())
+          );
+        },
+        message: "A custom name is required for custom measurements.",
+      },
     },
 
     value: {
       type: Number,
       required: true,
+      min: 0,
     },
 
     unit: {
@@ -103,12 +109,14 @@ const UserMeasurementSchema = new Schema<IUserMeasurement>(
     source: {
       type: String,
       enum: Object.values(MeasurementSource),
+      required: true,
       default: MeasurementSource.MANUAL,
     },
 
     recordedBy: {
       type: String,
       enum: Object.values(MeasurementRecordedBy),
+      required: true,
       default: MeasurementRecordedBy.USER,
     },
 
@@ -116,7 +124,6 @@ const UserMeasurementSchema = new Schema<IUserMeasurement>(
       type: Date,
       required: true,
       default: Date.now,
-      index: true,
     },
 
     notes: {
@@ -135,20 +142,8 @@ const UserMeasurementSchema = new Schema<IUserMeasurement>(
   },
 );
 
-UserMeasurementSchema.index({
-  userId: 1,
-  type: 1,
-  date: -1,
-});
-UserMeasurementSchema.index({
-  userProgramId: 1,
-  type: 1,
-  date: -1,
-});
-UserMeasurementSchema.index({
-  userId: 1,
-  date: -1,
-});
+UserMeasurementSchema.index({ userId: 1, type: 1, date: -1 });
+UserMeasurementSchema.index({ userProgramId: 1, type: 1, date: -1 });
 
 export const UserMeasurementModel = model<IUserMeasurement>(
   "UserMeasurement",

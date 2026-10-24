@@ -268,4 +268,14 @@ export const TYPES = {
     "INutriSessionRegistrationController",
   ),
 
+  INutriClientListQuery: Symbol.for("INutriClientListQuery"),
+  INutriClientDetailsQuery: Symbol.for("INutriClientDetailsQuery"),
+  IMeetingEligibleClientsQuery: Symbol.for("IMeetingEligibleClientsQuery"),
+  INutriProgramProgressRepository: Symbol.for(
+    "INutriProgramProgressRepository",
+  ),
+  INutriProgramProgressService: Symbol.for("INutriProgramProgressService"),
+  INutriProgramProgressController: Symbol.for(
+    "INutriProgramProgressController",
+  ),
 } as const;

@@ -19,6 +19,14 @@ export interface IUserDayTrackingRepository extends IBaseRepository<IUserDayTrac
     userProgramId: string | Types.ObjectId,
   ): Promise<IUserDayTracking | null>;
 
+  findOrCreateForProgramDay(
+    trackingData: Partial<IUserDayTracking> & {
+      userProgramId: Types.ObjectId;
+      userProgramDayId: Types.ObjectId;
+      dayNumber: number;
+    },
+  ): Promise<IUserDayTracking>;
+
   updateStatus(
     id: string | Types.ObjectId,
     status: UserDayTrackingStatus,
@@ -27,4 +35,9 @@ export interface IUserDayTrackingRepository extends IBaseRepository<IUserDayTrac
   lock(id: string | Types.ObjectId): Promise<IUserDayTracking | null>;
 
   unlock(id: string | Types.ObjectId): Promise<IUserDayTracking | null>;
+
+  findByProgramAndProgramDay(
+    userProgramId: string | Types.ObjectId,
+    userProgramDayId: string | Types.ObjectId,
+  ): Promise<IUserDayTracking | null>;
 }

@@ -1,12 +1,12 @@
-import {
+import type {
   ClientListItemDTO,
   ClientProgramSummaryDTO,
 } from "../../../dtos/nutritionist/client/client-response.dto";
 
-import {
+import type {
   IClientListProjection,
   IClientProgramProjection,
-} from "../../../types/nutriClientList.projection";
+} from "../../../types/nutritionist/client/nutriClientList.projection";
 
 export class NutriClientListMapper {
   static toClientProgramSummaryDTO(
@@ -18,8 +18,6 @@ export class NutriClientListMapper {
       nutritionistPlanId: program.planId.toString(),
 
       planTitle: program.planTitle,
-
-      subscriptionStatus: program.subscriptionStatus,
       programStatus: program.programStatus,
 
       currentDay: program.currentDay,
@@ -36,9 +34,7 @@ export class NutriClientListMapper {
   ): ClientListItemDTO {
     return {
       clientId: projection.clientId.toString(),
-
       fullName: projection.fullName,
-      username: projection.username,
       profileImage: projection.profileImage,
 
       programs: projection.programs.map((program) =>

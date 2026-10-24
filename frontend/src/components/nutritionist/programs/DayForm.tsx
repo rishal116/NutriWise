@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { programDayService } from "@/services/nutritionist/nutriProgramDay.service";
+import { programDayService } from "@/services/nutritionist/nutri-program-day.service";
 import { 
   Plus, Trash2, Utensils, Dumbbell, Save, 
   Info, Zap, Clock, CheckCircle2, Droplets 

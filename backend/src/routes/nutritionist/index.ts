@@ -16,6 +16,7 @@ import resourceRoutes from "./resource.route";
 import sessionRoutes from "./session.route";
 import earningsRoutes from "./earnings.route";
 import credentialsRoutes from "./credentials.route";
+import programProgressRoutes from "./program-progress.route";
 
 const router = Router();
 
@@ -29,6 +30,7 @@ router.use("/plans", planRoutes);
 router.use("/clients", clientRoutes);
 router.use("/programs", programRoutes);
 router.use("/program-days", programDayRoutes);
+router.use("/program-progress", programProgressRoutes);
 router.use("/meetings", meetingRoutes);
 router.use("/groups", groupRoutes);
 router.use("/resources", resourceRoutes);

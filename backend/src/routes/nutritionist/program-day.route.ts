@@ -15,6 +15,4 @@ router.get("/:dayId", controller.getProgramDayDetails);
 
 router.patch("/:dayId", controller.updateProgramDay);
 
-router.delete("/:dayId", controller.deleteProgramDay);
-
 export default router;

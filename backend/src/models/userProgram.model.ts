@@ -7,6 +7,7 @@ export const PROGRAM_STATUS = [
   "completed",
   "cancelled",
 ] as const;
+
 export type ProgramStatus = (typeof PROGRAM_STATUS)[number];
 
 export interface IUserProgram {
@@ -20,13 +21,13 @@ export interface IUserProgram {
   durationDays: number;
   status: ProgramStatus;
   lifecycle: {
-    pausedAt?: Date;
-    resumedAt?: Date;
-    completedAt?: Date;
-    cancelledAt?: Date;
+    pausedAt: Date | null;
+    resumedAt: Date | null;
+    completedAt: Date | null;
+    cancelledAt: Date | null;
   };
-  programNotes?: string;
-  isDeleted: boolean;
+  cancellationReason: string | null;
+  cancelledBy: Types.ObjectId | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,14 +38,12 @@ const UserProgramSchema = new Schema<IUserProgram>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     nutritionistId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     userPlanId: {
@@ -52,39 +51,45 @@ const UserProgramSchema = new Schema<IUserProgram>(
       ref: "UserPlan",
       required: true,
       unique: true,
-      index: true,
     },
 
     planId: {
       type: Schema.Types.ObjectId,
       ref: "NutritionistPlan",
       required: true,
-      index: true,
     },
 
     startDate: {
       type: Date,
       required: true,
-      index: true,
     },
 
     endDate: {
       type: Date,
       required: true,
-      index: true,
+      validate: {
+        validator(this: IUserProgram, value: Date) {
+          return value >= this.startDate;
+        },
+        message: "End date must be on or after the start date.",
+      },
     },
 
     durationDays: {
       type: Number,
       required: true,
       min: 1,
+      validate: {
+        validator: Number.isInteger,
+        message: "Duration must be a whole number of days.",
+      },
     },
 
     status: {
       type: String,
       enum: PROGRAM_STATUS,
+      required: true,
       default: "upcoming",
-      index: true,
     },
 
     lifecycle: {
@@ -92,33 +97,31 @@ const UserProgramSchema = new Schema<IUserProgram>(
         type: Date,
         default: null,
       },
-
       resumedAt: {
         type: Date,
         default: null,
       },
-
       completedAt: {
         type: Date,
         default: null,
       },
-
       cancelledAt: {
         type: Date,
         default: null,
       },
     },
 
-    programNotes: {
+    cancellationReason: {
       type: String,
       trim: true,
-      maxlength: 2000,
+      maxlength: 500,
+      default: null,
     },
 
-    isDeleted: {
-      type: Boolean,
-      default: false,
-      index: true,
+    cancelledBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   {
@@ -129,19 +132,12 @@ const UserProgramSchema = new Schema<IUserProgram>(
 UserProgramSchema.index({
   userId: 1,
   status: 1,
-  isDeleted: 1,
+  createdAt: -1,
 });
+
 UserProgramSchema.index({
   nutritionistId: 1,
   status: 1,
-  isDeleted: 1,
-});
-UserProgramSchema.index({
-  startDate: 1,
-  endDate: 1,
-});
-UserProgramSchema.index({
-  userId: 1,
   createdAt: -1,
 });
 

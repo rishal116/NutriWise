@@ -39,7 +39,7 @@ export class NutritionistPlanService implements INutritionistPlanService {
     logger.info(`Creating plan for nutritionist ${nutritionistId}`);
     await validateDto(CreatePlanDTO, dto);
     if (dto.status === "published") {
-      const publishedCount = await this._nutritionistPlanRepository.count({
+      const publishedCount = await this._nutritionistPlanRepository.countDocuments({
         nutritionistId: new Types.ObjectId(nutritionistId),
         status: "published",
         isDeleted: false,
@@ -61,6 +61,7 @@ export class NutritionistPlanService implements INutritionistPlanService {
     logger.info(`Plan ${createdPlan._id.toString()} created successfully`);
     return toPlanDTO(createdPlan);
   }
+  
   async updatePlan(
     nutritionistId: string,
     planId: string,
@@ -77,7 +78,7 @@ export class NutritionistPlanService implements INutritionistPlanService {
       );
     }
     if (dto.status === "published" && plan.status !== "published") {
-      const publishedCount = await this._nutritionistPlanRepository.count({
+      const publishedCount = await this._nutritionistPlanRepository.countDocuments({
         nutritionistId: new Types.ObjectId(nutritionistId),
         status: "published",
         isDeleted: false,

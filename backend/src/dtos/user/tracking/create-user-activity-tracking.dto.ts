@@ -1,9 +1,11 @@
-import {
+import type {
   ActivityCompletedBy,
-  ActivityTrackingValueType,
   UserActivityTrackingStatus,
 } from "../../../models/userActivityTracking.model";
-import { ProgramActivityCategory } from "../../../models/userProgramDay.model";
+import type {
+  ProgramActivityCategory,
+  ActivityValueType,
+} from "../../../models/userProgramDay.model";
 
 export interface CreateUserActivityTrackingDTO {
   userId: string;
@@ -14,9 +16,8 @@ export interface CreateUserActivityTrackingDTO {
   title: string;
   category: ProgramActivityCategory;
   status: UserActivityTrackingStatus;
-  valueType: ActivityTrackingValueType;
+  valueType: ActivityValueType;
   targetValue?: number;
   unit?: string;
-  completedBy: ActivityCompletedBy;
   lastUpdatedBy: ActivityCompletedBy;
 }

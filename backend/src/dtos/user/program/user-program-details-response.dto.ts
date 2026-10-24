@@ -1,15 +1,8 @@
-import {
-  PaymentStatus,
-  SubscriptionStatus,
-} from "../../../models/userPlan.model";
+import type { ProgramStatus } from "../../../models/userProgram.model";
 
-import { ProgramStatus } from "../../../models/userProgram.model";
-
-export interface UserProgramDetailsResponseDTO {
+export interface IUserProgramDetailsResponseDTO {
   _id: string;
-
   title: string;
-
   userPlanId: string;
 
   nutritionist: {
@@ -19,21 +12,10 @@ export interface UserProgramDetailsResponseDTO {
     profileImage?: string;
   };
 
-  status: ProgramStatus;
-
+  programStatus: ProgramStatus;
   currentDay: number;
-
   durationDays: number;
-
   completionPercentage: number;
-
   startDate: Date;
-
   endDate: Date;
-
-  paymentStatus: PaymentStatus;
-
-  subscriptionStatus: SubscriptionStatus;
-
-  purchasedAt: Date;
 }

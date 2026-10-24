@@ -1,10 +1,10 @@
 import { Types } from "mongoose";
-import { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
-import {
+import type { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
+import type {
   ActivityValueType,
   ProgramActivityCategory,
 } from "../../../models/userProgramDay.model";
-import { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
+import type { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
 
 export interface IUserProgramDayListProjection {
   _id: Types.ObjectId;

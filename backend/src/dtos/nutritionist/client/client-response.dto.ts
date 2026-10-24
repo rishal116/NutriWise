@@ -1,4 +1,3 @@
-import { SubscriptionStatus } from "../../../models/userPlan.model";
 import { ProgramStatus } from "../../../models/userProgram.model";
 
 export class ClientProgramSummaryDTO {
@@ -7,8 +6,6 @@ export class ClientProgramSummaryDTO {
   nutritionistPlanId!: string;
 
   planTitle!: string;
-
-  subscriptionStatus!: SubscriptionStatus;
   programStatus!: ProgramStatus;
 
   currentDay!: number;
@@ -21,9 +18,7 @@ export class ClientProgramSummaryDTO {
 
 export class ClientListItemDTO {
   clientId!: string;
-
   fullName!: string;
-  username!: string;
   profileImage?: string;
 
   programs!: ClientProgramSummaryDTO[];
@@ -45,7 +40,6 @@ export class ClientDetailsResponseDTO {
   clientId!: string;
 
   fullName!: string;
-  username!: string;
   email!: string;
 
   phone?: string;
@@ -54,7 +48,6 @@ export class ClientDetailsResponseDTO {
   profileImage?: string;
 
   health!: ClientHealthDetailsDTO;
-
   programs!: ClientProgramSummaryDTO[];
 }
 

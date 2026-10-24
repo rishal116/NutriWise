@@ -1,11 +1,8 @@
 import type { ReactNode } from "react";
-import {
-  CalendarDays,
-  Clock,
-  CreditCard,
-} from "lucide-react";
+import { CalendarDays, Clock, Target } from "lucide-react";
 
 import type { UserProgramDetailsDTO } from "@/dtos/user/program/user-program-details.dto";
+import type { ProgramStatus } from "@/dtos/user/program/user-program-request.dto";
 
 interface ProgramOverviewProps {
   program: UserProgramDetailsDTO;
@@ -18,38 +15,17 @@ interface StatCardProps {
   badge?: boolean;
 }
 
-const STATUS_STYLES: Record<string, string> = {
-  active:
-    "border-emerald-200 bg-emerald-50 text-emerald-700",
-  completed:
-    "border-sky-200 bg-sky-50 text-sky-700",
-  paused:
-    "border-amber-200 bg-amber-50 text-amber-700",
-  cancelled:
-    "border-rose-200 bg-rose-50 text-rose-700",
-  pending:
-    "border-slate-200 bg-slate-100 text-slate-700",
-  paid:
-    "border-emerald-200 bg-emerald-50 text-emerald-700",
-  failed:
-    "border-rose-200 bg-rose-50 text-rose-700",
-  refunded:
-    "border-amber-200 bg-amber-50 text-amber-700",
+const STATUS_STYLES: Record<ProgramStatus, string> = {
+  upcoming: "border-violet-200 bg-violet-50 text-violet-700",
+  active: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  paused: "border-amber-200 bg-amber-50 text-amber-700",
+  completed: "border-sky-200 bg-sky-50 text-sky-700",
+  cancelled: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
-function getStatusStyle(status: string): string {
-  return (
-    STATUS_STYLES[status.toLowerCase()] ??
-    STATUS_STYLES.pending
-  );
-}
+function StatCard({ icon, label, value, badge = false }: StatCardProps) {
+  const statusStyle = badge ? STATUS_STYLES[value as ProgramStatus] : undefined;
 
-function StatCard({
-  icon,
-  label,
-  value,
-  badge,
-}: StatCardProps) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5">
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100/80 text-emerald-700">
@@ -63,9 +39,9 @@ function StatCard({
 
         {badge ? (
           <span
-            className={`mt-0.5 inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize ${getStatusStyle(
-              String(value),
-            )}`}
+            className={`mt-0.5 inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize ${
+              statusStyle ?? "border-slate-200 bg-slate-100 text-slate-700"
+            }`}
           >
             {value}
           </span>
@@ -79,9 +55,21 @@ function StatCard({
   );
 }
 
-export default function ProgramOverview({
-  program,
-}: ProgramOverviewProps) {
+function formatDate(date: string): string {
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Not available";
+  }
+
+  return parsedDate.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export default function ProgramOverview({ program }: ProgramOverviewProps) {
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-7">
       <div className="mb-4 flex items-center gap-2">
@@ -94,16 +82,9 @@ export default function ProgramOverview({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard
-          icon={<CreditCard className="h-4 w-4" />}
-          label="Subscription"
-          value={program.subscriptionStatus}
-          badge
-        />
-
-        <StatCard
-          icon={<CreditCard className="h-4 w-4" />}
-          label="Payment"
-          value={program.paymentStatus}
+          icon={<Target className="h-4 w-4" />}
+          label="Program Status"
+          value={program.programStatus}
           badge
         />
 
@@ -120,19 +101,21 @@ export default function ProgramOverview({
         />
 
         <StatCard
+          icon={<Target className="h-4 w-4" />}
+          label="Completion"
+          value={`${Math.min(100, Math.max(0, program.completionPercentage))}%`}
+        />
+
+        <StatCard
           icon={<CalendarDays className="h-4 w-4" />}
           label="Start Date"
-          value={new Date(
-            program.startDate,
-          ).toLocaleDateString()}
+          value={formatDate(program.startDate)}
         />
 
         <StatCard
           icon={<CalendarDays className="h-4 w-4" />}
           label="End Date"
-          value={new Date(
-            program.endDate,
-          ).toLocaleDateString()}
+          value={formatDate(program.endDate)}
         />
       </div>
     </section>

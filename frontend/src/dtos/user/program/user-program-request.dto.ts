@@ -1,11 +1,3 @@
-export const SUBSCRIPTION_STATUS = [
-  "pending",
-  "active",
-  "expired",
-  "cancelled",
-] as const;
-export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
-
 export const PROGRAM_STATUS = [
   "upcoming",
   "active",
@@ -13,6 +5,7 @@ export const PROGRAM_STATUS = [
   "completed",
   "cancelled",
 ] as const;
+
 export type ProgramStatus = (typeof PROGRAM_STATUS)[number];
 
 export enum UserProgramSort {
@@ -27,6 +20,5 @@ export interface UserProgramListQuery {
   cursor?: string;
   search?: string;
   programStatus?: ProgramStatus;
-  subscriptionStatus?: SubscriptionStatus;
   sort?: UserProgramSort;
 }

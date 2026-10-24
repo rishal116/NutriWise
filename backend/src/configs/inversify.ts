@@ -223,7 +223,7 @@ import { NutriSessionService } from "../services/implements/nutritionist/nutriSe
 
 // ---------- Repositories ----------
 
-import { NutriClientRepository } from "../repositories/implements/nutritionist/nutriClient.repository";
+import { NutriClientRepository } from "../repositories/implements/nutritionist/client/nutri-client.repository";
 import { NutriMeetingRepository } from "../repositories/implements/nutritionist/nutriMeeting.repository";
 import { NutritionistPlanRepository } from "../repositories/implements/nutritionist/nutriPlan.repository";
 import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutriProfile.repository";
@@ -260,7 +260,7 @@ import { INutriSessionService } from "../services/interfaces/nutritionist/INutri
 
 // Repositories
 
-import { INutriClientRepository } from "../repositories/interfaces/nutritionist/INutriClientRepository";
+import { INutriClientRepository } from "../repositories/interfaces/nutritionist/client/INutriClientRepository";
 import { INutriMeetingRepository } from "../repositories/interfaces/nutritionist/INutriMeetingRepository";
 import { INutritionistPlanRepository } from "../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { INutritionistProfileRepository } from "../repositories/interfaces/nutritionist/INutriProfileRepository";
@@ -491,6 +491,18 @@ import { INutriSessionRegistrationService } from "../services/interfaces/nutriti
 import { NutriSessionRegistrationService } from "../services/implements/nutritionist/nutriRegistration.service";
 import { INutriSessionRegistrationRepository } from "../repositories/interfaces/nutritionist/INutriSessionRegistrationRepository";
 import { NutriSessionRegistrationRepository } from "../repositories/implements/nutritionist/nutriSessionRegistration.repository";
+import { NutriClientListQuery } from "../repositories/implements/nutritionist/client/nutri-client-list.query";
+import { INutriClientListQuery } from "../repositories/interfaces/nutritionist/client/INutriClientListQuery";
+import { INutriClientDetailsQuery } from "../repositories/interfaces/nutritionist/client/INutriClientDetailsQuery";
+import { NutriClientDetailsQuery } from "../repositories/implements/nutritionist/client/nutri-client-details.query";
+import { IMeetingEligibleClientsQuery } from "../repositories/interfaces/nutritionist/client/IMeetingEligibleClientsQuery";
+import { MeetingEligibleClientsQuery } from "../repositories/implements/nutritionist/client/meeting-eligible-clients.query";
+import { INutriProgramProgressController } from "../controllers/interfaces/nutritionist/INutriProgramProgressController";
+import { NutriProgramProgressController } from "../controllers/implementations/nutritionist/nutriProgramProgress.controller";
+import { INutriProgramProgressService } from "../services/interfaces/nutritionist/INutriProgramProgressService";
+import { NutriProgramProgressService } from "../services/implements/nutritionist/nutriProgramProgress.service";
+import { INutriProgramProgressRepository } from "../repositories/interfaces/nutritionist/INutriProgramProgressRepository";
+import { NutriProgramProgressRepository } from "../repositories/implements/nutritionist/nutriProgramProgess.repository";
 
 const container = new Container();
 
@@ -1191,5 +1203,29 @@ container
     TYPES.INutriSessionRegistrationRepository,
   )
   .to(NutriSessionRegistrationRepository);
+
+container
+  .bind<INutriClientListQuery>(TYPES.INutriClientListQuery)
+  .to(NutriClientListQuery);
+
+container
+  .bind<INutriClientDetailsQuery>(TYPES.INutriClientDetailsQuery)
+  .to(NutriClientDetailsQuery);
+
+container
+  .bind<IMeetingEligibleClientsQuery>(TYPES.IMeetingEligibleClientsQuery)
+  .to(MeetingEligibleClientsQuery);
+
+container
+  .bind<INutriProgramProgressController>(TYPES.INutriProgramProgressController)
+  .to(NutriProgramProgressController);
+
+container
+  .bind<INutriProgramProgressService>(TYPES.INutriProgramProgressService)
+  .to(NutriProgramProgressService);
+
+container
+  .bind<INutriProgramProgressRepository>(TYPES.INutriProgramProgressRepository)
+  .to(NutriProgramProgressRepository);
 
 export { container };

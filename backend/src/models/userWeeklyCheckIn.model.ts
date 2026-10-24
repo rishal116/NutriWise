@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 export enum MeasurementUnit {
   KG = "kg",
@@ -26,42 +26,33 @@ export interface IUserWeeklyCheckIn {
   overallRating?: number;
   achievements: string[];
   challenges: string[];
-  userNotes?: string;
-  nutritionistFeedback?: string;
-  nextWeekFocus?: string;
+  userNotes?: string | null;
+  nutritionistFeedback?: string | null;
+  nextWeekFocus?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const MeasurementSchema = new Schema<IUserMeasurement>(
-  {
-    _id: {
-      type: Schema.Types.ObjectId,
-      auto: true,
-    },
-
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-    },
-
-    value: {
-      type: Number,
-      required: true,
-    },
-
-    unit: {
-      type: String,
-      enum: Object.values(MeasurementUnit),
-      required: true,
-    },
+const MeasurementSchema = new Schema<IUserMeasurement>({
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 100,
   },
-  {
-    _id: false,
+
+  value: {
+    type: Number,
+    required: true,
+    min: 0,
   },
-);
+
+  unit: {
+    type: String,
+    enum: Object.values(MeasurementUnit),
+    required: true,
+  },
+});
 
 const UserWeeklyCheckInSchema = new Schema<IUserWeeklyCheckIn>(
   {
@@ -69,14 +60,12 @@ const UserWeeklyCheckInSchema = new Schema<IUserWeeklyCheckIn>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     userProgramId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       required: true,
-      index: true,
     },
 
     weekNumber: {
@@ -119,7 +108,6 @@ const UserWeeklyCheckInSchema = new Schema<IUserWeeklyCheckIn>(
       type: Number,
       min: 1,
       max: 5,
-      index: true,
     },
 
     achievements: {
@@ -159,22 +147,11 @@ const UserWeeklyCheckInSchema = new Schema<IUserWeeklyCheckIn>(
 );
 
 UserWeeklyCheckInSchema.index(
-  {
-    userProgramId: 1,
-    weekNumber: 1,
-  },
-  {
-    unique: true,
-  },
+  { userProgramId: 1, weekNumber: 1 },
+  { unique: true },
 );
-UserWeeklyCheckInSchema.index({
-  userId: 1,
-  startDate: -1,
-});
-UserWeeklyCheckInSchema.index({
-  userProgramId: 1,
-  startDate: -1,
-});
+
+UserWeeklyCheckInSchema.index({ userId: 1, startDate: -1 });
 
 export const UserWeeklyCheckInModel = model<IUserWeeklyCheckIn>(
   "UserWeeklyCheckIn",

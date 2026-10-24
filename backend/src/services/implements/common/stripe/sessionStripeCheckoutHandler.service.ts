@@ -152,7 +152,7 @@ export class SessionStripeCheckoutHandlerService implements ISessionStripeChecko
           );
       } else {
         registration =
-          await this._sessionRegistrationRepository.createWithSession(
+          await this._sessionRegistrationRepository.create(
             {
               sessionId,
               userId,
@@ -186,9 +186,6 @@ export class SessionStripeCheckoutHandlerService implements ISessionStripeChecko
             title: sessionData.title,
             price: sessionData.pricing.amount,
             currency: sessionData.pricing.currency.toLowerCase() as Currency,
-          },
-          metadata: {
-            registrationId: registration._id.toString(),
           },
         },
         dbSession,

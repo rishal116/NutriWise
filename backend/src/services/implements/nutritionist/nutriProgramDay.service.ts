@@ -1,30 +1,24 @@
 import { inject, injectable } from "inversify";
+
 import { TYPES } from "../../../types/types";
-import { INutriProgramDayService } from "../../interfaces/nutritionist/INutriProgramDayService";
-import { INutriProgramRepository } from "../../../repositories/interfaces/nutritionist/INutriProgramRepository";
-import { INutriProgramDayRepository } from "../../../repositories/interfaces/nutritionist/INutriProgramDayRepository";
+import type { INutriProgramDayService } from "../../interfaces/nutritionist/INutriProgramDayService";
+import type { INutriProgramRepository } from "../../../repositories/interfaces/nutritionist/INutriProgramRepository";
+import type { INutriProgramDayRepository } from "../../../repositories/interfaces/nutritionist/INutriProgramDayRepository";
 import {
   CreateProgramDayDTO,
   UpdateProgramDayDTO,
-} from "../../../dtos/nutritionist/program/program-day-request.dto";
+} from "../../../dtos/nutritionist/program/nutri-program-day-request.dto";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
-import { ProgramDayCardResponseDTO } from "../../../dtos/nutritionist/program/program-day-card-response.dto";
-import { ProgramDayResponseDTO } from "../../../dtos/nutritionist/program/program-day-response.dto";
-import { ProgramDayCardMapper } from "../../../mappers/nutritionist/program/program-day-card.mapper";
-import { ProgramDayMapper } from "../../../mappers/nutritionist/program/program-day.mapper";
+import type { INutriProgramDayCardResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-day-card-response.dto";
+import type { INutriProgramDayResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-day-response.dto";
+import { NutriProgramDayCardMapper } from "../../../mappers/nutritionist/program/program-day-card.mapper";
+import { NutriProgramDayMapper } from "../../../mappers/nutritionist/program/program-day.mapper";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
-import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/program-day-list-query.dto";
-import { IUserDayTrackingService } from "../../interfaces/user/tracking/IUserDayTrackingService";
-import { IUserActivityTrackingService } from "../../interfaces/user/tracking/IUserActivityTrackingService";
-import {
-  ActivityCompletedBy,
-  ActivityTrackingValueType,
-  UserActivityTrackingStatus,
-} from "../../../models/userActivityTracking.model";
-import { CreateUserActivityTrackingDTO } from "../../../dtos/user/tracking/create-user-activity-tracking.dto";
+import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/nutri-program-day-list-query.dto";
+import { Types } from "mongoose";
 
 @injectable()
 export class NutriProgramDayService implements INutriProgramDayService {
@@ -34,19 +28,12 @@ export class NutriProgramDayService implements INutriProgramDayService {
 
     @inject(TYPES.INutriProgramDayRepository)
     private readonly _programDayRepository: INutriProgramDayRepository,
-
-    @inject(TYPES.IUserDayTrackingService)
-    private readonly _userDayTrackingService: IUserDayTrackingService,
-
-    @inject(TYPES.IUserActivityTrackingService)
-    private readonly _userActivityTrackingService: IUserActivityTrackingService,
   ) {}
-
   async getProgramDays(
     nutritionistId: string,
     programId: string,
     query: ProgramDayListQueryDTO,
-  ): Promise<InfiniteScrollResponseDTO<ProgramDayCardResponseDTO>> {
+  ): Promise<InfiniteScrollResponseDTO<INutriProgramDayCardResponseDTO>> {
     logger.debug(
       `Fetching program days. nutritionistId=${nutritionistId}, programId=${programId}`,
     );
@@ -71,13 +58,19 @@ export class NutriProgramDayService implements INutriProgramDayService {
       `Fetched ${result.items.length} program days. nutritionistId=${nutritionistId}, programId=${programId}`,
     );
 
-    return ProgramDayCardMapper.toInfiniteScrollDTO(result);
+    return new InfiniteScrollResponseDTO(
+      result.items.map((item) =>
+        NutriProgramDayCardMapper.toProgramDayCardDTO(item),
+      ),
+      result.nextCursor,
+      result.hasMore,
+    );
   }
 
   async getProgramDayDetails(
     nutritionistId: string,
     dayId: string,
-  ): Promise<ProgramDayResponseDTO> {
+  ): Promise<INutriProgramDayResponseDTO> {
     logger.debug(
       `Fetching program day details. nutritionistId=${nutritionistId}, dayId=${dayId}`,
     );
@@ -88,17 +81,26 @@ export class NutriProgramDayService implements INutriProgramDayService {
       throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
     }
 
+    const programExists = await this._programRepository.existsById(
+      day.userProgramId.toString(),
+      nutritionistId,
+    );
+
+    if (!programExists) {
+      throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
+    }
+
     logger.info(`Successfully fetched program day details. dayId=${dayId}`);
 
-    return ProgramDayMapper.toProgramDayDTO(day);
+    return NutriProgramDayMapper.toProgramDayDTO(day);
   }
 
   async createProgramDay(
     nutritionistId: string,
     programId: string,
     dto: CreateProgramDayDTO,
-  ): Promise<ProgramDayResponseDTO> {
-    await validateDto(CreateProgramDayDTO, dto);
+  ): Promise<void> {
+    const validatedDTO = await validateDto(CreateProgramDayDTO, dto);
 
     logger.debug(
       `Creating program day. nutritionistId=${nutritionistId}, programId=${programId}`,
@@ -115,73 +117,36 @@ export class NutriProgramDayService implements INutriProgramDayService {
 
     const dayExists = await this._programDayRepository.existsByDayNumber(
       programId,
-      dto.dayNumber,
+      validatedDTO.dayNumber,
     );
 
     if (dayExists) {
       throw new CustomError(
-        `Day ${dto.dayNumber} already exists for this program`,
+        `Day ${validatedDTO.dayNumber} already exists for this program`,
         StatusCode.CONFLICT,
       );
     }
 
-    const day = await this._programDayRepository.createProgramDay(
-      programId,
-      dto,
-    );
-
-    const dayTracking =
-      await this._userDayTrackingService.initializeDayTracking(
-        programId,
-        day._id,
-        day.dayNumber,
-        day.activities.length,
-      );
-
-    const activityTrackingData: CreateUserActivityTrackingDTO[] =
-      day.activities.map((activity) => ({
-        userId: dayTracking.userId,
-        userProgramId: dayTracking.userProgramId,
-        userProgramDayId: dayTracking.userProgramDayId,
-        userDayTrackingId: dayTracking._id,
-
-        activityId: activity._id.toString(),
-        title: activity.title,
-        category: activity.category,
-
-        status: UserActivityTrackingStatus.NOT_STARTED,
-
-        valueType: activity.valueType as ActivityTrackingValueType,
-
-        ...(activity.targetValue !== undefined && {
-          targetValue: activity.targetValue,
-        }),
-
-        ...(activity.unit !== undefined && {
-          unit: activity.unit,
-        }),
-
-        completedBy: ActivityCompletedBy.USER,
-        lastUpdatedBy: ActivityCompletedBy.USER,
-      }));
-
-    await this._userActivityTrackingService.initializeForDay(
-      activityTrackingData,
-    );
+    const day = await this._programDayRepository.create({
+      ...validatedDTO,
+      userProgramId: new Types.ObjectId(programId),
+      activities: validatedDTO.activities.map((activity) => ({
+        ...activity,
+        _id: new Types.ObjectId(),
+      })),
+    });
 
     logger.info(
-      `Successfully created program day and initialized tracking. programId=${programId}, dayId=${day._id}`,
+      `Successfully created program day template. programId=${programId}, dayId=${day._id}`,
     );
-
-    return ProgramDayMapper.toProgramDayDTO(day);
   }
-  
+
   async updateProgramDay(
     nutritionistId: string,
     dayId: string,
     dto: UpdateProgramDayDTO,
-  ): Promise<ProgramDayResponseDTO> {
-    await validateDto(UpdateProgramDayDTO, dto);
+  ): Promise<void> {
+    const validatedDTO = await validateDto(UpdateProgramDayDTO, dto);
 
     logger.debug(
       `Updating program day. nutritionistId=${nutritionistId}, dayId=${dayId}`,
@@ -193,35 +158,24 @@ export class NutriProgramDayService implements INutriProgramDayService {
       throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
     }
 
-    const updated = await this._programDayRepository.updateProgramDay(
-      dayId,
-      dto,
+    const programExists = await this._programRepository.existsById(
+      day.userProgramId.toString(),
+      nutritionistId,
     );
 
-    if (!updated) {
+    if (!programExists) {
+      throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
+    }
+
+    const updatedCount = await this._programDayRepository.updateOne(
+      { _id: dayId },
+      { $set: validatedDTO },
+    );
+
+    if (updatedCount === 0) {
       throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
     }
 
     logger.info(`Successfully updated program day. dayId=${dayId}`);
-
-    return ProgramDayMapper.toProgramDayDTO(updated);
-  }
-
-  async deleteProgramDay(nutritionistId: string, dayId: string): Promise<void> {
-    logger.debug(
-      `Deleting program day. nutritionistId=${nutritionistId}, dayId=${dayId}`,
-    );
-
-    const day = await this._programDayRepository.findProgramDayById(dayId);
-
-    if (!day) {
-      throw new CustomError("Program day not found", StatusCode.NOT_FOUND);
-    }
-
-    await this._programDayRepository.deleteProgramDay(dayId);
-
-    logger.info(
-      `Successfully deleted program day. nutritionistId=${nutritionistId}, dayId=${dayId}`,
-    );
   }
 }

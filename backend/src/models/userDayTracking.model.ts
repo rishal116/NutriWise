@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 export enum UserDayTrackingStatus {
   NOT_STARTED = "not_started",
@@ -22,8 +22,6 @@ export interface IUserDayTracking {
   totalActivities: number;
   completedActivities: number;
   skippedActivities: number;
-  overallCompletionPercentage: number;
-  adherenceScore: number;
   isLocked: boolean;
   userNotes?: string;
   nutritionistNotes?: string;
@@ -37,21 +35,18 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     userProgramId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       required: true,
-      index: true,
     },
 
     userProgramDayId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgramDay",
       required: true,
-      index: true,
     },
 
     dayNumber: {
@@ -63,14 +58,13 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
     date: {
       type: Date,
       required: true,
-      index: true,
     },
 
     status: {
       type: String,
       enum: Object.values(UserDayTrackingStatus),
+      required: true,
       default: UserDayTrackingStatus.NOT_STARTED,
-      index: true,
     },
 
     startedAt: {
@@ -106,20 +100,6 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
       min: 0,
     },
 
-    overallCompletionPercentage: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-
-    adherenceScore: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-
     isLocked: {
       type: Boolean,
       default: false,
@@ -143,31 +123,12 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
 );
 
 UserDayTrackingSchema.index(
-  {
-    userProgramId: 1,
-    dayNumber: 1,
-  },
-  {
-    unique: true,
-  },
+  { userProgramId: 1, dayNumber: 1 },
+  { unique: true },
 );
-UserDayTrackingSchema.index({
-  userId: 1,
-  userProgramId: 1,
-  dayNumber: 1,
-});
-UserDayTrackingSchema.index({
-  userId: 1,
-  status: 1,
-});
-UserDayTrackingSchema.index({
-  userProgramId: 1,
-  date: 1,
-});
-UserDayTrackingSchema.index({
-  userId: 1,
-  date: -1,
-});
+
+UserDayTrackingSchema.index({ userId: 1, date: -1 });
+UserDayTrackingSchema.index({ userId: 1, status: 1 });
 
 export const UserDayTrackingModel = model<IUserDayTracking>(
   "UserDayTracking",

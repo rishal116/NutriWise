@@ -69,7 +69,7 @@ export const runProgramLifecycle = async (): Promise<void> => {
 };
 
 export const startProgramLifecycleCron = (): void => {
-  cron.schedule("0 * * * *", async () => {
+  cron.schedule("0 0,10 * * *", async () => {
     await runProgramLifecycle();
   });
 

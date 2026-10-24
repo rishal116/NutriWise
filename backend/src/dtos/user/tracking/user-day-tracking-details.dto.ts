@@ -1,3 +1,4 @@
+
 import { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
 
 export interface UserDayTrackingDetailsDTO {
@@ -8,14 +9,12 @@ export interface UserDayTrackingDetailsDTO {
   dayNumber: number;
   date: Date;
   status: UserDayTrackingStatus;
-  startedAt?: Date | null;
-  completedAt?: Date | null;
-  lastActivityAt?: Date | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
+  lastActivityAt: Date | null;
   totalActivities: number;
   completedActivities: number;
   skippedActivities: number;
-  overallCompletionPercentage: number;
-  adherenceScore: number;
   isLocked: boolean;
   userNotes?: string;
   nutritionistNotes?: string;

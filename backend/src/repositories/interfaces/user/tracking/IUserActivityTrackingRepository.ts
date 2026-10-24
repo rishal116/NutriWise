@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 import { IBaseRepository } from "../../common/IBaseRepository";
 import { ProgramActivityCategory } from "../../../../models/userProgramDay.model";
 import {
+  CreateUserActivityTrackingData,
   IUserActivityTracking,
   UserActivityTrackingStatus,
 } from "../../../../models/userActivityTracking.model";
@@ -16,7 +17,7 @@ export interface IUserActivityTrackingRepository extends IBaseRepository<IUserAc
   ): Promise<IUserActivityTracking[]>;
 
   findByDayAndActivity(
-    userProgramDayId: string | Types.ObjectId,
+    userDayTrackingId: string | Types.ObjectId,
     activityId: string | Types.ObjectId,
   ): Promise<IUserActivityTracking | null>;
 
@@ -31,6 +32,7 @@ export interface IUserActivityTrackingRepository extends IBaseRepository<IUserAc
   ): Promise<IUserActivityTracking[]>;
 
   initializeForDay(
-    activities: Partial<IUserActivityTracking>[],
+    activities: CreateUserActivityTrackingData[],
   ): Promise<IUserActivityTracking[]>;
+
 }

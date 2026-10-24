@@ -20,7 +20,7 @@ import {
   type CreateMeetingFormValues,
 } from "@/validations/nutritionist/meeting/create-meeting.validation";
 import { nutriMeetingService } from "@/services/nutritionist/nutriMeeting.service";
-import { nutriClientService } from "@/services/nutritionist/nutriClient.service";
+import { nutriClientService } from "@/services/nutritionist/nutri-client.service";
 import type { CreateMeetingDTO } from "@/dtos/nutritionist/meeting/create-meeting.dto";
 import type { MeetingClientOptionDTO } from "@/dtos/nutritionist/client/client-response.dto";
 import {

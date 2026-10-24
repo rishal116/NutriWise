@@ -1,7 +1,4 @@
-import {
-  ProgramStatus,
-  SubscriptionStatus,
-} from "@/dtos/user/program/user-program-request.dto";
+import type { ProgramStatus } from "@/dtos/user/program/user-program-request.dto";
 
 export interface UserProgramCardDTO {
   _id: string;
@@ -12,7 +9,6 @@ export interface UserProgramCardDTO {
     profileImage?: string;
   };
   programStatus: ProgramStatus;
-  subscriptionStatus: SubscriptionStatus;
   currentDay: number;
   durationDays: number;
   completionPercentage: number;

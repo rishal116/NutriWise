@@ -36,6 +36,7 @@ export class NutriClientController implements INutriClientController {
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Clients retrieved successfully",
       data: clients,
     });
   });
@@ -46,13 +47,12 @@ export class NutriClientController implements INutriClientController {
 
     const client = await this._nutriClientService.getClientDetails(
       nutritionistId,
-      {
-        clientId,
-      },
+      { clientId },
     );
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Client details retrieved successfully",
       data: client,
     });
   });
@@ -68,6 +68,7 @@ export class NutriClientController implements INutriClientController {
 
       res.status(StatusCode.OK).json({
         success: true,
+        message: "Meeting-eligible clients retrieved successfully",
         data: clients,
       });
     },

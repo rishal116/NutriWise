@@ -1,9 +1,9 @@
-import {
+import type {
   ActivityValueType,
   ProgramActivityCategory,
 } from "../../../models/userProgramDay.model";
-import { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
-import { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
+import type { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
+import type { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
 
 export interface UserProgramDayActivityResponseDTO {
   _id: string;
@@ -21,8 +21,6 @@ export interface UserProgramDayActivityResponseDTO {
   tracking: {
     status: UserActivityTrackingStatus;
     recordedValue?: number;
-    actualDurationMinutes?: number;
-    score?: number;
     evidence: string[];
     skippedReason?: string;
     notes?: string;
@@ -44,12 +42,11 @@ export interface UserProgramDayDetailsResponseDTO {
     completedActivities: number;
     skippedActivities: number;
     overallCompletionPercentage: number;
-    adherenceScore: number;
     startedAt: Date | null;
     completedAt: Date | null;
     lastActivityAt: Date | null;
     userNotes?: string;
     nutritionistNotes?: string;
-  };
+  } | null;
   activities: UserProgramDayActivityResponseDTO[];
 }

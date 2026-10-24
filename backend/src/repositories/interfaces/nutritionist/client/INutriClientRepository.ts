@@ -1,0 +1,24 @@
+import { Types } from "mongoose";
+import { GetClientsQueryDTO } from "../../../../dtos/nutritionist/client/client-request.dto";
+import { IClientListProjection } from "../../../../types/nutritionist/client/nutriClientList.projection";
+import {
+  IClientDetailsProjection,
+  IMeetingClientOption,
+} from "../../../../types/nutritionist/client/nutriClientDetails.projection";
+import { CursorPaginationResult } from "../../../../types/common/cursor-pagination.types";
+
+export interface INutriClientRepository {
+  findClients(
+    nutritionistId: string | Types.ObjectId,
+    query: GetClientsQueryDTO,
+  ): Promise<CursorPaginationResult<IClientListProjection>>;
+
+  findClientDetails(
+    clientId: string | Types.ObjectId,
+    nutritionistId: string | Types.ObjectId,
+  ): Promise<IClientDetailsProjection | null>;
+
+  findMeetingEligibleClients(
+    nutritionistId: string | Types.ObjectId,
+  ): Promise<IMeetingClientOption[]>;
+}

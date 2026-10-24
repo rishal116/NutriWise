@@ -1,5 +1,5 @@
 import { MeetingClientOptionDTO } from "../../../dtos/nutritionist/client/client-response.dto";
-import { IMeetingClientOption } from "../../../types/nutriClientDetails.projection";
+import { IMeetingClientOption } from "../../../types/nutritionist/client/nutriClientDetails.projection";
 
 export class MeetingClientOptionMapper {
   static toDTO(client: IMeetingClientOption): MeetingClientOptionDTO {

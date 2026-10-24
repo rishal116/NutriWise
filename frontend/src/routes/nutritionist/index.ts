@@ -10,3 +10,4 @@ export * from "./session.routes";
 export * from "./group.routes";
 export * from "./earnings.routes";
 export * from "./credentials.routes";
+export * from "./program-progress.routes";

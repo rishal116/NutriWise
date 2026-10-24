@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Target } from "lucide-react";
 
-import { userProgramService } from "@/services/user/userProgram.service";
+import { userProgramService } from "@/services/user/user-program.service";
 import type { UserProgramDetailsDTO } from "@/dtos/user/program/user-program-details.dto";
 
 import ProgramDetailsHeader from "@/components/user/program-detail/ProgramDetailsHeader";
@@ -11,7 +11,7 @@ import ProgramOverview from "@/components/user/program-detail/ProgramOverview";
 import ProgramProgressCard from "@/components/user/program-detail/ProgramProgressCard";
 import ProgramReviewSection from "@/components/user/program-detail/ProgramReviewSection";
 import ProgramDetailsSkeleton from "@/components/user/program-detail/ProgramDetailsSkeleton";
-import ProgramDaysSection from "@/components/user/program-detail/ProgramDaysSection";
+import ProgramDaysPreview from "@/components/user/program-detail/ProgramDaysPreview";
 
 interface ProgramDetailsPageProps {
   params: Promise<{
@@ -23,29 +23,30 @@ export default function ProgramDetailsPage({
   params,
 }: ProgramDetailsPageProps) {
   const [programId, setProgramId] = useState<string | null>(null);
-  const [program, setProgram] =
-    useState<UserProgramDetailsDTO | null>(null);
+  const [program, setProgram] = useState<UserProgramDetailsDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
 
-    const loadProgram = async () => {
+    async function loadProgram() {
+      setLoading(true);
+      setProgram(null);
+      setProgramId(null);
+
       try {
         const { programId: resolvedProgramId } = await params;
 
-        if (!active) {
-          return;
-        }
+        if (!active) return;
 
         setProgramId(resolvedProgramId);
 
         const response =
-          await userProgramService.getProgramDetails(
-            resolvedProgramId,
-          );
+          await userProgramService.getProgramDetails(resolvedProgramId);
 
-        if (active) {
+        if (!active) return;
+
+        if (response.success && response.data) {
           setProgram(response.data);
         }
       } catch {
@@ -57,7 +58,7 @@ export default function ProgramDetailsPage({
           setLoading(false);
         }
       }
-    };
+    }
 
     void loadProgram();
 
@@ -84,8 +85,7 @@ export default function ProgramDetailsPage({
             </h2>
 
             <p className="mt-1 max-w-sm text-xs font-medium leading-relaxed text-slate-500">
-              This program may have been removed or is no longer
-              available.
+              This program may have been removed or is no longer available.
             </p>
           </div>
         </div>
@@ -100,14 +100,14 @@ export default function ProgramDetailsPage({
           title={program.title}
           nutritionistName={program.nutritionist.fullName}
           username={program.nutritionist.username}
-          status={program.status}
+          status={program.programStatus}
         />
 
         <ProgramOverview program={program} />
 
         <ProgramProgressCard program={program} />
 
-        <ProgramDaysSection programId={programId} />
+        <ProgramDaysPreview programId={programId} />
 
         <ProgramReviewSection
           nutritionistId={program.nutritionist._id}

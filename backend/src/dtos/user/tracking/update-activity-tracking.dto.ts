@@ -1,13 +1,11 @@
-import {
-  ActivityTrackingValueType,
-  UserActivityTrackingStatus,
-} from "../../../models/userActivityTracking.model";
+import type { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
 
 export interface UpdateActivityTrackingDTO {
   status?: UserActivityTrackingStatus;
   recordedValue?: number;
-  actualDurationMinutes?: number;
+  recordedText?: string;
+  unit?: string;
   evidence?: string[];
+  skippedReason?: string;
   notes?: string;
-  valueType?: ActivityTrackingValueType;
 }
