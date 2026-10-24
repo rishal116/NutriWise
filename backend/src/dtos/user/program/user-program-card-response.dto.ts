@@ -1,7 +1,6 @@
-import { ProgramStatus } from "../../../models/userProgram.model";
-import { SubscriptionStatus } from "../../../models/userPlan.model";
+import type { ProgramStatus } from "../../../models/userProgram.model";
 
-export interface UserProgramCardResponseDTO {
+export interface IUserProgramCardResponseDTO {
   _id: string;
   title: string;
   nutritionist: {
@@ -10,7 +9,6 @@ export interface UserProgramCardResponseDTO {
     profileImage?: string;
   };
   programStatus: ProgramStatus;
-  subscriptionStatus: SubscriptionStatus;
   currentDay: number;
   durationDays: number;
   completionPercentage: number;

@@ -1,26 +1,31 @@
 import { injectable } from "inversify";
-import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
+import { FilterQuery, Types, UpdateResult } from "mongoose";
+
 import { BaseRepository } from "../../common/base.repository";
-import { IUserProgramRepository } from "../../../interfaces/user/program/IUserProgramRepository";
 import {
   IUserProgram,
   UserProgramModel,
 } from "../../../../models/userProgram.model";
+import { IUserProgramRepository } from "../../../interfaces/user/program/IUserProgramRepository";
 import { IUserProgramPopulated } from "../../../../types/userProgram.populated";
-
-
-
-
-
 
 @injectable()
 export class UserProgramRepository
   extends BaseRepository<IUserProgram>
-  implements IUserProgramRepository {
+  implements IUserProgramRepository
+{
   constructor() {
     super(UserProgramModel);
   }
 
+  private findPopulatedPrograms(filter: FilterQuery<IUserProgram>) {
+    return this._model
+      .find(filter)
+      .populate("userId")
+      .populate("nutritionistId")
+      .populate("userPlanId")
+      .populate("planId");
+  }
 
   async findActiveByUserAndNutritionist(
     userId: string | Types.ObjectId,
@@ -32,7 +37,6 @@ export class UserProgramRepository
         nutritionistId,
         status: "active",
         endDate: { $gt: new Date() },
-        isDeleted: false,
       })
       .lean<IUserProgram | null>()
       .exec();
@@ -46,9 +50,9 @@ export class UserProgramRepository
       .findOne({
         userId,
         nutritionistId,
-        isDeleted: false,
+        status: { $in: ["upcoming", "active", "paused"] },
       })
-      .sort({ createdAt: -1 })
+      .sort({ endDate: -1, createdAt: -1 })
       .lean<IUserProgram | null>()
       .exec();
   }
@@ -56,15 +60,7 @@ export class UserProgramRepository
   async findByUserId(
     userId: string | Types.ObjectId,
   ): Promise<IUserProgramPopulated[]> {
-    return this._model
-      .find({
-        userId,
-        isDeleted: false,
-      })
-      .populate("userId")
-      .populate("nutritionistId")
-      .populate("userPlanId")
-      .populate("planId")
+    return this.findPopulatedPrograms({ userId })
       .sort({ createdAt: -1 })
       .lean<IUserProgramPopulated[]>()
       .exec();
@@ -73,15 +69,7 @@ export class UserProgramRepository
   async findByNutritionistId(
     nutritionistId: string | Types.ObjectId,
   ): Promise<IUserProgramPopulated[]> {
-    return this._model
-      .find({
-        nutritionistId,
-        isDeleted: false,
-      })
-      .populate("userId")
-      .populate("nutritionistId")
-      .populate("userPlanId")
-      .populate("planId")
+    return this.findPopulatedPrograms({ nutritionistId })
       .sort({ createdAt: -1 })
       .lean<IUserProgramPopulated[]>()
       .exec();
@@ -90,15 +78,8 @@ export class UserProgramRepository
   async findOnePopulated(
     filter: FilterQuery<IUserProgram>,
   ): Promise<IUserProgramPopulated | null> {
-    return this._model
-      .findOne({
-        ...filter,
-        isDeleted: false,
-      })
-      .populate("userId")
-      .populate("nutritionistId")
-      .populate("userPlanId")
-      .populate("planId")
+    return this.findPopulatedPrograms(filter)
+      .findOne()
       .lean<IUserProgramPopulated | null>()
       .exec();
   }
@@ -108,11 +89,7 @@ export class UserProgramRepository
     planId: string | Types.ObjectId,
   ): Promise<IUserProgram[]> {
     return this._model
-      .find({
-        userId,
-        planId,
-        isDeleted: false,
-      })
+      .find({ userId, planId })
       .sort({ createdAt: -1 })
       .lean<IUserProgram[]>()
       .exec();
@@ -123,67 +100,42 @@ export class UserProgramRepository
     programId: string | Types.ObjectId,
   ): Promise<IUserProgram | null> {
     return this._model
-      .findOne({
-        _id: programId,
-        userId,
-        isDeleted: false,
-      })
-      .lean<IUserProgram | null>()
-      .exec();
-  }
-
-  async updateProgress(
-    programId: string | Types.ObjectId,
-    currentDay: number,
-    completionPercentage: number,
-    session?: ClientSession,
-  ): Promise<IUserProgram | null> {
-    return this._model
-      .findByIdAndUpdate(
-        programId,
-        {
-          currentDay,
-          completionPercentage,
-        },
-        {
-          new: true,
-          session,
-        },
-      )
+      .findOne({ _id: programId, userId })
       .lean<IUserProgram | null>()
       .exec();
   }
 
   async activateUpcomingPrograms(): Promise<UpdateResult> {
+    const now = new Date();
+
     return this._model.updateMany(
       {
         status: "upcoming",
-        startDate: { $lte: new Date() },
-        isDeleted: false,
+        startDate: { $lte: now },
+        endDate: { $gt: now },
       },
       {
-        $set: {
-          status: "active",
-        },
+        $set: { status: "active" },
       },
+      { runValidators: true },
     );
   }
 
   async completeActivePrograms(): Promise<UpdateResult> {
+    const now = new Date();
+
     return this._model.updateMany(
       {
         status: "active",
-        endDate: { $lt: new Date() },
-        isDeleted: false,
+        endDate: { $lte: now },
       },
       {
         $set: {
           status: "completed",
-          completedAt: new Date(),
+          "lifecycle.completedAt": now,
         },
       },
+      { runValidators: true },
     );
   }
-
-
 }

@@ -1,36 +1,21 @@
-import { Types } from "mongoose";
-import {
-  CreateProgramDayDTO,
-  UpdateProgramDayDTO,
-} from "../../../dtos/nutritionist/program/program-day-request.dto";
-import { IProgramDayProjection } from "../../../types/nutritionist/program/program-day.projection";
-import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-import { IProgramDayCardProjection } from "../../../types/nutritionist/program/program-day-card.projection";
-import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/program-day-list-query.dto";
+import type { Types } from "mongoose";
 
-export interface INutriProgramDayRepository {
+import type { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/nutri-program-day-list-query.dto";
+import type { INutriProgramDayProjection } from "../../../types/nutritionist/program/nutri-program-day.projection";
+import type { INutriProgramDayCardProjection } from "../../../types/nutritionist/program/nutri-program-day-card.projection";
+import type { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
+import { IBaseRepository } from "../common/IBaseRepository";
+import { IUserProgramDay } from "../../../models/userProgramDay.model";
+
+export interface INutriProgramDayRepository extends IBaseRepository<IUserProgramDay> {
   findProgramDays(
     userProgramId: string | Types.ObjectId,
     query: ProgramDayListQueryDTO,
-  ): Promise<CursorPaginationResult<IProgramDayCardProjection>>;
+  ): Promise<CursorPaginationResult<INutriProgramDayCardProjection>>;
 
   findProgramDayById(
     dayId: string | Types.ObjectId,
-  ): Promise<IProgramDayProjection | null>;
-
-  createProgramDay(
-    userProgramId: string | Types.ObjectId,
-    dto: CreateProgramDayDTO,
-  ): Promise<IProgramDayProjection>;
-
-  updateProgramDay(
-    dayId: string | Types.ObjectId,
-    dto: UpdateProgramDayDTO,
-  ): Promise<IProgramDayProjection | null>;
-
-  deleteProgramDay(dayId: string | Types.ObjectId): Promise<boolean>;
-
-  existsById(dayId: string | Types.ObjectId): Promise<boolean>;
+  ): Promise<INutriProgramDayProjection | null>;
 
   existsByDayNumber(
     userProgramId: string | Types.ObjectId,

@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
 import { INutriClientService } from "../../interfaces/nutritionist/INutriClientService";
-import { INutriClientRepository } from "../../../repositories/interfaces/nutritionist/INutriClientRepository";
+import { INutriClientRepository } from "../../../repositories/interfaces/nutritionist/client/INutriClientRepository";
 import {
   GetClientsQueryDTO,
   GetClientParamsDTO,

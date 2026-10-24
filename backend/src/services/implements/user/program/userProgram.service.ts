@@ -8,10 +8,11 @@ import logger from "../../../../utils/logger";
 import { UserProgramCardMapper } from "../../../../mappers/user/program/user-program-card.mapper";
 import { UserProgramDetailsMapper } from "../../../../mappers/user/program/user-program-details.mapper";
 import { UserProgramListQueryDTO } from "../../../../dtos/user/program/user-Program-list-query.dto";
-import { UserProgramCardResponseDTO } from "../../../../dtos/user/program/user-program-card-response.dto";
-import { UserProgramDetailsResponseDTO } from "../../../../dtos/user/program/user-program-details-response.dto";
+import { IUserProgramCardResponseDTO } from "../../../../dtos/user/program/user-program-card-response.dto";
+import { IUserProgramDetailsResponseDTO } from "../../../../dtos/user/program/user-program-details-response.dto";
 import { InfiniteScrollResponseDTO } from "../../../../dtos/common/infinite-scroll-response.dto";
 import { IUserProgramBrowseRepository } from "../../../../repositories/interfaces/user/program/IUserProgramBrowseRepository";
+import { validateDto } from "../../../../middlewares/validateDto.middleware";
 
 @injectable()
 export class UserProgramService implements IUserProgramService {
@@ -22,21 +23,32 @@ export class UserProgramService implements IUserProgramService {
 
   async browsePrograms(
     userId: string,
-    query: UserProgramListQueryDTO,
-  ): Promise<InfiniteScrollResponseDTO<UserProgramCardResponseDTO>> {
+    dto: UserProgramListQueryDTO,
+  ): Promise<InfiniteScrollResponseDTO<IUserProgramCardResponseDTO>> {
+    const query = await validateDto(UserProgramListQueryDTO, dto);
+
     logger.info("Browsing user programs", { userId });
+
     const result = await this._browseRepository.browsePrograms(
       new Types.ObjectId(userId),
       query,
     );
-    const response = UserProgramCardMapper.toBrowseResponseDTO(result);
-    return response;
+
+    const items = result.items.map((program) =>
+      UserProgramCardMapper.toResponseDTO(program),
+    );
+
+    return new InfiniteScrollResponseDTO(
+      items,
+      result.nextCursor,
+      result.hasMore,
+    );
   }
 
   async getProgramDetails(
     programId: string,
     userId: string,
-  ): Promise<UserProgramDetailsResponseDTO> {
+  ): Promise<IUserProgramDetailsResponseDTO> {
     logger.debug(
       "Fetching program details. userId=%s, programId=%s",
       userId,

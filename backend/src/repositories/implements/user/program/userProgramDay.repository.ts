@@ -1,5 +1,6 @@
 import { injectable } from "inversify";
 import { PipelineStage, Types } from "mongoose";
+
 import { BaseRepository } from "../../common/base.repository";
 import {
   IUserProgramDay,
@@ -20,7 +21,7 @@ import {
 export const USER_PROGRAM_DAY_SORT_FIELD_MAP: Record<
   UserProgramDaySort,
   {
-    field: string;
+    field: "dayNumber" | "createdAt";
     order: 1 | -1;
   }
 > = {
@@ -28,17 +29,14 @@ export const USER_PROGRAM_DAY_SORT_FIELD_MAP: Record<
     field: "dayNumber",
     order: 1,
   },
-
   [UserProgramDaySort.DAY_DESC]: {
     field: "dayNumber",
     order: -1,
   },
-
   [UserProgramDaySort.NEWEST]: {
     field: "createdAt",
     order: -1,
   },
-
   [UserProgramDaySort.OLDEST]: {
     field: "createdAt",
     order: 1,
@@ -72,16 +70,27 @@ export class UserProgramDayRepository
       sort = UserProgramDaySort.DAY_ASC,
       cursor,
     } = query;
-    const userObjectId =
-      typeof userId === "string" ? new Types.ObjectId(userId) : userId;
-    const programObjectId =
-      typeof programId === "string" ? new Types.ObjectId(programId) : programId;
+
+    const userObjectId = this.toObjectId(userId);
+    const programObjectId = this.toObjectId(programId);
+    const pageLimit = Math.min(Math.max(Math.trunc(limit), 1), 50);
     const searchText = search?.trim();
-    const cursorData = decodeCursor(cursor);
+    const cursorData = cursor ? decodeCursor(cursor) : null;
     const { field, order } = USER_PROGRAM_DAY_SORT_FIELD_MAP[sort];
-    if (cursorData?.sortKey && cursorData.sortKey !== sort) {
+
+    if (cursor && !cursorData) {
       throw new Error("Invalid cursor");
     }
+
+    if (cursorData) {
+      if (
+        cursorData.sortKey !== sort ||
+        !Types.ObjectId.isValid(cursorData.id)
+      ) {
+        throw new Error("Invalid cursor");
+      }
+    }
+
     const pipeline: PipelineStage[] = [
       {
         $match: {
@@ -102,7 +111,6 @@ export class UserProgramDayRepository
       {
         $match: {
           "program.userId": userObjectId,
-          "program.isDeleted": false,
         },
       },
       {
@@ -111,7 +119,6 @@ export class UserProgramDayRepository
           let: {
             programDayId: "$_id",
             programId: "$userProgramId",
-            userId: userObjectId,
           },
           pipeline: [
             {
@@ -125,38 +132,43 @@ export class UserProgramDayRepository
                       $eq: ["$userProgramId", "$$programId"],
                     },
                     {
-                      $eq: ["$userId", "$$userId"],
+                      $eq: ["$userId", userObjectId],
                     },
                   ],
                 },
               },
             },
+            {
+              $limit: 1,
+            },
           ],
-          as: "tracking",
+          as: "trackingRecords",
         },
       },
-
       {
-        $unwind: {
-          path: "$tracking",
-          preserveNullAndEmptyArrays: true,
+        $set: {
+          tracking: {
+            $arrayElemAt: ["$trackingRecords", 0],
+          },
         },
       },
     ];
 
     if (searchText) {
-      const searchNumber = Number(searchText);
+      const escapedSearch = searchText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       const searchConditions: Record<string, unknown>[] = [
         {
           "activities.title": {
-            $regex: searchText,
+            $regex: escapedSearch,
             $options: "i",
           },
         },
       ];
 
-      if (!Number.isNaN(searchNumber)) {
+      const searchNumber = Number(searchText);
+
+      if (Number.isSafeInteger(searchNumber) && searchNumber > 0) {
         searchConditions.push({
           dayNumber: searchNumber,
         });
@@ -172,7 +184,14 @@ export class UserProgramDayRepository
     if (status) {
       pipeline.push({
         $match: {
-          "tracking.status": status,
+          $expr: {
+            $eq: [
+              {
+                $ifNull: ["$tracking.status", "not_started"],
+              },
+              status,
+            ],
+          },
         },
       });
     }
@@ -180,16 +199,33 @@ export class UserProgramDayRepository
     if (locked !== undefined) {
       pipeline.push({
         $match: {
-          "tracking.isLocked": locked,
+          $expr: {
+            $eq: [
+              {
+                $ifNull: ["$tracking.isLocked", false],
+              },
+              locked,
+            ],
+          },
         },
       });
     }
 
     if (cursorData) {
-      let cursorValue: string | number | Date = cursorData.value;
+      const cursorValue =
+        field === "createdAt"
+          ? new Date(cursorData.value)
+          : Number(cursorData.value);
 
-      if (field === "createdAt" || field === "updatedAt") {
-        cursorValue = new Date(cursorData.value);
+      if (
+        (field === "createdAt" &&
+          Number.isNaN(
+            cursorValue instanceof Date ? cursorValue.getTime() : NaN,
+          )) ||
+        (field === "dayNumber" &&
+          (typeof cursorValue !== "number" || !Number.isFinite(cursorValue)))
+      ) {
+        throw new Error("Invalid cursor");
       }
 
       pipeline.push({
@@ -222,23 +258,17 @@ export class UserProgramDayRepository
           _id: order,
         },
       },
-
       {
-        $limit: limit + 1,
+        $limit: pageLimit + 1,
       },
-
       {
         $project: {
           _id: 1,
-
           userProgramId: 1,
-
           dayNumber: 1,
-
           totalActivities: {
             $size: "$activities",
           },
-
           requiredActivities: {
             $size: {
               $filter: {
@@ -250,37 +280,51 @@ export class UserProgramDayRepository
               },
             },
           },
-
           tracking: {
             $cond: [
               {
                 $ne: [
                   {
-                    $type: "$tracking",
+                    $ifNull: ["$tracking._id", null],
                   },
-                  "missing",
+                  null,
                 ],
               },
               {
                 status: "$tracking.status",
-
-                completedActivities: "$tracking.completedActivities",
-
-                skippedActivities: "$tracking.skippedActivities",
-
-                overallCompletionPercentage:
-                  "$tracking.overallCompletionPercentage",
-
-                adherenceScore: "$tracking.adherenceScore",
-
-                isLocked: "$tracking.isLocked",
+                completedActivities: {
+                  $ifNull: ["$tracking.completedActivities", 0],
+                },
+                skippedActivities: {
+                  $ifNull: ["$tracking.skippedActivities", 0],
+                },
+                overallCompletionPercentage: {
+                  $cond: [
+                    {
+                      $gt: ["$tracking.totalActivities", 0],
+                    },
+                    {
+                      $multiply: [
+                        {
+                          $divide: [
+                            "$tracking.completedActivities",
+                            "$tracking.totalActivities",
+                          ],
+                        },
+                        100,
+                      ],
+                    },
+                    0,
+                  ],
+                },
+                isLocked: {
+                  $ifNull: ["$tracking.isLocked", false],
+                },
               },
               null,
             ],
           },
-
           cursorId: "$_id",
-
           cursorValue: `$${field}`,
         },
       },
@@ -289,10 +333,8 @@ export class UserProgramDayRepository
     const result =
       await this._model.aggregate<ProgramDayCardWithCursor>(pipeline);
 
-    const hasMore = result.length > limit;
-
-    const items = hasMore ? result.slice(0, limit) : result;
-
+    const hasMore = result.length > pageLimit;
+    const items = hasMore ? result.slice(0, pageLimit) : result;
     const lastItem = items[items.length - 1];
 
     const nextCursor =
@@ -310,6 +352,7 @@ export class UserProgramDayRepository
     const cleanItems = items.map(
       ({ cursorId: _cursorId, cursorValue: _cursorValue, ...item }) => item,
     );
+
     return {
       items: cleanItems,
       nextCursor,
@@ -322,11 +365,8 @@ export class UserProgramDayRepository
     programId: string | Types.ObjectId,
     dayNumber: number,
   ): Promise<IUserProgramDayDetailsProjection | null> {
-    const userObjectId =
-      typeof userId === "string" ? new Types.ObjectId(userId) : userId;
-
-    const programObjectId =
-      typeof programId === "string" ? new Types.ObjectId(programId) : programId;
+    const userObjectId = this.toObjectId(userId);
+    const programObjectId = this.toObjectId(programId);
 
     const pipeline: PipelineStage[] = [
       {
@@ -335,7 +375,6 @@ export class UserProgramDayRepository
           dayNumber,
         },
       },
-
       {
         $lookup: {
           from: "userprograms",
@@ -344,25 +383,20 @@ export class UserProgramDayRepository
           as: "program",
         },
       },
-
       {
         $unwind: "$program",
       },
-
       {
         $match: {
           "program.userId": userObjectId,
-          "program.isDeleted": false,
         },
       },
-
       {
         $lookup: {
           from: "userdaytrackings",
           let: {
             programDayId: "$_id",
             programId: "$userProgramId",
-            userId: userObjectId,
           },
           pipeline: [
             {
@@ -376,7 +410,7 @@ export class UserProgramDayRepository
                       $eq: ["$userProgramId", "$$programId"],
                     },
                     {
-                      $eq: ["$userId", "$$userId"],
+                      $eq: ["$userId", userObjectId],
                     },
                   ],
                 },
@@ -386,24 +420,22 @@ export class UserProgramDayRepository
               $limit: 1,
             },
           ],
-          as: "tracking",
+          as: "trackingRecords",
         },
       },
-
       {
-        $unwind: {
-          path: "$tracking",
-          preserveNullAndEmptyArrays: true,
+        $set: {
+          tracking: {
+            $arrayElemAt: ["$trackingRecords", 0],
+          },
         },
       },
-
       {
         $lookup: {
           from: "useractivitytrackings",
           let: {
             programDayId: "$_id",
             programId: "$userProgramId",
-            userId: userObjectId,
           },
           pipeline: [
             {
@@ -417,7 +449,7 @@ export class UserProgramDayRepository
                       $eq: ["$userProgramId", "$$programId"],
                     },
                     {
-                      $eq: ["$userId", "$$userId"],
+                      $eq: ["$userId", userObjectId],
                     },
                   ],
                 },
@@ -427,7 +459,6 @@ export class UserProgramDayRepository
           as: "activityTracking",
         },
       },
-
       {
         $set: {
           activities: {
@@ -437,7 +468,7 @@ export class UserProgramDayRepository
               in: {
                 $let: {
                   vars: {
-                    tracking: {
+                    activityTracking: {
                       $arrayElemAt: [
                         {
                           $filter: {
@@ -455,57 +486,38 @@ export class UserProgramDayRepository
                       ],
                     },
                   },
-
                   in: {
                     _id: "$$activity._id",
-
                     category: "$$activity.category",
-
                     title: "$$activity.title",
-
                     description: "$$activity.description",
-
                     instructions: "$$activity.instructions",
-
                     valueType: "$$activity.valueType",
-
                     targetValue: "$$activity.targetValue",
-
                     unit: "$$activity.unit",
-
                     estimatedDurationMinutes:
                       "$$activity.estimatedDurationMinutes",
-
                     scheduledTime: "$$activity.scheduledTime",
-
                     isRequired: "$$activity.isRequired",
-
                     order: "$$activity.order",
-
                     tracking: {
                       status: {
-                        $ifNull: ["$$tracking.status", "not_started"],
+                        $ifNull: ["$$activityTracking.status", "not_started"],
                       },
-
-                      recordedValue: "$$tracking.recordedValue",
-
-                      actualDurationMinutes: "$$tracking.actualDurationMinutes",
-
-                      score: "$$tracking.score",
-
+                      recordedValue: "$$activityTracking.recordedValue",
                       evidence: {
-                        $ifNull: ["$$tracking.evidence", []],
+                        $ifNull: ["$$activityTracking.evidence", []],
                       },
-
-                      skippedReason: "$$tracking.skippedReason",
-
-                      notes: "$$tracking.notes",
-
-                      nutritionistFeedback: "$$tracking.nutritionistFeedback",
-
-                      startedAt: "$$tracking.startedAt",
-
-                      completedAt: "$$tracking.completedAt",
+                      skippedReason: "$$activityTracking.skippedReason",
+                      notes: "$$activityTracking.notes",
+                      nutritionistFeedback:
+                        "$$activityTracking.nutritionistFeedback",
+                      startedAt: {
+                        $ifNull: ["$$activityTracking.startedAt", null],
+                      },
+                      completedAt: {
+                        $ifNull: ["$$activityTracking.completedAt", null],
+                      },
                     },
                   },
                 },
@@ -514,62 +526,75 @@ export class UserProgramDayRepository
           },
         },
       },
-
       {
         $project: {
           _id: 1,
-
           dayNumber: 1,
-
           tracking: {
-            _id: "$tracking._id",
-
-            date: "$tracking.date",
-
-            status: {
-              $ifNull: ["$tracking.status", "not_started"],
-            },
-
-            isLocked: {
-              $ifNull: ["$tracking.isLocked", false],
-            },
-
-            totalActivities: {
-              $ifNull: [
-                "$tracking.totalActivities",
-                {
-                  $size: "$activities",
+            $cond: [
+              {
+                $ne: [
+                  {
+                    $ifNull: ["$tracking._id", null],
+                  },
+                  null,
+                ],
+              },
+              {
+                _id: "$tracking._id",
+                date: "$tracking.date",
+                status: "$tracking.status",
+                isLocked: {
+                  $ifNull: ["$tracking.isLocked", false],
                 },
-              ],
-            },
-
-            completedActivities: {
-              $ifNull: ["$tracking.completedActivities", 0],
-            },
-
-            skippedActivities: {
-              $ifNull: ["$tracking.skippedActivities", 0],
-            },
-
-            overallCompletionPercentage: {
-              $ifNull: ["$tracking.overallCompletionPercentage", 0],
-            },
-
-            adherenceScore: {
-              $ifNull: ["$tracking.adherenceScore", 0],
-            },
-
-            startedAt: "$tracking.startedAt",
-
-            completedAt: "$tracking.completedAt",
-
-            lastActivityAt: "$tracking.lastActivityAt",
-
-            userNotes: "$tracking.userNotes",
-
-            nutritionistNotes: "$tracking.nutritionistNotes",
+                totalActivities: {
+                  $ifNull: [
+                    "$tracking.totalActivities",
+                    {
+                      $size: "$activities",
+                    },
+                  ],
+                },
+                completedActivities: {
+                  $ifNull: ["$tracking.completedActivities", 0],
+                },
+                skippedActivities: {
+                  $ifNull: ["$tracking.skippedActivities", 0],
+                },
+                overallCompletionPercentage: {
+                  $cond: [
+                    {
+                      $gt: ["$tracking.totalActivities", 0],
+                    },
+                    {
+                      $multiply: [
+                        {
+                          $divide: [
+                            "$tracking.completedActivities",
+                            "$tracking.totalActivities",
+                          ],
+                        },
+                        100,
+                      ],
+                    },
+                    0,
+                  ],
+                },
+                startedAt: {
+                  $ifNull: ["$tracking.startedAt", null],
+                },
+                completedAt: {
+                  $ifNull: ["$tracking.completedAt", null],
+                },
+                lastActivityAt: {
+                  $ifNull: ["$tracking.lastActivityAt", null],
+                },
+                userNotes: "$tracking.userNotes",
+                nutritionistNotes: "$tracking.nutritionistNotes",
+              },
+              null,
+            ],
           },
-
           activities: 1,
         },
       },
@@ -579,5 +604,17 @@ export class UserProgramDayRepository
       await this._model.aggregate<IUserProgramDayDetailsProjection>(pipeline);
 
     return day ?? null;
+  }
+
+  private toObjectId(value: string | Types.ObjectId): Types.ObjectId {
+    if (value instanceof Types.ObjectId) {
+      return value;
+    }
+
+    if (!Types.ObjectId.isValid(value)) {
+      throw new Error("Invalid identifier");
+    }
+
+    return new Types.ObjectId(value);
   }
 }

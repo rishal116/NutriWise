@@ -15,6 +15,7 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { Types } from "mongoose";
 
 @injectable()
 export class NutriSessionService implements INutriSessionService {
@@ -130,39 +131,53 @@ export class NutriSessionService implements INutriSessionService {
     sessionId: string,
     nutritionistId: string,
   ): Promise<void> {
+    if (!Types.ObjectId.isValid(sessionId)) {
+      throw new CustomError("Invalid session ID", StatusCode.BAD_REQUEST);
+    }
+
     const session = await this._nutriSessionRepository.findById(sessionId);
+
     if (!session) {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
+
     if (session.nutritionistId.toString() !== nutritionistId) {
       throw new CustomError(
         "You are not authorized to publish this session",
         StatusCode.FORBIDDEN,
       );
     }
+
     if (session.status !== "draft") {
       throw new CustomError(
         "Only draft sessions can be published",
         StatusCode.BAD_REQUEST,
       );
     }
+
     if (session.scheduledAt <= new Date()) {
       throw new CustomError(
         "Session scheduled time must be in the future",
         StatusCode.BAD_REQUEST,
       );
     }
-    const updatedSession = await this._nutriSessionRepository.updateById(
-      sessionId,
+
+    const modifiedCount = await this._nutriSessionRepository.updateOne(
+      {
+        _id: sessionId,
+        nutritionistId: session.nutritionistId,
+        status: "draft",
+        scheduledAt: { $gt: new Date() },
+      },
       {
         $set: { status: "scheduled" },
       },
     );
 
-    if (!updatedSession) {
+    if (modifiedCount === 0) {
       throw new CustomError(
-        "Failed to publish session",
-        StatusCode.INTERNAL_SERVER_ERROR,
+        "Session could not be published because it may have changed. Please try again.",
+        StatusCode.CONFLICT,
       );
     }
   }

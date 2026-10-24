@@ -2,46 +2,13 @@ import { Schema, model, Types } from "mongoose";
 
 import { CURRENCY, Currency } from "../constants/currency.constants";
 
-export const PAYMENT_STATUS = [
-  "pending",
-  "paid",
-  "failed",
-  "refunded",
-  "partially_refunded",
-] as const;
-
-export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
-
-export const SUBSCRIPTION_STATUS = [
-  "pending",
-  "active",
-  "expired",
-  "cancelled",
-] as const;
-
-export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUS)[number];
-
-export const PAYMENT_PROVIDERS = ["stripe", "razorpay", "paypal"] as const;
-
-export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
-
 export interface IUserPlan {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   nutritionistId: Types.ObjectId;
   planId: Types.ObjectId;
-  paymentStatus: PaymentStatus;
-  subscriptionStatus: SubscriptionStatus;
   amount: number;
   currency: Currency;
-
-  payment: {
-    provider: PaymentProvider;
-    sessionId: string;
-    transactionId?: string;
-    completedAt?: Date;
-  };
-
   planSnapshot: {
     title: string;
     description?: string;
@@ -49,11 +16,7 @@ export interface IUserPlan {
     durationDays: number;
     price: number;
     currency: Currency;
-    thumbnail?: string;
   };
-
-  startDate: Date | null;
-  endDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -64,35 +27,18 @@ const UserPlanSchema = new Schema<IUserPlan>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     nutritionistId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     planId: {
       type: Schema.Types.ObjectId,
       ref: "NutritionistPlan",
       required: true,
-      index: true,
-    },
-
-    paymentStatus: {
-      type: String,
-      enum: PAYMENT_STATUS,
-      default: "pending",
-      index: true,
-    },
-
-    subscriptionStatus: {
-      type: String,
-      enum: SUBSCRIPTION_STATUS,
-      default: "pending",
-      index: true,
     },
 
     amount: {
@@ -106,33 +52,6 @@ const UserPlanSchema = new Schema<IUserPlan>(
       enum: [CURRENCY],
       required: true,
       default: CURRENCY,
-    },
-
-    payment: {
-      provider: {
-        type: String,
-        enum: PAYMENT_PROVIDERS,
-        required: true,
-      },
-
-      sessionId: {
-        type: String,
-        required: true,
-        unique: true,
-        index: true,
-      },
-
-      transactionId: {
-        type: String,
-        unique: true,
-        sparse: true,
-        index: true,
-      },
-
-      completedAt: {
-        type: Date,
-        default: null,
-      },
     },
 
     planSnapshot: {
@@ -171,23 +90,6 @@ const UserPlanSchema = new Schema<IUserPlan>(
         required: true,
         default: CURRENCY,
       },
-
-      thumbnail: {
-        type: String,
-        trim: true,
-      },
-    },
-
-    startDate: {
-      type: Date,
-      default: null,
-      index: true,
-    },
-
-    endDate: {
-      type: Date,
-      default: null,
-      index: true,
     },
   },
   {
@@ -195,30 +97,10 @@ const UserPlanSchema = new Schema<IUserPlan>(
   },
 );
 
-UserPlanSchema.index({
-  userId: 1,
-  subscriptionStatus: 1,
-});
+UserPlanSchema.index({ userId: 1, createdAt: -1 });
 
-UserPlanSchema.index({
-  nutritionistId: 1,
-  subscriptionStatus: 1,
-});
+UserPlanSchema.index({ nutritionistId: 1, createdAt: -1 });
 
-UserPlanSchema.index({
-  endDate: 1,
-  subscriptionStatus: 1,
-});
-
-UserPlanSchema.index({
-  userId: 1,
-  createdAt: -1,
-});
-
-UserPlanSchema.index({
-  userId: 1,
-  planId: 1,
-  subscriptionStatus: 1,
-});
+UserPlanSchema.index({ userId: 1, planId: 1 });
 
 export const UserPlanModel = model<IUserPlan>("UserPlan", UserPlanSchema);

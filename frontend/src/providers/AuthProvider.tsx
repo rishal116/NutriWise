@@ -19,6 +19,24 @@ const SKIP_AUTH_ROUTES = [
   "/reset-password",
 ];
 
+const ACTIVE_ROLE_COOKIE = "nutriwise_active_role";
+
+function syncActiveRoleCookie(activeRole: string | undefined) {
+  if (typeof document === "undefined") return;
+
+  if (
+    activeRole === "nutritionist" ||
+    activeRole === "admin" ||
+    activeRole === "user"
+  ) {
+    document.cookie = `${ACTIVE_ROLE_COOKIE}=${encodeURIComponent(
+      activeRole,
+    )}; Path=/; SameSite=Lax`;
+  } else {
+    document.cookie = `${ACTIVE_ROLE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+  }
+}
+
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -49,6 +67,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
               throw new Error("User data was not returned.");
             }
 
+            syncActiveRoleCookie(response.data.activeRole);
             dispatch(setUser(response.data));
             return;
           } catch {
@@ -58,6 +77,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
         if (isAuthPage(pathname) && !storedToken) {
           if (isMounted) {
+            syncActiveRoleCookie(undefined);
             dispatch(logout());
           }
           return;
@@ -77,9 +97,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
           throw new Error("User data was not returned.");
         }
 
+        syncActiveRoleCookie(response.data.activeRole);
         dispatch(setUser(response.data));
       } catch {
         if (isMounted) {
+          syncActiveRoleCookie(undefined);
           dispatch(logout());
         }
       }
@@ -93,17 +115,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   }, [dispatch, initialized, pathname]);
 
   useEffect(() => {
-    if (!initialized || !user) {
-      return;
-    }
+    if (!initialized || !user) return;
 
     const isAuthRoute = SKIP_AUTH_ROUTES.some(
       (route) => pathname === route || pathname.startsWith(`${route}/`),
     );
 
-    if (pathname !== "/" && !isAuthRoute) {
-      return;
-    }
+    if (pathname !== "/" && !isAuthRoute) return;
 
     const redirectParam = searchParams.get("redirect");
 
@@ -133,6 +151,27 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         break;
     }
   }, [initialized, user, pathname, router, searchParams]);
+
+  const shouldHideHome =
+    pathname === "/" &&
+    (!initialized ||
+      user?.activeRole === "nutritionist" ||
+      user?.activeRole === "admin");
+
+  const shouldWaitForDashboard =
+    pathname === "/nutritionist/dashboard" && !initialized;
+
+  if (shouldHideHome || shouldWaitForDashboard) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div
+          role="status"
+          aria-label="Loading your account"
+          className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"
+        />
+      </div>
+    );
+  }
 
   return <>{children}</>;
 }

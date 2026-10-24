@@ -5,17 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
-import { nutriProgramService } from "@/services/nutritionist/nutriProgram.service";
-import type { UserProgramDetailsResponseDTO } from "@/dtos/nutritionist/program/program-details-response.dto";
+import { nutriProgramService } from "@/services/nutritionist/nutri-program.service";
+import type { NutriProgramDetailsResponseDTO } from "@/dtos/nutritionist/program/nutri-program-details-response.dto";
 import { ProgramAvatar } from "@/components/nutritionist/programs/ProgramAvatar";
-import {
-  ProgramStatusBadge,
-  SubscriptionStatusBadge,
-} from "@/components/nutritionist/programs/StatusBadges";
+import { ProgramStatusBadge } from "@/components/nutritionist/programs/StatusBadges";
 import { StatCard } from "@/components/nutritionist/programs/StatCard";
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleDateString("en-IN", {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not available";
+  }
+
+  return date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -47,36 +50,60 @@ export default function ProgramDetailsPage() {
   const { programId } = useParams<{ programId: string }>();
   const router = useRouter();
 
-  const [program, setProgram] = useState<UserProgramDetailsResponseDTO | null>(
+  const [program, setProgram] = useState<NutriProgramDetailsResponseDTO | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!programId) return;
+    if (!programId) {
+      setLoading(false);
+      setNotFound(true);
+      return;
+    }
+
     let cancelled = false;
 
-    (async () => {
+    async function fetchProgramDetails() {
       setLoading(true);
       setNotFound(false);
+      setProgram(null);
+
       try {
-        const res = await nutriProgramService.getProgramDetails(programId);
-        if (!cancelled) setProgram(res);
+        const response = await nutriProgramService.getProgramDetails(programId);
+
+        if (!cancelled) {
+          setProgram(response);
+
+          sessionStorage.setItem(
+            `nutriwise:program-duration:${response.userProgramId}`,
+            String(response.durationDays),
+          );
+        }
       } catch {
         if (!cancelled) {
           setNotFound(true);
           toast.error("Couldn't load this program's details.");
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-    })();
+    }
+
+    void fetchProgramDetails();
 
     return () => {
       cancelled = true;
     };
   }, [programId]);
+
+  const completionPercentage = Math.min(
+    100,
+    Math.max(0, program?.completionPercentage ?? 0),
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 pb-16">
@@ -100,10 +127,16 @@ export default function ProgramDetailsPage() {
             <p className="text-xs text-slate-400">
               This program may have been removed or the link is incorrect.
             </p>
+            <button
+              type="button"
+              onClick={() => router.push("/nutritionist/programs")}
+              className="mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+            >
+              Back to programs
+            </button>
           </div>
         ) : (
           <>
-            {/* Header */}
             <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
                 <ProgramAvatar
@@ -119,13 +152,10 @@ export default function ProgramDetailsPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                <ProgramStatusBadge status={program.programStatus} />
-                <SubscriptionStatusBadge status={program.subscriptionStatus} />
-              </div>
+
+              <ProgramStatusBadge status={program.programStatus} />
             </div>
 
-            {/* Plan + progress */}
             <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -138,6 +168,7 @@ export default function ProgramDetailsPage() {
                     </p>
                   )}
                 </div>
+
                 <button
                   type="button"
                   onClick={() =>
@@ -155,40 +186,51 @@ export default function ProgramDetailsPage() {
               <div>
                 <div className="mb-1 flex justify-between text-xs font-semibold text-slate-500">
                   <span>
-                    Day {program.currentDay}/{program.durationDays}
+                    {program.completedDays}/{program.totalDays} days completed
                   </span>
-                  <span>{Math.round(program.completionPercentage)}%</span>
+                  <span>{Math.round(completionPercentage)}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+
+                <div
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100"
+                  role="progressbar"
+                  aria-label="Program completion"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(completionPercentage)}
+                >
                   <div
-                    className="h-full rounded-full bg-emerald-600"
-                    style={{
-                      width: `${Math.min(100, Math.max(0, program.completionPercentage))}%`,
-                    }}
+                    className="h-full rounded-full bg-emerald-600 transition-[width]"
+                    style={{ width: `${completionPercentage}%` }}
                   />
                 </div>
               </div>
 
-              <div className="space-y-2.5 pt-2">
+              <div className="space-y-2.5 border-t border-slate-100 pt-4">
                 <InfoRow
                   label="Start date"
                   value={formatDate(program.startDate)}
                 />
                 <InfoRow label="End date" value={formatDate(program.endDate)} />
-                <InfoRow label="Payment status" value={program.paymentStatus} />
+                <InfoRow
+                  label="Duration"
+                  value={`${program.durationDays} days`}
+                />
+                {program.lastActivityAt && (
+                  <InfoRow
+                    label="Last activity"
+                    value={formatDate(program.lastActivityAt)}
+                  />
+                )}
               </div>
             </div>
 
-            {/* Stats grid */}
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-sm font-bold text-slate-900">
                 Progress stats
               </h2>
+
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <StatCard
-                  label="Adherence"
-                  value={`${program.adherenceScore}%`}
-                />
                 <StatCard
                   label="Current streak"
                   value={`${program.currentStreak}d`}
@@ -209,16 +251,12 @@ export default function ProgramDetailsPage() {
                   label="Skipped activities"
                   value={program.skippedActivities}
                 />
+                <StatCard
+                  label="Total activities"
+                  value={program.totalActivities}
+                />
               </div>
             </div>
-
-            {/* Notes */}
-            {program.programNotes && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="mb-2 text-sm font-bold text-slate-900">Notes</h2>
-                <p className="text-sm text-slate-600">{program.programNotes}</p>
-              </div>
-            )}
           </>
         )}
       </div>

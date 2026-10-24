@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ClipboardList, Search } from "lucide-react";
-import { userProgramService } from "@/services/user/userProgram.service";
+
+import { userProgramService } from "@/services/user/user-program.service";
 import {
-  ProgramStatus,
-  SubscriptionStatus,
   UserProgramSort,
+  type ProgramStatus,
 } from "@/dtos/user/program/user-program-request.dto";
 import { useDebounce } from "@/hooks/common/debounce.hooks";
 import { ProgramCard } from "@/components/user/programs/ProgramCard";
@@ -22,33 +22,30 @@ export default function ProgramsPage() {
   const [programStatus, setProgramStatus] = useState<ProgramStatus | "all">(
     "all",
   );
-  const [subscriptionStatus, setSubscriptionStatus] = useState<
-    SubscriptionStatus | "all"
-  >("all");
   const [sort, setSort] = useState<UserProgramSort>(UserProgramSort.NEWEST);
 
   const debouncedSearch = useDebounce(search, 400);
 
   const hasActiveFilters =
-    debouncedSearch !== "" ||
-    programStatus !== "all" ||
-    subscriptionStatus !== "all";
+    debouncedSearch.trim() !== "" || programStatus !== "all";
 
   const queryKey = useMemo(
     () => [
       "user-programs",
-      { search: debouncedSearch, programStatus, subscriptionStatus, sort },
+      { search: debouncedSearch.trim(), programStatus, sort },
     ],
-    [debouncedSearch, programStatus, subscriptionStatus, sort],
+    [debouncedSearch, programStatus, sort],
   );
 
   const {
     data,
-    isLoading,
+    isPending,
     isError,
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
+    refetch,
+    isRefetching,
   } = useInfiniteQuery({
     queryKey,
     initialPageParam: undefined as string | undefined,
@@ -56,12 +53,14 @@ export default function ProgramsPage() {
       const response = await userProgramService.browsePrograms({
         limit: PAGE_LIMIT,
         cursor: pageParam,
-        search: debouncedSearch || undefined,
+        search: debouncedSearch.trim() || undefined,
         programStatus: programStatus === "all" ? undefined : programStatus,
-        subscriptionStatus:
-          subscriptionStatus === "all" ? undefined : subscriptionStatus,
         sort,
       });
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Failed to load programs");
+      }
 
       return response.data;
     },
@@ -71,37 +70,43 @@ export default function ProgramsPage() {
 
   const programs = data?.pages.flatMap((page) => page.items) ?? [];
 
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  const setSentinel = (node: HTMLDivElement | null) => {
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
+  const setSentinel = useCallback(
+    (node: HTMLDivElement | null) => {
+      observerRef.current?.disconnect();
 
-    sentinelRef.current = node;
+      if (!node) return;
 
-    if (!node) return;
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0]?.isIntersecting &&
+            hasNextPage &&
+            !isFetchingNextPage
+          ) {
+            void fetchNextPage().catch(() => {
+              toast.error("Failed to load more programs");
+            });
+          }
+        },
+        { rootMargin: "200px" },
+      );
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage().catch(() => {
-            toast.error("Failed to load more programs");
-          });
-        }
-      },
-      { rootMargin: "200px" },
-    );
+      observerRef.current.observe(node);
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage],
+  );
 
-    observerRef.current.observe(node);
-  };
+  useEffect(() => {
+    return () => observerRef.current?.disconnect();
+  }, []);
 
-  function handleReset() {
+  const handleReset = useCallback(() => {
     setSearch("");
     setProgramStatus("all");
-    setSubscriptionStatus("all");
-  }
+    setSort(UserProgramSort.NEWEST);
+  }, []);
 
   return (
     <div className="mx-auto max-w-6xl p-6">
@@ -117,8 +122,6 @@ export default function ProgramsPage() {
         onSearchChange={setSearch}
         programStatus={programStatus}
         onProgramStatusChange={setProgramStatus}
-        subscriptionStatus={subscriptionStatus}
-        onSubscriptionStatusChange={setSubscriptionStatus}
         sort={sort}
         onSortChange={setSort}
         onReset={handleReset}
@@ -126,10 +129,10 @@ export default function ProgramsPage() {
       />
 
       <div className="mt-6">
-        {isLoading ? (
+        {isPending ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <ProgramCardSkeleton key={i} />
+            {Array.from({ length: 6 }).map((_, index) => (
+              <ProgramCardSkeleton key={index} />
             ))}
           </div>
         ) : isError ? (
@@ -143,6 +146,14 @@ export default function ProgramsPage() {
             <p className="mt-1 text-xs font-medium text-slate-500">
               Something went wrong. Please try again.
             </p>
+            <button
+              type="button"
+              onClick={() => void refetch()}
+              disabled={isRefetching}
+              className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRefetching ? "Retrying..." : "Try again"}
+            </button>
           </div>
         ) : programs.length === 0 ? (
           <div className="flex flex-col items-center rounded-2xl border-2 border-dashed border-slate-300 py-16 text-center">
@@ -163,6 +174,15 @@ export default function ProgramsPage() {
                 ? "Try adjusting your search or filters."
                 : "Purchase a nutrition program to begin your journey."}
             </p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="mt-4 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         ) : (
           <>
@@ -172,12 +192,12 @@ export default function ProgramsPage() {
               ))}
             </div>
 
-            <div ref={setSentinel} className="h-1" />
+            {hasNextPage && <div ref={setSentinel} className="h-1" />}
 
             {isFetchingNextPage && (
               <div className="grid gap-6 pt-6 md:grid-cols-2 xl:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <ProgramCardSkeleton key={i} />
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <ProgramCardSkeleton key={index} />
                 ))}
               </div>
             )}

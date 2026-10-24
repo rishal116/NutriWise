@@ -28,6 +28,28 @@ export class UserDayTrackingService implements IUserDayTrackingService {
     dayNumber: number,
     totalActivities: number,
   ): Promise<UserDayTrackingDetailsDTO> {
+    if (!Types.ObjectId.isValid(programId)) {
+      throw new CustomError("Invalid user program ID", StatusCode.BAD_REQUEST);
+    }
+
+    if (!Types.ObjectId.isValid(programDayId)) {
+      throw new CustomError("Invalid program day ID", StatusCode.BAD_REQUEST);
+    }
+
+    if (!Number.isInteger(dayNumber) || dayNumber < 1) {
+      throw new CustomError(
+        "Day number must be a positive integer",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (!Number.isInteger(totalActivities) || totalActivities < 0) {
+      throw new CustomError(
+        "Total activities must be a non-negative integer",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
     const programObjectId =
       typeof programId === "string" ? new Types.ObjectId(programId) : programId;
 
@@ -36,6 +58,7 @@ export class UserDayTrackingService implements IUserDayTrackingService {
         ? new Types.ObjectId(programDayId)
         : programDayId;
 
+    // Return existing tracking without resetting progress.
     const existingTracking =
       await this._userDayTrackingRepository.findByUserProgramDay(
         programObjectId,
@@ -43,6 +66,13 @@ export class UserDayTrackingService implements IUserDayTrackingService {
       );
 
     if (existingTracking) {
+      if (!existingTracking.userProgramDayId.equals(programDayObjectId)) {
+        throw new CustomError(
+          "Day tracking already exists for a different program day",
+          StatusCode.CONFLICT,
+        );
+      }
+
       return this.toDTO(existingTracking);
     }
 
@@ -53,52 +83,59 @@ export class UserDayTrackingService implements IUserDayTrackingService {
       throw new CustomError("User program not found", StatusCode.NOT_FOUND);
     }
 
-    const today = new Date();
-
     const startDate = new Date(userProgram.startDate);
 
+    if (Number.isNaN(startDate.getTime())) {
+      throw new CustomError(
+        "User program has an invalid start date",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
     startDate.setHours(0, 0, 0, 0);
 
-    const differenceInMilliseconds = today.getTime() - startDate.getTime();
-
-    const differenceInDays = Math.floor(
-      differenceInMilliseconds / (1000 * 60 * 60 * 24),
+    const differenceInDays = Math.round(
+      (today.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000),
     );
 
     const currentDay = differenceInDays + 1;
-
     const isLocked = dayNumber > currentDay;
 
     const trackingDate = new Date(startDate);
-
-    trackingDate.setDate(trackingDate.getDate() + (dayNumber - 1));
+    trackingDate.setDate(trackingDate.getDate() + dayNumber - 1);
 
     const trackingData: Partial<IUserDayTracking> = {
       userId: userProgram.userId,
       userProgramId: programObjectId,
       userProgramDayId: programDayObjectId,
-
       dayNumber,
       date: trackingDate,
-
       status: UserDayTrackingStatus.NOT_STARTED,
-
       startedAt: null,
       completedAt: null,
       lastActivityAt: null,
-
-      totalActivities: totalActivities,
+      totalActivities,
       completedActivities: 0,
       skippedActivities: 0,
-
-      overallCompletionPercentage: 0,
-      adherenceScore: 0,
-
       isLocked,
     };
 
-    const tracking = await this._userDayTrackingRepository.create(trackingData);
+    const tracking =
+      await this._userDayTrackingRepository.findOrCreateForProgramDay({
+        ...trackingData,
+        userProgramId: programObjectId,
+        userProgramDayId: programDayObjectId,
+        dayNumber,
+      });
+
+    if (!tracking.userProgramDayId.equals(programDayObjectId)) {
+      throw new CustomError(
+        "Day tracking already exists for a different program day",
+        StatusCode.CONFLICT,
+      );
+    }
 
     return this.toDTO(tracking);
   }
@@ -109,34 +146,22 @@ export class UserDayTrackingService implements IUserDayTrackingService {
       userId: tracking.userId.toString(),
       userProgramId: tracking.userProgramId.toString(),
       userProgramDayId: tracking.userProgramDayId.toString(),
-
       dayNumber: tracking.dayNumber,
       date: tracking.date,
-
       status: tracking.status,
-
       startedAt: tracking.startedAt ?? null,
       completedAt: tracking.completedAt ?? null,
       lastActivityAt: tracking.lastActivityAt ?? null,
-
       totalActivities: tracking.totalActivities,
       completedActivities: tracking.completedActivities,
       skippedActivities: tracking.skippedActivities,
-
-      overallCompletionPercentage: tracking.overallCompletionPercentage,
-
-      adherenceScore: tracking.adherenceScore,
-
       isLocked: tracking.isLocked,
-
       ...(tracking.userNotes !== undefined && {
         userNotes: tracking.userNotes,
       }),
-
       ...(tracking.nutritionistNotes !== undefined && {
         nutritionistNotes: tracking.nutritionistNotes,
       }),
-
       createdAt: tracking.createdAt,
       updatedAt: tracking.updatedAt,
     };

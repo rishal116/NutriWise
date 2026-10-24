@@ -1,15 +1,13 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "../../../types/types";
-
-import { asyncHandler } from "../../../utils/asyncHandler";
-
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { asyncHandler } from "../../../utils/asyncHandler";
 
 import { INutriProgramDayController } from "../../interfaces/nutritionist/INutriProgramDayController";
 import { INutriProgramDayService } from "../../../services/interfaces/nutritionist/INutriProgramDayService";
-import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/program-day-list-query.dto";
+import { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/nutri-program-day-list-query.dto";
 
 @injectable()
 export class NutriProgramDayController implements INutriProgramDayController {
@@ -55,7 +53,7 @@ export class NutriProgramDayController implements INutriProgramDayController {
     const { userId: nutritionistId } = req.user!;
     const { programId } = req.params;
 
-    const result = await this._programDayService.createProgramDay(
+    await this._programDayService.createProgramDay(
       nutritionistId,
       programId,
       req.body,
@@ -64,7 +62,6 @@ export class NutriProgramDayController implements INutriProgramDayController {
     res.status(StatusCode.CREATED).json({
       success: true,
       message: "Program day created successfully",
-      data: result,
     });
   });
 
@@ -72,7 +69,7 @@ export class NutriProgramDayController implements INutriProgramDayController {
     const { userId: nutritionistId } = req.user!;
     const { dayId } = req.params;
 
-    const result = await this._programDayService.updateProgramDay(
+    await this._programDayService.updateProgramDay(
       nutritionistId,
       dayId,
       req.body,
@@ -81,19 +78,6 @@ export class NutriProgramDayController implements INutriProgramDayController {
     res.status(StatusCode.OK).json({
       success: true,
       message: "Program day updated successfully",
-      data: result,
-    });
-  });
-
-  deleteProgramDay = asyncHandler(async (req: Request, res: Response) => {
-    const { userId: nutritionistId } = req.user!;
-    const { dayId } = req.params;
-
-    await this._programDayService.deleteProgramDay(nutritionistId, dayId);
-
-    res.status(StatusCode.OK).json({
-      success: true,
-      message: "Program day deleted successfully",
     });
   });
 }

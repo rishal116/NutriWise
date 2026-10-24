@@ -2,6 +2,7 @@ import { UpdateActivityTrackingDTO } from "../../../../dtos/user/tracking/update
 import { CreateUserActivityTrackingDTO } from "../../../../dtos/user/tracking/create-user-activity-tracking.dto";
 import { UserActivityTrackingResponseDTO } from "../../../../dtos/user/tracking/user-activity-tracking-response.dto";
 
+
 export interface IUserActivityTrackingService {
   initializeForDay(
     activities: CreateUserActivityTrackingDTO[],

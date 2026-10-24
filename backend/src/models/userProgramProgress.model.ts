@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 export interface IUserProgramProgress {
   _id: Types.ObjectId;
@@ -10,8 +10,6 @@ export interface IUserProgramProgress {
   totalActivities: number;
   completedActivities: number;
   skippedActivities: number;
-  completionPercentage: number;
-  adherenceScore: number;
   currentStreak: number;
   longestStreak: number;
   lastCompletedDay: number;
@@ -26,7 +24,6 @@ const UserProgramProgressSchema = new Schema<IUserProgramProgress>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     userProgramId: {
@@ -34,7 +31,6 @@ const UserProgramProgressSchema = new Schema<IUserProgramProgress>(
       ref: "UserProgram",
       required: true,
       unique: true,
-      index: true,
     },
 
     totalDays: {
@@ -54,7 +50,7 @@ const UserProgramProgressSchema = new Schema<IUserProgramProgress>(
       default: 1,
       min: 1,
     },
-    
+
     totalActivities: {
       type: Number,
       default: 0,
@@ -71,20 +67,6 @@ const UserProgramProgressSchema = new Schema<IUserProgramProgress>(
       type: Number,
       default: 0,
       min: 0,
-    },
-
-    completionPercentage: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
-    },
-
-    adherenceScore: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 100,
     },
 
     currentStreak: {
@@ -108,26 +90,12 @@ const UserProgramProgressSchema = new Schema<IUserProgramProgress>(
     lastActivityAt: {
       type: Date,
       default: null,
-      index: true,
     },
   },
   {
     timestamps: true,
   },
 );
-
-UserProgramProgressSchema.index({
-  userId: 1,
-  userProgramId: 1,
-});
-UserProgramProgressSchema.index({
-  userId: 1,
-  completionPercentage: -1,
-});
-UserProgramProgressSchema.index({
-  userId: 1,
-  adherenceScore: -1,
-});
 
 export const UserProgramProgressModel = model<IUserProgramProgress>(
   "UserProgramProgress",

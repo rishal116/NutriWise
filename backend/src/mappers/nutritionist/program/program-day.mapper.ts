@@ -1,14 +1,14 @@
-import { ProgramDayResponseDTO } from "../../../dtos/nutritionist/program/program-day-response.dto";
-import { IProgramDayProjection } from "../../../types/nutritionist/program/program-day.projection";
+import type { INutriProgramDayResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-day-response.dto";
+import type { INutriProgramDayProjection } from "../../../types/nutritionist/program/nutri-program-day.projection";
 
-export class ProgramDayMapper {
-  static toProgramDayDTO(day: IProgramDayProjection): ProgramDayResponseDTO {
+export class NutriProgramDayMapper {
+  static toProgramDayDTO(
+    day: INutriProgramDayProjection,
+  ): INutriProgramDayResponseDTO {
     return {
       userProgramDayId: day._id,
       userProgramId: day.userProgramId,
-
       dayNumber: day.dayNumber,
-
       activities: day.activities.map((activity) => ({
         _id: activity._id,
         category: activity.category,
@@ -21,12 +21,8 @@ export class ProgramDayMapper {
         estimatedDurationMinutes: activity.estimatedDurationMinutes,
         scheduledTime: activity.scheduledTime,
         isRequired: activity.isRequired,
-        configuration: activity.configuration,
         order: activity.order,
       })),
-
-      createdAt: day.createdAt,
-      updatedAt: day.updatedAt,
     };
   }
 }

@@ -1,10 +1,10 @@
-import { UserProgramDetailsResponseDTO } from "../../../dtos/nutritionist/program/program-details-response.dto";
-import { IUserProgramDetailsProjection } from "../../../types/nutritionist/program/program-details.projection";
+import { NutriProgramDetailsResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-details-response.dto";
+import { INutriProgramDetailsProjection } from "../../../types/nutritionist/program/nutri-program-details.projection";
 
-export class ProgramDetailsMapper {
+export class NutriProgramDetailsMapper {
   static toDTO(
-    program: IUserProgramDetailsProjection,
-  ): UserProgramDetailsResponseDTO {
+    program: INutriProgramDetailsProjection,
+  ): NutriProgramDetailsResponseDTO {
     return {
       userProgramId: program.userProgramId.toString(),
 
@@ -12,23 +12,17 @@ export class ProgramDetailsMapper {
       userFullName: program.userFullName,
       userProfileImage: program.userProfileImage,
 
-      planId: program.planId.toString(),
       planTitle: program.planTitle,
       planDescription: program.planDescription,
       specialization: program.specialization,
-
-      subscriptionStatus: program.subscriptionStatus,
-      paymentStatus: program.paymentStatus,
 
       programStatus: program.programStatus,
 
       startDate: program.startDate,
       endDate: program.endDate,
       durationDays: program.durationDays,
-      currentDay: program.currentDay,
 
       completionPercentage: program.completionPercentage,
-      adherenceScore: program.adherenceScore,
 
       completedDays: program.completedDays,
       totalDays: program.totalDays,
@@ -40,10 +34,7 @@ export class ProgramDetailsMapper {
       currentStreak: program.currentStreak,
       longestStreak: program.longestStreak,
 
-      lastCompletedDay: program.lastCompletedDay,
       lastActivityAt: program.lastActivityAt,
-
-      programNotes: program.programNotes,
     };
   }
 }

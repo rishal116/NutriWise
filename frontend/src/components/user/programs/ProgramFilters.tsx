@@ -2,10 +2,8 @@ import { Search, X } from "lucide-react";
 
 import {
   PROGRAM_STATUS,
-  ProgramStatus,
-  SUBSCRIPTION_STATUS,
-  SubscriptionStatus,
   UserProgramSort,
+  type ProgramStatus,
 } from "@/dtos/user/program/user-program-request.dto";
 
 const SORT_LABELS: Record<UserProgramSort, string> = {
@@ -20,8 +18,6 @@ interface ProgramFiltersProps {
   onSearchChange: (value: string) => void;
   programStatus: ProgramStatus | "all";
   onProgramStatusChange: (value: ProgramStatus | "all") => void;
-  subscriptionStatus: SubscriptionStatus | "all";
-  onSubscriptionStatusChange: (value: SubscriptionStatus | "all") => void;
   sort: UserProgramSort;
   onSortChange: (value: UserProgramSort) => void;
   onReset: () => void;
@@ -36,8 +32,6 @@ export function ProgramFilters({
   onSearchChange,
   programStatus,
   onProgramStatusChange,
-  subscriptionStatus,
-  onSubscriptionStatusChange,
   sort,
   onSortChange,
   onReset,
@@ -50,8 +44,9 @@ export function ProgramFilters({
         <input
           type="text"
           value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Search programs..."
+          aria-label="Search programs"
           className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-xs font-medium text-slate-700 transition-colors duration-150 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
         />
       </div>
@@ -59,12 +54,13 @@ export function ProgramFilters({
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={programStatus}
-          onChange={(e) =>
-            onProgramStatusChange(e.target.value as ProgramStatus | "all")
+          onChange={(event) =>
+            onProgramStatusChange(event.target.value as ProgramStatus | "all")
           }
+          aria-label="Filter by program status"
           className={selectClassName}
         >
-          <option value="all">All program status</option>
+          <option value="all">All program statuses</option>
           {PROGRAM_STATUS.map((status) => (
             <option key={status} value={status} className="capitalize">
               {status}
@@ -73,25 +69,11 @@ export function ProgramFilters({
         </select>
 
         <select
-          value={subscriptionStatus}
-          onChange={(e) =>
-            onSubscriptionStatusChange(
-              e.target.value as SubscriptionStatus | "all",
-            )
-          }
-          className={selectClassName}
-        >
-          <option value="all">All subscription status</option>
-          {SUBSCRIPTION_STATUS.map((status) => (
-            <option key={status} value={status} className="capitalize">
-              {status}
-            </option>
-          ))}
-        </select>
-
-        <select
           value={sort}
-          onChange={(e) => onSortChange(e.target.value as UserProgramSort)}
+          onChange={(event) =>
+            onSortChange(event.target.value as UserProgramSort)
+          }
+          aria-label="Sort programs"
           className={selectClassName}
         >
           {Object.values(UserProgramSort).map((value) => (

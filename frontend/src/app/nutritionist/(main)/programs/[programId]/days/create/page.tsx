@@ -1,12 +1,7 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import {
-  useForm,
-  useFieldArray,
-  Controller,
-  type Control,
-} from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -18,30 +13,41 @@ import {
   ChevronDown,
   GripVertical,
 } from "lucide-react";
-import { nutriProgramDayService } from "@/services/nutritionist/nutriProgramDay.service";
+
+import { nutriProgramDayService } from "@/services/nutritionist/nutri-program-day.service";
 import {
   PROGRAM_ACTIVITY_CATEGORIES,
   ACTIVITY_VALUE_TYPES,
   type ProgramActivityCategory,
   type ActivityValueType,
-} from "@/dtos/nutritionist/program/program-day-response.dto";
-import type { CreateProgramDayDTO } from "@/dtos/nutritionist/program/program-day-request.dto";
+} from "@/types/program-activity.types";
+import type { CreateNutriProgramDayDTO } from "@/dtos/nutritionist/program/nutri-program-day-request.dto";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import { useEffect, useState } from "react";
 
 const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 const optionalPositiveNumber = z.preprocess((value) => {
-  if (value === "" || value === undefined || value === null) return undefined;
+  if (value === "" || value === undefined || value === null) {
+    return undefined;
+  }
+
   return Number(value);
-}, z.number().positive().optional());
+}, z.number().positive("Must be greater than zero").optional());
 
 const optionalPositiveInteger = z.preprocess((value) => {
-  if (value === "" || value === undefined || value === null) return undefined;
-  return z.number().int().positive().parse(Number(value));
-}, z.number().int().positive().optional());
+  if (value === "" || value === undefined || value === null) {
+    return undefined;
+  }
+
+  return Number(value);
+}, z.number().int("Must be a whole number").positive("Must be greater than zero").optional());
 
 const optionalTime = z.preprocess((value) => {
-  if (value === "" || value === undefined || value === null) return undefined;
+  if (value === "" || value === undefined || value === null) {
+    return undefined;
+  }
+
   return value;
 }, z.string().regex(TIME_REGEX, "Use HH:mm format").optional());
 
@@ -49,7 +55,9 @@ const activitySchema = z.object({
   category: z.enum(PROGRAM_ACTIVITY_CATEGORIES, {
     message: "Select a category",
   }),
-  valueType: z.enum(ACTIVITY_VALUE_TYPES, { message: "Select a value type" }),
+  valueType: z.enum(ACTIVITY_VALUE_TYPES, {
+    message: "Select a response type",
+  }),
   title: z.string().trim().min(1, "Title is required").max(120),
   description: z.string().trim().max(500).optional(),
   instructions: z.string().trim().max(1000).optional(),
@@ -58,11 +66,13 @@ const activitySchema = z.object({
   estimatedDurationMinutes: optionalPositiveInteger,
   scheduledTime: optionalTime,
   isRequired: z.boolean(),
-  configuration: z.record(z.string(), z.unknown()).default({}),
 });
 
 const formSchema = z.object({
-  dayNumber: z.coerce.number().int().min(1, "Day number must be at least 1"),
+  dayNumber: z.coerce
+    .number()
+    .int("Day number must be a whole number")
+    .min(1, "Day number must be at least 1"),
   activities: z
     .array(activitySchema)
     .min(1, "Add at least one activity for this day"),
@@ -73,6 +83,7 @@ type FormValues = z.output<typeof formSchema>;
 type ActivityInput = FormInput["activities"][number];
 
 const NEEDS_TARGET_AND_UNIT: ActivityValueType[] = ["number", "duration"];
+
 const NEEDS_ESTIMATED_DURATION: ActivityValueType[] = ["boolean", "duration"];
 
 const CATEGORY_DEFAULT_VALUE_TYPE: Record<
@@ -131,17 +142,6 @@ const VALUE_TYPE_LABELS: Record<ActivityValueType, string> = {
   text: "Text",
 };
 
-const CATEGORY_CONFIG_TITLES: Partial<Record<ProgramActivityCategory, string>> =
-  {
-    water: "Water settings",
-    exercise: "Exercise settings",
-    habit: "Habit settings",
-    meal: "Meal settings",
-    meditation: "Meditation settings",
-    sleep: "Sleep settings",
-    measurement: "Measurement settings",
-  };
-
 const inputClass =
   "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20";
 
@@ -162,535 +162,39 @@ function emptyActivity(): ActivityInput {
     estimatedDurationMinutes: undefined,
     scheduledTime: "",
     isRequired: false,
-    configuration: {},
   };
 }
-
-/* ------------------------------------------------------------------ */
-/* Category-specific configuration                                    */
-/* ------------------------------------------------------------------ */
-
-type ConfigurationProps = {
-  control: Control<FormInput, unknown, FormValues>;
-  index: number;
-};
-
-interface WaterConfigValue {
-  trackingMethod?: "daily_total" | "per_serving";
-  reminderIntervalMinutes?: number;
-}
-
-function WaterConfiguration({ control, index }: ConfigurationProps) {
-  return (
-    <Controller
-      control={control}
-      name={`activities.${index}.configuration`}
-      render={({ field }) => {
-        const config = (field.value ?? {}) as WaterConfigValue;
-        return (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Tracking method</label>
-              <select
-                value={config.trackingMethod ?? "daily_total"}
-                onChange={(e) =>
-                  field.onChange({
-                    ...config,
-                    trackingMethod: e.target.value as
-                      "daily_total" | "per_serving",
-                  })
-                }
-                className={`${inputClass} mt-1`}
-              >
-                <option value="daily_total">Daily total</option>
-                <option value="per_serving">Per serving</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>
-                Reminder interval (min, optional)
-              </label>
-              <input
-                type="number"
-                min={0}
-                value={
-                  typeof config.reminderIntervalMinutes === "number"
-                    ? config.reminderIntervalMinutes
-                    : ""
-                }
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const next = { ...config };
-                  if (raw === "") {
-                    delete next.reminderIntervalMinutes;
-                  } else {
-                    next.reminderIntervalMinutes = Number(raw);
-                  }
-                  field.onChange(next);
-                }}
-                placeholder="60"
-                className={`${inputClass} mt-1`}
-              />
-            </div>
-          </div>
-        );
-      }}
-    />
-  );
-}
-
-interface ExerciseConfigValue {
-  exerciseType?: string;
-  intensity?: string;
-}
-
-const EXERCISE_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: "walking", label: "Walking" },
-  { value: "running", label: "Running" },
-  { value: "cycling", label: "Cycling" },
-  { value: "strength", label: "Strength" },
-  { value: "stretching", label: "Stretching" },
-  { value: "other", label: "Other" },
-];
-
-const INTENSITY_OPTIONS: { value: string; label: string }[] = [
-  { value: "light", label: "Light" },
-  { value: "moderate", label: "Moderate" },
-  { value: "high", label: "High" },
-];
-
-function ExerciseConfiguration({ control, index }: ConfigurationProps) {
-  return (
-    <Controller
-      control={control}
-      name={`activities.${index}.configuration`}
-      render={({ field }) => {
-        const config = (field.value ?? {}) as ExerciseConfigValue;
-        return (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Exercise type</label>
-              <select
-                value={config.exerciseType ?? "walking"}
-                onChange={(e) =>
-                  field.onChange({ ...config, exerciseType: e.target.value })
-                }
-                className={`${inputClass} mt-1`}
-              >
-                {EXERCISE_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Intensity</label>
-              <select
-                value={config.intensity ?? "moderate"}
-                onChange={(e) =>
-                  field.onChange({ ...config, intensity: e.target.value })
-                }
-                className={`${inputClass} mt-1`}
-              >
-                {INTENSITY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        );
-      }}
-    />
-  );
-}
-
-interface HabitConfigValue {
-  prompts?: string[];
-}
-
-function HabitConfiguration({ control, index }: ConfigurationProps) {
-  return (
-    <Controller
-      control={control}
-      name={`activities.${index}.configuration`}
-      render={({ field }) => {
-        const config = (field.value ?? {}) as HabitConfigValue;
-        const prompts = config.prompts ?? [];
-
-        const updatePrompts = (next: string[]) => {
-          field.onChange({ ...config, prompts: next });
-        };
-
-        return (
-          <div className="space-y-2">
-            <label className={labelClass}>Reflection prompts (optional)</label>
-            <div className="space-y-2">
-              {prompts.map((prompt, promptIndex) => (
-                <div key={promptIndex} className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={prompt}
-                    onChange={(e) => {
-                      const next = [...prompts];
-                      next[promptIndex] = e.target.value;
-                      updatePrompts(next);
-                    }}
-                    placeholder="What went well today?"
-                    className={inputClass}
-                  />
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updatePrompts(
-                        prompts.filter((_, pi) => pi !== promptIndex),
-                      )
-                    }
-                    className="rounded-lg p-1.5 text-slate-300 transition-colors duration-150 hover:bg-rose-50 hover:text-rose-600"
-                    aria-label="Remove prompt"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => updatePrompts([...prompts, ""])}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors duration-150 hover:bg-emerald-100"
-            >
-              <Plus size={13} />
-              Add prompt
-            </button>
-          </div>
-        );
-      }}
-    />
-  );
-}
-
-interface MealConfigValue {
-  mealType?: "breakfast" | "lunch" | "dinner" | "snack";
-  caloriesTarget?: number;
-  proteinTarget?: number;
-}
-
-function MealConfiguration({ control, index }: ConfigurationProps) {
-  return (
-    <Controller
-      control={control}
-      name={`activities.${index}.configuration`}
-      render={({ field }) => {
-        const config = (field.value ?? {}) as MealConfigValue;
-        return (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div>
-              <label className={labelClass}>Meal type</label>
-              <select
-                value={config.mealType ?? "breakfast"}
-                onChange={(e) =>
-                  field.onChange({
-                    ...config,
-                    mealType: e.target.value as MealConfigValue["mealType"],
-                  })
-                }
-                className={`${inputClass} mt-1`}
-              >
-                <option value="breakfast">Breakfast</option>
-                <option value="lunch">Lunch</option>
-                <option value="dinner">Dinner</option>
-                <option value="snack">Snack</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Calories target (optional)</label>
-              <input
-                type="number"
-                min={0}
-                value={
-                  typeof config.caloriesTarget === "number"
-                    ? config.caloriesTarget
-                    : ""
-                }
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const next = { ...config };
-                  if (raw === "") {
-                    delete next.caloriesTarget;
-                  } else {
-                    next.caloriesTarget = Number(raw);
-                  }
-                  field.onChange(next);
-                }}
-                placeholder="600"
-                className={`${inputClass} mt-1`}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Protein target (optional)</label>
-              <input
-                type="number"
-                min={0}
-                value={
-                  typeof config.proteinTarget === "number"
-                    ? config.proteinTarget
-                    : ""
-                }
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const next = { ...config };
-                  if (raw === "") {
-                    delete next.proteinTarget;
-                  } else {
-                    next.proteinTarget = Number(raw);
-                  }
-                  field.onChange(next);
-                }}
-                placeholder="30"
-                className={`${inputClass} mt-1`}
-              />
-            </div>
-          </div>
-        );
-      }}
-    />
-  );
-}
-
-interface MeditationConfigValue {
-  technique?: string;
-  guided?: boolean;
-}
-
-const MEDITATION_TECHNIQUE_OPTIONS: { value: string; label: string }[] = [
-  { value: "breathing", label: "Breathing" },
-  { value: "body_scan", label: "Body scan" },
-  { value: "mindfulness", label: "Mindfulness" },
-  { value: "guided", label: "Guided" },
-];
-
-function MeditationConfiguration({ control, index }: ConfigurationProps) {
-  return (
-    <Controller
-      control={control}
-      name={`activities.${index}.configuration`}
-      render={({ field }) => {
-        const config = (field.value ?? {}) as MeditationConfigValue;
-        return (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Technique</label>
-              <select
-                value={config.technique ?? "breathing"}
-                onChange={(e) =>
-                  field.onChange({ ...config, technique: e.target.value })
-                }
-                className={`${inputClass} mt-1`}
-              >
-                {MEDITATION_TECHNIQUE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end pb-0.5">
-              <label className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                <input
-                  type="checkbox"
-                  checked={config.guided ?? false}
-                  onChange={(e) =>
-                    field.onChange({ ...config, guided: e.target.checked })
-                  }
-                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
-                />
-                Guided
-              </label>
-            </div>
-          </div>
-        );
-      }}
-    />
-  );
-}
-
-interface SleepConfigValue {
-  bedtime?: string;
-  wakeTime?: string;
-}
-
-function SleepConfiguration({ control, index }: ConfigurationProps) {
-  return (
-    <Controller
-      control={control}
-      name={`activities.${index}.configuration`}
-      render={({ field }) => {
-        const config = (field.value ?? {}) as SleepConfigValue;
-        return (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Bedtime (optional)</label>
-              <input
-                type="time"
-                value={config.bedtime ?? ""}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const next = { ...config };
-                  if (raw === "") {
-                    delete next.bedtime;
-                  } else {
-                    next.bedtime = raw;
-                  }
-                  field.onChange(next);
-                }}
-                className={`${inputClass} mt-1`}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Wake time (optional)</label>
-              <input
-                type="time"
-                value={config.wakeTime ?? ""}
-                onChange={(e) => {
-                  const raw = e.target.value;
-                  const next = { ...config };
-                  if (raw === "") {
-                    delete next.wakeTime;
-                  } else {
-                    next.wakeTime = raw;
-                  }
-                  field.onChange(next);
-                }}
-                className={`${inputClass} mt-1`}
-              />
-            </div>
-          </div>
-        );
-      }}
-    />
-  );
-}
-
-interface MeasurementConfigValue {
-  measurementType?: string;
-}
-
-const MEASUREMENT_TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: "weight", label: "Weight" },
-  { value: "waist", label: "Waist" },
-  { value: "blood_pressure", label: "Blood pressure" },
-  { value: "custom", label: "Custom" },
-];
-
-function MeasurementConfiguration({ control, index }: ConfigurationProps) {
-  return (
-    <Controller
-      control={control}
-      name={`activities.${index}.configuration`}
-      render={({ field }) => {
-        const config = (field.value ?? {}) as MeasurementConfigValue;
-        return (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>Measurement type</label>
-              <select
-                value={config.measurementType ?? "weight"}
-                onChange={(e) =>
-                  field.onChange({
-                    ...config,
-                    measurementType: e.target.value,
-                  })
-                }
-                className={`${inputClass} mt-1`}
-              >
-                {MEASUREMENT_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        );
-      }}
-    />
-  );
-}
-
-function ActivityConfiguration({
-  category,
-  control,
-  index,
-}: { category: ProgramActivityCategory } & ConfigurationProps) {
-  const body = (() => {
-    switch (category) {
-      case "water":
-        return <WaterConfiguration control={control} index={index} />;
-      case "exercise":
-        return <ExerciseConfiguration control={control} index={index} />;
-      case "habit":
-        return <HabitConfiguration control={control} index={index} />;
-      case "meal":
-        return <MealConfiguration control={control} index={index} />;
-      case "meditation":
-        return <MeditationConfiguration control={control} index={index} />;
-      case "sleep":
-        return <SleepConfiguration control={control} index={index} />;
-      case "measurement":
-        return <MeasurementConfiguration control={control} index={index} />;
-      default:
-        return null;
-    }
-  })();
-
-  if (!body) return null;
-
-  return (
-    <div className="space-y-2 border-t border-slate-200/80 pt-3">
-      <h3 className={labelClass}>{CATEGORY_CONFIG_TITLES[category]}</h3>
-      {body}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Submit payload helpers                                             */
-/* ------------------------------------------------------------------ */
-
-function cleanConfiguration(
-  configuration: Record<string, unknown> | undefined,
-): Record<string, unknown> {
-  if (!configuration) return {};
-  const cleaned: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(configuration)) {
-    if (value === undefined || value === null) continue;
-    if (typeof value === "string" && value.trim() === "") continue;
-    if (Array.isArray(value)) {
-      const filtered = value.filter(
-        (item) => !(typeof item === "string" && item.trim() === ""),
-      );
-      if (filtered.length === 0) continue;
-      cleaned[key] = filtered;
-      continue;
-    }
-    cleaned[key] = value;
-  }
-  return cleaned;
-}
-
-type ActivityPayload = CreateProgramDayDTO["activities"][number] & {
-  configuration: Record<string, unknown>;
-};
-
-type ProgramDayPayload = Omit<CreateProgramDayDTO, "activities"> & {
-  activities: ActivityPayload[];
-};
 
 export default function CreateProgramDayPage() {
   const { programId } = useParams<{ programId: string }>();
   const router = useRouter();
+
+  const [durationDays, setDurationDays] = useState<number | null>(null);
+  const [durationLoaded, setDurationLoaded] = useState(false);
+
+  useEffect(() => {
+    setDurationLoaded(false);
+    setDurationDays(null);
+
+    if (!programId) {
+      setDurationLoaded(true);
+      return;
+    }
+
+    const storedDuration = sessionStorage.getItem(
+      `nutriwise:program-duration:${programId}`,
+    );
+
+    if (storedDuration !== null) {
+      const duration = Number(storedDuration);
+
+      if (Number.isInteger(duration) && duration >= 1) {
+        setDurationDays(duration);
+      }
+    }
+
+    setDurationLoaded(true);
+  }, [programId]);
 
   const {
     register,
@@ -724,6 +228,7 @@ export default function CreateProgramDayPage() {
       setValue(`activities.${index}.targetValue`, undefined);
       setValue(`activities.${index}.unit`, "");
     }
+
     if (!NEEDS_ESTIMATED_DURATION.includes(valueType)) {
       setValue(`activities.${index}.estimatedDurationMinutes`, undefined);
     }
@@ -734,18 +239,35 @@ export default function CreateProgramDayPage() {
     category: ProgramActivityCategory,
   ) => {
     const defaultValueType = CATEGORY_DEFAULT_VALUE_TYPE[category];
-    setValue(`activities.${index}.valueType`, defaultValueType);
+
+    setValue(`activities.${index}.valueType`, defaultValueType, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
     applyValueTypeChange(index, defaultValueType);
-    setValue(`activities.${index}.configuration`, {});
   };
 
   const onSubmit = async (values: FormValues) => {
-    const payload: ProgramDayPayload = {
+    if (durationDays === null) {
+      toast.error(
+        "Program duration is unavailable. Open program details first.",
+      );
+      return;
+    }
+
+    if (values.dayNumber < 1 || values.dayNumber > durationDays) {
+      toast.error(`Day number must be between 1 and ${durationDays}.`);
+      return;
+    }
+
+    const payload: CreateNutriProgramDayDTO = {
       dayNumber: values.dayNumber,
       activities: values.activities.map((activity, index) => {
         const showTargetAndUnit = NEEDS_TARGET_AND_UNIT.includes(
           activity.valueType,
         );
+
         const showEstimatedDuration = NEEDS_ESTIMATED_DURATION.includes(
           activity.valueType,
         );
@@ -766,23 +288,23 @@ export default function CreateProgramDayPage() {
           scheduledTime: activity.scheduledTime || undefined,
           isRequired: activity.isRequired,
           order: index,
-          configuration: cleanConfiguration(activity.configuration),
         };
       }),
     };
+
     try {
       await nutriProgramDayService.createProgramDay(programId, payload);
+
       toast.success(`Day ${values.dayNumber} created.`);
       router.push(`/nutritionist/programs/${programId}/days`);
     } catch (error) {
       const message = getErrorMessage(error);
-      console.error("Failed to create program day:", message);
       toast.error(message || "Couldn't create this day. Please try again.");
     }
   };
 
-  const onInvalid = (formErrors: typeof errors) => {
-    console.error("Program day validation failed:", formErrors);
+  const onInvalid = () => {
+    toast.error("Please fix the validation errors before submitting.");
   };
 
   return (
@@ -801,7 +323,7 @@ export default function CreateProgramDayPage() {
           <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
             Add a program day
           </h1>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="mt-1 text-sm font-medium text-slate-500">
             Build the list of activities scheduled for this day.
           </p>
         </div>
@@ -810,39 +332,55 @@ export default function CreateProgramDayPage() {
           onSubmit={handleSubmit(onSubmit, onInvalid)}
           className="space-y-6"
         >
-          {/* Day number */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-            <label className={labelClass}>Day number</label>
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <label className={labelClass} htmlFor="dayNumber">
+              Day number
+            </label>
+
+            <p className="mt-1 text-xs text-slate-500">
+              Program duration:{" "}
+              {durationDays !== null ? `${durationDays} days` : "Unavailable"}
+            </p>
+
             <input
+              id="dayNumber"
               type="number"
               min={1}
-              {...register("dayNumber")}
+              max={durationDays ?? undefined}
+              step={1}
+              disabled={
+                !durationLoaded || durationDays === null || isSubmitting
+              }
+              {...register("dayNumber", { valueAsNumber: true })}
               className={`${inputClass} mt-1.5 sm:w-40`}
             />
+
             {errors.dayNumber && (
               <p className={errorClass}>{errors.dayNumber.message}</p>
             )}
           </div>
 
-          {/* Activities */}
-          <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold tracking-tight text-slate-900">
-                Activities
-              </h2>
+          <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold tracking-tight text-slate-900">
+                  Activities
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Add and arrange the activities for this day.
+                </p>
+              </div>
+
               <button
                 type="button"
                 onClick={() => append(emptyActivity())}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors duration-150 hover:bg-emerald-100"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
               >
                 <Plus size={13} />
                 Add activity
               </button>
             </div>
 
-            {errors.activities?.root && (
-              <p className={errorClass}>{errors.activities.root.message}</p>
-            )}
             {errors.activities?.message && (
               <p className={errorClass}>{errors.activities.message}</p>
             )}
@@ -852,65 +390,96 @@ export default function CreateProgramDayPage() {
                 <p className="text-xs font-medium text-slate-400">
                   No activities added yet.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => append(emptyActivity())}
+                  className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+                >
+                  <Plus size={13} />
+                  Add your first activity
+                </button>
               </div>
             )}
 
             {fields.map((field, index) => {
               const category = watch(`activities.${index}.category`);
               const valueType = watch(`activities.${index}.valueType`);
+
+              const valueTypeOptions = CATEGORY_VALUE_TYPE_OPTIONS[category];
+
               const showTargetAndUnit =
                 NEEDS_TARGET_AND_UNIT.includes(valueType);
+
               const showEstimatedDuration =
                 NEEDS_ESTIMATED_DURATION.includes(valueType);
-              const valueTypeOptions = CATEGORY_VALUE_TYPE_OPTIONS[category];
+
               const activityErrors = errors.activities?.[index];
 
               return (
                 <div
                   key={field.id}
-                  className="space-y-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-4"
+                  className="space-y-4 rounded-xl border border-slate-200/80 bg-slate-50/60 p-4"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="flex flex-col items-center gap-1 pt-1.5 text-slate-300">
-                      <GripVertical size={14} />
+                    <div className="flex shrink-0 flex-col items-center gap-1 pt-2 text-slate-300">
+                      <GripVertical size={15} />
                       <span className="text-[10px] font-bold text-slate-400">
                         {index + 1}
                       </span>
                     </div>
 
-                    <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
-                      <div className="col-span-2 sm:col-span-1">
-                        <label className={labelClass}>Category</label>
+                    <div className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label
+                          className={labelClass}
+                          htmlFor={`activity-${index}-category`}
+                        >
+                          Category
+                        </label>
                         <Controller
                           control={control}
                           name={`activities.${index}.category`}
-                          render={({ field: f }) => (
+                          render={({ field: categoryField }) => (
                             <select
-                              {...f}
-                              onChange={(e) => {
-                                const category = e.target
+                              {...categoryField}
+                              id={`activity-${index}-category`}
+                              onChange={(event) => {
+                                const nextCategory = event.target
                                   .value as ProgramActivityCategory;
-                                f.onChange(category);
-                                applyCategoryChange(index, category);
+
+                                categoryField.onChange(nextCategory);
+                                applyCategoryChange(index, nextCategory);
                               }}
                               className={`${inputClass} mt-1`}
                             >
-                              {PROGRAM_ACTIVITY_CATEGORIES.map((c) => (
-                                <option key={c} value={c}>
-                                  {CATEGORY_LABELS[c]}
+                              {PROGRAM_ACTIVITY_CATEGORIES.map((item) => (
+                                <option key={item} value={item}>
+                                  {CATEGORY_LABELS[item]}
                                 </option>
                               ))}
                             </select>
                           )}
                         />
+                        {activityErrors?.category && (
+                          <p className={errorClass}>
+                            {activityErrors.category.message}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="col-span-2 sm:col-span-2">
-                        <label className={labelClass}>Title</label>
+                      <div>
+                        <label
+                          className={labelClass}
+                          htmlFor={`activity-${index}-title`}
+                        >
+                          Title
+                        </label>
                         <input
+                          id={`activity-${index}-title`}
                           type="text"
+                          maxLength={120}
                           {...register(`activities.${index}.title`)}
-                          placeholder="Grilled chicken salad"
+                          placeholder="Morning walk"
                           className={`${inputClass} mt-1`}
                         />
                         {activityErrors?.title && (
@@ -921,38 +490,57 @@ export default function CreateProgramDayPage() {
                       </div>
 
                       <div>
-                        <label className={labelClass}>Response type</label>
+                        <label
+                          className={labelClass}
+                          htmlFor={`activity-${index}-valueType`}
+                        >
+                          Response type
+                        </label>
                         <Controller
                           control={control}
                           name={`activities.${index}.valueType`}
-                          render={({ field: f }) => (
+                          render={({ field: valueTypeField }) => (
                             <select
-                              {...f}
-                              onChange={(e) => {
-                                const nextValueType = e.target
+                              {...valueTypeField}
+                              id={`activity-${index}-valueType`}
+                              onChange={(event) => {
+                                const nextValueType = event.target
                                   .value as ActivityValueType;
-                                f.onChange(nextValueType);
+
+                                valueTypeField.onChange(nextValueType);
                                 applyValueTypeChange(index, nextValueType);
                               }}
                               className={`${inputClass} mt-1`}
                             >
-                              {valueTypeOptions.map((v) => (
-                                <option key={v} value={v}>
-                                  {VALUE_TYPE_LABELS[v]}
+                              {valueTypeOptions.map((item) => (
+                                <option key={item} value={item}>
+                                  {VALUE_TYPE_LABELS[item]}
                                 </option>
                               ))}
                             </select>
                           )}
                         />
+                        {activityErrors?.valueType && (
+                          <p className={errorClass}>
+                            {activityErrors.valueType.message}
+                          </p>
+                        )}
                       </div>
 
                       {showTargetAndUnit && (
                         <>
                           <div>
-                            <label className={labelClass}>Target value</label>
+                            <label
+                              className={labelClass}
+                              htmlFor={`activity-${index}-targetValue`}
+                            >
+                              Target value
+                            </label>
                             <input
+                              id={`activity-${index}-targetValue`}
                               type="number"
-                              min={0}
+                              min="0"
+                              step="any"
                               {...register(`activities.${index}.targetValue`)}
                               placeholder="30"
                               className={`${inputClass} mt-1`}
@@ -963,38 +551,67 @@ export default function CreateProgramDayPage() {
                               </p>
                             )}
                           </div>
+
                           <div>
-                            <label className={labelClass}>Unit</label>
+                            <label
+                              className={labelClass}
+                              htmlFor={`activity-${index}-unit`}
+                            >
+                              Unit
+                            </label>
                             <input
+                              id={`activity-${index}-unit`}
                               type="text"
+                              maxLength={30}
                               {...register(`activities.${index}.unit`)}
-                              placeholder="mins, ml, reps..."
+                              placeholder="ml, reps, minutes..."
                               className={`${inputClass} mt-1`}
                             />
+                            {activityErrors?.unit && (
+                              <p className={errorClass}>
+                                {activityErrors.unit.message}
+                              </p>
+                            )}
                           </div>
                         </>
                       )}
 
                       {showEstimatedDuration && (
                         <div>
-                          <label className={labelClass}>
-                            Est. duration (min)
+                          <label
+                            className={labelClass}
+                            htmlFor={`activity-${index}-duration`}
+                          >
+                            Estimated duration (min)
                           </label>
                           <input
+                            id={`activity-${index}-duration`}
                             type="number"
-                            min={0}
+                            min={1}
+                            step={1}
                             {...register(
                               `activities.${index}.estimatedDurationMinutes`,
                             )}
                             placeholder="Optional"
                             className={`${inputClass} mt-1`}
                           />
+                          {activityErrors?.estimatedDurationMinutes && (
+                            <p className={errorClass}>
+                              {activityErrors.estimatedDurationMinutes.message}
+                            </p>
+                          )}
                         </div>
                       )}
 
                       <div>
-                        <label className={labelClass}>Scheduled time</label>
+                        <label
+                          className={labelClass}
+                          htmlFor={`activity-${index}-scheduledTime`}
+                        >
+                          Scheduled time
+                        </label>
                         <input
+                          id={`activity-${index}-scheduledTime`}
                           type="time"
                           {...register(`activities.${index}.scheduledTime`)}
                           className={`${inputClass} mt-1`}
@@ -1006,44 +623,45 @@ export default function CreateProgramDayPage() {
                         )}
                       </div>
 
-                      <div className="col-span-2 flex items-end gap-2 pb-0.5 sm:col-span-1">
+                      <div className="flex items-end pb-1">
                         <label className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                           <input
                             type="checkbox"
                             {...register(`activities.${index}.isRequired`)}
                             className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500/20"
                           />
-                          Required
+                          Required activity
                         </label>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-1">
+                    <div className="flex shrink-0 flex-col gap-1">
                       <button
                         type="button"
-                        onClick={() => index > 0 && move(index, index - 1)}
-                        disabled={index === 0}
-                        className="rounded-lg p-1 text-slate-300 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
-                        aria-label="Move up"
+                        onClick={() => move(index, index - 1)}
+                        disabled={index === 0 || isSubmitting}
+                        aria-label={`Move activity ${index + 1} up`}
+                        className="rounded-lg p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <ChevronUp size={15} />
                       </button>
+
                       <button
                         type="button"
-                        onClick={() =>
-                          index < fields.length - 1 && move(index, index + 1)
-                        }
-                        disabled={index === fields.length - 1}
-                        className="rounded-lg p-1 text-slate-300 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-40"
-                        aria-label="Move down"
+                        onClick={() => move(index, index + 1)}
+                        disabled={index === fields.length - 1 || isSubmitting}
+                        aria-label={`Move activity ${index + 1} down`}
+                        className="rounded-lg p-1 text-slate-300 transition-colors hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <ChevronDown size={15} />
                       </button>
+
                       <button
                         type="button"
                         onClick={() => remove(index)}
-                        className="rounded-lg p-1.5 text-slate-300 transition-colors duration-150 hover:bg-rose-50 hover:text-rose-600"
-                        aria-label="Remove activity"
+                        disabled={isSubmitting}
+                        aria-label={`Remove activity ${index + 1}`}
+                        className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:opacity-40"
                       >
                         <Trash2 size={15} />
                       </button>
@@ -1052,49 +670,70 @@ export default function CreateProgramDayPage() {
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className={labelClass}>
+                      <label
+                        className={labelClass}
+                        htmlFor={`activity-${index}-description`}
+                      >
                         Description (optional)
                       </label>
                       <textarea
-                        {...register(`activities.${index}.description`)}
+                        id={`activity-${index}-description`}
                         rows={2}
+                        maxLength={500}
+                        {...register(`activities.${index}.description`)}
+                        placeholder="Briefly describe this activity"
                         className={`${inputClass} mt-1`}
                       />
+                      {activityErrors?.description && (
+                        <p className={errorClass}>
+                          {activityErrors.description.message}
+                        </p>
+                      )}
                     </div>
+
                     <div>
-                      <label className={labelClass}>
+                      <label
+                        className={labelClass}
+                        htmlFor={`activity-${index}-instructions`}
+                      >
                         Instructions (optional)
                       </label>
                       <textarea
-                        {...register(`activities.${index}.instructions`)}
+                        id={`activity-${index}-instructions`}
                         rows={2}
+                        maxLength={1000}
+                        {...register(`activities.${index}.instructions`)}
+                        placeholder="Steps or guidance to follow"
                         className={`${inputClass} mt-1`}
                       />
+                      {activityErrors?.instructions && (
+                        <p className={errorClass}>
+                          {activityErrors.instructions.message}
+                        </p>
+                      )}
                     </div>
                   </div>
-
-                  <ActivityConfiguration
-                    category={category}
-                    control={control}
-                    index={index}
-                  />
                 </div>
               );
             })}
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
             <button
               type="button"
               onClick={goBack}
-              className="rounded-xl border border-slate-200/80 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors duration-150 hover:bg-slate-50"
+              disabled={isSubmitting}
+              className="rounded-xl border border-slate-200/80 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-60"
             >
               Cancel
             </button>
+
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:bg-emerald-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+              disabled={
+                isSubmitting || !durationLoaded || durationDays === null
+              }
+              className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSubmitting ? "Creating…" : "Create day"}
             </button>

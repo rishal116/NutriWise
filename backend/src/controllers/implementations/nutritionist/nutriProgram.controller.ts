@@ -6,7 +6,7 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 
 import { INutriProgramController } from "../../interfaces/nutritionist/INutriProgramController";
 import { INutriProgramService } from "../../../services/interfaces/nutritionist/INutriProgramService";
-import { GetProgramsQueryDTO } from "../../../dtos/nutritionist/program/program-request.dto";
+import { GetProgramsQueryDTO } from "../../../dtos/nutritionist/program/nutri-program-request.dto";
 
 @injectable()
 export class NutriProgramController implements INutriProgramController {
@@ -25,24 +25,23 @@ export class NutriProgramController implements INutriProgramController {
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Programs fetched successfully",
       data: programs,
     });
   });
 
   getProgramDetails = asyncHandler(async (req: Request, res: Response) => {
     const nutritionistId = req.user!.userId;
-
     const { programId } = req.params;
 
     const program = await this._nutriProgramService.getProgramDetails(
       nutritionistId,
-      {
-        programId,
-      },
+      { programId },
     );
 
     res.status(StatusCode.OK).json({
       success: true,
+      message: "Program details fetched successfully",
       data: program,
     });
   });

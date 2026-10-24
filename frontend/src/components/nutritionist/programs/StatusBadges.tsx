@@ -1,7 +1,7 @@
 import type {
   ProgramStatus,
   SubscriptionStatus,
-} from "@/dtos/nutritionist/program/program-request.dto";
+} from "@/dtos/nutritionist/program/nutri-program-request.dto";
 
 const PROGRAM_STATUS_STYLES: Record<ProgramStatus, string> = {
   upcoming: "bg-sky-50 text-sky-700 border-sky-100",

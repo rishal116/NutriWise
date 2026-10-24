@@ -16,6 +16,5 @@ export interface UserProgramDayListDTO {
   completedActivities: number;
   skippedActivities: number;
   completionPercentage: number;
-  adherenceScore: number;
   isLocked: boolean;
 }

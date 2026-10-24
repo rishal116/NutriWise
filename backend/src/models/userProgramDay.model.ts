@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
 
 export const PROGRAM_ACTIVITY_CATEGORIES = [
   "meal",
@@ -37,7 +37,6 @@ export interface IUserProgramActivity {
   estimatedDurationMinutes?: number;
   scheduledTime?: string;
   isRequired: boolean;
-  configuration?: Record<string, unknown>;
   order: number;
 }
 
@@ -50,86 +49,73 @@ export interface IUserProgramDay {
   updatedAt: Date;
 }
 
-const ActivitySchema = new Schema<IUserProgramActivity>(
-  {
-    _id: {
-      type: Schema.Types.ObjectId,
-      auto: true,
-    },
-
-    category: {
-      type: String,
-      enum: PROGRAM_ACTIVITY_CATEGORIES,
-      required: true,
-    },
-
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 150,
-    },
-
-    description: {
-      type: String,
-      trim: true,
-      maxlength: 2000,
-    },
-
-    instructions: {
-      type: String,
-      trim: true,
-      maxlength: 5000,
-    },
-
-    valueType: {
-      type: String,
-      enum: ACTIVITY_VALUE_TYPES,
-      required: true,
-    },
-
-    targetValue: {
-      type: Number,
-      min: 0,
-    },
-
-    unit: {
-      type: String,
-      trim: true,
-      maxlength: 30,
-    },
-
-    estimatedDurationMinutes: {
-      type: Number,
-      min: 0,
-    },
-
-    scheduledTime: {
-      type: String,
-      trim: true,
-      match: /^([01]\d|2[0-3]):([0-5]\d)$/,
-    },
-
-    isRequired: {
-      type: Boolean,
-      default: true,
-    },
-
-    configuration: {
-      type: Schema.Types.Mixed,
-      default: {},
-    },
-
-    order: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
+const ActivitySchema = new Schema<IUserProgramActivity>({
+  category: {
+    type: String,
+    enum: PROGRAM_ACTIVITY_CATEGORIES,
+    required: true,
   },
-  {
-    _id: false,
+
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 150,
   },
-);
+
+  description: {
+    type: String,
+    trim: true,
+    maxlength: 2000,
+  },
+
+  instructions: {
+    type: String,
+    trim: true,
+    maxlength: 5000,
+  },
+
+  valueType: {
+    type: String,
+    enum: ACTIVITY_VALUE_TYPES,
+    required: true,
+  },
+
+  targetValue: {
+    type: Number,
+    min: 0,
+  },
+
+  unit: {
+    type: String,
+    trim: true,
+    maxlength: 30,
+  },
+
+  estimatedDurationMinutes: {
+    type: Number,
+    min: 0,
+  },
+
+  scheduledTime: {
+    type: String,
+    trim: true,
+    match: /^([01]\d|2[0-3]):([0-5]\d)$/,
+  },
+
+  isRequired: {
+    type: Boolean,
+    required: true,
+    default: true,
+  },
+
+  order: {
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+  },
+});
 
 const UserProgramDaySchema = new Schema<IUserProgramDay>(
   {
@@ -137,7 +123,6 @@ const UserProgramDaySchema = new Schema<IUserProgramDay>(
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       required: true,
-      index: true,
     },
 
     dayNumber: {
@@ -157,13 +142,8 @@ const UserProgramDaySchema = new Schema<IUserProgramDay>(
 );
 
 UserProgramDaySchema.index(
-  {
-    userProgramId: 1,
-    dayNumber: 1,
-  },
-  {
-    unique: true,
-  },
+  { userProgramId: 1, dayNumber: 1 },
+  { unique: true },
 );
 
 export const UserProgramDayModel = model<IUserProgramDay>(

@@ -3,7 +3,10 @@ import Stripe from "stripe";
 import { inject, injectable } from "inversify";
 
 import logger from "../../../../utils/logger";
+import { CustomError } from "../../../../utils/customError";
+import { StatusCode } from "../../../../enums/statusCode.enum";
 import { TYPES } from "../../../../types/types";
+import { CURRENCY } from "../../../../constants/currency.constants";
 
 import { IStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/IStripeCheckoutHandlerService";
 import { IUserPlanRepository } from "../../../../repositories/interfaces/user/program/IUserPlanRepository";
@@ -13,8 +16,6 @@ import { IWalletRepository } from "../../../../repositories/interfaces/common/IW
 import { INutritionistPlanRepository } from "../../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 import { IUserProgramProgressRepository } from "../../../../repositories/interfaces/user/tracking/IUserProgramProgressRepository";
 import { IConversationService } from "../../../interfaces/chat/IConversationService";
-
-import { CURRENCY } from "../../../../constants/currency.constants";
 
 @injectable()
 export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerService {
@@ -42,122 +43,133 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
   ) {}
 
   async handle(session: Stripe.Checkout.Session): Promise<void> {
-    console.log("\n========== STRIPE CHECKOUT HANDLER ==========");
-    console.log("Stripe session ID:", session.id);
-    console.log("Stripe metadata:", session.metadata);
+    const userIdValue = session.metadata?.userId;
+    const nutritionistIdValue = session.metadata?.nutritionistId;
+    const planIdValue = session.metadata?.planId;
+
+    if (!userIdValue || !nutritionistIdValue || !planIdValue) {
+      throw new CustomError(
+        "Stripe checkout session metadata is incomplete.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
 
     if (
-      !session.metadata?.userId ||
-      !session.metadata?.planId ||
-      !session.metadata?.nutritionistId
+      !Types.ObjectId.isValid(userIdValue) ||
+      !Types.ObjectId.isValid(nutritionistIdValue) ||
+      !Types.ObjectId.isValid(planIdValue)
     ) {
-      throw new Error("Stripe session metadata is missing.");
+      throw new CustomError(
+        "Stripe checkout session contains invalid IDs.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (session.payment_status !== "paid") {
+      throw new CustomError(
+        "Stripe checkout session has not been paid.",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
     if (!session.payment_intent) {
-      throw new Error("Stripe payment intent not found.");
+      throw new CustomError(
+        "Stripe payment intent not found.",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
-    console.log("User ID:", session.metadata.userId);
-    console.log("Plan ID:", session.metadata.planId);
-    console.log("Nutritionist ID:", session.metadata.nutritionistId);
-    console.log("Payment Intent:", session.payment_intent);
+    if (
+      session.amount_total === null ||
+      session.amount_total === undefined ||
+      session.currency?.toUpperCase() !== CURRENCY
+    ) {
+      throw new CustomError(
+        "Stripe payment amount or currency is invalid.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
 
     const alreadyProcessed =
       await this._paymentRepository.existsByCheckoutSessionId(session.id);
 
-    console.log("Already processed:", alreadyProcessed);
-
     if (alreadyProcessed) {
-      logger.warn("Duplicate Stripe webhook ignored.", {
-        sessionId: session.id,
+      logger.warn("Duplicate Stripe checkout webhook ignored.", {
+        checkoutSessionId: session.id,
       });
       return;
     }
 
-    const plan = await this._planRepository.findById(session.metadata.planId);
+    const plan = await this._planRepository.findById(planIdValue);
 
     if (!plan) {
-      throw new Error("Nutritionist plan not found.");
+      throw new CustomError(
+        "Nutritionist plan not found.",
+        StatusCode.NOT_FOUND,
+      );
     }
 
-    console.log("\n========== PLAN ==========");
-    console.log("Plan ID:", plan._id.toString());
-    console.log("Plan title:", plan.title);
-    console.log("Plan price:", plan.price);
-    console.log("Plan currency:", plan.currency);
+    if (plan.price * 100 !== session.amount_total) {
+      throw new CustomError(
+        "Stripe payment amount does not match the plan price.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
 
-    const userId = new Types.ObjectId(session.metadata.userId);
-    const nutritionistId = new Types.ObjectId(session.metadata.nutritionistId);
-    const planId = new Types.ObjectId(session.metadata.planId);
+    if (plan.nutritionistId.toString() !== nutritionistIdValue) {
+      throw new CustomError(
+        "Nutritionist does not own this plan.",
+        StatusCode.FORBIDDEN,
+      );
+    }
+
+    const adminId = process.env.ADMIN_ID;
+
+    if (!adminId || !Types.ObjectId.isValid(adminId)) {
+      throw new CustomError(
+        "Admin wallet configuration is invalid.",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const userId = new Types.ObjectId(userIdValue);
+    const nutritionistId = new Types.ObjectId(nutritionistIdValue);
+    const planId = new Types.ObjectId(planIdValue);
+
+    const paymentIntentId =
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : session.payment_intent.id;
+
+    const amount = session.amount_total / 100;
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + plan.durationDays);
 
     const dbSession = await mongoose.startSession();
 
     try {
       dbSession.startTransaction();
 
-      console.log("\n========== TRANSACTION STARTED ==========");
+      const duplicatePayment =
+        await this._paymentRepository.existsByCheckoutSessionId(session.id);
 
-      const latestPlan = await this._userPlanRepository.findLatestPlan(
-        userId,
-        nutritionistId,
-      );
+      if (duplicatePayment) {
+        await dbSession.abortTransaction();
 
-      console.log("\n========== LATEST USER PLAN ==========");
-      console.log(
-        "Latest plan:",
-        latestPlan
-          ? {
-              id: latestPlan._id.toString(),
-              status: latestPlan.subscriptionStatus,
-              startDate: latestPlan.startDate,
-              endDate: latestPlan.endDate,
-            }
-          : null,
-      );
-
-      let startDate = new Date();
-      let subscriptionStatus: "active" | "pending" = "active";
-
-      if (latestPlan?.endDate && latestPlan.endDate > new Date()) {
-        startDate = new Date(latestPlan.endDate);
-        startDate.setDate(startDate.getDate() + 1);
-        subscriptionStatus = "pending";
+        logger.warn("Duplicate Stripe checkout webhook ignored.", {
+          checkoutSessionId: session.id,
+        });
+        return;
       }
-
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + plan.durationDays);
-
-      console.log("\n========== PLAN DATES ==========");
-      console.log("Start date:", startDate);
-      console.log("End date:", endDate);
-      console.log("Subscription status:", subscriptionStatus);
-
-      /*
-       * =====================================================
-       * USER PLAN
-       * =====================================================
-       */
 
       const userPlan = await this._userPlanRepository.createWithSession(
         {
           userId,
           nutritionistId,
           planId,
-
-          paymentStatus: "paid",
-          subscriptionStatus,
-
-          amount: plan.price,
+          amount,
           currency: CURRENCY,
-
-          payment: {
-            provider: "stripe",
-            sessionId: session.id,
-            transactionId: session.payment_intent.toString(),
-            completedAt: new Date(),
-          },
-
           planSnapshot: {
             title: plan.title,
             description: plan.description,
@@ -166,24 +178,9 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
             price: plan.price,
             currency: CURRENCY,
           },
-
-          startDate,
-          endDate,
         },
         dbSession,
       );
-
-      console.log("\n========== USER PLAN CREATED ==========");
-      console.log("UserPlan ID:", userPlan._id.toString());
-      console.log("UserPlan status:", userPlan.subscriptionStatus);
-      console.log("UserPlan payment status:", userPlan.paymentStatus);
-      console.log("UserPlan currency:", userPlan.currency);
-
-      /*
-       * =====================================================
-       * USER PROGRAM
-       * =====================================================
-       */
 
       const userProgram = await this._userProgramRepository.createWithSession(
         {
@@ -191,156 +188,84 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
           nutritionistId,
           userPlanId: userPlan._id,
           planId,
-
           startDate,
           endDate,
-
           durationDays: plan.durationDays,
-
-          status: subscriptionStatus === "active" ? "active" : "upcoming",
+          status: "active",
         },
         dbSession,
       );
 
-      console.log("\n========== USER PROGRAM CREATED ==========");
-      console.log("UserProgram ID:", userProgram._id.toString());
-      console.log("UserProgram status:", userProgram.status);
+      await this._userProgramProgressRepository.createWithSession(
+        {
+          userId,
+          userProgramId: userProgram._id,
+          totalDays: plan.durationDays,
+        },
+        dbSession,
+      );
 
-      /*
-       * =====================================================
-       * USER PROGRAM PROGRESS
-       * =====================================================
-       */
+      await this._conversationService.createDirectConversation(
+        {
+          currentUserId: userId.toString(),
+          otherUserId: nutritionistId.toString(),
+        },
+        dbSession,
+      );
 
-      const userProgramProgress =
-        await this._userProgramProgressRepository.createWithSession(
-          {
-            userId,
-            userProgramId: userProgram._id,
-            totalDays: plan.durationDays,
-          },
-          dbSession,
-        );
-
-      console.log("\n========== USER PROGRAM PROGRESS CREATED ==========");
-      console.log("Progress ID:", userProgramProgress._id.toString());
-
-      /*
-       * =====================================================
-       * CONVERSATION
-       * =====================================================
-       */
-
-      console.log("\n========== CREATING COACHING CONVERSATION ==========");
-      console.log("Current user:", userId.toString());
-      console.log("Nutritionist:", nutritionistId.toString());
-
-      const conversation =
-        await this._conversationService.createDirectConversation(
-          {
-            currentUserId: userId.toString(),
-            otherUserId: nutritionistId.toString(),
-          },
-          dbSession,
-        );
-
-      console.log("\n========== CONVERSATION CREATED ==========");
-      console.log("Conversation ID:", conversation.id.toString());
-
-      /*
-       * =====================================================
-       * PAYMENT
-       * =====================================================
-       */
-
-      const payment = await this._paymentRepository.createWithSession(
+      await this._paymentRepository.createWithSession(
         {
           userId,
           sellerId: nutritionistId,
-
           resourceType: "nutritionist_plan",
           resourceId: planId,
-
           provider: "stripe",
           status: "paid",
-
-          amount: plan.price,
+          amount,
           currency: CURRENCY,
-
           checkoutSessionId: session.id,
-          paymentIntentId: session.payment_intent.toString(),
-
+          paymentIntentId,
           itemSnapshot: {
             title: plan.title,
-            price: plan.price,
+            price: amount,
             currency: CURRENCY,
-          },
-
-          metadata: {
-            userPlanId: userPlan._id.toString(),
           },
         },
         dbSession,
       );
 
-      console.log("\n========== PAYMENT CREATED ==========");
-      console.log("Payment ID:", payment._id.toString());
-
-      /*
-       * =====================================================
-       * ADMIN WALLET
-       * =====================================================
-       */
-
       const adminWallet = await this._walletRepository.findOrCreate(
-        process.env.ADMIN_ID!,
+        adminId,
         "admin",
         dbSession,
       );
 
-      console.log("\n========== ADMIN WALLET ==========");
-      console.log("Admin wallet ID:", adminWallet._id.toString());
-      console.log("Balance before escrow:", adminWallet.availableBalance);
-      console.log("Escrow before:", adminWallet.escrowBalance);
-
       await this._walletRepository.creditEscrow(
         adminWallet._id.toString(),
-        plan.price,
+        amount,
         dbSession,
       );
 
-      console.log("Escrow credited:", plan.price);
-
-      /*
-       * =====================================================
-       * COMMIT
-       * =====================================================
-       */
-
       await dbSession.commitTransaction();
-
-      console.log("\n========== TRANSACTION COMMITTED ==========");
-      console.log("Stripe checkout processed successfully:", session.id);
 
       logger.info("Stripe checkout processed successfully.", {
         checkoutSessionId: session.id,
+        userPlanId: userPlan._id.toString(),
+        userProgramId: userProgram._id.toString(),
       });
     } catch (error) {
-      console.log("\n========== TRANSACTION FAILED ==========");
-      console.log(error);
+      if (dbSession.inTransaction()) {
+        await dbSession.abortTransaction();
+      }
 
-      await dbSession.abortTransaction();
-
-      console.log("Transaction aborted.");
-
-      logger.error("Stripe checkout processing failed.", error);
+      logger.error("Stripe checkout processing failed.", {
+        checkoutSessionId: session.id,
+        error,
+      });
 
       throw error;
     } finally {
       await dbSession.endSession();
-
-      console.log("MongoDB session ended.");
-      console.log("==========================================\n");
     }
   }
 }

@@ -1,5 +1,4 @@
 import { Schema, Types, model } from "mongoose";
-
 import { CURRENCY, Currency } from "../constants/currency.constants";
 
 export const PAYMENT_STATUSES = [
@@ -8,48 +7,39 @@ export const PAYMENT_STATUSES = [
   "failed",
   "refunded",
 ] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const PAYMENT_PROVIDERS = ["stripe", "razorpay"] as const;
+export const PAYMENT_PROVIDERS = ["stripe"] as const;
+export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
 export const PAYMENT_RESOURCE_TYPES = [
   "nutritionist_plan",
   "consultation_session",
-  "subscription",
-  "membership",
-  "wallet_topup",
-  "session",
   "session_registration",
 ] as const;
-
-export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
-
-export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
-
 export type PaymentResourceType = (typeof PAYMENT_RESOURCE_TYPES)[number];
 
 export interface IPayment {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  sellerId?: Types.ObjectId;
+  sellerId?: Types.ObjectId | null;
   resourceType: PaymentResourceType;
   resourceId: Types.ObjectId;
   provider: PaymentProvider;
   status: PaymentStatus;
   amount: number;
+  commissionAmount: number;
   currency: Currency;
   checkoutSessionId: string;
-  paymentIntentId?: string;
-  chargeId?: string;
-
+  paymentIntentId?: string | null;
+  chargeId?: string | null;
   itemSnapshot: {
     title: string;
     price: number;
     currency: Currency;
   };
-
-  refundedAmount?: number;
-  refundReason?: string;
-  metadata?: Record<string, string>;
+  refundedAmount: number;
+  refundReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,34 +50,29 @@ const PaymentSchema = new Schema<IPayment>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     sellerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,
-      index: true,
     },
 
     resourceType: {
       type: String,
       enum: PAYMENT_RESOURCE_TYPES,
       required: true,
-      index: true,
     },
 
     resourceId: {
       type: Schema.Types.ObjectId,
       required: true,
-      index: true,
     },
 
     provider: {
       type: String,
       enum: PAYMENT_PROVIDERS,
       required: true,
-      default: "stripe",
     },
 
     status: {
@@ -95,13 +80,19 @@ const PaymentSchema = new Schema<IPayment>(
       enum: PAYMENT_STATUSES,
       required: true,
       default: "pending",
-      index: true,
     },
 
     amount: {
       type: Number,
       required: true,
       min: 0,
+    },
+
+    commissionAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
     },
 
     currency: {
@@ -115,7 +106,7 @@ const PaymentSchema = new Schema<IPayment>(
       type: String,
       required: true,
       unique: true,
-      index: true,
+      trim: true,
     },
 
     paymentIntentId: {
@@ -123,7 +114,6 @@ const PaymentSchema = new Schema<IPayment>(
       default: null,
       unique: true,
       sparse: true,
-      index: true,
     },
 
     chargeId: {
@@ -131,7 +121,6 @@ const PaymentSchema = new Schema<IPayment>(
       default: null,
       unique: true,
       sparse: true,
-      index: true,
     },
 
     itemSnapshot: {
@@ -140,13 +129,11 @@ const PaymentSchema = new Schema<IPayment>(
         required: true,
         trim: true,
       },
-
       price: {
         type: Number,
         required: true,
         min: 0,
       },
-
       currency: {
         type: String,
         enum: [CURRENCY],
@@ -157,6 +144,7 @@ const PaymentSchema = new Schema<IPayment>(
 
     refundedAmount: {
       type: Number,
+      required: true,
       default: 0,
       min: 0,
     },
@@ -165,12 +153,7 @@ const PaymentSchema = new Schema<IPayment>(
       type: String,
       trim: true,
       maxlength: 500,
-    },
-
-    metadata: {
-      type: Map,
-      of: String,
-      default: {},
+      default: null,
     },
   },
   {
@@ -178,24 +161,8 @@ const PaymentSchema = new Schema<IPayment>(
   },
 );
 
-PaymentSchema.index({
-  userId: 1,
-  createdAt: -1,
-});
-
-PaymentSchema.index({
-  sellerId: 1,
-  createdAt: -1,
-});
-
-PaymentSchema.index({
-  resourceType: 1,
-  resourceId: 1,
-});
-
-PaymentSchema.index({
-  provider: 1,
-  checkoutSessionId: 1,
-});
+PaymentSchema.index({ userId: 1, createdAt: -1 });
+PaymentSchema.index({ sellerId: 1, createdAt: -1 });
+PaymentSchema.index({ resourceType: 1, resourceId: 1 });
 
 export const PaymentModel = model<IPayment>("Payment", PaymentSchema);

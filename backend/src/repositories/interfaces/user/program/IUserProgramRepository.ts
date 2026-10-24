@@ -1,4 +1,5 @@
-import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
+import { FilterQuery, Types, UpdateResult } from "mongoose";
+
 import { IBaseRepository } from "../../common/IBaseRepository";
 import { IUserProgram } from "../../../../models/userProgram.model";
 import { IUserProgramPopulated } from "../../../../types/userProgram.populated";
@@ -34,13 +35,6 @@ export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   findByIdAndUser(
     userId: string | Types.ObjectId,
     programId: string | Types.ObjectId,
-  ): Promise<IUserProgram | null>;
-
-  updateProgress(
-    programId: string | Types.ObjectId,
-    currentDay: number,
-    completionPercentage: number,
-    session?: ClientSession,
   ): Promise<IUserProgram | null>;
 
   activateUpcomingPrograms(): Promise<UpdateResult>;

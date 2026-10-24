@@ -1,4 +1,5 @@
-import { Schema, model, Types } from "mongoose";
+
+import { Schema, Types, model } from "mongoose";
 
 export enum DailyCheckInMood {
   VERY_BAD = "very_bad",
@@ -20,7 +21,7 @@ export interface IUserDailyCheckIn {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   userProgramId: Types.ObjectId;
-  userDayTrackingId?: Types.ObjectId;
+  userDayTrackingId?: Types.ObjectId | null;
   date: Date;
   mood: DailyCheckInMood;
   energy: DailyCheckInLevel;
@@ -29,13 +30,12 @@ export interface IUserDailyCheckIn {
   hunger: DailyCheckInLevel;
   sleepHours?: number;
   waterIntakeMl?: number;
-  weightKg?: number;
   painLevel?: number;
   digestion?: DailyCheckInLevel;
   userNotes?: string;
   nutritionistNotes?: string;
   evidence: string[];
-  completedAt?: Date;
+  completedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,27 +46,23 @@ const UserDailyCheckInSchema = new Schema<IUserDailyCheckIn>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     userProgramId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       required: true,
-      index: true,
     },
 
     userDayTrackingId: {
       type: Schema.Types.ObjectId,
       ref: "UserDayTracking",
       default: null,
-      index: true,
     },
 
     date: {
       type: Date,
       required: true,
-      index: true,
     },
 
     mood: {
@@ -110,15 +106,14 @@ const UserDailyCheckInSchema = new Schema<IUserDailyCheckIn>(
       min: 0,
     },
 
-    weightKg: {
-      type: Number,
-      min: 0,
-    },
-
     painLevel: {
       type: Number,
       min: 0,
       max: 10,
+      validate: {
+        validator: (value: number) => Number.isInteger(value),
+        message: "Pain level must be an integer from 0 to 10.",
+      },
     },
 
     digestion: {
@@ -141,6 +136,10 @@ const UserDailyCheckInSchema = new Schema<IUserDailyCheckIn>(
     evidence: {
       type: [String],
       default: [],
+      validate: {
+        validator: (items: string[]) => items.length <= 10,
+        message: "Maximum 10 evidence attachments are allowed.",
+      },
     },
 
     completedAt: {
@@ -154,23 +153,11 @@ const UserDailyCheckInSchema = new Schema<IUserDailyCheckIn>(
 );
 
 UserDailyCheckInSchema.index(
-  {
-    userId: 1,
-    userProgramId: 1,
-    date: 1,
-  },
-  {
-    unique: true,
-  },
+  { userId: 1, userProgramId: 1, date: 1 },
+  { unique: true },
 );
-UserDailyCheckInSchema.index({
-  userProgramId: 1,
-  date: -1,
-});
-UserDailyCheckInSchema.index({
-  userId: 1,
-  date: -1,
-});
+
+UserDailyCheckInSchema.index({ userProgramId: 1, date: -1 });
 
 export const UserDailyCheckInModel = model<IUserDailyCheckIn>(
   "UserDailyCheckIn",

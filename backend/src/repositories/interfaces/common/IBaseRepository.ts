@@ -1,17 +1,19 @@
-import { ClientSession, FilterQuery, Types, UpdateQuery } from "mongoose";
+import type { ClientSession, FilterQuery, Types, UpdateQuery } from "mongoose";
 
 export interface IBaseRepository<T> {
-  create(data: Partial<T>): Promise<T>;
-
-  createWithSession(data: Partial<T>, session: ClientSession): Promise<T>;
+  create(data: Partial<T>, session?: ClientSession): Promise<T>;
 
   findOne(filter: FilterQuery<T>): Promise<T | null>;
 
   findById(id: string | Types.ObjectId): Promise<T | null>;
 
-  findByIds(ids: (string | Types.ObjectId)[]): Promise<T[]>;
-
   find(filter: FilterQuery<T>): Promise<T[]>;
+
+  updateById(
+    id: string | Types.ObjectId,
+    update: UpdateQuery<T>,
+    session?: ClientSession,
+  ): Promise<T | null>;
 
   updateOne(
     filter: FilterQuery<T>,
@@ -19,14 +21,9 @@ export interface IBaseRepository<T> {
     session?: ClientSession,
   ): Promise<number>;
 
-  updateById(
-    id: string | Types.ObjectId,
-    update: UpdateQuery<T>,
-  ): Promise<T | null>;
+  deleteOne(filter: FilterQuery<T>, session?: ClientSession): Promise<number>;
 
-  deleteOne(filter: FilterQuery<T>): Promise<boolean>;
-
-  count(filter: FilterQuery<T>): Promise<number>;
+  countDocuments(filter: FilterQuery<T>): Promise<number>;
 
   exists(filter: FilterQuery<T>): Promise<boolean>;
 }

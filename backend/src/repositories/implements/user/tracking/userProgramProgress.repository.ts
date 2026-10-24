@@ -1,3 +1,4 @@
+
 import { injectable } from "inversify";
 import { Types } from "mongoose";
 import { BaseRepository } from "../../common/base.repository";
@@ -10,45 +11,45 @@ import { IUserProgramProgressRepository } from "../../../interfaces/user/trackin
 @injectable()
 export class UserProgramProgressRepository
   extends BaseRepository<IUserProgramProgress>
-  implements IUserProgramProgressRepository
-{
+  implements IUserProgramProgressRepository {
   constructor() {
     super(UserProgramProgressModel);
   }
+
+
 
   async findByProgram(
     userProgramId: string | Types.ObjectId,
   ): Promise<IUserProgramProgress | null> {
     return this._model
-      .findOne({
-        userProgramId,
-      })
-      .lean<IUserProgramProgress | null>();
+      .findOne({ userProgramId })
+      .lean<IUserProgramProgress | null>()
+      .exec();
   }
 
   async findByUser(
     userId: string | Types.ObjectId,
   ): Promise<IUserProgramProgress[]> {
     return this._model
-      .find({
-        userId,
-      })
+      .find({ userId })
       .sort({
         completionPercentage: -1,
         updatedAt: -1,
       })
-      .lean<IUserProgramProgress[]>();
+      .lean<IUserProgramProgress[]>()
+      .exec();
   }
 
   async updateProgress(
-    id: string | Types.ObjectId,
+    userProgramId: string | Types.ObjectId,
     update: Partial<IUserProgramProgress>,
   ): Promise<IUserProgramProgress | null> {
     return this._model
-      .findByIdAndUpdate(id, update, {
+      .findOneAndUpdate({ userProgramId }, update, {
         new: true,
         runValidators: true,
       })
-      .lean<IUserProgramProgress | null>();
+      .lean<IUserProgramProgress | null>()
+      .exec();
   }
 }

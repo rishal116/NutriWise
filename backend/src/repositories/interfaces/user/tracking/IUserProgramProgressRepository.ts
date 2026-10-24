@@ -1,12 +1,9 @@
-import { ClientSession, Types } from "mongoose";
+import { Types } from "mongoose";
 import { IBaseRepository } from "../../common/IBaseRepository";
 import { IUserProgramProgress } from "../../../../models/userProgramProgress.model";
 
 export interface IUserProgramProgressRepository extends IBaseRepository<IUserProgramProgress> {
-  createWithSession(
-    data: Partial<IUserProgramProgress>,
-    session: ClientSession,
-  ): Promise<IUserProgramProgress>;
+
 
   findByProgram(
     userProgramId: string | Types.ObjectId,

@@ -22,10 +22,7 @@ export class UserDayTrackingRepository
     dayNumber: number,
   ): Promise<IUserDayTracking | null> {
     return this._model
-      .findOne({
-        userProgramId,
-        dayNumber,
-      })
+      .findOne({ userProgramId, dayNumber })
       .lean<IUserDayTracking | null>();
   }
 
@@ -33,12 +30,8 @@ export class UserDayTrackingRepository
     userProgramId: string | Types.ObjectId,
   ): Promise<IUserDayTracking[]> {
     return this._model
-      .find({
-        userProgramId,
-      })
-      .sort({
-        dayNumber: 1,
-      })
+      .find({ userProgramId })
+      .sort({ dayNumber: 1 })
       .lean<IUserDayTracking[]>();
   }
 
@@ -50,7 +43,38 @@ export class UserDayTrackingRepository
         userProgramId,
         status: UserDayTrackingStatus.IN_PROGRESS,
       })
+      .sort({ dayNumber: 1 })
       .lean<IUserDayTracking | null>();
+  }
+
+  async findOrCreateForProgramDay(
+    trackingData: Partial<IUserDayTracking> & {
+      userProgramId: Types.ObjectId;
+      userProgramDayId: Types.ObjectId;
+      dayNumber: number;
+    },
+  ): Promise<IUserDayTracking> {
+    const tracking = await this._model.findOneAndUpdate(
+      {
+        userProgramId: trackingData.userProgramId,
+        dayNumber: trackingData.dayNumber,
+      },
+      {
+        $setOnInsert: trackingData,
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+        runValidators: true,
+      },
+    );
+
+    if (!tracking) {
+      throw new Error("Failed to find or create user day tracking");
+    }
+
+    return tracking;
   }
 
   async updateStatus(
@@ -60,38 +84,38 @@ export class UserDayTrackingRepository
     return this._model
       .findByIdAndUpdate(
         id,
-        { status },
-        {
-          new: true,
-          runValidators: true,
-        },
+        { $set: { status } },
+        { new: true, runValidators: true },
       )
       .lean<IUserDayTracking | null>();
   }
 
   async lock(id: string | Types.ObjectId): Promise<IUserDayTracking | null> {
     return this._model
-      .findByIdAndUpdate(
-        id,
-        { isLocked: true },
-        {
-          new: true,
-          runValidators: true,
-        },
+      .findOneAndUpdate(
+        { _id: id, isLocked: false },
+        { $set: { isLocked: true } },
+        { new: true, runValidators: true },
       )
       .lean<IUserDayTracking | null>();
   }
 
   async unlock(id: string | Types.ObjectId): Promise<IUserDayTracking | null> {
     return this._model
-      .findByIdAndUpdate(
-        id,
-        { isLocked: false },
-        {
-          new: true,
-          runValidators: true,
-        },
+      .findOneAndUpdate(
+        { _id: id, isLocked: true },
+        { $set: { isLocked: false } },
+        { new: true, runValidators: true },
       )
+      .lean<IUserDayTracking | null>();
+  }
+
+  async findByProgramAndProgramDay(
+    userProgramId: string | Types.ObjectId,
+    userProgramDayId: string | Types.ObjectId,
+  ): Promise<IUserDayTracking | null> {
+    return this._model
+      .findOne({ userProgramId, userProgramDayId })
       .lean<IUserDayTracking | null>();
   }
 }
