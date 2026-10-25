@@ -1,4 +1,4 @@
-import {
+import type {
   ChallengeAccessType,
   ChallengeCategory,
   ChallengeDifficulty,
@@ -7,24 +7,13 @@ import {
 
 export interface AdminChallengeDetailsDTO {
   id: string;
-
   title: string;
   description: string;
-
   instructions?: string;
-  coverImageUrl?: string;
   thumbnailUrl?: string;
-
   category: ChallengeCategory;
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
-
   durationDays: number;
-
   status: ChallengeStatus;
-
-  createdBy: string;
-
-  createdAt: Date;
-  updatedAt: Date;
 }

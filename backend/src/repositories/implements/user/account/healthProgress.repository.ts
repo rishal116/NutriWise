@@ -1,47 +1,77 @@
 import { injectable } from "inversify";
-import { Types } from "mongoose";
-import { IHealthProgressRepository } from "../../../interfaces/user/account/IHealthProgressRepository";
+import { Types, type ClientSession } from "mongoose";
+
 import {
   HealthProgressModel,
-  IHealthProgress,
+  type IHealthProgress,
 } from "../../../../models/healthProgress.model";
-import { IUpsertHealthProgressDTO } from "../../../../dtos/user/healthProgress.dto";
+import type { IHealthProgressRepository } from "../../../interfaces/user/account/IHealthProgressRepository";
+import type { IUpsertDailyProgress } from "../../../../types/user/health-progress/health-progress.types";
+import { BaseRepository } from "../../common/base.repository";
 
 @injectable()
-export class HealthProgressRepository implements IHealthProgressRepository {
-  private normalizeDate(date?: Date): Date {
-    const d = date ? new Date(date) : new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
+export class HealthProgressRepository
+  extends BaseRepository<IHealthProgress>
+  implements IHealthProgressRepository
+{
+  constructor() {
+    super(HealthProgressModel);
+  }
+
+  private normalizeDate(date: Date = new Date()): Date {
+    const normalizedDate = new Date(date);
+    normalizedDate.setHours(0, 0, 0, 0);
+
+    return normalizedDate;
   }
 
   async upsertDailyProgress(
-    data: IUpsertHealthProgressDTO,
-  ): Promise<IHealthProgress> {
-    const normalizedDate = this.normalizeDate(data.date);
+    data: IUpsertDailyProgress,
+    session?: ClientSession,
+  ): Promise<IHealthProgress | null> {
+    if (!Types.ObjectId.isValid(data.userId)) {
+      return null;
+    }
 
-    const updateFields: any = {};
+    const userId = new Types.ObjectId(data.userId);
+    const date = this.normalizeDate(data.date);
 
-    if (data.weightKg !== undefined) updateFields.weightKg = data.weightKg;
-    if (data.bmi !== undefined) updateFields.bmi = data.bmi;
-    if (data.dailyWaterIntakeLiters !== undefined)
-      updateFields.dailyWaterIntakeLiters = data.dailyWaterIntakeLiters;
-    if (data.sleepDurationHours !== undefined)
-      updateFields.sleepDurationHours = data.sleepDurationHours;
+    const { weightKg, bmi, dailyWaterIntakeLiters, sleepDurationHours } = data;
 
-    return await HealthProgressModel.findOneAndUpdate(
-      {
-        userId: new Types.ObjectId(data.userId),
-        date: normalizedDate,
-      },
-      {
-        $set: updateFields,
-      },
-      {
-        upsert: true,
-        new: true,
-      },
-    );
+    const updateFields: Partial<
+      Pick<
+        IHealthProgress,
+        "weightKg" | "bmi" | "dailyWaterIntakeLiters" | "sleepDurationHours"
+      >
+    > = {};
+
+    if (weightKg !== undefined) updateFields.weightKg = weightKg;
+    if (bmi !== undefined) updateFields.bmi = bmi;
+
+    if (dailyWaterIntakeLiters !== undefined) {
+      updateFields.dailyWaterIntakeLiters = dailyWaterIntakeLiters;
+    }
+
+    if (sleepDurationHours !== undefined) {
+      updateFields.sleepDurationHours = sleepDurationHours;
+    }
+
+    return this._model
+      .findOneAndUpdate(
+        { userId, date },
+        {
+          $set: updateFields,
+          $setOnInsert: { userId, date },
+        },
+        {
+          upsert: true,
+          new: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+          session,
+        },
+      )
+      .exec();
   }
 
   async findByUserAndDateRange(
@@ -49,24 +79,31 @@ export class HealthProgressRepository implements IHealthProgressRepository {
     fromDate: Date,
     toDate: Date,
   ): Promise<IHealthProgress[]> {
-    return await HealthProgressModel.find({
-      userId: new Types.ObjectId(userId),
-      date: {
-        $gte: this.normalizeDate(fromDate),
-        $lte: this.normalizeDate(toDate),
-      },
-    }).sort({ date: 1 });
-  }
+    if (!Types.ObjectId.isValid(userId)) {
+      return [];
+    }
 
-  async findByUserId(userId: string): Promise<IHealthProgress[]> {
-    return await HealthProgressModel.find({
-      userId: new Types.ObjectId(userId),
-    }).sort({ date: 1 });
+    const startDate = this.normalizeDate(fromDate);
+    const endDate = this.normalizeDate(toDate);
+    endDate.setDate(endDate.getDate() + 1);
+
+    return this._model
+      .find({
+        userId: new Types.ObjectId(userId),
+        date: { $gte: startDate, $lt: endDate },
+      })
+      .sort({ date: 1 })
+      .exec();
   }
 
   async findLatestByUserId(userId: string): Promise<IHealthProgress | null> {
-    return await HealthProgressModel.findOne({
-      userId: new Types.ObjectId(userId),
-    }).sort({ date: -1 });
+    if (!Types.ObjectId.isValid(userId)) {
+      return null;
+    }
+
+    return this._model
+      .findOne({ userId: new Types.ObjectId(userId) })
+      .sort({ date: -1 })
+      .exec();
   }
 }

@@ -143,10 +143,11 @@ export default function OtpForm() {
       dispatch(clearSignupEmail());
       localStorage.removeItem("signupEmail");
 
-      if (!res.isProfileCompleted) {
+      if (!res.data?.isProfileCompleted) {
         router.replace("/complete-profile");
         return;
       }
+
       router.replace("/");
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));

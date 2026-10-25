@@ -116,11 +116,14 @@ export default function LoginForm() {
         password,
       });
 
-      await completeAuthentication(
-        response.accessToken,
-        response.activeRole as ActiveRole,
-        response.isProfileCompleted,
-      );
+      if (!response.success) {
+        toast.error(response.message || "Login failed.");
+        return;
+      }
+
+      const { accessToken, activeRole, isProfileCompleted } = response.data;
+
+      await completeAuthentication(accessToken, activeRole, isProfileCompleted);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -145,11 +148,14 @@ export default function LoginForm() {
         credential: credentialResponse.credential,
       });
 
-      await completeAuthentication(
-        response.accessToken,
-        response.activeRole as ActiveRole,
-        response.isProfileCompleted,
-      );
+      if (!response.success) {
+        toast.error(response.message || "Google sign-in failed.");
+        return;
+      }
+
+      const { accessToken, activeRole, isProfileCompleted } = response.data;
+
+      await completeAuthentication(accessToken, activeRole, isProfileCompleted);
     } catch (error: unknown) {
       toast.error(getErrorMessage(error));
     } finally {

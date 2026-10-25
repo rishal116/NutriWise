@@ -1,17 +1,11 @@
 "use client";
 
-import {
-  FormEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
-import Cropper, { Area } from "react-easy-crop";
-
+import Cropper, { type Area } from "react-easy-crop";
 import type { LucideIcon } from "lucide-react";
 
 import {
@@ -31,25 +25,20 @@ import {
   CHALLENGE_DIFFICULTIES,
 } from "@/types/admin/challenge/challenge.types";
 
-import { CreateChallengeDTO } from "@/dtos/admin/challenge/create-challenge.dto";
-
-import { adminChallengeService } from "@/services/admin/adminChallenge.service";
+import type { CreateChallengeDTO } from "@/dtos/admin/challenge/create-challenge.dto";
+import { adminChallengeService } from "@/services/admin/admin-challenge.service";
 
 interface ChallengeFormProps {
   mode: "create" | "edit";
   challengeId?: string;
   initialValues?: Partial<CreateChallengeDTO> & {
     thumbnailUrl?: string;
-    coverImageUrl?: string;
   };
 }
 
 type ChallengeFormState = CreateChallengeDTO & {
   thumbnailUrl?: string;
-  coverImageUrl?: string;
 };
-
-type ImageField = "thumbnail" | "coverImage";
 
 interface ImageConfig {
   label: string;
@@ -70,52 +59,35 @@ interface ImageState {
 }
 
 interface CropTarget {
-  field: ImageField;
   file: File;
 }
 
-const IMAGE_CONFIG: Record<ImageField, ImageConfig> = {
-  thumbnail: {
-    label: "Thumbnail",
-    description: "Used for Challenge cards and discovery sections.",
-    aspectRatio: 2 / 3,
-    aspectLabel: "2:3 portrait",
-    outputWidth: 600,
-    outputHeight: 900,
-    accept: "image/jpeg,image/png,image/webp",
-    maxFileSizeMB: 5,
-  },
-
-  coverImage: {
-    label: "Cover Image",
-    description: "Used as the wide hero image on the Challenge Details page.",
-    aspectRatio: 16 / 9,
-    aspectLabel: "16:9 banner",
-    outputWidth: 1600,
-    outputHeight: 900,
-    accept: "image/jpeg,image/png,image/webp",
-    maxFileSizeMB: 8,
-  },
+const IMAGE_CONFIG: ImageConfig = {
+  label: "Thumbnail",
+  description: "Used for challenge cards and discovery sections.",
+  aspectRatio: 2 / 3,
+  aspectLabel: "2:3 portrait",
+  outputWidth: 600,
+  outputHeight: 900,
+  accept: "image/jpeg,image/png,image/webp",
+  maxFileSizeMB: 5,
 };
 
-const imageFileSchema = (maxFileSizeMB: number) =>
-  z
-    .instanceof(File, { message: "Please select a valid image file." })
-    .refine(
-      (file) =>
-        ["image/jpeg", "image/png", "image/webp"].includes(file.type),
-      { message: "Only JPG, PNG, and WebP images are supported." },
-    )
-    .refine((file) => file.size <= maxFileSizeMB * 1024 * 1024, {
-      message: `Image size must be ${maxFileSizeMB} MB or smaller.`,
-    });
+const imageFileSchema = z
+  .instanceof(File, { message: "Please select a valid image file." })
+  .refine(
+    (file) => ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+    { message: "Only JPG, PNG, and WebP images are supported." },
+  )
+  .refine((file) => file.size <= IMAGE_CONFIG.maxFileSizeMB * 1024 * 1024, {
+    message: `Image size must be ${IMAGE_CONFIG.maxFileSizeMB} MB or smaller.`,
+  });
 
 const defaultFormState: ChallengeFormState = {
   title: "",
   description: "",
   instructions: "",
   thumbnailUrl: "",
-  coverImageUrl: "",
   category: "nutrition",
   difficulty: "beginner",
   accessType: "free",
@@ -145,7 +117,6 @@ function SectionHeader({
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100/80 text-emerald-700">
         <Icon className="h-5 w-5" />
       </div>
-
       <div>
         <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
         <p className="mt-0.5 text-sm text-slate-500">{description}</p>
@@ -157,24 +128,20 @@ function SectionHeader({
 const createImage = (src: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new window.Image();
-
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Unable to load image."));
-
     image.src = src;
   });
 
 const createCroppedFile = async (
   imageSrc: string,
   crop: Area,
-  outputWidth: number,
-  outputHeight: number,
 ): Promise<File> => {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
 
-  canvas.width = outputWidth;
-  canvas.height = outputHeight;
+  canvas.width = IMAGE_CONFIG.outputWidth;
+  canvas.height = IMAGE_CONFIG.outputHeight;
 
   const context = canvas.getContext("2d");
 
@@ -193,8 +160,8 @@ const createCroppedFile = async (
     crop.height,
     0,
     0,
-    outputWidth,
-    outputHeight,
+    IMAGE_CONFIG.outputWidth,
+    IMAGE_CONFIG.outputHeight,
   );
 
   const blob = await new Promise<Blob | null>((resolve) => {
@@ -219,15 +186,12 @@ function ImageCropper({
   onDone: (file: File) => void;
   onCancel: () => void;
 }) {
-  const config = IMAGE_CONFIG[target.field];
-
-  const [imageUrl, setImageUrl] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState("");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(
-    null,
-  );
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const url = URL.createObjectURL(target.file);
@@ -236,10 +200,9 @@ function ImageCropper({
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
+    setError(null);
 
-    return () => {
-      URL.revokeObjectURL(url);
-    };
+    return () => URL.revokeObjectURL(url);
   }, [target.file]);
 
   const handleCropComplete = (_: Area, pixels: Area) => {
@@ -247,31 +210,19 @@ function ImageCropper({
   };
 
   const handleUseImage = async () => {
-    if (!imageUrl || !croppedAreaPixels) {
-      return;
-    }
+    if (!imageUrl || !croppedAreaPixels) return;
 
     try {
       setProcessing(true);
-
-      const file = await createCroppedFile(
-        imageUrl,
-        croppedAreaPixels,
-        config.outputWidth,
-        config.outputHeight,
-      );
-
-      onDone(file);
+      setError(null);
+      onDone(await createCroppedFile(imageUrl, croppedAreaPixels));
     } catch {
-      onCancel();
-    } finally {
+      setError("Unable to process this image. Please try another image.");
       setProcessing(false);
     }
   };
 
-  if (!imageUrl) {
-    return null;
-  }
+  if (!imageUrl) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-sm">
@@ -279,19 +230,18 @@ function ImageCropper({
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">
-              Adjust {config.label.toLowerCase()}
+              Adjust thumbnail
             </h3>
             <p className="mt-1 text-sm text-slate-500">
               Drag to position the image and use the slider to zoom.
             </p>
           </div>
-
           <button
             type="button"
             onClick={onCancel}
             disabled={processing}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Close image cropper"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
           >
             <X className="h-5 w-5" />
           </button>
@@ -301,13 +251,13 @@ function ImageCropper({
           <div className="mx-auto w-full max-w-2xl">
             <div
               className="relative w-full overflow-hidden rounded-xl bg-slate-950"
-              style={{ aspectRatio: config.aspectRatio }}
+              style={{ aspectRatio: IMAGE_CONFIG.aspectRatio }}
             >
               <Cropper
                 image={imageUrl}
                 crop={crop}
                 zoom={zoom}
-                aspect={config.aspectRatio}
+                aspect={IMAGE_CONFIG.aspectRatio}
                 cropShape="rect"
                 showGrid
                 objectFit="contain"
@@ -322,7 +272,6 @@ function ImageCropper({
                 <span>Zoom</span>
                 <span>{Math.round(zoom * 100)}%</span>
               </div>
-
               <input
                 type="range"
                 min={1}
@@ -338,31 +287,33 @@ function ImageCropper({
             <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-500">
               Final image:{" "}
               <span className="font-semibold text-slate-700">
-                {config.outputWidth} × {config.outputHeight}px
-              </span>
-              {" · "}
-              {config.aspectLabel}
+                {IMAGE_CONFIG.outputWidth} × {IMAGE_CONFIG.outputHeight}px
+              </span>{" "}
+              · {IMAGE_CONFIG.aspectLabel}
             </div>
+
+            {error && (
+              <p role="alert" className="mt-3 text-sm text-red-600">
+                {error}
+              </p>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-white px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
           <button
             type="button"
             onClick={onCancel}
             disabled={processing}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
-
           <button
             type="button"
-            onClick={() => {
-              void handleUseImage();
-            }}
+            onClick={() => void handleUseImage()}
             disabled={processing || !croppedAreaPixels}
-            className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
           >
             {processing ? "Processing..." : "Use Image"}
           </button>
@@ -372,32 +323,26 @@ function ImageCropper({
   );
 }
 
-function ImageField({
-  field,
+function ThumbnailField({
   state,
   onSelect,
   onRemove,
   disabled,
 }: {
-  field: ImageField;
   state: ImageState;
   onSelect: (file: File) => void;
   onRemove: () => void;
   disabled: boolean;
 }) {
-  const config = IMAGE_CONFIG[field];
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const previewUrl = state.previewUrl ?? state.existingUrl ?? null;
 
   return (
     <div>
       <div className="mb-3">
-        <label className="text-sm font-medium text-slate-700">
-          {config.label}
-        </label>
+        <label className="text-sm font-medium text-slate-700">Thumbnail</label>
         <p className="mt-0.5 text-xs leading-5 text-slate-400">
-          {config.description}
+          Used for challenge cards and discovery sections.
         </p>
       </div>
 
@@ -406,38 +351,33 @@ function ImageField({
           "overflow-hidden rounded-2xl border transition",
           previewUrl
             ? "border-slate-200 bg-slate-50"
-            : "border-2 border-dashed border-slate-200 bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50/30",
+            : "border-2 border-dashed border-slate-200 bg-slate-50 hover:border-emerald-300",
         ].join(" ")}
       >
         {previewUrl ? (
           <>
             <div
               className="relative w-full"
-              style={{ aspectRatio: config.aspectRatio }}
+              style={{ aspectRatio: IMAGE_CONFIG.aspectRatio }}
             >
               <Image
                 src={previewUrl}
-                alt={`${config.label} preview`}
+                alt="Challenge thumbnail preview"
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 unoptimized={Boolean(state.previewUrl)}
                 className="object-cover"
               />
-
-              <div className="absolute right-3 top-3">
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={onRemove}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-slate-700 shadow-md backdrop-blur transition hover:bg-white hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label={`Remove ${config.label.toLowerCase()}`}
-                  title="Remove image"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-3 pt-10">
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={onRemove}
+                aria-label="Remove thumbnail"
+                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-slate-700 shadow-md hover:text-red-600 disabled:opacity-50"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-4 pb-3 pt-10">
                 <p className="truncate text-xs font-medium text-white">
                   {state.file?.name ?? "Existing image"}
                 </p>
@@ -445,22 +385,19 @@ function ImageField({
             </div>
 
             <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-white p-3">
-              <div className="min-w-0">
+              <div>
                 <p className="text-xs font-semibold text-slate-700">
-                  {field === "thumbnail" ? "Card thumbnail" : "Details cover"}
+                  Challenge thumbnail
                 </p>
                 <p className="mt-0.5 text-[11px] text-slate-400">
-                  {config.outputWidth} × {config.outputHeight}px{" "}
-                  {" · "}
-                  {config.aspectLabel}
+                  600 × 900px · 2:3 portrait
                 </p>
               </div>
-
               <button
                 type="button"
                 disabled={disabled}
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 <Upload className="h-3.5 w-3.5" />
                 Replace
@@ -472,20 +409,17 @@ function ImageField({
             type="button"
             disabled={disabled}
             onClick={() => fileInputRef.current?.click()}
-            className="flex min-h-56 w-full flex-col items-center justify-center px-6 py-8 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500"
+            className="flex min-h-56 w-full flex-col items-center justify-center px-6 py-8 text-center"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100/80 text-emerald-700">
               <ImageIcon className="h-5 w-5" />
             </div>
-
             <p className="mt-4 text-sm font-semibold text-slate-800">
-              Upload {config.label.toLowerCase()}
+              Upload thumbnail
             </p>
-
-            <p className="mt-1 max-w-xs text-xs leading-5 text-slate-400">
-              JPG, PNG, or WebP · up to {config.maxFileSizeMB} MB
+            <p className="mt-1 text-xs text-slate-400">
+              JPG, PNG, or WebP · up to 5 MB
             </p>
-
             <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white">
               <Upload className="h-3.5 w-3.5" />
               Choose Image
@@ -493,29 +427,23 @@ function ImageField({
           </button>
         )}
 
-        {/* Single hidden input per field, used for both initial select and replace */}
         <input
           ref={fileInputRef}
           type="file"
-          accept={config.accept}
+          accept={IMAGE_CONFIG.accept}
           className="hidden"
           disabled={disabled}
           onChange={(event) => {
             const file = event.target.files?.[0];
             event.target.value = "";
-
-            if (file) {
-              onSelect(file);
-            }
+            if (file) onSelect(file);
           }}
         />
       </div>
 
       <p className="mt-2 text-[11px] text-slate-400">
         Recommended:{" "}
-        <span className="font-medium text-slate-500">
-          {config.outputWidth} × {config.outputHeight}px
-        </span>
+        <span className="font-medium text-slate-500">600 × 900px</span>
       </p>
     </div>
   );
@@ -543,24 +471,16 @@ export default function ChallengeForm({
   const [thumbnail, setThumbnail] = useState<ImageState>(() =>
     emptyImageState(initialValues?.thumbnailUrl),
   );
-
-  const [coverImage, setCoverImage] = useState<ImageState>(() =>
-    emptyImageState(initialValues?.coverImageUrl),
-  );
-
   const [cropTarget, setCropTarget] = useState<CropTarget | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageError, setImageError] = useState<
-    Partial<Record<ImageField, string>>
-  >({});
+  const [imageError, setImageError] = useState<string | null>(null);
 
-  // Revoke any outstanding blob URLs when the form unmounts.
   useEffect(() => {
     return () => {
       if (thumbnail.previewUrl) URL.revokeObjectURL(thumbnail.previewUrl);
-      if (coverImage.previewUrl) URL.revokeObjectURL(coverImage.previewUrl);
     };
+    // Preview URLs are cleaned up when this form unmounts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -568,45 +488,29 @@ export default function ChallengeForm({
     field: K,
     value: ChallengeFormState[K],
   ) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((previous) => ({ ...previous, [field]: value }));
   };
 
-  const setImageState = (field: ImageField) =>
-    field === "thumbnail" ? setThumbnail : setCoverImage;
-
-  const handleImageSelection = (field: ImageField, file: File) => {
-    const config = IMAGE_CONFIG[field];
-    const result = imageFileSchema(config.maxFileSizeMB).safeParse(file);
+  const handleImageSelection = (file: File) => {
+    const result = imageFileSchema.safeParse(file);
 
     if (!result.success) {
-      setImageError((prev) => ({
-        ...prev,
-        [field]: result.error.issues[0]?.message ?? "Invalid image file.",
-      }));
-
+      setImageError(result.error.issues[0]?.message ?? "Invalid image file.");
       return;
     }
 
-    setImageError((prev) => ({ ...prev, [field]: undefined }));
-    setCropTarget({ field, file });
+    setImageError(null);
+    setCropTarget({ file });
   };
 
   const handleCropComplete = (file: File) => {
-    if (!cropTarget) {
-      return;
-    }
-
-    const setter = setImageState(cropTarget.field);
-
-    setter((prev) => {
-      if (prev.previewUrl) {
-        URL.revokeObjectURL(prev.previewUrl);
-      }
+    setThumbnail((previous) => {
+      if (previous.previewUrl) URL.revokeObjectURL(previous.previewUrl);
 
       return {
         file,
         previewUrl: URL.createObjectURL(file),
-        existingUrl: prev.existingUrl,
+        existingUrl: previous.existingUrl,
         removed: false,
       };
     });
@@ -614,14 +518,9 @@ export default function ChallengeForm({
     setCropTarget(null);
   };
 
-  // Always fully clears the image (local file AND any existing server URL) and
-  // flags it for deletion. Previously this only cleared local previews and
-  // silently no-opped on existing server images.
-  const handleRemoveImage = (field: ImageField) => {
-    setImageState(field)((prev) => {
-      if (prev.previewUrl) {
-        URL.revokeObjectURL(prev.previewUrl);
-      }
+  const handleRemoveThumbnail = () => {
+    setThumbnail((previous) => {
+      if (previous.previewUrl) URL.revokeObjectURL(previous.previewUrl);
 
       return {
         file: null,
@@ -658,8 +557,13 @@ export default function ChallengeForm({
         return;
       }
 
-      if (imageError.thumbnail || imageError.coverImage) {
-        setError("Please fix the image validation errors before saving.");
+      if (imageError) {
+        setError("Please fix the thumbnail validation error before saving.");
+        return;
+      }
+
+      if (mode === "edit" && !challengeId) {
+        setError("Challenge ID is required.");
         return;
       }
 
@@ -681,25 +585,12 @@ export default function ChallengeForm({
         formData.append("thumbnail", thumbnail.file);
       }
 
-      if (coverImage.file) {
-        formData.append("coverImage", coverImage.file);
-      }
-
       if (mode === "edit") {
-        if (!challengeId) {
-          setError("Challenge ID is required.");
-          return;
-        }
-
         if (thumbnail.removed) {
           formData.append("removeThumbnail", "true");
         }
 
-        if (coverImage.removed) {
-          formData.append("removeCoverImage", "true");
-        }
-
-        await adminChallengeService.updateChallenge(challengeId, formData);
+        await adminChallengeService.updateChallenge(challengeId!, formData);
       } else {
         await adminChallengeService.createChallenge(formData);
       }
@@ -713,7 +604,6 @@ export default function ChallengeForm({
       router.refresh();
     } catch (err) {
       console.error(err);
-
       setError(
         mode === "create"
           ? "Failed to create challenge. Please verify your inputs and try again."
@@ -736,7 +626,10 @@ export default function ChallengeForm({
 
       <form onSubmit={handleSubmit} className="mx-auto max-w-5xl space-y-6">
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600"
+          >
             {error}
           </div>
         )}
@@ -761,7 +654,6 @@ export default function ChallengeForm({
                   {form.title.length}/150
                 </span>
               </div>
-
               <input
                 id="title"
                 type="text"
@@ -786,7 +678,6 @@ export default function ChallengeForm({
                   {form.description.length}/3000
                 </span>
               </div>
-
               <textarea
                 id="description"
                 required
@@ -816,7 +707,6 @@ export default function ChallengeForm({
                   {form.instructions?.length ?? 0}/5000
                 </span>
               </div>
-
               <textarea
                 id="instructions"
                 maxLength={5000}
@@ -835,43 +725,23 @@ export default function ChallengeForm({
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <SectionHeader
             icon={ImageIcon}
-            title="Challenge Images"
-            description="Use a portrait thumbnail for cards and a wide cover for the Challenge Details hero."
+            title="Challenge Thumbnail"
+            description="Choose a portrait image used throughout the challenge experience."
           />
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <ImageField
-              field="thumbnail"
+          <div className="mt-6 max-w-md">
+            <ThumbnailField
               state={thumbnail}
-              onSelect={(file) => handleImageSelection("thumbnail", file)}
-              onRemove={() => handleRemoveImage("thumbnail")}
+              onSelect={handleImageSelection}
+              onRemove={handleRemoveThumbnail}
               disabled={loading}
             />
-
-            <ImageField
-              field="coverImage"
-              state={coverImage}
-              onSelect={(file) => handleImageSelection("coverImage", file)}
-              onRemove={() => handleRemoveImage("coverImage")}
-              disabled={loading}
-            />
+            {imageError && (
+              <p role="alert" className="mt-3 text-xs font-medium text-red-600">
+                {imageError}
+              </p>
+            )}
           </div>
-
-          {(imageError.thumbnail || imageError.coverImage) && (
-            <div className="mt-4 space-y-2">
-              {imageError.thumbnail && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
-                  Thumbnail: {imageError.thumbnail}
-                </p>
-              )}
-
-              {imageError.coverImage && (
-                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
-                  Cover image: {imageError.coverImage}
-                </p>
-              )}
-            </div>
-          )}
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -889,7 +759,6 @@ export default function ChallengeForm({
               >
                 Category
               </label>
-
               <select
                 id="category"
                 value={form.category}
@@ -916,7 +785,6 @@ export default function ChallengeForm({
               >
                 Difficulty
               </label>
-
               <select
                 id="difficulty"
                 value={form.difficulty}
@@ -943,7 +811,6 @@ export default function ChallengeForm({
               >
                 Access Type
               </label>
-
               <select
                 id="accessType"
                 value={form.accessType}
@@ -970,7 +837,6 @@ export default function ChallengeForm({
               >
                 Duration
               </label>
-
               <div className="relative">
                 <input
                   id="durationDays"
@@ -987,7 +853,6 @@ export default function ChallengeForm({
                   }
                   className={`${inputClassName} pr-16`}
                 />
-
                 <span className="pointer-events-none absolute inset-y-0 right-3.5 flex items-center text-xs font-medium text-slate-400">
                   days
                 </span>
@@ -1002,7 +867,6 @@ export default function ChallengeForm({
             title="Challenge Structure"
             description="Configure individual days and activities after creating the challenge."
           />
-
           <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
             <p className="text-sm leading-6 text-emerald-900">
               This challenge will contain{" "}
@@ -1026,15 +890,14 @@ export default function ChallengeForm({
               )
             }
             disabled={loading}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Cancel
           </button>
-
           <button
             type="submit"
             disabled={loading}
-            className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
           >
             {loading
               ? "Saving..."

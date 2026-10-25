@@ -21,13 +21,13 @@ import {
   ACTIVITY_LEVELS,
   DIET_TYPES,
   GOALS,
-} from "@/types/health.types";
+} from "@/types/health/health.types";
 import type {
   ActivityLevel,
   DietType,
   GoalType,
   TimelineType,
-} from "@/types/health.types";
+} from "@/types/health/health.types";
 
 interface HealthDetailsFormProps {
   onSuccess: () => void;

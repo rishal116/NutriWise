@@ -1,23 +1,13 @@
 import { Request, Response } from "express";
-
 import { inject, injectable } from "inversify";
-
 import { IAdminChallengeDayController } from "../../interfaces/admin/IAdminChallengeDayController";
-
 import { IAdminChallengeDayService } from "../../../services/interfaces/admin/IAdminChallengeDayService";
-
 import { TYPES } from "../../../types/types";
-
 import { asyncHandler } from "../../../utils/asyncHandler";
-
 import { StatusCode } from "../../../enums/statusCode.enum";
-
 import { AdminChallengeDayListQueryDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-list-query.dto";
-
 import { CreateChallengeDayDTO } from "../../../dtos/admin/challenge-day/create-challenge-day.dto";
-
 import { UpdateChallengeDayDTO } from "../../../dtos/admin/challenge-day/update-challenge-day.dto";
-
 import { ChallengeDayUploadedFiles } from "../../../types/admin/challenge-day/challenge-day-files.types";
 
 @injectable()
@@ -30,9 +20,6 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
   createDay = asyncHandler(async (req: Request, res: Response) => {
     const { challengeId } = req.params;
 
-    console.log("BODY:", req.body);
-    console.log("FILES:", req.files);
-
     const data: CreateChallengeDayDTO = {
       dayNumber: Number(req.body.dayNumber),
       title: req.body.title,
@@ -43,16 +30,11 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
 
     const files = req.files as ChallengeDayUploadedFiles | undefined;
 
-    const result = await this._challengeDayService.createDay(
-      challengeId,
-      data,
-      files,
-    );
+    await this._challengeDayService.createDay(challengeId, data, files);
 
     return res.status(StatusCode.CREATED).json({
       success: true,
       message: "Challenge day created successfully",
-      data: result,
     });
   });
 
@@ -98,21 +80,16 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
       title: req.body.title,
       description: req.body.description,
       activities: req.body.activities,
+      activityMediaIndexes: req.body.activityMediaIndexes,
     };
 
     const files = req.files as ChallengeDayUploadedFiles | undefined;
 
-    const result = await this._challengeDayService.updateDay(
-      challengeId,
-      dayId,
-      data,
-      files,
-    );
+    await this._challengeDayService.updateDay(challengeId, dayId, data, files);
 
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Challenge day updated successfully",
-      data: result,
     });
   });
 

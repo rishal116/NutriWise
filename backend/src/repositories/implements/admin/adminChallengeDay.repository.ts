@@ -1,25 +1,17 @@
 import { PipelineStage, Types } from "mongoose";
-
 import { BaseRepository } from "../common/base.repository";
-
-import { IAdminChallengeDayRepository } from "../../interfaces/admin/IAdminChallengDayRepository";
-
+import { IAdminChallengeDayRepository } from "../../interfaces/admin/IAdminChallengeDayRepository";
 import {
   ChallengeDayModel,
   IChallengeDay,
 } from "../../../models/challengeDay.model";
-
 import { AdminChallengeDayListQueryDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-list-query.dto";
-
-import { AdminChallengeDayListItemDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-list-item.dto";
-
 import { AdminChallengeDayDetailsDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-details.dto";
-
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-
 import { decodeCursor, encodeCursor } from "../../../utils/cursor.util";
+import { AdminChallengeDayListProjection } from "../../../types/admin/challenge-day/admin-challenge-day.projection";
 
-type AdminChallengeDayListItemWithCursor = AdminChallengeDayListItemDTO & {
+type AdminChallengeDayListItemWithCursor = AdminChallengeDayListProjection & {
   cursorId: Types.ObjectId;
   cursorValue: number;
 };
@@ -40,7 +32,7 @@ export class AdminChallengeDayRepository
   async findDays(
     challengeId: string,
     query: AdminChallengeDayListQueryDTO,
-  ): Promise<CursorPaginationResult<AdminChallengeDayListItemDTO>> {
+  ): Promise<CursorPaginationResult<AdminChallengeDayListProjection>> {
     const { sortBy = "day_asc", cursor, limit = 12 } = query;
 
     const challengeObjectId = new Types.ObjectId(challengeId);
@@ -107,16 +99,12 @@ export class AdminChallengeDayRepository
 
           dayNumber: 1,
           title: 1,
-          description: 1,
 
           activityCount: {
             $size: {
               $ifNull: ["$activities", []],
             },
           },
-
-          createdAt: 1,
-          updatedAt: 1,
 
           cursorId: "$_id",
           cursorValue: "$dayNumber",
@@ -190,8 +178,6 @@ export class AdminChallengeDayRepository
           title: 1,
           description: 1,
           activities: 1,
-          createdAt: 1,
-          updatedAt: 1,
         },
       },
     ]);

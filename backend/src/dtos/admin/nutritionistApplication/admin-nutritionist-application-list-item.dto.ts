@@ -1,9 +1,8 @@
-import { Types } from "mongoose";
-import { ApplicationStatus } from "../../../types/nutritionist.types";
+import type { ApplicationStatus } from "../../../types/nutritionist.types";
 
 export interface AdminNutritionistApplicationListItemDto {
-  _id: Types.ObjectId;
-  userId: Types.ObjectId;
+  id: string;
+  userId: string;
   fullName: string;
   email: string;
   profileImage?: string;

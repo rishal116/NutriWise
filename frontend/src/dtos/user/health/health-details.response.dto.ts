@@ -3,7 +3,7 @@ import {
   DietType,
   GoalType,
   TimelineType,
-} from "@/types/health.types";
+} from "@/types/health/health.types";
 
 export interface HealthDetailsResponseDto {
   heightCm: number;

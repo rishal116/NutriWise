@@ -2,7 +2,6 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
-  IsObject,
   IsOptional,
   IsString,
   MaxLength,
@@ -56,8 +55,4 @@ export class CreateChallengeActivityDTO {
   @IsInt()
   @Min(0)
   order!: number;
-
-  @IsOptional()
-  @IsObject()
-  configuration?: Record<string, unknown>;
 }

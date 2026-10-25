@@ -1,19 +1,11 @@
 import { injectable } from "inversify";
-
 import { PipelineStage, Types } from "mongoose";
-
 import { ChallengeModel, IChallenge } from "../../../models/challenge.model";
-
 import { IAdminChallengeRepository } from "../../interfaces/admin/IAdminChallengeRepository";
-
 import { BaseRepository } from "../common/base.repository";
-
 import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
-
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-
 import { AdminChallengeListQueryDTO } from "../../../dtos/admin/challenge/admin-challenge-list-query.dto";
-
 import { AdminChallengeListItem } from "../../../types/admin/challenge/admin-challenge-list-item.type";
 import { AdminChallengeDetailsResult } from "../../../types/admin/challenge/admin-challenge-details-result.type";
 
@@ -51,28 +43,15 @@ export class AdminChallengeRepository
     } = query;
 
     const sortField = ADMIN_CHALLENGE_SORT_FIELD_MAP[sortBy];
-
     const cursorData = decodeCursor(cursor);
 
     const pipeline: PipelineStage[] = [];
-
     const matchStage: Record<string, unknown> = {};
 
-    if (category) {
-      matchStage.category = category;
-    }
-
-    if (difficulty) {
-      matchStage.difficulty = difficulty;
-    }
-
-    if (accessType) {
-      matchStage.accessType = accessType;
-    }
-
-    if (status) {
-      matchStage.status = status;
-    }
+    if (category) matchStage.category = category;
+    if (difficulty) matchStage.difficulty = difficulty;
+    if (accessType) matchStage.accessType = accessType;
+    if (status) matchStage.status = status;
 
     if (search?.trim()) {
       const escapedSearch = search
@@ -80,46 +59,35 @@ export class AdminChallengeRepository
         .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       matchStage.$or = [
-        {
-          title: {
-            $regex: escapedSearch,
-            $options: "i",
-          },
-        },
-        {
-          description: {
-            $regex: escapedSearch,
-            $options: "i",
-          },
-        },
+        { title: { $regex: escapedSearch, $options: "i" } },
+        { description: { $regex: escapedSearch, $options: "i" } },
       ];
     }
 
     if (Object.keys(matchStage).length > 0) {
-      pipeline.push({
-        $match: matchStage,
-      });
+      pipeline.push({ $match: matchStage });
     }
 
     const isAscending = sortBy === "oldest";
+    const sortDirection = isAscending ? 1 : -1;
 
     if (cursorData) {
       const cursorValue = new Date(cursorData.value);
+      const cursorId = new Types.ObjectId(cursorData.id);
+      const comparisonOperator = isAscending ? "$gt" : "$lt";
 
       pipeline.push({
         $match: {
           $or: [
             {
               [sortField]: {
-                [isAscending ? "$gt" : "$lt"]: cursorValue,
+                [comparisonOperator]: cursorValue,
               },
             },
             {
               [sortField]: cursorValue,
               _id: {
-                [isAscending ? "$gt" : "$lt"]: new Types.ObjectId(
-                  cursorData.id,
-                ),
+                [comparisonOperator]: cursorId,
               },
             },
           ],
@@ -127,53 +95,37 @@ export class AdminChallengeRepository
       });
     }
 
-    pipeline.push({
-      $sort: {
-        [sortField]: isAscending ? 1 : -1,
-        _id: isAscending ? 1 : -1,
-      },
-    });
-
-    pipeline.push({
-      $limit: limit + 1,
-    });
-
-    pipeline.push({
-      $project: {
-        _id: 0,
-
-        id: {
-          $toString: "$_id",
+    pipeline.push(
+      {
+        $sort: {
+          [sortField]: sortDirection,
+          _id: sortDirection,
         },
-
-        title: 1,
-        description: 1,
-        thumbnailUrl: 1,
-        category: 1,
-        difficulty: 1,
-        accessType: 1,
-        durationDays: 1,
-        status: 1,
-
-        createdBy: {
-          $toString: "$createdBy",
-        },
-
-        createdAt: 1,
-        updatedAt: 1,
-
-        cursorId: "$_id",
-        cursorValue: `$${sortField}`,
       },
-    });
+      { $limit: limit + 1 },
+      {
+        $project: {
+          _id: 0,
+          id: { $toString: "$_id" },
+          title: 1,
+
+          thumbnailUrl: 1,
+          category: 1,
+          difficulty: 1,
+          accessType: 1,
+          durationDays: 1,
+          status: 1,
+          cursorId: "$_id",
+          cursorValue: `$${sortField}`,
+        },
+      },
+    );
 
     const result =
       await this._model.aggregate<ChallengeCardWithCursor>(pipeline);
 
     const hasMore = result.length > limit;
-
     const items = hasMore ? result.slice(0, limit) : result;
-
     const lastItem = items[items.length - 1];
 
     const nextCursor =
@@ -185,7 +137,7 @@ export class AdminChallengeRepository
           })
         : null;
 
-    const cleanItems = items.map(
+    const cleanItems: AdminChallengeListItem[] = items.map(
       ({ cursorId: _cursorId, cursorValue: _cursorValue, ...item }) => item,
     );
 
@@ -208,36 +160,20 @@ export class AdminChallengeRepository
       {
         $project: {
           _id: 0,
-
-          id: {
-            $toString: "$_id",
-          },
-
+          id: { $toString: "$_id" },
           title: 1,
           description: 1,
           instructions: 1,
-          coverImageUrl: 1,
-          thumbnailUrl:1,
+          thumbnailUrl: 1,
           category: 1,
           difficulty: 1,
           accessType: 1,
           durationDays: 1,
           status: 1,
-
-          createdBy: {
-            $toString: "$createdBy",
-          },
-
-          createdAt: 1,
-          updatedAt: 1,
         },
       },
     ]);
 
-    if (!result.length) {
-      return null;
-    }
-
-    return result[0];
+    return result[0] ?? null;
   }
 }

@@ -1,23 +1,16 @@
 import { PipelineStage, Types } from "mongoose";
-
 import { BaseRepository } from "../common/base.repository";
-
 import { IAdminUserRepository } from "../../interfaces/admin/IAdminUserRepository";
-
 import { UserModel, IUser } from "../../../models/user.model";
-
 import { AdminUserListQueryDto } from "../../../dtos/admin/user/admin-user-list-query.dto";
-
-import { AdminUserListItemDto } from "../../../dtos/admin/user/admin-user-list-item.dto";
-
 import { UserRole } from "../../../enums/user.enum";
-
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-
 import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
+import { IAdminUserListProjection } from "../../../types/admin/user/admin-user-list.projection";
+import { HealthDetailsModel } from "../../../models/healthDetails.model"; 
+import { IAdminUserDetailsProjection } from "../../../types/admin/user/admin-user-details.projection";
 
-type AdminUserListItemWithCursor = AdminUserListItemDto & {
-  cursorId: Types.ObjectId;
+type AdminUserListItemWithCursor = IAdminUserListProjection & {
   cursorValue: Date;
 };
 
@@ -25,6 +18,13 @@ const ADMIN_USER_SORT_FIELD_MAP = {
   newest: "createdAt",
   oldest: "createdAt",
 } as const;
+
+const DEFAULT_PAGE_SIZE = 12;
+const MAX_PAGE_SIZE = 50;
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export class AdminUserRepository
   extends BaseRepository<IUser>
@@ -36,12 +36,32 @@ export class AdminUserRepository
 
   async getUsers(
     query: AdminUserListQueryDto,
-  ): Promise<CursorPaginationResult<AdminUserListItemDto>> {
-    const { search, isBlocked, sortBy = "newest", cursor, limit = 12 } = query;
+  ): Promise<CursorPaginationResult<IAdminUserListProjection>> {
+    const {
+      search,
+      isBlocked,
+      sortBy = "newest",
+      cursor,
+      limit = DEFAULT_PAGE_SIZE,
+    } = query;
+
+    const pageSize = Math.min(Math.max(Math.trunc(limit), 1), MAX_PAGE_SIZE);
 
     const sortField = ADMIN_USER_SORT_FIELD_MAP[sortBy];
+    const isAscending = sortBy === "oldest";
+    const direction = isAscending ? 1 : -1;
 
     const cursorData = decodeCursor(cursor);
+
+    if (cursorData) {
+      if (
+        cursorData.sortKey !== sortBy ||
+        typeof cursorData.value !== "string" ||
+        !Number.isFinite(Date.parse(cursorData.value))
+      ) {
+        throw new Error("Invalid cursor");
+      }
+    }
 
     const matchStage: Record<string, unknown> = {
       deletedAt: null,
@@ -54,28 +74,19 @@ export class AdminUserRepository
       matchStage.isBlocked = isBlocked;
     }
 
-    if (search?.trim()) {
-      const keyword = search.trim();
+    const keyword = search?.trim();
+
+    if (keyword) {
+      const escapedKeyword = escapeRegex(keyword);
+      const searchRegex = {
+        $regex: escapedKeyword,
+        $options: "i",
+      };
 
       matchStage.$or = [
-        {
-          fullName: {
-            $regex: keyword,
-            $options: "i",
-          },
-        },
-        {
-          email: {
-            $regex: keyword,
-            $options: "i",
-          },
-        },
-        {
-          username: {
-            $regex: keyword,
-            $options: "i",
-          },
-        },
+        { fullName: searchRegex },
+        { email: searchRegex },
+        { username: searchRegex },
       ];
     }
 
@@ -85,25 +96,22 @@ export class AdminUserRepository
       },
     ];
 
-    const isAscending = sortBy === "oldest";
-
     if (cursorData) {
-      const cursorValue = new Date(cursorData.value);
+      const cursorDate = new Date(cursorData.value);
+      const cursorId = new Types.ObjectId(cursorData.id);
 
       pipeline.push({
         $match: {
           $or: [
             {
               [sortField]: {
-                [isAscending ? "$gt" : "$lt"]: cursorValue,
+                [isAscending ? "$gt" : "$lt"]: cursorDate,
               },
             },
             {
-              [sortField]: cursorValue,
+              [sortField]: cursorDate,
               _id: {
-                [isAscending ? "$gt" : "$lt"]: new Types.ObjectId(
-                  cursorData.id,
-                ),
+                [isAscending ? "$gt" : "$lt"]: cursorId,
               },
             },
           ],
@@ -111,59 +119,49 @@ export class AdminUserRepository
       });
     }
 
-    pipeline.push({
-      $sort: {
-        [sortField]: isAscending ? 1 : -1,
-        _id: isAscending ? 1 : -1,
-      },
-    });
-
-    pipeline.push({
-      $limit: limit + 1,
-    });
-
-    pipeline.push({
-      $project: {
-        _id: 0,
-
-        id: {
-          $toString: "$_id",
+    pipeline.push(
+      {
+        $sort: {
+          [sortField]: direction,
+          _id: direction,
         },
-
-        fullName: 1,
-        email: 1,
-        username: 1,
-        profileImage: 1,
-        activeRole: 1,
-        isBlocked: 1,
-        isProfileCompleted: 1,
-        createdAt: 1,
-
-        cursorId: "$_id",
-        cursorValue: `$${sortField}`,
       },
-    });
+      {
+        $limit: pageSize + 1,
+      },
+      {
+        $project: {
+          _id: 1,
+          fullName: 1,
+          email: 1,
+          username: 1,
+          profileImage: 1,
+          activeRole: 1,
+          isBlocked: 1,
+          createdAt: 1,
+          cursorValue: `$${sortField}`,
+        },
+      },
+    );
 
     const result =
       await this._model.aggregate<AdminUserListItemWithCursor>(pipeline);
 
-    const hasMore = result.length > limit;
-
-    const items = hasMore ? result.slice(0, limit) : result;
-
-    const lastItem = items[items.length - 1];
+    const hasMore = result.length > pageSize;
+    const items = hasMore ? result.slice(0, pageSize) : result;
+    const lastItem = items.at(-1);
 
     const nextCursor =
       hasMore && lastItem
         ? encodeCursor({
-            id: lastItem.cursorId.toString(),
+            id: lastItem._id.toString(),
             value: lastItem.cursorValue.toISOString(),
             sortKey: sortBy,
           })
         : null;
 
-    const cleanItems = items.map(
-      ({ cursorId: _cursorId, cursorValue: _cursorValue, ...user }) => user,
+    const cleanItems: IAdminUserListProjection[] = items.map(
+      ({ cursorValue: _cursorValue, ...user }) => user,
     );
 
     return {
@@ -173,20 +171,89 @@ export class AdminUserRepository
     };
   }
 
+  async getUserDetailsById(
+    userId: string,
+  ): Promise<IAdminUserDetailsProjection | null> {
+    if (!Types.ObjectId.isValid(userId)) {
+      return null;
+    }
+
+    const userObjectId = new Types.ObjectId(userId);
+
+    const user = await this._model
+      .findOne({
+        _id: userObjectId,
+        deletedAt: null,
+        roles: { $nin: [UserRole.ADMIN] },
+      })
+      .select(
+        [
+          "_id",
+          "fullName",
+          "username",
+          "email",
+          "gender",
+          "profileImage",
+          "authProvider",
+          "emailVerifiedAt",
+          "roles",
+          "activeRole",
+          "isBlocked",
+          "isProfileCompleted",
+          "createdAt",
+          "updatedAt",
+        ].join(" "),
+      )
+      .lean()
+      .exec();
+
+    if (!user) {
+      return null;
+    }
+
+    const healthDetails = await HealthDetailsModel.findOne({
+      userId: userObjectId,
+    })
+      .select(
+        [
+          "-_id",
+          "heightCm",
+          "weightKg",
+          "activityLevel",
+          "dietType",
+          "goal",
+          "targetWeightKg",
+          "preferredTimeline",
+        ].join(" "),
+      )
+      .lean()
+      .exec();
+
+    return {
+      ...user,
+      healthDetails,
+    } as IAdminUserDetailsProjection;
+  }
+
   async updateBlockStatus(userId: string, isBlocked: boolean): Promise<void> {
     await this._model.updateOne(
-      { _id: userId },
       {
-        $set: {
-          isBlocked,
-        },
+        _id: userId,
+        deletedAt: null,
+        roles: { $nin: [UserRole.ADMIN] },
+      },
+      {
+        $set: { isBlocked },
       },
     );
   }
 
   async addRole(userId: string, role: UserRole): Promise<void> {
     await this._model.updateOne(
-      { _id: userId },
+      {
+        _id: userId,
+        deletedAt: null,
+      },
       {
         $addToSet: {
           roles: role,

@@ -1,22 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState, type ChangeEvent } from "react";
-
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-
 import {
   useFieldArray,
   useForm,
   Controller,
   type Control,
 } from "react-hook-form";
-
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-
 import Cropper, { type Area } from "react-easy-crop";
-
 import {
   ArrowLeft,
   Check,
@@ -33,154 +27,31 @@ import {
   Video,
   X,
 } from "lucide-react";
-
 import { toast } from "sonner";
-
-import { adminChallengeDayService } from "@/services/admin/adminChallengeDay.service";
-
+import { adminChallengeDayService } from "@/services/admin/admin-challenge-day.service";
+import {
+  challengeDayFormSchema,
+  type FormValues,
+} from "./challenge-day-form.schema";
+import type { ChallengeDayFormProps } from "./challenge-day-form.types";
+import {
+  cleanConfiguration,
+  createEmptyActivity,
+  getCroppedImageFile,
+  getVideoDuration,
+  IMAGE_ACCEPTED_TYPES,
+  IMAGE_ASPECT,
+  IMAGE_MAX_SIZE,
+  MAX_VIDEO_DURATION_SECONDS,
+  VIDEO_ACCEPTED_TYPES,
+  VIDEO_MAX_SIZE,
+} from "./challenge-day-form.helpers";
 import {
   CHALLENGE_ACTIVITY_TYPES,
   CHALLENGE_ACTIVITY_VALUE_TYPES,
   type ChallengeActivityType,
   type ChallengeActivityValueType,
 } from "@/types/admin/challenge-day/challenge-day.types";
-
-/* -------------------------------------------------------------------------- */
-/* Constants                                                                  */
-/* -------------------------------------------------------------------------- */
-
-const IMAGE_MAX_SIZE = 5 * 1024 * 1024;
-const VIDEO_MAX_SIZE = 50 * 1024 * 1024;
-
-const MAX_VIDEO_DURATION_SECONDS = 120;
-
-const IMAGE_ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-
-const VIDEO_ACCEPTED_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-
-const IMAGE_ASPECT = 16 / 9;
-
-/* -------------------------------------------------------------------------- */
-/* Types                                                                      */
-/* -------------------------------------------------------------------------- */
-
-type ExistingMedia = {
-  imageUrl?: string;
-  videoUrl?: string;
-};
-
-type ActivityFormValue = {
-  type: ChallengeActivityType;
-  title: string;
-  description: string;
-  instructions: string;
-  valueType: ChallengeActivityValueType;
-  targetValue?: number;
-  unit: string;
-  estimatedDurationMinutes?: number;
-  isRequired: boolean;
-  configuration: Record<string, unknown>;
-
-  imageFile: File | null;
-  videoFile: File | null;
-
-  existingImageUrl?: string;
-  existingVideoUrl?: string;
-
-  removeImage: boolean;
-  removeVideo: boolean;
-};
-
-interface ChallengeDayFormProps {
-  mode: "create" | "edit";
-  challengeId: string;
-  dayId?: string;
-
-  initialValues?: {
-    dayNumber?: number;
-    title?: string;
-    description?: string;
-
-    activities?: Array<Partial<ActivityFormValue> & ExistingMedia>;
-  };
-}
-
-/* -------------------------------------------------------------------------- */
-/* Validation                                                                 */
-/* -------------------------------------------------------------------------- */
-
-const activitySchema = z.object({
-  type: z.enum(CHALLENGE_ACTIVITY_TYPES),
-
-  title: z
-    .string()
-    .trim()
-    .min(1, "Activity title is required")
-    .max(150, "Activity title must not exceed 150 characters"),
-
-  description: z
-    .string()
-    .trim()
-    .max(2000, "Description must not exceed 2000 characters"),
-
-  instructions: z
-    .string()
-    .trim()
-    .max(5000, "Instructions must not exceed 5000 characters"),
-
-  valueType: z.enum(CHALLENGE_ACTIVITY_VALUE_TYPES),
-
-  targetValue: z.number().min(0, "Target value cannot be negative").optional(),
-
-  unit: z.string().trim().max(30, "Unit must not exceed 30 characters"),
-
-  estimatedDurationMinutes: z
-    .number()
-    .min(0, "Duration cannot be negative")
-    .optional(),
-
-  isRequired: z.boolean(),
-
-  configuration: z.record(z.string(), z.unknown()),
-
-  imageFile: z.custom<File | null>(),
-
-  videoFile: z.custom<File | null>(),
-
-  existingImageUrl: z.string().optional(),
-
-  existingVideoUrl: z.string().optional(),
-
-  removeImage: z.boolean(),
-
-  removeVideo: z.boolean(),
-});
-
-const formSchema = z.object({
-  dayNumber: z.number().int().min(1, "Day number must be at least 1"),
-
-  title: z
-    .string()
-    .trim()
-    .min(1, "Day title is required")
-    .max(150, "Day title must not exceed 150 characters"),
-
-  description: z
-    .string()
-    .trim()
-    .min(1, "Day description is required")
-    .max(2000, "Day description must not exceed 2000 characters"),
-
-  activities: z
-    .array(activitySchema)
-    .min(1, "At least one activity is required"),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-/* -------------------------------------------------------------------------- */
-/* Labels                                                                     */
-/* -------------------------------------------------------------------------- */
 
 const ACTIVITY_TYPE_LABELS: Record<ChallengeActivityType, string> = {
   exercise: "Exercise",
@@ -203,10 +74,6 @@ const VALUE_TYPE_LABELS: Record<ChallengeActivityValueType, string> = {
   duration: "Duration",
 };
 
-/* -------------------------------------------------------------------------- */
-/* Styles                                                                     */
-/* -------------------------------------------------------------------------- */
-
 const inputClass =
   "mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/10 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60";
 
@@ -214,135 +81,6 @@ const labelClass =
   "text-xs font-semibold uppercase tracking-wider text-slate-500";
 
 const errorClass = "mt-1 text-xs font-medium text-rose-600";
-
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function createEmptyActivity(): ActivityFormValue {
-  return {
-    type: "custom",
-    title: "",
-    description: "",
-    instructions: "",
-    valueType: "boolean",
-    targetValue: undefined,
-    unit: "",
-    estimatedDurationMinutes: undefined,
-    isRequired: true,
-    configuration: {},
-
-    imageFile: null,
-    videoFile: null,
-
-    existingImageUrl: undefined,
-    existingVideoUrl: undefined,
-
-    removeImage: false,
-    removeVideo: false,
-  };
-}
-
-function cleanConfiguration(
-  configuration: Record<string, unknown>,
-): Record<string, unknown> {
-  const cleaned: Record<string, unknown> = {};
-
-  Object.entries(configuration).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === "") {
-      return;
-    }
-
-    if (Array.isArray(value) && value.length === 0) {
-      return;
-    }
-
-    cleaned[key] = value;
-  });
-
-  return cleaned;
-}
-
-function getVideoDuration(file: File): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-
-    const video = document.createElement("video");
-
-    video.preload = "metadata";
-
-    video.onloadedmetadata = () => {
-      URL.revokeObjectURL(url);
-      resolve(video.duration);
-    };
-
-    video.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Unable to read video metadata."));
-    };
-
-    video.src = url;
-  });
-}
-
-function createImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const image = new window.Image();
-
-    image.onload = () => resolve(image);
-
-    image.onerror = () => reject(new Error("Unable to load image."));
-
-    image.src = url;
-  });
-}
-
-async function getCroppedImageFile(
-  imageSrc: string,
-  crop: Area,
-  fileName: string,
-): Promise<File> {
-  const image = await createImage(imageSrc);
-
-  const canvas = document.createElement("canvas");
-
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx) {
-    throw new Error("Unable to create image canvas.");
-  }
-
-  canvas.width = crop.width;
-  canvas.height = crop.height;
-
-  ctx.drawImage(
-    image,
-    crop.x,
-    crop.y,
-    crop.width,
-    crop.height,
-    0,
-    0,
-    crop.width,
-    crop.height,
-  );
-
-  const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/webp", 0.9),
-  );
-
-  if (!blob) {
-    throw new Error("Unable to create cropped image.");
-  }
-
-  return new File([blob], fileName.replace(/\.[^/.]+$/, ".webp"), {
-    type: "image/webp",
-  });
-}
-
-/* -------------------------------------------------------------------------- */
-/* Configuration fields                                                       */
-/* -------------------------------------------------------------------------- */
 
 function ConfigurationFields({
   type,
@@ -895,6 +633,26 @@ export default function ChallengeDayForm({
   } | null>(null);
 
   const [saving, setSaving] = useState(false);
+  const [maxDurationDays, setMaxDurationDays] = useState<number | null>(null);
+  const [durationLoaded, setDurationLoaded] = useState(false);
+
+  useEffect(() => {
+    const storageKey = `challenge-duration-${challengeId}`;
+    const savedDuration = sessionStorage.getItem(storageKey);
+
+    if (savedDuration === null || savedDuration.trim() === "") {
+      setMaxDurationDays(null);
+      setDurationLoaded(true);
+      return;
+    }
+
+    const duration = Number(savedDuration);
+
+    setMaxDurationDays(
+      Number.isSafeInteger(duration) && duration > 0 ? duration : null,
+    );
+    setDurationLoaded(true);
+  }, [challengeId]);
 
   const {
     control,
@@ -904,7 +662,7 @@ export default function ChallengeDayForm({
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(challengeDayFormSchema),
     defaultValues: {
       dayNumber: initialValues?.dayNumber ?? 1,
 
@@ -916,6 +674,9 @@ export default function ChallengeDayForm({
         ? initialValues.activities.map((activity) => ({
             ...createEmptyActivity(),
             ...activity,
+            id:
+              (activity as { id?: string; _id?: string }).id ??
+              (activity as { id?: string; _id?: string })._id,
             description: activity.description ?? "",
             instructions: activity.instructions ?? "",
             unit: activity.unit ?? "",
@@ -1078,6 +839,7 @@ export default function ChallengeDayForm({
       formData.append("description", values.description.trim());
 
       const activities = values.activities.map((activity, index) => ({
+        id: activity.id,
         type: activity.type,
         title: activity.title.trim(),
         description: activity.description.trim() || undefined,
@@ -1089,6 +851,8 @@ export default function ChallengeDayForm({
         isRequired: activity.isRequired,
         order: index,
         configuration: cleanConfiguration(activity.configuration),
+        removeImage: activity.removeImage || undefined,
+        removeVideo: activity.removeVideo || undefined,
       }));
 
       formData.append("activities", JSON.stringify(activities));
@@ -1111,6 +875,25 @@ export default function ChallengeDayForm({
           }),
         );
       });
+
+      if (mode === "create") {
+        if (!durationLoaded) {
+          toast.error("Challenge duration is still loading.");
+          return;
+        }
+
+        if (maxDurationDays === null) {
+          toast.error(
+            "Challenge duration is unavailable. Open challenge details and try again.",
+          );
+          return;
+        }
+
+        if (values.dayNumber > maxDurationDays) {
+          toast.error(`This challenge allows only ${maxDurationDays} days.`);
+          return;
+        }
+      }
 
       if (mode === "create") {
         await adminChallengeDayService.createDay(challengeId, formData);
@@ -1236,12 +1019,29 @@ export default function ChallengeDayForm({
                     id="dayNumber"
                     type="number"
                     min={1}
-                    disabled={mode === "edit" || saving}
-                    {...register("dayNumber", {
-                      valueAsNumber: true,
-                    })}
+                    max={
+                      mode === "create"
+                        ? (maxDurationDays ?? undefined)
+                        : undefined
+                    }
+                    disabled={
+                      mode === "edit" ||
+                      saving ||
+                      (mode === "create" && !durationLoaded)
+                    }
+                    {...register("dayNumber", { valueAsNumber: true })}
                     className={`${inputClass} sm:max-w-[180px]`}
                   />
+
+                  <p className="mt-1.5 text-[11px] text-slate-400">
+                    {mode === "edit"
+                      ? "The day number stays fixed after creation."
+                      : !durationLoaded
+                        ? "Loading challenge duration..."
+                        : maxDurationDays !== null
+                          ? `Allowed range: Day 1 to Day ${maxDurationDays}.`
+                          : "Challenge duration unavailable. Open challenge details first."}
+                  </p>
 
                   <p className="mt-1.5 text-[11px] text-slate-400">
                     The day number stays fixed after creation.

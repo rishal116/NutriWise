@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -18,9 +19,8 @@ export default function UserTable() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("newest");
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [confirmUser, setConfirmUser] = useState<AdminUserListItemDto | null>(
-    null,
-  );
+  const [confirmUser, setConfirmUser] =
+    useState<AdminUserListItemDto | null>(null);
 
   const debouncedSearch = useDebounce(search, 500);
 
@@ -47,7 +47,9 @@ export default function UserTable() {
   };
 
   const handleConfirm = async () => {
-    if (confirmUser && (await toggleBlock(confirmUser))) setConfirmUser(null);
+    if (confirmUser && (await toggleBlock(confirmUser))) {
+      setConfirmUser(null);
+    }
   };
 
   const SortIcon = sortBy === "newest" ? ArrowDown : ArrowUp;
@@ -60,6 +62,7 @@ export default function UserTable() {
 
         <div className="flex items-center gap-3">
           <UserSearchBar value={search} onChange={setSearch} />
+
           {hasActiveFilters && (
             <button
               type="button"
@@ -87,14 +90,21 @@ export default function UserTable() {
         <table className="w-full text-left text-sm">
           <thead className="border-b border-slate-100 bg-slate-50/50 font-medium text-slate-500">
             <tr>
-              <th className="px-6 py-4 font-semibold">User</th>
-              <th className="hidden px-6 py-4 font-semibold sm:table-cell">
+              <th scope="col" className="px-6 py-4 font-semibold">
+                User
+              </th>
+
+              <th
+                scope="col"
+                className="hidden px-6 py-4 font-semibold sm:table-cell"
+              >
                 Role
               </th>
-              <th className="hidden px-6 py-4 font-semibold md:table-cell">
-                Profile
-              </th>
-              <th className="hidden px-6 py-4 lg:table-cell">
+
+              <th
+                scope="col"
+                className="hidden px-6 py-4 font-semibold lg:table-cell"
+              >
                 <button
                   type="button"
                   onClick={() =>
@@ -106,18 +116,33 @@ export default function UserTable() {
                   className="flex items-center gap-1 font-semibold text-slate-600 transition-colors hover:text-slate-900"
                 >
                   Joined
-                  <SortIcon size={13} />
+                  <SortIcon size={13} aria-hidden="true" />
                 </button>
               </th>
-              <th className="px-6 py-4 text-center font-semibold">Status</th>
-              <th className="px-6 py-4 text-right font-semibold">Actions</th>
+
+              <th
+                scope="col"
+                className="px-6 py-4 text-center font-semibold"
+              >
+                Status
+              </th>
+
+              <th
+                scope="col"
+                className="px-6 py-4 text-right font-semibold"
+              >
+                Actions
+              </th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-14 text-center text-slate-400">
+                <td
+                  colSpan={5}
+                  className="py-14 text-center text-slate-400"
+                >
                   {isLoading ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 size={18} className="animate-spin" />
@@ -154,11 +179,15 @@ export default function UserTable() {
             aria-label="Loading more users"
           />
         )}
-        {!isLoading && !isLoadingMore && !hasMore && users.length > 0 && (
-          <span className="text-xs font-medium text-slate-400">
-            No more users
-          </span>
-        )}
+
+        {!isLoading &&
+          !isLoadingMore &&
+          !hasMore &&
+          users.length > 0 && (
+            <span className="text-xs font-medium text-slate-400">
+              No more users
+            </span>
+          )}
       </div>
 
       {confirmUser && (

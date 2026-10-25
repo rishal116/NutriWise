@@ -2,10 +2,13 @@
 
 import { useEffect } from "react";
 
-import type { AdminUserListItemDto } from "@/dtos/admin/user/admin-user-list-item.dto";
+interface ConfirmTarget {
+  fullName: string;
+  isBlocked: boolean;
+}
 
 interface ConfirmBlockDialogProps {
-  user: AdminUserListItemDto;
+  user: ConfirmTarget;
   isLoading: boolean;
   onConfirm: () => void;
   onCancel: () => void;

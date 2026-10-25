@@ -1,26 +1,17 @@
 import { inject, injectable } from "inversify";
-
 import { TYPES } from "../../../types/types";
-
 import { IAdminUserService } from "../../interfaces/admin/IAdminUserService";
-
 import { IAdminUserRepository } from "../../../repositories/interfaces/admin/IAdminUserRepository";
-
 import { AdminUserListQueryDto } from "../../../dtos/admin/user/admin-user-list-query.dto";
-
 import { AdminUserListItemDto } from "../../../dtos/admin/user/admin-user-list-item.dto";
-
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
-
 import logger from "../../../utils/logger";
-
-import { UserMapper } from "../../../mappers/admin/user/user.mapper";
-
+import { AdminUserMapper } from "../../../mappers/admin/user/admin-user.mapper";
 import { Types } from "mongoose";
-
 import { NotificationType } from "../../../models/notification.model";
-
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
+import { validateDto } from "../../../middlewares/validateDto.middleware";
+import { AdminUserDetailsDto } from "../../../dtos/admin/user/admin-user-details.dto";
 
 @injectable()
 export class AdminUserService implements IAdminUserService {
@@ -35,14 +26,16 @@ export class AdminUserService implements IAdminUserService {
   async getUsers(
     query: AdminUserListQueryDto,
   ): Promise<InfiniteScrollResponseDTO<AdminUserListItemDto>> {
+    const validatedQuery = await validateDto(AdminUserListQueryDto, query);
+
     logger.info("Fetching admin users", {
-      query,
+      query: validatedQuery,
     });
 
-    const result = await this._adminUserRepository.getUsers(query);
+    const result = await this._adminUserRepository.getUsers(validatedQuery);
 
     const items = result.items.map((user) =>
-      UserMapper.toAdminUserListItemDto(user),
+      AdminUserMapper.toUserTableRowDto(user),
     );
 
     return new InfiniteScrollResponseDTO(
@@ -50,6 +43,18 @@ export class AdminUserService implements IAdminUserService {
       result.nextCursor,
       result.hasMore,
     );
+  }
+
+  async getUserDetails(userId: string): Promise<AdminUserDetailsDto | null> {
+    logger.info("Fetching admin user details", { userId });
+
+    const user = await this._adminUserRepository.getUserDetailsById(userId);
+
+    if (!user) {
+      return null;
+    }
+
+    return AdminUserMapper.toUserDetailsDto(user);
   }
 
   async updateBlockStatus(userId: string, isBlocked: boolean): Promise<void> {

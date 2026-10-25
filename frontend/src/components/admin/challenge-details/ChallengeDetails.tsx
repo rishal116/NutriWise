@@ -5,12 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Sparkles, RefreshCw } from "lucide-react";
 
-import { AdminChallengeDetailsDTO } from "@/dtos/admin/challenge/admin-challenge-details.dto";
-
-import { adminChallengeService } from "@/services/admin/adminChallenge.service";
+import type { AdminChallengeDetailsDTO } from "@/dtos/admin/challenge/admin-challenge-details.dto";
+import { adminChallengeService } from "@/services/admin/admin-challenge.service";
 
 import { ChallengeDetailsHeader } from "./ChallengeDetailsHeader";
-import { ChallengeDetailsCover } from "./ChallengeDetailsCover";
 import { ChallengeOverview } from "./ChallengeOverview";
 import { ChallengeMetadata } from "./ChallengeMetadata";
 import { ChallengeDaysSection } from "./ChallengeDaysSection";
@@ -25,19 +23,12 @@ export default function ChallengeDetails({
 }: ChallengeDetailsProps) {
   const router = useRouter();
 
-  const [challenge, setChallenge] =
-    useState<AdminChallengeDetailsDTO | null>(
-      null,
-    );
-
-  const [loading, setLoading] = useState(true);
-
-  const [actionLoading, setActionLoading] =
-    useState(false);
-
-  const [error, setError] = useState<string | null>(
+  const [challenge, setChallenge] = useState<AdminChallengeDetailsDTO | null>(
     null,
   );
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchChallenge = async () => {
@@ -46,16 +37,25 @@ export default function ChallengeDetails({
         setError(null);
 
         const response =
-          await adminChallengeService.getChallengeDetails(
-            challengeId,
-          );
+          await adminChallengeService.getChallengeDetails(challengeId);
 
-        setChallenge(response.data);
+        if (!response.success || !response.data) {
+          setChallenge(null);
+          setError(response.message || "Failed to load challenge details.");
+          return;
+        }
+        const loadedChallenge = response.data;
+
+        setChallenge(loadedChallenge);
+
+        sessionStorage.setItem(
+          `challenge-duration-${loadedChallenge.id}`,
+          String(loadedChallenge.durationDays),
+        );
       } catch (err) {
         console.error(err);
-        setError(
-          "Failed to load challenge details.",
-        );
+        setChallenge(null);
+        setError("Failed to load challenge details.");
       } finally {
         setLoading(false);
       }
@@ -65,6 +65,7 @@ export default function ChallengeDetails({
   }, [challengeId]);
 
   const handleRetry = () => {
+    router.refresh();
     window.location.reload();
   };
 
@@ -74,16 +75,17 @@ export default function ChallengeDetails({
       setError(null);
 
       const response =
-        await adminChallengeService.publishChallenge(
-          challengeId,
-        );
+        await adminChallengeService.publishChallenge(challengeId);
 
-      setChallenge(response.data);
+      if (!response.success) {
+        setError(response.message || "Failed to publish challenge.");
+        return;
+      }
+
+      setChallenge((prev) => (prev ? { ...prev, status: "published" } : prev));
     } catch (err) {
       console.error(err);
-      setError(
-        "Failed to publish challenge.",
-      );
+      setError("Failed to publish challenge.");
     } finally {
       setActionLoading(false);
     }
@@ -102,18 +104,18 @@ export default function ChallengeDetails({
       setActionLoading(true);
       setError(null);
 
-      await adminChallengeService.deleteChallenge(
-        challengeId,
-      );
+      const response = await adminChallengeService.deleteChallenge(challengeId);
+
+      if (!response.success) {
+        setError(response.message || "Failed to delete challenge.");
+        return;
+      }
 
       router.push("/admin/challenges");
       router.refresh();
     } catch (err) {
       console.error(err);
-
-      setError(
-        "Failed to delete challenge.",
-      );
+      setError("Failed to delete challenge.");
     } finally {
       setActionLoading(false);
     }
@@ -137,17 +139,28 @@ export default function ChallengeDetails({
             </h2>
 
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              The challenge may have been deleted
-              or no longer exists.
+              {error ||
+                "The challenge may have been deleted or no longer exists."}
             </p>
 
-            <Link
-              href="/admin/challenges"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Challenges
-            </Link>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Retry
+              </button>
+
+              <Link
+                href="/admin/challenges"
+                className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Challenges
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -165,10 +178,11 @@ export default function ChallengeDetails({
         />
 
         {error && (
-          <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <span className="flex-1">
-              {error}
-            </span>
+          <div
+            role="alert"
+            className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            <span className="flex-1">{error}</span>
 
             <button
               type="button"
@@ -182,15 +196,9 @@ export default function ChallengeDetails({
         )}
 
         <main className="space-y-6">
-          <ChallengeDetailsCover
-            challenge={challenge}
-          />
-
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="space-y-6">
-              <ChallengeOverview
-                challenge={challenge}
-              />
+              <ChallengeOverview challenge={challenge} />
 
               {challenge.instructions && (
                 <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -200,8 +208,7 @@ export default function ChallengeDetails({
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Guidance for participants
-                      completing this challenge.
+                      Guidance for participants completing this challenge.
                     </p>
                   </div>
 
@@ -211,14 +218,10 @@ export default function ChallengeDetails({
                 </section>
               )}
 
-              <ChallengeDaysSection
-                challengeId={challenge.id}
-              />
+              <ChallengeDaysSection challengeId={challenge.id} />
             </div>
 
-            <ChallengeMetadata
-              challenge={challenge}
-            />
+            <ChallengeMetadata challenge={challenge} />
           </div>
         </main>
       </div>

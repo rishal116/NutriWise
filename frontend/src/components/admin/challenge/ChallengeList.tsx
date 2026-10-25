@@ -2,12 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { adminChallengeService } from "@/services/admin/adminChallenge.service";
+import { adminChallengeService } from "@/services/admin/admin-challenge.service";
 
-import { AdminChallengeCardDTO } from "@/dtos/admin/challenge/admin-challenge-card.dto";
-import { AdminChallengeListQueryDTO } from "@/dtos/admin/challenge/admin-challenge-list-query.dto";
-
-import { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
+import type { AdminChallengeCardDTO } from "@/dtos/admin/challenge/admin-challenge-card.dto";
+import type { AdminChallengeListQueryDTO } from "@/dtos/admin/challenge/admin-challenge-list-query.dto";
 
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
@@ -17,37 +15,18 @@ import { ChallengeCard } from "./ChallengeCard";
 import { ChallengeListSkeleton } from "./ChallengeListSkeleton";
 import { ChallengeListEmpty } from "./ChallengeListEmpty";
 
-interface ChallengeListProps {
-  initialData: InfiniteScrollResponseDTO<AdminChallengeCardDTO>;
-}
+const DEFAULT_QUERY: AdminChallengeListQueryDTO = {
+  limit: 12,
+  sortBy: "newest",
+};
 
-export default function ChallengeList({
-  initialData,
-}: ChallengeListProps) {
-  const [challenges, setChallenges] = useState<
-    AdminChallengeCardDTO[]
-  >(initialData.items);
-
-  const [query, setQuery] =
-    useState<AdminChallengeListQueryDTO>({
-      limit: 12,
-      sortBy: "newest",
-    });
-
-  const [nextCursor, setNextCursor] =
-    useState<string | null>(
-      initialData.nextCursor,
-    );
-
-  const [hasMore, setHasMore] = useState<boolean>(
-    initialData.hasMore,
-  );
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [error, setError] =
-    useState<string | null>(null);
+export default function ChallengeList() {
+  const [challenges, setChallenges] = useState<AdminChallengeCardDTO[]>([]);
+  const [query, setQuery] = useState<AdminChallengeListQueryDTO>(DEFAULT_QUERY);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchChallenges = useCallback(
     async (cursor?: string) => {
@@ -55,25 +34,20 @@ export default function ChallengeList({
         setLoading(true);
         setError(null);
 
-        const response =
-          await adminChallengeService.listChallenges(
-            {
-              ...query,
-              cursor,
-            },
-          );
+        const response = await adminChallengeService.listChallenges({
+          ...query,
+          cursor,
+        });
+
+        if (!response.data) {
+          throw new Error("Unable to fetch challenges.");
+        }
 
         const data = response.data;
 
-        if (!cursor) {
-          setChallenges(data.items);
-        } else {
-          setChallenges((prev) => [
-            ...prev,
-            ...data.items,
-          ]);
-        }
-
+        setChallenges((previous) =>
+          cursor ? [...previous, ...data.items] : data.items,
+        );
         setNextCursor(data.nextCursor);
         setHasMore(data.hasMore);
       } catch (err) {
@@ -86,44 +60,24 @@ export default function ChallengeList({
   );
 
   useEffect(() => {
-    if (
-      query.search === undefined &&
-      query.category === undefined &&
-      query.difficulty === undefined &&
-      query.accessType === undefined &&
-      query.status === undefined &&
-      query.sortBy === "newest"
-    ) {
-      return;
-    }
-
     void fetchChallenges();
-  }, [fetchChallenges, query]);
+  }, [fetchChallenges]);
 
-  const updateQuery = <
-    K extends keyof AdminChallengeListQueryDTO,
-  >(
+  const updateQuery = <K extends keyof AdminChallengeListQueryDTO>(
     field: K,
     value: AdminChallengeListQueryDTO[K],
   ) => {
-    setQuery((prev) => ({
-      ...prev,
+    setQuery((previous) => ({
+      ...previous,
       [field]: value,
     }));
   };
 
-  const handleSearchChange = (
-    value: string,
-  ) => {
-    updateQuery(
-      "search",
-      value.trim() || undefined,
-    );
+  const handleSearchChange = (value: string) => {
+    updateQuery("search", value.trim() || undefined);
   };
 
-  const handleCategoryChange = (
-    value: string,
-  ) => {
+  const handleCategoryChange = (value: string) => {
     updateQuery(
       "category",
       value === "all"
@@ -132,9 +86,7 @@ export default function ChallengeList({
     );
   };
 
-  const handleDifficultyChange = (
-    value: string,
-  ) => {
+  const handleDifficultyChange = (value: string) => {
     updateQuery(
       "difficulty",
       value === "all"
@@ -143,9 +95,7 @@ export default function ChallengeList({
     );
   };
 
-  const handleAccessTypeChange = (
-    value: string,
-  ) => {
+  const handleAccessTypeChange = (value: string) => {
     updateQuery(
       "accessType",
       value === "all"
@@ -154,9 +104,7 @@ export default function ChallengeList({
     );
   };
 
-  const handleStatusChange = (
-    value: string,
-  ) => {
+  const handleStatusChange = (value: string) => {
     updateQuery(
       "status",
       value === "all"
@@ -165,9 +113,7 @@ export default function ChallengeList({
     );
   };
 
-  const handleSortChange = (
-    value: string,
-  ) => {
+  const handleSortChange = (value: string) => {
     updateQuery(
       "sortBy",
       value === "all"
@@ -177,14 +123,11 @@ export default function ChallengeList({
   };
 
   const handleClearFilters = () => {
-    setQuery({
-      limit: 12,
-      sortBy: "newest",
-    });
+    setQuery(DEFAULT_QUERY);
   };
 
   const handleLoadMore = () => {
-    if (!nextCursor || loading) {
+    if (!nextCursor || loading || !hasMore) {
       return;
     }
 
@@ -217,8 +160,18 @@ export default function ChallengeList({
       />
 
       {error && (
-        <div className="rounded-lg border border-rose-200 bg-rose-50/60 px-4 py-3 text-xs text-rose-800">
+        <div
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50/60 px-4 py-3 text-xs text-rose-800"
+        >
           {error}
+          <button
+            type="button"
+            onClick={() => void fetchChallenges()}
+            className="ml-2 font-semibold underline underline-offset-2"
+          >
+            Retry
+          </button>
         </div>
       )}
 
@@ -244,9 +197,15 @@ export default function ChallengeList({
                 disabled={loading}
                 className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "Loading more..." : "Load More"}
+                {loading ? "Loading..." : "Load More"}
               </button>
             </div>
+          )}
+
+          {loading && challenges.length > 0 && (
+            <p className="text-center text-sm text-slate-500">
+              Loading challenges...
+            </p>
           )}
         </>
       )}

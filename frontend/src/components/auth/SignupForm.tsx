@@ -107,21 +107,26 @@ export default function SignupForm() {
       const response = await userAuthService.googleAuth(payload);
 
       if (!response.success) {
-        toast.error(response.message || "Signup failed");
+        toast.error(response.message || "Google sign-in failed.");
         return;
       }
-      if (!response.isProfileCompleted) {
+
+      const { activeRole, isProfileCompleted } = response.data ?? {};
+
+      if (!isProfileCompleted) {
         router.push("/complete-profile");
         return;
       }
 
-      switch (response.activeRole) {
+      switch (activeRole) {
         case "admin":
           router.push("/admin");
           break;
+
         case "nutritionist":
           router.push("/nutritionist");
           break;
+
         default:
           router.push("/");
       }

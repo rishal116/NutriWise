@@ -76,6 +76,7 @@ export class UserAuthController implements IUserAuthController {
 
     return res.status(StatusCode.OK).json({
       success: true,
+      message: "User profile retrieved successfully.",
       data: response,
     });
   });
@@ -103,7 +104,9 @@ export class UserAuthController implements IUserAuthController {
     return res.status(StatusCode.CREATED).json({
       success: true,
       message: AUTH_MESSAGES.OTP_VERIFIED_SUCCESS,
-      accessToken: response.accessToken,
+      data: {
+        accessToken: response.accessToken,
+      },
     });
   });
 
@@ -120,9 +123,11 @@ export class UserAuthController implements IUserAuthController {
     return res.status(StatusCode.OK).json({
       success: true,
       message: AUTH_MESSAGES.LOGIN_SUCCESS,
-      activeRole: response.activeRole,
-      isProfileCompleted: response.isProfileCompleted,
-      accessToken: response.accessToken,
+      data: {
+        activeRole: response.activeRole,
+        isProfileCompleted: response.isProfileCompleted,
+        accessToken: response.accessToken,
+      },
     });
   });
 
@@ -136,14 +141,17 @@ export class UserAuthController implements IUserAuthController {
     return res.status(StatusCode.OK).json({
       success: true,
       message: AUTH_MESSAGES.LOGIN_SUCCESS,
-      activeRole: response.activeRole,
-      isProfileCompleted: response.isProfileCompleted,
-      accessToken: response.accessToken,
+      data: {
+        activeRole: response.activeRole,
+        isProfileCompleted: response.isProfileCompleted,
+        accessToken: response.accessToken,
+      },
     });
   });
 
   switchRole = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
+
     const response = await this._userAuthService.switchRole(userId, req.body);
 
     setAuthCookies(res, response.refreshToken);
@@ -151,7 +159,9 @@ export class UserAuthController implements IUserAuthController {
     return res.status(StatusCode.OK).json({
       success: true,
       message: AUTH_MESSAGES.ROLE_SWITCH_SUCCESS,
-      accessToken: response.accessToken,
+      data: {
+        accessToken: response.accessToken,
+      },
     });
   });
 }

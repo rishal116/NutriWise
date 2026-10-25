@@ -1,15 +1,16 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
+
 import {
   APPLICATION_STATUSES,
   AVAILABILITY_STATUSES,
   COACH_LEVELS,
   SPECIALIZATIONS,
   LANGUAGES,
-  AvailabilityStatus,
-  ApplicationStatus,
-  CoachLevel,
-  Specialization,
-  Language,
+  type ApplicationStatus,
+  type AvailabilityStatus,
+  type CoachLevel,
+  type Specialization,
+  type Language,
 } from "../types/nutritionist.types";
 
 export interface IQualification {
@@ -30,7 +31,7 @@ export interface ICertification {
   certificateUrl: string;
 }
 
-export interface INutritionistProfile extends Document {
+export interface INutritionistProfile {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   qualifications: IQualification[];
@@ -38,12 +39,11 @@ export interface INutritionistProfile extends Document {
   experiences: IExperience[];
   bio?: string;
   languages: Language[];
-  availabilityStatus: AvailabilityStatus;
   resumeUrl: string;
   certifications: ICertification[];
-  totalExperienceYears: number;
   applicationStatus: ApplicationStatus;
   rejectionReason?: string;
+  availabilityStatus: AvailabilityStatus;
   coachLevel: CoachLevel;
   rating: number;
   totalReviews: number;
@@ -74,7 +74,7 @@ const CertificationSchema = new Schema<ICertification>(
   {
     name: { type: String, required: true, trim: true },
     issuedBy: { type: String, required: true, trim: true },
-    certificateUrl: { type: String, required: true },
+    certificateUrl: { type: String, required: true, trim: true },
   },
   { _id: false },
 );
@@ -86,36 +86,34 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
       ref: "User",
       required: true,
       unique: true,
-      index: true,
       immutable: true,
     },
 
     qualifications: {
       type: [QualificationSchema],
       required: true,
-      validate: [
-        (v: IQualification[]) => v.length > 0,
-        "At least one qualification is required",
-      ],
+      validate: {
+        validator: (value: IQualification[]) => value.length > 0,
+        message: "At least one qualification is required.",
+      },
     },
 
     specializations: {
-      type: [String],
-      enum: SPECIALIZATIONS,
+      type: [{ type: String, enum: SPECIALIZATIONS }],
       required: true,
-      validate: [
-        (v: string[]) => v.length > 0,
-        "At least one specialization is required",
-      ],
+      validate: {
+        validator: (value: Specialization[]) => value.length > 0,
+        message: "At least one specialization is required.",
+      },
     },
 
     experiences: {
       type: [ExperienceSchema],
       required: true,
-      validate: [
-        (v: IExperience[]) => v.length > 0,
-        "At least one experience is required",
-      ],
+      validate: {
+        validator: (value: IExperience[]) => value.length > 0,
+        message: "At least one experience is required.",
+      },
     },
 
     bio: {
@@ -125,19 +123,12 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
     },
 
     languages: {
-      type: [String],
-      enum: LANGUAGES,
+      type: [{ type: String, enum: LANGUAGES }],
       required: true,
-      validate: [
-        (v: string[]) => v.length > 0,
-        "At least one language is required",
-      ],
-    },
-
-    availabilityStatus: {
-      type: String,
-      enum: AVAILABILITY_STATUSES,
-      default: "available",
+      validate: {
+        validator: (value: Language[]) => value.length > 0,
+        message: "At least one language is required.",
+      },
     },
 
     resumeUrl: {
@@ -151,16 +142,11 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
       default: [],
     },
 
-    totalExperienceYears: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
     applicationStatus: {
       type: String,
       enum: APPLICATION_STATUSES,
       default: "pending",
+      required: true,
     },
 
     rejectionReason: {
@@ -168,10 +154,18 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
       trim: true,
     },
 
+    availabilityStatus: {
+      type: String,
+      enum: AVAILABILITY_STATUSES,
+      default: "available",
+      required: true,
+    },
+
     coachLevel: {
       type: String,
       enum: COACH_LEVELS,
       default: "beginner",
+      required: true,
     },
 
     rating: {
@@ -193,18 +187,12 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
       min: 0,
     },
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true },
 );
 
-NutritionistProfileSchema.index({ applicationStatus: 1 });
-NutritionistProfileSchema.index({ coachLevel: 1 });
-NutritionistProfileSchema.index({ rating: -1 });
-NutritionistProfileSchema.index({
-  applicationStatus: 1,
-  coachLevel: 1,
-});
+NutritionistProfileSchema.index({ applicationStatus: 1, createdAt: -1 });
+NutritionistProfileSchema.index({ applicationStatus: 1, rating: -1 });
+NutritionistProfileSchema.index({ applicationStatus: 1, coachLevel: 1 });
 
 export const NutritionistProfileModel = model<INutritionistProfile>(
   "NutritionistProfile",

@@ -25,10 +25,10 @@ import { HealthDetailsService } from "../services/implements/user/healthDetails.
 import { HealthProgressService } from "../services/implements/user/healthProgress.service";
 import { NutritionistBrowsingService } from "../services/implements/user/discovery/nutriBrowsing.service";
 import { NutritionistPlanBrowsingService } from "../services/implements/user/discovery/nutriPlanBrowsing.service";
-import { OnboardingService } from "../services/implements/user/onboarding.service";
+import { OnboardingService } from "../services/implements/user/account/onboarding.service";
 import { ReviewService } from "../services/implements/user/discovery/review.service";
-import { UserAccountService } from "../services/implements/user/userAccount.service";
-import { UserAuthService } from "../services/implements/user/userAuth.service";
+import { UserAccountService } from "../services/implements/user/account/userAccount.service";
+import { UserAuthService } from "../services/implements/user/account/userAuth.service";
 import { UserMeetingService } from "../services/implements/user/meeting/userMeeting.service";
 import { UserProfileService } from "../services/implements/user/userProfile.service";
 import { UserProgramService } from "../services/implements/user/program/userProgram.service";
@@ -397,8 +397,8 @@ import { IAdminChallengeRepository } from "../repositories/interfaces/admin/IAdm
 import { IAdminChallengeDayController } from "../controllers/interfaces/admin/IAdminChallengeDayController";
 import { AdminChallengeDayController } from "../controllers/implementations/admin/adminChallengeDay.controller";
 import { IAdminChallengeDayService } from "../services/interfaces/admin/IAdminChallengeDayService";
-import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDAy.service";
-import { IAdminChallengeDayRepository } from "../repositories/interfaces/admin/IAdminChallengDayRepository";
+import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDay.service";
+import { IAdminChallengeDayRepository } from "../repositories/interfaces/admin/IAdminChallengeDayRepository";
 import { AdminChallengeDayRepository } from "../repositories/implements/admin/adminChallengeDay.repository";
 import { IPublicChallengeController } from "../controllers/interfaces/public/IPublicChallengeController";
 import { PublicChallengeController } from "../controllers/implementations/public/publicChallenge.controller";
