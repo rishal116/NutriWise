@@ -8,6 +8,5 @@ export interface AdminUserListItemDto {
   profileImage?: string;
   activeRole: UserRole;
   isBlocked: boolean;
-  isProfileCompleted: boolean;
   createdAt: Date;
 }

@@ -1,11 +1,11 @@
-import {
+import type {
   ApplicationStatus,
   AvailabilityStatus,
   CoachLevel,
   Language,
   Specialization,
 } from "@/types/nutritionist.types";
-import { Gender, UserRole } from "@/enums/user/user.enum";
+import type { Gender, UserRole } from "@/enums/user/user.enum";
 
 export interface QualificationDto {
   degree: string;
@@ -26,68 +26,38 @@ export interface CertificationDto {
 }
 
 export interface AdminNutritionistDetailsDto {
-  // User
-  _id: string;
+  id: string;
   userId: string;
 
   fullName: string;
   email: string;
   username: string;
-
   profileImage?: string;
-
-  phone?: string;
-
-  birthDate?: Date;
-
   gender?: Gender;
 
   roles: UserRole[];
-
   activeRole: UserRole;
-
   isBlocked: boolean;
-
   isProfileCompleted: boolean;
 
-  lastLoginAt?: Date;
-
-  lastActiveAt?: Date;
-
-  // Nutritionist Profile
   qualifications: QualificationDto[];
-
   experiences: ExperienceDto[];
-
   certifications: CertificationDto[];
-
   specializations: Specialization[];
-
   languages: Language[];
-
   bio?: string;
-
   resumeUrl: string;
 
-  totalExperienceYears: number;
-
   availabilityStatus: AvailabilityStatus;
-
   applicationStatus: ApplicationStatus;
-
   rejectionReason?: string;
-
   coachLevel: CoachLevel;
 
   rating: number;
-
   totalReviews: number;
-
   totalPeopleCoached: number;
+  totalExperienceYears: number;
 
-  createdAt: Date;
-
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
-
-

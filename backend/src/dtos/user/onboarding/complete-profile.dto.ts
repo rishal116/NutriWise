@@ -1,44 +1,59 @@
-import { IsDateString, IsIn, IsNumber, IsOptional } from "class-validator";
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  Max,
+  Min,
+} from "class-validator";
 
 import {
-  ActivityLevel,
-  DietType,
-  GoalType,
-  TimelineType,
   ACTIVITY_LEVELS,
   DIET_TYPES,
   GOALS,
   TIMELINES,
+  type ActivityLevel,
+  type DietType,
+  type GoalType,
+  type TimelineType,
 } from "../../../types/health.types";
 
 import { Gender } from "../../../enums/user.enum";
 
 export class CompleteProfileDto {
-  @IsIn(Object.values(Gender))
+  @IsEnum(Gender)
   gender!: Gender;
 
   @IsDateString()
   birthDate!: string;
 
   @IsNumber()
+  @Min(1)
+  @Max(300)
   heightCm!: number;
 
   @IsNumber()
+  @IsPositive()
+  @Max(700)
   weightKg!: number;
 
-  @IsIn(ACTIVITY_LEVELS)
+  @IsEnum(ACTIVITY_LEVELS)
   activityLevel!: ActivityLevel;
 
-  @IsIn(DIET_TYPES)
+  @IsEnum(DIET_TYPES)
   dietType!: DietType;
 
-  @IsIn(GOALS)
+  @IsEnum(GOALS)
   goal!: GoalType;
 
   @IsOptional()
   @IsNumber()
+  @IsPositive()
+  @Max(700)
   targetWeightKg?: number;
 
-  @IsIn(TIMELINES)
-  preferredTimeline!: TimelineType;
+  @IsOptional()
+  @IsEnum(TIMELINES)
+  preferredTimeline?: TimelineType;
 }

@@ -1,22 +1,18 @@
-import { Request, Response } from "express";
-
+import type { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 
 import { asyncHandler } from "../../../utils/asyncHandler";
-
 import { TYPES } from "../../../types/types";
-
 import { StatusCode } from "../../../enums/statusCode.enum";
 
-import { IAdminChallengeController } from "../../interfaces/admin/IAdminChallengeController";
+import type { IAdminChallengeController } from "../../interfaces/admin/IAdminChallengeController";
+import type { IAdminChallengeService } from "../../../services/interfaces/admin/IAdminChallengeService";
 
-import { IAdminChallengeService } from "../../../services/interfaces/admin/IAdminChallengeService";
+import type { AdminChallengeListQueryDTO } from "../../../dtos/admin/challenge/admin-challenge-list-query.dto";
+import type { CreateChallengeDTO } from "../../../dtos/admin/challenge/create-challenge.dto";
+import type { UpdateChallengeDTO } from "../../../dtos/admin/challenge/update-challenge.dto";
 
-import { AdminChallengeListQueryDTO } from "../../../dtos/admin/challenge/admin-challenge-list-query.dto";
-
-import { CreateChallengeDTO } from "../../../dtos/admin/challenge/create-challenge.dto";
-
-import { UpdateChallengeDTO } from "../../../dtos/admin/challenge/update-challenge.dto";
+import { toAdminChallengeListQuery } from "../../../utils/adminChallengeController.util";
 
 @injectable()
 export class AdminChallengeController implements IAdminChallengeController {
@@ -27,86 +23,50 @@ export class AdminChallengeController implements IAdminChallengeController {
 
   updateChallenge = asyncHandler(async (req: Request, res: Response) => {
     const { challengeId } = req.params;
-
     const data: UpdateChallengeDTO = req.body;
+    const files = req.files as
+      | {
+          thumbnail?: Express.Multer.File[];
+        }
+      | undefined;
 
-    const files = req.files as {
-      thumbnail?: Express.Multer.File[];
-      coverImage?: Express.Multer.File[];
-    };
-
-    const thumbnailFile = files.thumbnail?.[0];
-    const coverImageFile = files.coverImage?.[0];
-
-    const result = await this._challengeService.updateChallenge(
+    await this._challengeService.updateChallenge(
       challengeId,
       data,
-      thumbnailFile,
-      coverImageFile,
+      files?.thumbnail?.[0],
     );
 
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Challenge updated successfully",
-      data: result,
     });
   });
 
   createChallenge = asyncHandler(async (req: Request, res: Response) => {
     const adminId = req.user!.userId;
-
     const data: CreateChallengeDTO = req.body;
+    const files = req.files as
+      | {
+          thumbnail?: Express.Multer.File[];
+        }
+      | undefined;
 
-    const files = req.files as {
-      thumbnail?: Express.Multer.File[];
-      coverImage?: Express.Multer.File[];
-    };
-
-    const thumbnailFile = files.thumbnail?.[0];
-    const coverImageFile = files.coverImage?.[0];
-
-    const result = await this._challengeService.createChallenge(
+    await this._challengeService.createChallenge(
       data,
       adminId,
-      thumbnailFile,
-      coverImageFile,
+      files?.thumbnail?.[0],
     );
 
     return res.status(StatusCode.CREATED).json({
       success: true,
       message: "Challenge created successfully",
-      data: result,
     });
   });
 
   listChallenges = asyncHandler(async (req: Request, res: Response) => {
-    const query: AdminChallengeListQueryDTO = {
-      search: req.query.search as string | undefined,
-
-      category: req.query.category as
-        | AdminChallengeListQueryDTO["category"]
-        | undefined,
-
-      difficulty: req.query.difficulty as
-        | AdminChallengeListQueryDTO["difficulty"]
-        | undefined,
-
-      accessType: req.query.accessType as
-        | AdminChallengeListQueryDTO["accessType"]
-        | undefined,
-
-      status: req.query.status as
-        | AdminChallengeListQueryDTO["status"]
-        | undefined,
-
-      sortBy: req.query.sortBy as
-        | AdminChallengeListQueryDTO["sortBy"]
-        | undefined,
-
-      cursor: req.query.cursor as string | undefined,
-
-      limit: req.query.limit ? Number(req.query.limit) : undefined,
-    };
+    const query: AdminChallengeListQueryDTO = toAdminChallengeListQuery(
+      req.query,
+    );
 
     const result = await this._challengeService.browseChallenges(query);
 
@@ -119,7 +79,6 @@ export class AdminChallengeController implements IAdminChallengeController {
 
   getChallengeDetails = asyncHandler(async (req: Request, res: Response) => {
     const { challengeId } = req.params;
-
     const result = await this._challengeService.getChallenge(challengeId);
 
     return res.status(StatusCode.OK).json({
@@ -143,12 +102,11 @@ export class AdminChallengeController implements IAdminChallengeController {
   publishChallenge = asyncHandler(async (req: Request, res: Response) => {
     const { challengeId } = req.params;
 
-    const result = await this._challengeService.publishChallenge(challengeId);
+    await this._challengeService.publishChallenge(challengeId);
 
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Challenge published successfully",
-      data: result,
     });
   });
 }

@@ -8,7 +8,7 @@ import { IHealthProgressRepository } from "../../../repositories/interfaces/user
 import {
   HealthProgressResponseDTO,
   IHealthProgressData,
-} from "../../../dtos/user/healthProgress.dto";
+} from "../../../dtos/user/health/healthProgress.dto";
 import { IHealthProgress } from "../../../models/healthProgress.model";
 
 interface IProgressPoint {

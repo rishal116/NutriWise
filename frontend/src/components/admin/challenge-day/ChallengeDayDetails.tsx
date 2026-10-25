@@ -8,7 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import type { AdminChallengeDayDetailsDTO } from "@/dtos/admin/challenge-day/admin-challenge-day-details.dto";
-import { adminChallengeDayService } from "@/services/admin/adminChallengeDay.service";
+import { adminChallengeDayService } from "@/services/admin/admin-challenge-day.service";
 
 interface ChallengeDayDetailsProps {
   challengeId: string;
@@ -50,18 +50,6 @@ export default function ChallengeDayDetails({
       setIsDeleting(false);
     }
   };
-
-  const createdDate = new Date(day.createdAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  const updatedDate = new Date(day.updatedAt).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-6 pb-12 sm:px-6 lg:px-8">
@@ -119,16 +107,7 @@ export default function ChallengeDayDetails({
                 {day.activities.length}{" "}
                 {day.activities.length === 1 ? "activity" : "activities"}
               </p>
-
-              <p className="mt-1 text-xs font-medium text-slate-400">
-                Updated {updatedDate}
-              </p>
             </div>
-          </div>
-
-          <div className="mt-6 grid gap-3 border-t border-slate-100 pt-5 text-xs font-medium text-slate-400 sm:grid-cols-2">
-            <p>Created {createdDate}</p>
-            <p className="sm:text-right">Last updated {updatedDate}</p>
           </div>
         </section>
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { AdminUserListItemDto } from "@/dtos/admin/user/admin-user-list-item.dto";
-import { adminUserService } from "@/services/admin/adminUser.service";
+import { adminUserService } from "@/services/admin/admin-user.service";
 
 import {
   PAGE_SIZE,

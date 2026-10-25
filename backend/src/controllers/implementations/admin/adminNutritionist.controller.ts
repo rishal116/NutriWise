@@ -1,25 +1,11 @@
 import { Request, Response } from "express";
-
 import { inject, injectable } from "inversify";
-
-import { IAdminNutritionistController } from "../../interfaces/admin/IAdminNutritionistController";
-
-import { IAdminNutritionistService } from "../../../services/interfaces/admin/IAdminNutritionistService";
-
+import type { IAdminNutritionistController } from "../../interfaces/admin/IAdminNutritionistController";
+import type { IAdminNutritionistService } from "../../../services/interfaces/admin/IAdminNutritionistService";
 import { asyncHandler } from "../../../utils/asyncHandler";
-
 import { TYPES } from "../../../types/types";
-
 import { StatusCode } from "../../../enums/statusCode.enum";
-
 import { ADMIN_NUTRITIONIST_MESSAGES } from "../../../constants";
-
-import {
-  ApplicationStatus,
-  AvailabilityStatus,
-  CoachLevel,
-} from "../../../types/nutritionist.types";
-
 import { AdminNutritionistListQueryDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-list-query.dto";
 
 @injectable()
@@ -30,34 +16,9 @@ export class AdminNutritionistController implements IAdminNutritionistController
   ) {}
 
   getNutritionists = asyncHandler(async (req: Request, res: Response) => {
-    const query: AdminNutritionistListQueryDto = {
-      search: req.query.search as string | undefined,
-
-      coachLevel: req.query.coachLevel as CoachLevel | undefined,
-
-      availabilityStatus: req.query.availabilityStatus as
-        | AvailabilityStatus
-        | undefined,
-
-      applicationStatus: req.query.applicationStatus as
-        | ApplicationStatus
-        | undefined,
-
-      isBlocked:
-        req.query.isBlocked !== undefined
-          ? req.query.isBlocked === "true"
-          : undefined,
-
-      sortBy: req.query.sortBy as
-        | AdminNutritionistListQueryDto["sortBy"]
-        | undefined,
-
-      cursor: req.query.cursor as string | undefined,
-
-      limit: req.query.limit ? Number(req.query.limit) : undefined,
-    };
-
-    const result = await this._adminNutritionistService.getNutritionists(query);
+    const result = await this._adminNutritionistService.getNutritionists(
+      req.query as unknown as AdminNutritionistListQueryDto,
+    );
 
     return res.status(StatusCode.OK).json({
       success: true,
@@ -81,7 +42,6 @@ export class AdminNutritionistController implements IAdminNutritionistController
 
   updateCoachLevel = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
-
     const { coachLevel } = req.body;
 
     await this._adminNutritionistService.updateCoachLevel(userId, coachLevel);

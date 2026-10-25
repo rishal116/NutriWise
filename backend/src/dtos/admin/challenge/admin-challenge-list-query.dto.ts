@@ -1,14 +1,23 @@
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+  MinLength,
+} from "class-validator";
 
 import {
   CHALLENGE_ACCESS_TYPES,
   CHALLENGE_CATEGORIES,
   CHALLENGE_DIFFICULTIES,
   CHALLENGE_STATUSES,
-  ChallengeAccessType,
-  ChallengeCategory,
-  ChallengeDifficulty,
-  ChallengeStatus,
+  type ChallengeAccessType,
+  type ChallengeCategory,
+  type ChallengeDifficulty,
+  type ChallengeStatus,
 } from "../../../models/challenge.model";
 
 export const ADMIN_CHALLENGE_SORT_OPTIONS = ["newest", "oldest"] as const;
@@ -19,6 +28,7 @@ export type AdminChallengeSortBy =
 export class AdminChallengeListQueryDTO {
   @IsOptional()
   @IsString()
+  @MaxLength(150)
   search?: string;
 
   @IsOptional()
@@ -43,6 +53,8 @@ export class AdminChallengeListQueryDTO {
 
   @IsOptional()
   @IsString()
+  @MinLength(1)
+  @MaxLength(200)
   cursor?: string;
 
   @IsOptional()

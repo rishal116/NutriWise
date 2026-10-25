@@ -1,3 +1,8 @@
+export enum AuthProvider {
+  LOCAL = "local",
+  GOOGLE = "google",
+}
+
 export enum Gender {
   MALE = "male",
   FEMALE = "female",

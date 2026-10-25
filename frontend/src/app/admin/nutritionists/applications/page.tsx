@@ -1,22 +1,6 @@
-import type { Metadata } from "next";
-
-import ApplicationTable from "@/components/admin/ApplicationTable";
-
-import { adminNutritionistApplicationServerService } from "@/services/server/admin/adminNutriApplicationServer.service";
-
-export const metadata: Metadata = {
-  title: "Nutritionist Applications | NutriWise Admin",
-  description: "Review and manage incoming nutritionist applications.",
-};
+import ApplicationTable from "@/components/admin/nutri-application/ApplicationTable";
 
 export default async function ApplicationsPage() {
-  const initialData =
-    await adminNutritionistApplicationServerService.getApplications({
-      limit: 10,
-      sortBy: "newest",
-      applicationStatus: "pending",
-    });
-
   return (
     <div className="space-y-6">
       <div>
@@ -30,7 +14,7 @@ export default async function ApplicationsPage() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <ApplicationTable initialData={initialData} />
+        <ApplicationTable  />
       </div>
     </div>
   );

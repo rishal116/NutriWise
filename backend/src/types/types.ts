@@ -1,73 +1,5 @@
 export const TYPES = {
-  // ======================================================
-  // COMMON
-  // ======================================================
-
-  // Controllers
-  ICheckoutController: Symbol.for("ICheckoutController"),
-  IStripeWebhookController: Symbol.for("IStripeWebhookController"),
-  IConversationController: Symbol.for("IConversationController"),
-  IMessageController: Symbol.for("IMessageController"),
-  IPublicSessionController: Symbol.for("IPublicSessionController"),
-  ISessionCheckoutController: Symbol.for("ISessionCheckoutController"),
-  ISessionRegistrationController: Symbol.for("ISessionRegistrationController"),
-  ISessionRoomController: Symbol.for("ISessionRoomController"),
-  IPublicChallengeController: Symbol.for("IPublicChallengeController"),
-  IPublicGroupController: Symbol.for("IPublicGroupController"),
-  IPublicPostController: Symbol.for("IPublicPostController"),
-
-  // Services
-  IStripeService: Symbol.for("IStripeService"),
-  ICheckoutService: Symbol.for("ICheckoutService"),
-  IStripeWebhookService: Symbol.for("IStripeWebhookService"),
-  ISocketService: Symbol.for("ISocketService"),
-  IConversationService: Symbol.for("IConversationService"),
-  IMessageService: Symbol.for("IMessageService"),
-  IStripeCheckoutHandlerService: Symbol.for("IStripeCheckoutHandlerService"),
-  IPublicSessionService: Symbol.for("IPublicSessionService"),
-  ISessionCheckoutService: Symbol.for("ISessionCheckoutService"),
-  ISessionRegistrationService: Symbol.for("ISessionRegistrationService"),
-  ILiveKitService: Symbol.for("ILiveKitService"),
-  ISessionRoomService: Symbol.for("ISessionRoomService"),
-  IPublicChallengeService: Symbol.for("IPublicChallengeService"),
-  IPublicGroupService: Symbol.for("IPublicGroupService"),
-  ISessionStripeCheckoutHandlerService: Symbol.for(
-    "ISessionStripeCheckoutHandlerService",
-  ),
-  IPublicPostService: Symbol.for("IPublicPostService"),
-
-  // Repositories
-  IWalletRepository: Symbol.for("IWalletRepository"),
-  IPaymentRepository: Symbol.for("IPaymentRepository"),
-  IConversationRepository: Symbol.for("IConversationRepository"),
-  IMessageRepository: Symbol.for("IMessageRepository"),
-  IConversationMemberRepository: Symbol.for("IConversationMemberRepository"),
-  IMessageReceiptRepository: Symbol.for("IMessageReceiptRepository"),
-  INotificationRepository: Symbol.for("INotificationRepository"),
-  IResourceRepository: Symbol.for("IResourceRepository"),
-  ISessionRepository: Symbol.for("ISessionRepository"),
-  IPublicSessionRepository: Symbol.for("IPublicSessionRepository"),
-  ISessionRegistrationRepository: Symbol.for("ISessionRegistrationRepository"),
-  IResourceViewRepository: Symbol.for("IResourceViewRepository"),
-  IResourceDownloadRepository: Symbol.for("IResourceDownloadRepository"),
-  IResourceLikeRepository: Symbol.for("IResourceLikeRepository"),
-  IResourceBookmarkRepository: Symbol.for("IResourceBookmarkRepository"),
-  IResourceCommentRepository: Symbol.for("IResourceCommentRepository"),
-  IPublicChallengeRepository: Symbol.for("IPublicChallengeRepository"),
-  IPublicGroupRepository: Symbol.for("IPublicGroupRepository"),
-  IPublicPostRepository: Symbol.for("IPublicPostRepository"),
-
-  // Shared Services
-  INotificationService: Symbol.for("INotificationService"),
-  IOTPService: Symbol.for("IOTPService"),
-
-  // Shared Repositories
-  IOtpRepository: Symbol.for("IOtpRepository"),
-  IPasswordResetRepository: Symbol.for("IPasswordResetRepository"),
-
-  // ======================================================
   // USER
-  // ======================================================
 
   // Controllers
   IUserConversationController: Symbol.for("IUserConversationController"),
@@ -157,47 +89,7 @@ export const TYPES = {
   ),
   IUserDashboardRepository: Symbol.for("IUserDashboardRepository"),
 
-  // ======================================================
-  // ADMIN
-  // ======================================================
-
-  // Controllers
-  IAdminUserController: Symbol.for("IAdminUserController"),
-  IAdminNutritionistController: Symbol.for("IAdminNutritionistController"),
-  IAdminNutritionistApplicationController: Symbol.for(
-    "IAdminNutritionistApplicationController",
-  ),
-  IAdminNotificationController: Symbol.for("IAdminNotificationController"),
-  IAdminPlanController: Symbol.for("IAdminPlanController"),
-  IAdminChallengeController: Symbol.for("IAdminChallengeController"),
-  IAdminChallengeDayController: Symbol.for("IAdminChallengeDayController"),
-  IAdminDashboardController: Symbol.for("IAdminDashboardController"),
-
-  // Services
-  IAdminUserService: Symbol.for("IAdminUserService"),
-  IAdminNutritionistService: Symbol.for("IAdminNutritionistService"),
-  IAdminNutritionistApplicationService: Symbol.for(
-    "IAdminNutritionistApplicationService",
-  ),
-  IAdminPlanService: Symbol.for("IAdminPlanService"),
-  IAdminChallengeService: Symbol.for("IAdminChallengeService"),
-  IAdminChallengeDayService: Symbol.for("IAdminChallengeDayService"),
-  IAdminDashboardService: Symbol.for("IAdminDashboardService"),
-
-  // Repositories
-  IAdminUserRepository: Symbol.for("IAdminUserRepository"),
-  IAdminNutritionistRepository: Symbol.for("IAdminNutritionistRepository"),
-  IAdminNutritionistApplicationRepository: Symbol.for(
-    "IAdminNutritionistApplicationRepository",
-  ),
-  IAdminChallengeRepository: Symbol.for("IAdminChallengeRepository"),
-  IAdminChallengeDayRepository: Symbol.for("IAdminChallengeDayRepository"),
-  IAdminDashboardRepository: Symbol.for("IAdminDashboardRepository"),
-  IAdminPlanRepository: Symbol.for("IAdminPlanRepository"),
-
-  // ======================================================
   // NUTRITIONIST
-  // ======================================================
 
   // Controllers
   INutritionistApplicationController: Symbol.for(
@@ -241,7 +133,7 @@ export const TYPES = {
   INutriGroupRepository: Symbol.for("INutriGroupRepository"),
   INutriDashboardRepository: Symbol.for("INutriDashboardRepository"),
 
-  // post
+  // Posts
   IPostLikeRepository: Symbol.for("IPostLikeRepository"),
   IPostRepository: Symbol.for("IPostRepository"),
   IPostLikeService: Symbol.for("IPostLikeService"),
@@ -278,4 +170,106 @@ export const TYPES = {
   INutriProgramProgressController: Symbol.for(
     "INutriProgramProgressController",
   ),
+
+  IAdminPaymentRepository: Symbol.for("IAdminPaymentRepository"),
+
+  // COMMON
+
+  // Controllers
+  ICheckoutController: Symbol.for("ICheckoutController"),
+  IStripeWebhookController: Symbol.for("IStripeWebhookController"),
+  IConversationController: Symbol.for("IConversationController"),
+  IMessageController: Symbol.for("IMessageController"),
+  IPublicSessionController: Symbol.for("IPublicSessionController"),
+  ISessionCheckoutController: Symbol.for("ISessionCheckoutController"),
+  ISessionRegistrationController: Symbol.for("ISessionRegistrationController"),
+  ISessionRoomController: Symbol.for("ISessionRoomController"),
+  IPublicChallengeController: Symbol.for("IPublicChallengeController"),
+  IPublicGroupController: Symbol.for("IPublicGroupController"),
+  IPublicPostController: Symbol.for("IPublicPostController"),
+
+  // Services
+  IStripeService: Symbol.for("IStripeService"),
+  ICheckoutService: Symbol.for("ICheckoutService"),
+  IStripeWebhookService: Symbol.for("IStripeWebhookService"),
+  ISocketService: Symbol.for("ISocketService"),
+  IConversationService: Symbol.for("IConversationService"),
+  IMessageService: Symbol.for("IMessageService"),
+  IStripeCheckoutHandlerService: Symbol.for("IStripeCheckoutHandlerService"),
+  IPublicSessionService: Symbol.for("IPublicSessionService"),
+  ISessionCheckoutService: Symbol.for("ISessionCheckoutService"),
+  ISessionRegistrationService: Symbol.for("ISessionRegistrationService"),
+  ILiveKitService: Symbol.for("ILiveKitService"),
+  ISessionRoomService: Symbol.for("ISessionRoomService"),
+  IPublicChallengeService: Symbol.for("IPublicChallengeService"),
+  IPublicGroupService: Symbol.for("IPublicGroupService"),
+  ISessionStripeCheckoutHandlerService: Symbol.for(
+    "ISessionStripeCheckoutHandlerService",
+  ),
+  IPublicPostService: Symbol.for("IPublicPostService"),
+
+  // Repositories
+  IWalletRepository: Symbol.for("IWalletRepository"),
+  IPaymentRepository: Symbol.for("IPaymentRepository"),
+  IConversationRepository: Symbol.for("IConversationRepository"),
+  IMessageRepository: Symbol.for("IMessageRepository"),
+  IConversationMemberRepository: Symbol.for("IConversationMemberRepository"),
+  IMessageReceiptRepository: Symbol.for("IMessageReceiptRepository"),
+  INotificationRepository: Symbol.for("INotificationRepository"),
+  IResourceRepository: Symbol.for("IResourceRepository"),
+  ISessionRepository: Symbol.for("ISessionRepository"),
+  IPublicSessionRepository: Symbol.for("IPublicSessionRepository"),
+  ISessionRegistrationRepository: Symbol.for("ISessionRegistrationRepository"),
+  IResourceViewRepository: Symbol.for("IResourceViewRepository"),
+  IResourceDownloadRepository: Symbol.for("IResourceDownloadRepository"),
+  IResourceLikeRepository: Symbol.for("IResourceLikeRepository"),
+  IResourceBookmarkRepository: Symbol.for("IResourceBookmarkRepository"),
+  IResourceCommentRepository: Symbol.for("IResourceCommentRepository"),
+  IPublicChallengeRepository: Symbol.for("IPublicChallengeRepository"),
+  IPublicGroupRepository: Symbol.for("IPublicGroupRepository"),
+  IPublicPostRepository: Symbol.for("IPublicPostRepository"),
+
+  // Shared Services
+  INotificationService: Symbol.for("INotificationService"),
+  IOTPService: Symbol.for("IOTPService"),
+
+  // Shared Repositories
+  IOtpRepository: Symbol.for("IOtpRepository"),
+  IPasswordResetRepository: Symbol.for("IPasswordResetRepository"),
+
+  // ADMIN
+
+  // Controllers
+  IAdminUserController: Symbol.for("IAdminUserController"),
+  IAdminNutritionistController: Symbol.for("IAdminNutritionistController"),
+  IAdminNutritionistApplicationController: Symbol.for(
+    "IAdminNutritionistApplicationController",
+  ),
+  IAdminNotificationController: Symbol.for("IAdminNotificationController"),
+  IAdminPlanController: Symbol.for("IAdminPlanController"),
+  IAdminChallengeController: Symbol.for("IAdminChallengeController"),
+  IAdminChallengeDayController: Symbol.for("IAdminChallengeDayController"),
+  IAdminDashboardController: Symbol.for("IAdminDashboardController"),
+
+  // Services
+  IAdminUserService: Symbol.for("IAdminUserService"),
+  IAdminNutritionistService: Symbol.for("IAdminNutritionistService"),
+  IAdminNutritionistApplicationService: Symbol.for(
+    "IAdminNutritionistApplicationService",
+  ),
+  IAdminPlanService: Symbol.for("IAdminPlanService"),
+  IAdminChallengeService: Symbol.for("IAdminChallengeService"),
+  IAdminChallengeDayService: Symbol.for("IAdminChallengeDayService"),
+  IAdminDashboardService: Symbol.for("IAdminDashboardService"),
+
+  // Repositories
+  IAdminUserRepository: Symbol.for("IAdminUserRepository"),
+  IAdminNutritionistRepository: Symbol.for("IAdminNutritionistRepository"),
+  IAdminNutritionistApplicationRepository: Symbol.for(
+    "IAdminNutritionistApplicationRepository",
+  ),
+  IAdminChallengeRepository: Symbol.for("IAdminChallengeRepository"),
+  IAdminChallengeDayRepository: Symbol.for("IAdminChallengeDayRepository"),
+  IAdminDashboardRepository: Symbol.for("IAdminDashboardRepository"),
+  IAdminPlanRepository: Symbol.for("IAdminPlanRepository"),
 } as const;

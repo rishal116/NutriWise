@@ -11,9 +11,8 @@ const adminUserController = container.get<IAdminUserController>(
 
 router.get("/", adminUserController.getUsers);
 
-router.patch(
-  "/:userId/block-status",
-  adminUserController.updateBlockStatus,
-);
+router.get("/:userId", adminUserController.getUserDetails);
+
+router.patch("/:userId/block-status", adminUserController.updateBlockStatus);
 
 export default router;

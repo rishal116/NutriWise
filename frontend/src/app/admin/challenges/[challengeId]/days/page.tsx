@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 
-import ChallengeDayList from "@/components/admin/challenge-day/ChallengeDayList";
-
-import { adminChallengeDayServerService } from "@/services/server/admin/adminChallengeDayServer.service";
+import ChallengeDaysClient from "@/components/admin/challenge-day/ChallengeDaysClient";
 
 interface ChallengeDaysPageProps {
   params: Promise<{
@@ -19,15 +17,6 @@ export default async function ChallengeDaysPage({
   params,
 }: ChallengeDaysPageProps) {
   const { challengeId } = await params;
-  const initialData = await adminChallengeDayServerService.listDays(
-    challengeId,
-    {
-      limit: 12,
-      sortBy: "day_asc",
-    },
-  );
 
-  return (
-    <ChallengeDayList challengeId={challengeId} initialData={initialData} />
-  );
+  return <ChallengeDaysClient challengeId={challengeId} />;
 }

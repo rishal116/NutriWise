@@ -1,29 +1,26 @@
-import { Schema, model, Document, Types } from "mongoose";
+import { Schema, model, Types } from "mongoose";
+
 import {
-  ActivityLevel,
-  DietType,
-  GoalType,
   ACTIVITY_LEVELS,
   DIET_TYPES,
   GOALS,
   TIMELINES,
-  TimelineType,
+  type ActivityLevel,
+  type DietType,
+  type GoalType,
+  type TimelineType,
 } from "../types/health.types";
 
-export interface IHealthDetails extends Document {
+export interface IHealthDetails {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-
   heightCm: number;
   weightKg: number;
-
   activityLevel: ActivityLevel;
   dietType: DietType;
-
   goal: GoalType;
   targetWeightKg?: number;
-  preferredTimeline: TimelineType;
-
+  preferredTimeline?: TimelineType;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,41 +31,50 @@ const healthDetailsSchema = new Schema<IHealthDetails>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
-      index: true,
     },
-
-    heightCm: { type: Number, required: true },
-    weightKg: { type: Number, required: true },
-
+    heightCm: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 300,
+    },
+    weightKg: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: 700,
+    },
     activityLevel: {
       type: String,
       enum: ACTIVITY_LEVELS,
       required: true,
     },
-
     dietType: {
       type: String,
       enum: DIET_TYPES,
       required: true,
     },
-
     goal: {
       type: String,
       enum: GOALS,
       required: true,
     },
-
-    targetWeightKg: { type: Number },
-
+    targetWeightKg: {
+      type: Number,
+      min: 1,
+      max: 700,
+    },
     preferredTimeline: {
       type: String,
       enum: TIMELINES,
-      required: true,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
+
+healthDetailsSchema.index({ userId: 1 }, { unique: true });
 
 export const HealthDetailsModel = model<IHealthDetails>(
   "HealthDetails",

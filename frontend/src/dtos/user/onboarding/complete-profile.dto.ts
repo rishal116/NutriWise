@@ -1,11 +1,3 @@
-export interface CompleteProfileDto {
-  gender: string;
-  birthDate: string;
-  heightCm: number;
-  weightKg: number;
-  activityLevel: string;
-  dietType: string;
-  goal: string;
-  targetWeightKg?: number;
-  preferredTimeline: string;
-}
+import type { CompleteProfileFormData } from "@/validations/onboarding.validation";
+
+export type CompleteProfileDto = CompleteProfileFormData;

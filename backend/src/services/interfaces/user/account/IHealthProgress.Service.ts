@@ -1,4 +1,4 @@
-import { HealthProgressResponseDTO, IHealthProgressData } from "../../../../dtos/user/healthProgress.dto";
+import { HealthProgressResponseDTO, IHealthProgressData } from "../../../../dtos/user/health/healthProgress.dto";
 
 export interface IHealthProgressService {
   getHealthProgress(

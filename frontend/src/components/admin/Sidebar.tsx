@@ -78,15 +78,16 @@ const NAV_SECTIONS: NavSection[] = [
           },
         ],
       },
-      {
-        name: "Plans",
-        icon: BadgeDollarSign,
-        path: "/admin/plans",
-      },
+
       {
         name: "Challenges",
         icon: Trophy,
         path: "/admin/challenges",
+      },
+      {
+        name: "Plans",
+        icon: BadgeDollarSign,
+        path: "/admin/plans",
       },
     ],
   },

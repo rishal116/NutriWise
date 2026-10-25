@@ -2,7 +2,8 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
-  IsObject,
+  IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -19,12 +20,19 @@ import {
 export class UpdateChallengeActivityDTO {
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
   id?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  _id?: string;
 
   @IsEnum(CHALLENGE_ACTIVITY_TYPES)
   type!: ChallengeActivityType;
 
   @IsString()
+  @IsNotEmpty()
   @MaxLength(150)
   title!: string;
 
@@ -42,6 +50,7 @@ export class UpdateChallengeActivityDTO {
   valueType!: ChallengeActivityValueType;
 
   @IsOptional()
+  @IsNumber()
   @Min(0)
   targetValue?: number;
 
@@ -51,6 +60,7 @@ export class UpdateChallengeActivityDTO {
   unit?: string;
 
   @IsOptional()
+  @IsNumber()
   @Min(0)
   estimatedDurationMinutes?: number;
 
@@ -60,10 +70,6 @@ export class UpdateChallengeActivityDTO {
   @IsInt()
   @Min(0)
   order!: number;
-
-  @IsOptional()
-  @IsObject()
-  configuration?: Record<string, unknown>;
 
   @IsOptional()
   @IsBoolean()

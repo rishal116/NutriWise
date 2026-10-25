@@ -1,20 +1,20 @@
-import { IHealthProgress } from "../../../../models/healthProgress.model";
-import { IUpsertHealthProgressDTO } from "../../../../dtos/user/healthProgress.dto";
+import type { ClientSession } from "mongoose";
 
-export interface IHealthProgressRepository {
-  // ✅ Create or update same-day record
-  upsertDailyProgress(data: IUpsertHealthProgressDTO): Promise<IHealthProgress>;
+import type { IHealthProgress } from "../../../../models/healthProgress.model";
+import type { IBaseRepository } from "../../common/IBaseRepository";
+import type { IUpsertDailyProgress } from "../../../../types/user/health-progress/health-progress.types";
 
-  // ✅ Get all progress (sorted)
-  findByUserId(userId: string): Promise<IHealthProgress[]>;
+export interface IHealthProgressRepository extends IBaseRepository<IHealthProgress> {
+  upsertDailyProgress(
+    data: IUpsertDailyProgress,
+    session?: ClientSession,
+  ): Promise<IHealthProgress | null>;
 
-  // ✅ Get range (for graphs)
   findByUserAndDateRange(
     userId: string,
     fromDate: Date,
     toDate: Date,
   ): Promise<IHealthProgress[]>;
 
-  // ✅ Get latest record (very useful)
   findLatestByUserId(userId: string): Promise<IHealthProgress | null>;
 }

@@ -4,13 +4,10 @@ export interface IHealthProgress {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   date: Date;
-
   weightKg: number;
   bmi?: number;
-
   dailyWaterIntakeLiters?: number;
   sleepDurationHours?: number;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,29 +18,31 @@ const healthProgressSchema = new Schema<IHealthProgress>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
-
     date: {
       type: Date,
+      required: true,
       default: Date.now,
     },
-
     weightKg: {
       type: Number,
       required: true,
+      min: 1,
+      max: 700,
     },
-
     bmi: {
       type: Number,
+      min: 1,
+      max: 100,
     },
-
     dailyWaterIntakeLiters: {
       type: Number,
+      min: 0,
     },
-
     sleepDurationHours: {
       type: Number,
+      min: 0,
+      max: 24,
     },
   },
   { timestamps: true },

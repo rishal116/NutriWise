@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 
-import ChallengeDayForm from "@/components/admin/challenge-day/ChallengeDayForm";
-
-import { adminChallengeDayServerService } from "@/services/server/admin/adminChallengeDayServer.service";
+import EditChallengeDayClient from "@/components/admin/challenge-day/EditChallengeDayClient";
 
 interface EditChallengeDayPageProps {
   params: Promise<{
@@ -21,22 +19,10 @@ export default async function EditChallengeDayPage({
 }: EditChallengeDayPageProps) {
   const { challengeId, dayId } = await params;
 
-  const response = await adminChallengeDayServerService.getDayDetails(
-    challengeId,
-    dayId,
-  );
-
   return (
-    <ChallengeDayForm
-      mode="edit"
+    <EditChallengeDayClient
       challengeId={challengeId}
       dayId={dayId}
-      initialValues={{
-        dayNumber: response.dayNumber,
-        title: response.title ?? "",
-        description: response.description ?? "",
-        activities: response.activities,
-      }}
     />
   );
 }

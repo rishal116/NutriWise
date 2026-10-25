@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 
-import ChallengeDayDetails from "@/components/admin/challenge-day/ChallengeDayDetails";
-
-import { adminChallengeDayServerService } from "@/services/server/admin/adminChallengeDayServer.service";
+import ChallengeDayDetailsClient from "@/components/admin/challenge-day/ChallengeDayDetailsClient";
 
 interface ChallengeDayDetailsPageProps {
   params: Promise<{
@@ -21,10 +19,5 @@ export default async function ChallengeDayDetailsPage({
 }: ChallengeDayDetailsPageProps) {
   const { challengeId, dayId } = await params;
 
-  const day = await adminChallengeDayServerService.getDayDetails(
-    challengeId,
-    dayId,
-  );
-
-  return <ChallengeDayDetails challengeId={challengeId} day={day} />;
+  return <ChallengeDayDetailsClient challengeId={challengeId} dayId={dayId} />;
 }
