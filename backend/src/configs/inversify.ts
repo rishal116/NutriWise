@@ -135,7 +135,7 @@ import { SessionRegistrationService } from "../services/implements/public/sessio
 
 // ---------- Repositories ----------
 
-import { ResourceRepository } from "../repositories/implements/public/resource.repository";
+import { ResourceRepository } from "../repositories/implements/resource/resource.repository";
 import { PublicSessionRepository } from "../repositories/implements/public/publicSession.repository";
 import { SessionRegistrationRepository } from "../repositories/implements/public/sessionRegistration.repository";
 
@@ -152,7 +152,7 @@ import { IPublicSessionService } from "../services/interfaces/public/IPublicSess
 
 // Repositories
 
-import { IResourceRepository } from "../repositories/interfaces/public/IResourceRepository";
+import { IResourceRepository } from "../repositories/interfaces/resource/IResourceRepository";
 import { IPublicSessionRepository } from "../repositories/interfaces/public/IPublicSessionRepository";
 
 // ADMIN MODULE
@@ -374,18 +374,16 @@ import { ISessionRoomService } from "../services/interfaces/public/ISessionRoomS
 import { SessionRoomService } from "../services/implements/public/sessionRoom.service";
 import { ILiveKitService } from "../services/interfaces/livekit/ILiveKitService";
 import { LiveKitService } from "../services/implements/livekit/livekit.service";
-import { IResourceViewRepository } from "../repositories/interfaces/public/IResourceViewRepository";
-import { ResourceViewRepository } from "../repositories/implements/public/resourceView.repository";
-import { IResourceBookmarkRepository } from "../repositories/interfaces/public/IResourceBookmarkRepository";
-import { ResourceBookmarkRepository } from "../repositories/implements/public/resourcBookmark.repository";
-import { IResourceLikeRepository } from "../repositories/interfaces/public/IResourceLikeRepository";
-import { ResourceLikeRepository } from "../repositories/implements/public/resourcLike.repository";
-import { IResourceCommentRepository } from "../repositories/interfaces/public/IResourceCommentRepository";
-import { ResourceCommentRepository } from "../repositories/implements/public/resourcComment.repository";
+import { IResourceViewRepository } from "../repositories/interfaces/resource/IResourceViewRepository";
+import { ResourceViewRepository } from "../repositories/implements/resource/resourceView.repository";
+import { IResourceLikeRepository } from "../repositories/interfaces/resource/IResourceLikeRepository";
+import { ResourceLikeRepository } from "../repositories/implements/resource/resourcLike.repository";
+import { IResourceCommentRepository } from "../repositories/interfaces/resource/IResourceCommentRepository";
+import { ResourceCommentRepository } from "../repositories/implements/resource/resourcComment.repository";
 import { IUserPostRepository } from "../repositories/interfaces/user/post/IUserPostRepository";
 import { UserPostRepository } from "../repositories/implements/user/post/userPost.repository";
-import { IUserPostService } from "../services/interfaces/user/IUserPostSservice";
-import { UserPostService } from "../services/implements/user/userPost.service";
+import { IUserPostService } from "../services/interfaces/user/post/IUserPostSservice";
+import { UserPostService } from "../services/implements/user/post/userPost.service";
 import { IUserPostController } from "../controllers/interfaces/user/IUserPostController";
 import { UserPostController } from "../controllers/implementations/user/userPost.controller";
 import { IAdminChallengeController } from "../controllers/interfaces/admin/IAdminChallengeController";
@@ -397,7 +395,7 @@ import { IAdminChallengeRepository } from "../repositories/interfaces/admin/IAdm
 import { IAdminChallengeDayController } from "../controllers/interfaces/admin/IAdminChallengeDayController";
 import { AdminChallengeDayController } from "../controllers/implementations/admin/adminChallengeDay.controller";
 import { IAdminChallengeDayService } from "../services/interfaces/admin/IAdminChallengeDayService";
-import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDay.service";
+import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDAy.service";
 import { IAdminChallengeDayRepository } from "../repositories/interfaces/admin/IAdminChallengeDayRepository";
 import { AdminChallengeDayRepository } from "../repositories/implements/admin/adminChallengeDay.repository";
 import { IPublicChallengeController } from "../controllers/interfaces/public/IPublicChallengeController";
@@ -503,6 +501,32 @@ import { INutriProgramProgressService } from "../services/interfaces/nutritionis
 import { NutriProgramProgressService } from "../services/implements/nutritionist/nutriProgramProgress.service";
 import { INutriProgramProgressRepository } from "../repositories/interfaces/nutritionist/INutriProgramProgressRepository";
 import { NutriProgramProgressRepository } from "../repositories/implements/nutritionist/nutriProgramProgess.repository";
+import { IPostViewRepository } from "../repositories/interfaces/post/IPostViewRepository";
+import { PostViewRepository } from "../repositories/implements/post/postView.repository";
+import { IPostViewService } from "../services/interfaces/post/IPostViewService";
+import { PostViewService } from "../services/implements/post/postView.service";
+import { IPostViewController } from "../controllers/interfaces/post/IPostViewController";
+import { PostViewController } from "../controllers/implementations/post/postView.controller";
+import { IUserLikedPostRepository } from "../repositories/interfaces/user/post/IUserLikedPostRepository";
+import { UserLikedPostRepository } from "../repositories/implements/user/post/userLikedPost.repository";
+import { IUserLikedPostService } from "../services/interfaces/user/post/IUserLikedPostService";
+import { UserLikedPostService } from "../services/implements/user/post/userLikedPost.service";
+import { IUserLikedPostController } from "../controllers/interfaces/user/IUserLikedPostController";
+import { UserLikedPostController } from "../controllers/implementations/user/userLikedPost.controller";
+import { IPublicResourceRepository } from "../repositories/interfaces/public/IPublicResourceRepository";
+import { PublicResourceRepository } from "../repositories/implements/public/publicResource.repository";
+import { IResourceViewService } from "../services/interfaces/resource/IResourceViewService";
+import { ResourceViewService } from "../services/implements/resource/resourceView.service";
+import { IResourceLikeService } from "../services/interfaces/resource/IResourceLikeService";
+import { ResourceLikeService } from "../services/implements/resource/resourceLike.service";
+import { IResourceCommentService } from "../services/interfaces/resource/IResourceCommentService";
+import { ResourceCommentService } from "../services/implements/resource/resourceComment.service";
+import { IResourceViewController } from "../controllers/interfaces/resource/IResourceViewController";
+import { ResourceViewController } from "../controllers/implementations/resource/resourceView.controller";
+import { IResourceLikeController } from "../controllers/interfaces/resource/IResourceLikeController";
+import { ResourceLikeController } from "../controllers/implementations/resource/resourceLike.controller";
+import { IResourceCommentController } from "../controllers/interfaces/resource/IResourceCommentController";
+import { ResourceCommentController } from "../controllers/implementations/resource/resourceComment.controller";
 
 const container = new Container();
 
@@ -800,10 +824,6 @@ container
 container
   .bind<IResourceViewRepository>(TYPES.IResourceViewRepository)
   .to(ResourceViewRepository);
-
-container
-  .bind<IResourceBookmarkRepository>(TYPES.IResourceBookmarkRepository)
-  .to(ResourceBookmarkRepository);
 
 container
   .bind<IResourceLikeRepository>(TYPES.IResourceLikeRepository)
@@ -1227,5 +1247,53 @@ container
 container
   .bind<INutriProgramProgressRepository>(TYPES.INutriProgramProgressRepository)
   .to(NutriProgramProgressRepository);
+
+container
+  .bind<IPostViewRepository>(TYPES.IPostViewRepository)
+  .to(PostViewRepository);
+
+container.bind<IPostViewService>(TYPES.IPostViewService).to(PostViewService);
+
+container
+  .bind<IPostViewController>(TYPES.IPostViewController)
+  .to(PostViewController);
+
+container
+  .bind<IUserLikedPostRepository>(TYPES.IUserLikedPostRepository)
+  .to(UserLikedPostRepository);
+
+container
+  .bind<IUserLikedPostService>(TYPES.IUserLikedPostService)
+  .to(UserLikedPostService);
+
+container
+  .bind<IUserLikedPostController>(TYPES.IUserLikedPostController)
+  .to(UserLikedPostController);
+
+container
+  .bind<IPublicResourceRepository>(TYPES.IPublicResourceRepository)
+  .to(PublicResourceRepository);
+
+container
+  .bind<IResourceViewService>(TYPES.IResourceViewService)
+  .to(ResourceViewService);
+container
+  .bind<IResourceLikeService>(TYPES.IResourceLikeService)
+  .to(ResourceLikeService);
+container
+  .bind<IResourceCommentService>(TYPES.IResourceCommentService)
+  .to(ResourceCommentService);
+
+container
+  .bind<IResourceViewController>(TYPES.IResourceViewController)
+  .to(ResourceViewController);
+
+container
+  .bind<IResourceLikeController>(TYPES.IResourceLikeController)
+  .to(ResourceLikeController);
+
+container
+  .bind<IResourceCommentController>(TYPES.IResourceCommentController)
+  .to(ResourceCommentController);
 
 export { container };

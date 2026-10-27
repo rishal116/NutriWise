@@ -1,12 +1,14 @@
 import { inject, injectable } from "inversify";
-import mongoose, { Types } from "mongoose";
+import { Types } from "mongoose";
 import { TYPES } from "../../../types/types";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IPostCommentRepository } from "../../../repositories/interfaces/post/IPostCommentRepository";
 import { IPostRepository } from "../../../repositories/interfaces/post/IPostRepository";
-import { IPostComment } from "../../../models/postComment.model";
 import { IPostCommentService } from "../../interfaces/post/IPostCommentService";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { PostCommentResponseDto } from "../../../dtos/post/post-comment-response.dto";
+import { PostCommentMapper } from "../../../mappers/post/post-comment.mapper";
 
 @injectable()
 export class PostCommentService implements IPostCommentService {
@@ -22,7 +24,7 @@ export class PostCommentService implements IPostCommentService {
     postId: string,
     userId: string,
     content: string,
-  ): Promise<IPostComment> {
+  ): Promise<void> {
     if (!Types.ObjectId.isValid(postId) || !Types.ObjectId.isValid(userId)) {
       throw new CustomError("Invalid post or user ID", StatusCode.BAD_REQUEST);
     }
@@ -36,62 +38,34 @@ export class PostCommentService implements IPostCommentService {
       );
     }
 
-    const session = await mongoose.startSession();
+    const post = await this._postRepository.findById(postId);
 
-    try {
-      let createdComment: IPostComment | null = null;
+    if (!post) {
+      throw new CustomError("Post not found", StatusCode.NOT_FOUND);
+    }
 
-      await session.withTransaction(async () => {
-        const post = await this._postRepository.findById(postId);
+    await this._postCommentRepository.create({
+      postId: new Types.ObjectId(postId),
+      userId: new Types.ObjectId(userId),
+      content: trimmedContent,
+    });
 
-        if (!post) {
-          throw new CustomError("Post not found", StatusCode.NOT_FOUND);
-        }
+    const updatedCount =
+      await this._postRepository.incrementCommentCount(postId);
 
-        createdComment = await this._postCommentRepository.createWithSession(
-          {
-            postId: new Types.ObjectId(postId),
-            userId: new Types.ObjectId(userId),
-            content: trimmedContent,
-          },
-          session,
-        );
-
-        const updatedCount = await this._postRepository.incrementCommentCount(
-          postId,
-          session,
-        );
-
-        if (updatedCount === 0) {
-          throw new CustomError(
-            "Failed to update comment count",
-            StatusCode.INTERNAL_SERVER_ERROR,
-          );
-        }
-      });
-
-      if (!createdComment) {
-        throw new CustomError(
-          "Failed to create comment",
-          StatusCode.INTERNAL_SERVER_ERROR,
-        );
-      }
-
-      return createdComment;
-    } finally {
-      await session.endSession();
+    if (updatedCount === 0) {
+      throw new CustomError(
+        "Failed to update comment count",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
   async getComments(
     postId: string,
     limit = 10,
-    cursor?: { createdAt: Date; id: string },
-  ): Promise<{
-    comments: IPostComment[];
-    nextCursor: { createdAt: Date; id: string } | null;
-    hasMore: boolean;
-  }> {
+    cursor?: string,
+  ): Promise<InfiniteScrollResponseDTO<PostCommentResponseDto>> {
     if (!Types.ObjectId.isValid(postId)) {
       throw new CustomError("Invalid post ID", StatusCode.BAD_REQUEST);
     }
@@ -102,36 +76,21 @@ export class PostCommentService implements IPostCommentService {
       throw new CustomError("Post not found", StatusCode.NOT_FOUND);
     }
 
-    const safeLimit = Math.min(Math.max(limit, 1), 50);
+    const safeLimit = Number.isFinite(limit)
+      ? Math.min(Math.max(Math.floor(limit), 1), 50)
+      : 10;
 
-    const parsedCursor = cursor
-      ? {
-          createdAt: new Date(cursor.createdAt),
-          id: new Types.ObjectId(cursor.id),
-        }
-      : undefined;
-
-    const results = await this._postCommentRepository.findByPostId(
+    const result = await this._postCommentRepository.findByPostId(
       new Types.ObjectId(postId),
-      safeLimit + 1,
-      parsedCursor,
+      safeLimit,
+      cursor,
     );
 
-    const hasMore = results.length > safeLimit;
-    const comments = hasMore ? results.slice(0, safeLimit) : results;
-    const lastComment = comments[comments.length - 1];
-
-    return {
-      comments,
-      hasMore,
-      nextCursor:
-        hasMore && lastComment
-          ? {
-              createdAt: lastComment.createdAt,
-              id: lastComment._id.toString(),
-            }
-          : null,
-    };
+    return new InfiniteScrollResponseDTO(
+      result.items.map(PostCommentMapper.toResponseDto),
+      result.nextCursor,
+      result.hasMore,
+    );
   }
 
   async deleteComment(commentId: string, userId: string): Promise<void> {
@@ -142,49 +101,39 @@ export class PostCommentService implements IPostCommentService {
       );
     }
 
-    const session = await mongoose.startSession();
+    const comment = await this._postCommentRepository.findById(commentId);
 
-    try {
-      await session.withTransaction(async () => {
-        const comment = await this._postCommentRepository.findById(commentId);
+    if (!comment) {
+      throw new CustomError("Comment not found", StatusCode.NOT_FOUND);
+    }
 
-        if (!comment) {
-          throw new CustomError("Comment not found", StatusCode.NOT_FOUND);
-        }
+    if (comment.userId.toString() !== userId) {
+      throw new CustomError(
+        "You are not allowed to delete this comment",
+        StatusCode.FORBIDDEN,
+      );
+    }
 
-        if (comment.userId.toString() !== userId) {
-          throw new CustomError(
-            "You are not allowed to delete this comment",
-            StatusCode.FORBIDDEN,
-          );
-        }
+    const deleted = await this._postCommentRepository.deleteOne(
+      new Types.ObjectId(commentId),
+    );
 
-        const deleted = await this._postCommentRepository.deleteById(
-          new Types.ObjectId(commentId),
-          session,
-        );
+    if (!deleted) {
+      throw new CustomError(
+        "Failed to delete comment",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
 
-        if (!deleted) {
-          throw new CustomError(
-            "Failed to delete comment",
-            StatusCode.INTERNAL_SERVER_ERROR,
-          );
-        }
+    const updatedCount = await this._postRepository.decrementCommentCount(
+      comment.postId.toString(),
+    );
 
-        const updatedCount = await this._postRepository.decrementCommentCount(
-          comment.postId.toString(),
-          session,
-        );
-
-        if (updatedCount === 0) {
-          throw new CustomError(
-            "Failed to update comment count",
-            StatusCode.INTERNAL_SERVER_ERROR,
-          );
-        }
-      });
-    } finally {
-      await session.endSession();
+    if (updatedCount === 0) {
+      throw new CustomError(
+        "Failed to update comment count",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

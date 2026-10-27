@@ -8,7 +8,6 @@ import {
 const MAX_PDF_SIZE = 10 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
 
 const ALLOWED_PDF_TYPE = "application/pdf";
 
@@ -36,18 +35,11 @@ export const createResourceSchema = z
 
     file: z.instanceof(globalThis.File).optional(),
 
-    thumbnail: z.instanceof(globalThis.File).optional(),
-
     category: z.enum(RESOURCE_CATEGORIES, {
       message: "Category is required",
     }),
-
-    isDownloadable: z.boolean(),
   })
   .superRefine((data, ctx) => {
-    // --------------------------------------------------
-    // Article
-    // --------------------------------------------------
     if (data.type === "article") {
       if (!data.content || data.content.trim().length < 20) {
         ctx.addIssue({
@@ -66,9 +58,6 @@ export const createResourceSchema = z
       }
     }
 
-    // --------------------------------------------------
-    // PDF
-    // --------------------------------------------------
     if (data.type === "pdf") {
       if (!data.file) {
         ctx.addIssue({
@@ -95,9 +84,6 @@ export const createResourceSchema = z
       }
     }
 
-    // --------------------------------------------------
-    // Video
-    // --------------------------------------------------
     if (data.type === "video") {
       if (!data.file) {
         ctx.addIssue({
@@ -124,9 +110,6 @@ export const createResourceSchema = z
       }
     }
 
-    // --------------------------------------------------
-    // Infographic
-    // --------------------------------------------------
     if (data.type === "infographic") {
       if (!data.file) {
         ctx.addIssue({
@@ -150,27 +133,6 @@ export const createResourceSchema = z
             message: "Infographic file size must not exceed 10 MB",
           });
         }
-      }
-    }
-
-    // --------------------------------------------------
-    // Thumbnail
-    // --------------------------------------------------
-    if (data.thumbnail) {
-      if (!ALLOWED_IMAGE_TYPES.includes(data.thumbnail.type)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["thumbnail"],
-          message: "Thumbnail must be a JPG, PNG, or WebP image",
-        });
-      }
-
-      if (data.thumbnail.size > MAX_THUMBNAIL_SIZE) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["thumbnail"],
-          message: "Thumbnail size must not exceed 5 MB",
-        });
       }
     }
   });

@@ -16,13 +16,11 @@ const postCommentSchema = new Schema<IPostComment>(
       ref: "Post",
       required: true,
     },
-
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-
     content: {
       type: String,
       required: true,
@@ -35,15 +33,8 @@ const postCommentSchema = new Schema<IPostComment>(
   },
 );
 
-postCommentSchema.index({
-  postId: 1,
-  createdAt: -1,
-});
-
-postCommentSchema.index({
-  userId: 1,
-  createdAt: -1,
-});
+postCommentSchema.index({ postId: 1, createdAt: -1 });
+postCommentSchema.index({ userId: 1, createdAt: -1 });
 
 export const PostCommentModel = model<IPostComment>(
   "PostComment",

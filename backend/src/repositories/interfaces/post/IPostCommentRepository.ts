@@ -1,26 +1,13 @@
-import { ClientSession, Types } from "mongoose";
+import { Types } from "mongoose";
 import { IBaseRepository } from "../common/IBaseRepository";
 import { IPostComment } from "../../../models/postComment.model";
-
-export interface IPostCommentCursor {
-  createdAt: Date;
-  id: Types.ObjectId;
-}
+import { IPostCommentResponse } from "../../../types/post/post-comment-response.type";
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 
 export interface IPostCommentRepository extends IBaseRepository<IPostComment> {
   findByPostId(
     postId: Types.ObjectId,
     limit: number,
-    cursor?: IPostCommentCursor,
-  ): Promise<IPostComment[]>;
-
-  deleteById(
-    commentId: Types.ObjectId,
-    session?: ClientSession,
-  ): Promise<boolean>;
-
-  countByPostId(
-    postId: Types.ObjectId,
-    session?: ClientSession,
-  ): Promise<number>;
+    cursor?: string,
+  ): Promise<CursorPaginationResult<IPostCommentResponse>>;
 }

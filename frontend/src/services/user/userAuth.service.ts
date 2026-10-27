@@ -81,23 +81,6 @@ export const userAuthService = {
     return data;
   },
 
-  getMe(): Promise<GetMeResponse> {
-    if (!getMeRequest) {
-      getMeRequest = clientApi
-        .get<GetMeResponse>(AUTH_ROUTES.ME)
-        .then(({ data }) => data)
-        .finally(() => {
-          getMeRequest = null;
-        });
-    }
-
-    return getMeRequest;
-  },
-
-  async logout(): Promise<void> {
-    await clientApi.post<ApiResponseDTO>(AUTH_ROUTES.LOGOUT, {});
-  },
-
   async refreshToken(): Promise<AuthResponse> {
     const { data } = await clientApi.post<AuthResponse>(
       AUTH_ROUTES.REFRESH_TOKEN,
@@ -114,5 +97,26 @@ export const userAuthService = {
     );
 
     return data;
+  },
+
+  getMe(): Promise<GetMeResponse> {
+    if (!getMeRequest) {
+      getMeRequest = clientApi
+        .get<GetMeResponse>(AUTH_ROUTES.ME)
+        .then(({ data }) => data)
+        .finally(() => {
+          getMeRequest = null;
+        });
+    }
+
+    return getMeRequest;
+  },
+
+  async logout(): Promise<void> {
+    try {
+      await clientApi.post<ApiResponseDTO>(AUTH_ROUTES.LOGOUT, {});
+    } finally {
+      getMeRequest = null;
+    }
   },
 };

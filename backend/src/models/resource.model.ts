@@ -6,6 +6,7 @@ export const RESOURCE_TYPES = [
   "video",
   "infographic",
 ] as const;
+
 export type ResourceType = (typeof RESOURCE_TYPES)[number];
 
 export const RESOURCE_CATEGORIES = [
@@ -14,34 +15,27 @@ export const RESOURCE_CATEGORIES = [
   "wellness",
   "recipes",
 ] as const;
+
 export type ResourceCategory = (typeof RESOURCE_CATEGORIES)[number];
 
 export const RESOURCE_STATUSES = ["draft", "published", "archived"] as const;
+
 export type ResourceStatus = (typeof RESOURCE_STATUSES)[number];
 
 export interface IResource {
   _id: Types.ObjectId;
-
   title: string;
   description: string;
-
   type: ResourceType;
   category: ResourceCategory;
-
   content?: string;
   fileUrl?: string;
-  thumbnailUrl?: string;
-
   status: ResourceStatus;
-
   createdBy: Types.ObjectId;
   publishedAt?: Date;
-
   viewCount: number;
   likeCount: number;
-  bookmarkCount: number;
   commentCount: number;
-
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,43 +48,32 @@ const resourceSchema = new Schema<IResource>(
       trim: true,
       maxlength: 200,
     },
-
     description: {
       type: String,
       required: true,
       trim: true,
       maxlength: 1000,
     },
-
     type: {
       type: String,
       enum: RESOURCE_TYPES,
       required: true,
       index: true,
     },
-
     category: {
       type: String,
       enum: RESOURCE_CATEGORIES,
       required: true,
       index: true,
     },
-
     content: {
       type: String,
       trim: true,
     },
-
     fileUrl: {
       type: String,
       trim: true,
     },
-
-    thumbnailUrl: {
-      type: String,
-      trim: true,
-    },
-
     status: {
       type: String,
       enum: RESOURCE_STATUSES,
@@ -98,36 +81,25 @@ const resourceSchema = new Schema<IResource>(
       required: true,
       index: true,
     },
-
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "Nutritionist",
       required: true,
       index: true,
     },
-
     publishedAt: {
       type: Date,
     },
-
     viewCount: {
       type: Number,
       default: 0,
       min: 0,
     },
-
     likeCount: {
       type: Number,
       default: 0,
       min: 0,
     },
-
-    bookmarkCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
     commentCount: {
       type: Number,
       default: 0,
@@ -139,27 +111,9 @@ const resourceSchema = new Schema<IResource>(
   },
 );
 
-resourceSchema.index({
-  title: "text",
-  description: "text",
-});
-
-resourceSchema.index({
-  status: 1,
-  category: 1,
-  createdAt: -1,
-});
-
-resourceSchema.index({
-  status: 1,
-  type: 1,
-  createdAt: -1,
-});
-
-resourceSchema.index({
-  createdBy: 1,
-  status: 1,
-  createdAt: -1,
-});
+resourceSchema.index({ title: "text", description: "text" });
+resourceSchema.index({ status: 1, category: 1, createdAt: -1 });
+resourceSchema.index({ status: 1, type: 1, createdAt: -1 });
+resourceSchema.index({ createdBy: 1, status: 1, createdAt: -1 });
 
 export const ResourceModel = model<IResource>("Resource", resourceSchema);

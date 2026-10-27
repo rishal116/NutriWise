@@ -15,7 +15,7 @@ import {
 import { publicResourceService } from "@/services/public/publicResource.service";
 import { getErrorMessage } from "@/utils/getErrorMessage"; // adjust to actual path
 
-import type { PublicResourceListItemDTO } from "@/dtos/public/resource/public-resource-list-item.dto";
+import type { PublicResourceDTO } from "@/dtos/public/resource/public-resource-response.dto";
 import type {
   PublicResourceCategory,
   PublicResourceListQueryDTO,
@@ -64,7 +64,7 @@ export default function PublicResourcesPage() {
   const [category, setCategory] = useState<PublicResourceCategory | "">("");
   const [sortBy, setSortBy] = useState<PublicResourceSortBy>("latest");
 
-  const [resources, setResources] = useState<PublicResourceListItemDTO[]>([]);
+  const [resources, setResources] = useState<PublicResourceDTO[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
@@ -103,6 +103,13 @@ export default function PublicResourcesPage() {
       const response = await publicResourceService.getResources(q);
       const data = response.data;
 
+      if (!data) {
+        setResources([]);
+        setCursor(null);
+        setHasMore(false);
+        return;
+      }
+
       setResources(data.items);
       setCursor(data.nextCursor);
       setHasMore(data.hasMore);
@@ -120,7 +127,7 @@ export default function PublicResourcesPage() {
   }, [JSON.stringify(query), refetchToken]);
 
   const loadMore = async () => {
-    if (!cursor || loadingMore) return;
+    if (!cursor || loadingMore || loading) return;
 
     setLoadingMore(true);
     setError(null);
@@ -130,7 +137,13 @@ export default function PublicResourcesPage() {
         ...query,
         cursor,
       });
+
       const data = response.data;
+
+      if (!data) {
+        setError("Unable to load more resources. Please try again.");
+        return;
+      }
 
       setResources((prev) => [...prev, ...data.items]);
       setCursor(data.nextCursor);
@@ -320,7 +333,7 @@ function ResourceCard({
   resource,
   getResourceIcon,
 }: {
-  resource: PublicResourceListItemDTO;
+  resource: PublicResourceDTO;
   getResourceIcon: (type: PublicResourceType) => React.ReactNode;
 }) {
   return (
@@ -329,9 +342,10 @@ function ResourceCard({
       className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="relative aspect-video overflow-hidden bg-slate-100">
-        {resource.thumbnailUrl ? (
+        {resource.fileUrl &&
+        (resource.type === "infographic" || resource.type === "video") ? (
           <Image
-            src={resource.thumbnailUrl}
+            src={resource.fileUrl}
             alt={resource.title}
             fill
             unoptimized
@@ -362,6 +376,10 @@ function ResourceCard({
           {resource.description}
         </p>
 
+        <p className="mt-3 text-xs text-slate-500">
+          By {resource.createdBy.fullName}
+        </p>
+
         <div className="mt-5 flex items-center gap-4 text-xs text-slate-500">
           <span className="flex items-center gap-1">
             <Eye size={14} />
@@ -369,8 +387,14 @@ function ResourceCard({
           </span>
 
           <span className="flex items-center gap-1">
-            <Bookmark size={14} />
-            {resource.bookmarkCount}
+            <span
+              className={
+                resource.isLikedByMe ? "font-semibold text-rose-600" : ""
+              }
+            >
+              ♥
+            </span>
+            {resource.likeCount}
           </span>
         </div>
       </div>

@@ -1,13 +1,5 @@
 export interface IPostLikeService {
-  likePost(
-    postId: string,
-    userId: string,
-  ): Promise<{ isLiked: boolean; likeCount: number }>;
+  likePost(postId: string, userId: string): Promise<void>;
 
-  unlikePost(
-    postId: string,
-    userId: string,
-  ): Promise<{ isLiked: boolean; likeCount: number }>;
-
-  hasLikedPost(postId: string, userId: string): Promise<boolean>;
+  unlikePost(postId: string, userId: string): Promise<void>;
 }

@@ -95,7 +95,11 @@ export const refreshToken = async (
     return res.status(StatusCode.OK).json({
       success: true,
       message: "Tokens refreshed successfully",
-      accessToken: tokens.accessToken,
+      data: {
+        accessToken: tokens.accessToken,
+        activeRole: user.activeRole,
+        isProfileCompleted: user.isProfileCompleted,
+      },
     });
   } catch (error: unknown) {
     clearAuthCookies(res);

@@ -14,8 +14,6 @@ const controller = container.get<IPublicPostController>(
 
 router.get("/", optionalAuthMiddleware, controller.browsePosts);
 
-router.get("/author/:userId", controller.browsePostsByAuthor);
-
-router.get("/:postId", controller.getPost);
+router.get("/:postId", optionalAuthMiddleware, controller.getPost);
 
 export default router;

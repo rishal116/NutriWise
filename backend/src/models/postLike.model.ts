@@ -15,7 +15,6 @@ const postLikeSchema = new Schema<IPostLike>(
       ref: "Post",
       required: true,
     },
-
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -27,19 +26,8 @@ const postLikeSchema = new Schema<IPostLike>(
   },
 );
 
-postLikeSchema.index(
-  {
-    postId: 1,
-    userId: 1,
-  },
-  {
-    unique: true,
-  },
-);
+postLikeSchema.index({ postId: 1, userId: 1 }, { unique: true });
 
-postLikeSchema.index({
-  userId: 1,
-  createdAt: -1,
-});
+postLikeSchema.index({ userId: 1, createdAt: -1 });
 
 export const PostLikeModel = model<IPostLike>("PostLike", postLikeSchema);

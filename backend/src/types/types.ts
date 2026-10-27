@@ -1,4 +1,16 @@
+
 export const TYPES = {
+  IResourceCommentController:Symbol.for("IResourceCommentController"),
+  IResourceLikeController:Symbol.for("IResourceLikeController"),
+  IResourceViewController:Symbol.for("IResourceViewController"),
+  IResourceViewService:Symbol.for("IResourceViewService"),
+  IResourceCommentService:Symbol.for("IResourceCommentService"),
+  IResourceLikeService:Symbol.for("IResourceLikeService"),
+  IPublicResourceRepository:Symbol.for("IPublicResourceRepository"),
+  IPostViewController:Symbol.for("IPostViewController"),
+  IUserLikedPostRepository:Symbol.for("IUserLikedPostRepository"),
+  IUserLikedPostService:Symbol.for("IUserLikedPostService"),
+  IUserLikedPostController:Symbol.for("IUserLikedPostController"),
   // USER
 
   // Controllers
@@ -141,6 +153,8 @@ export const TYPES = {
   IPostCommentRepository: Symbol.for("IPostCommentRepository"),
   IPostCommentService: Symbol.for("IPostCommentService"),
   IPostCommentController: Symbol.for("IPostCommentController"),
+  IPostViewRepository:Symbol.for("IPostViewRepository"),
+  IPostViewService:Symbol.for("IPostViewService"),
 
   IGroupService: Symbol.for("IGroupService"),
   IGroupController: Symbol.for("IGroupController"),

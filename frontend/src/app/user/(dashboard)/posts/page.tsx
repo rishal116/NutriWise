@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
 import { ArrowDownUp, Plus, Search, X } from "lucide-react";
 
 import { userPostService } from "@/services/user/userPost.service";
 import type { PostCardResponseDTO } from "@/dtos/user/post/post-response.dto";
-import { PostSortOption } from "@/dtos/user/post/post-list-query.dto";
+import { POST_SORT_OPTIONS } from "@/dtos/user/post/post-list-query.dto";
+import type { PostSortOption } from "@/dtos/user/post/post-list-query.dto";
 import { useCursorInfiniteScroll } from "@/hooks/user/useCursorInfiniteScroll";
 import { PostCard } from "@/components/user/posts/PostCard";
 import { PostCardSkeletonGrid } from "@/components/user/posts/PostCardSkeleton";
@@ -16,13 +18,18 @@ import { DeletePostModal } from "@/components/user/posts/DeletePostModel";
 
 const PAGE_SIZE = 8;
 
-const SORT_OPTIONS: { value: PostSortOption; label: string }[] = [
-  { value: PostSortOption.LATEST, label: "Latest" },
-  { value: PostSortOption.OLDEST, label: "Oldest" },
-  { value: PostSortOption.MOST_LIKED, label: "Most liked" },
-  { value: PostSortOption.MOST_COMMENTED, label: "Most commented" },
-  { value: PostSortOption.MOST_BOOKMARKED, label: "Most bookmarked" },
-];
+const SORT_LABELS: Record<PostSortOption, string> = {
+  latest: "Latest",
+  oldest: "Oldest",
+  most_liked: "Most liked",
+  most_commented: "Most commented",
+  most_viewed: "Most viewed",
+};
+
+const SORT_OPTIONS = POST_SORT_OPTIONS.map((value) => ({
+  value,
+  label: SORT_LABELS[value],
+}));
 
 const fieldClass =
   "w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 text-sm text-slate-700 transition-colors placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20";
@@ -30,7 +37,7 @@ const fieldClass =
 export default function UserPostsPage() {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<PostSortOption>(PostSortOption.LATEST);
+  const [sortBy, setSortBy] = useState<PostSortOption>("latest");
   const [postPendingDelete, setPostPendingDelete] =
     useState<PostCardResponseDTO | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -43,6 +50,10 @@ export default function UserPostsPage() {
         sortBy,
         ...(search ? { search } : {}),
       });
+
+      if (!response.data) {
+        throw new Error("Failed to fetch posts");
+      }
 
       return {
         items: response.data.items,
@@ -67,7 +78,7 @@ export default function UserPostsPage() {
     deps: [search, sortBy],
   });
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSearch(searchInput.trim());
   };
@@ -79,10 +90,12 @@ export default function UserPostsPage() {
 
   const confirmDelete = async () => {
     if (!postPendingDelete) return;
+
     setIsDeleting(true);
+
     try {
       await userPostService.deletePost(postPendingDelete._id);
-      removeItem((p) => p._id === postPendingDelete._id);
+      removeItem((post) => post._id === postPendingDelete._id);
       setPostPendingDelete(null);
     } catch {
       // Keep the modal open so the user can retry.
@@ -92,15 +105,13 @@ export default function UserPostsPage() {
   };
 
   const showInitialSkeleton = isLoading && items.length === 0;
-  const showInitialError = !isLoading && error && items.length === 0;
+  const showInitialError = !isLoading && Boolean(error) && items.length === 0;
   const showEmptyState = !isLoading && !error && items.length === 0;
   const showFeed =
     !showInitialSkeleton && !showInitialError && items.length > 0;
 
   return (
-    // Single left-aligned column: header, toolbar and feed share one edge
     <div className="flex w-full max-w-3xl flex-col gap-5">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -121,7 +132,6 @@ export default function UserPostsPage() {
         </Link>
       </div>
 
-      {/* Toolbar */}
       <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row">
         <form
           onSubmit={handleSearchSubmit}
@@ -137,6 +147,7 @@ export default function UserPostsPage() {
             aria-label="Search your posts"
             className={`${fieldClass} pl-9 pr-9`}
           />
+
           {searchInput && (
             <button
               type="button"
@@ -157,16 +168,15 @@ export default function UserPostsPage() {
             aria-label="Sort posts"
             className={`${fieldClass} appearance-none pl-9 pr-8`}
           >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
         </div>
       </div>
 
-      {/* Content */}
       {showInitialSkeleton && <PostCardSkeletonGrid count={PAGE_SIZE} />}
 
       {showInitialError && <PostsErrorState onRetry={retry} />}

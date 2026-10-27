@@ -10,6 +10,7 @@ import { userAuthService } from "@/services/user/userAuth.service";
 import { logout, setAccessToken, setUser } from "@/redux/slices/authSlice";
 import type { RootState } from "@/redux/store";
 import Logo from "../common/Logo";
+import { tokenStorage } from "@/lib/auth/tokenStorage";
 
 export default function NutritionistHeader() {
   const dispatch = useDispatch();
@@ -25,6 +26,12 @@ export default function NutritionistHeader() {
 
   const notifRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  console.log({
+    initialized,
+    hasUser: Boolean(user),
+    activeRole: user?.activeRole,
+  });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,9 +63,16 @@ export default function NutritionistHeader() {
     try {
       const response = await userAuthService.switchRole(role);
 
-      if (response.accessToken) {
-        dispatch(setAccessToken(response.accessToken));
+      if (!response.success || !response.data?.accessToken) {
+        throw new Error("Role switching failed.");
       }
+
+      const accessToken = response.data.accessToken;
+
+      tokenStorage.set(accessToken);
+
+      // Synchronize Redux.
+      dispatch(setAccessToken(accessToken));
 
       dispatch(
         setUser({
@@ -71,7 +85,7 @@ export default function NutritionistHeader() {
         role === "user" ? "/user/dashboard" : "/nutritionist/dashboard",
       );
     } catch {
-      // Keep the current role and user state if switching fails.
+      // Keep the current client-side role state if switching fails.
     } finally {
       setSwitching(false);
       setMenuOpen(false);
@@ -79,18 +93,17 @@ export default function NutritionistHeader() {
   };
 
   const handleLogout = async () => {
-    if (loggingOut) {
-      return;
-    }
+    if (loggingOut) return;
 
     setLoggingOut(true);
 
     try {
       await userAuthService.logout();
+    } catch {
     } finally {
+      tokenStorage.remove();
       dispatch(logout());
       router.replace("/login");
-      setLoggingOut(false);
     }
   };
 

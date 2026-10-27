@@ -12,9 +12,9 @@ export interface IPost {
   authorId: Types.ObjectId;
   content?: string;
   media?: IPostMedia;
+  viewCount: number;
   likeCount: number;
   commentCount: number;
-  bookmarkCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,33 +43,27 @@ const postSchema = new Schema<IPost>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
-
     content: {
       type: String,
       trim: true,
       maxlength: 5000,
     },
-
     media: {
       type: postMediaSchema,
       required: false,
     },
-
+    viewCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     likeCount: {
       type: Number,
       default: 0,
       min: 0,
     },
-
     commentCount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    bookmarkCount: {
       type: Number,
       default: 0,
       min: 0,
@@ -80,13 +74,7 @@ const postSchema = new Schema<IPost>(
   },
 );
 
-postSchema.index({
-  authorId: 1,
-  createdAt: -1,
-});
-
-postSchema.index({
-  createdAt: -1,
-});
+postSchema.index({ authorId: 1, createdAt: -1 });
+postSchema.index({ createdAt: -1 });
 
 export const PostModel = model<IPost>("Post", postSchema);

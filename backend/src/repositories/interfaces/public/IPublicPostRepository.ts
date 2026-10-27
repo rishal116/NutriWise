@@ -1,25 +1,16 @@
 import { Types } from "mongoose";
-
-import { PublicPostListQueryDTO } from "../../../dtos/public/post/public-post-list-query.dto";
-
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-
-import { IPublicPostListItemProjection } from "../../../types/public/post/public-post-list-item.projection";
-
-import { IPublicPostDetailsProjection } from "../../../types/public/post/public-post-details.projection";
+import { IPublicPost } from "../../../types/post/public-post.type";
 
 export interface IPublicPostRepository {
-  findPublicPosts(
-    query: PublicPostListQueryDTO,
-    userId?: string,
-  ): Promise<CursorPaginationResult<IPublicPostListItemProjection>>;
+  browsePublicPosts(
+    userId?: string | Types.ObjectId,
+    limit?: number,
+    cursor?: string,
+  ): Promise<CursorPaginationResult<IPublicPost>>;
 
   findPublicPostDetails(
     postId: string | Types.ObjectId,
-  ): Promise<IPublicPostDetailsProjection | null>;
-
-  findPublicPostsByAuthor(
-    authorId: string | Types.ObjectId,
-    query: PublicPostListQueryDTO,
-  ): Promise<CursorPaginationResult<IPublicPostListItemProjection>>;
+    userId?: string | Types.ObjectId,
+  ): Promise<IPublicPost | null>;
 }

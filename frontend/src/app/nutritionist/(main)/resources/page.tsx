@@ -1,8 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   Plus,
   FileText,
@@ -11,7 +16,6 @@ import {
   Image as ImageIcon,
   Eye,
   Heart,
-  Bookmark,
   RefreshCw,
   Inbox,
   AlertCircle,
@@ -21,9 +25,9 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { nutriResourceService } from "@/services/nutritionist/nutriResource.service";
+import { nutriResourceService } from "@/services/nutritionist/nutri-resource.service";
 
-import type { NutriResourceListItemDTO } from "@/dtos/nutritionist/resource/resource-list-response.dto";
+import type { NutriResourceDTO } from "@/dtos/nutritionist/resource/nutri-resource.dto"; 
 import type { GetNutriResourcesQueryDTO } from "@/dtos/nutritionist/resource/resource-list-query.dto";
 import { NutriResourceSortBy } from "@/dtos/nutritionist/resource/resource-list-query.dto";
 
@@ -38,14 +42,20 @@ import { useDebounce } from "@/hooks/common/debounce.hooks";
 
 const PAGE_LIMIT = 12;
 
-const STATUS_OPTIONS: { label: string; value: ResourceStatus | "all" }[] = [
+const STATUS_OPTIONS: {
+  label: string;
+  value: ResourceStatus | "all";
+}[] = [
   { label: "All statuses", value: "all" },
   { label: "Draft", value: "draft" },
   { label: "Published", value: "published" },
   { label: "Archived", value: "archived" },
 ];
 
-const TYPE_OPTIONS: { label: string; value: ResourceType | "all" }[] = [
+const TYPE_OPTIONS: {
+  label: string;
+  value: ResourceType | "all";
+}[] = [
   { label: "All types", value: "all" },
   { label: "Article", value: "article" },
   { label: "PDF", value: "pdf" },
@@ -57,15 +67,21 @@ function formatCategoryLabel(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-const CATEGORY_OPTIONS: { label: string; value: ResourceCategory | "all" }[] = [
+const CATEGORY_OPTIONS: {
+  label: string;
+  value: ResourceCategory | "all";
+}[] = [
   { label: "All categories", value: "all" },
-  ...RESOURCE_CATEGORIES.map((cat) => ({
-    label: formatCategoryLabel(cat),
-    value: cat,
+  ...RESOURCE_CATEGORIES.map((category) => ({
+    label: formatCategoryLabel(category),
+    value: category,
   })),
 ];
 
-const SORT_OPTIONS: { label: string; value: NutriResourceSortBy }[] = [
+const SORT_OPTIONS: {
+  label: string;
+  value: NutriResourceSortBy;
+}[] = [
   { label: "Latest", value: NutriResourceSortBy.LATEST },
   { label: "Oldest", value: NutriResourceSortBy.OLDEST },
   { label: "Title A-Z", value: NutriResourceSortBy.TITLE_ASC },
@@ -99,46 +115,59 @@ function getResourceIcon(type: ResourceType) {
 
 function getResourceIconClasses(type: ResourceType): string {
   switch (type) {
-    case "video":
-      return "bg-purple-100/80 text-purple-700";
-    case "pdf":
-      return "bg-rose-100/80 text-rose-700";
-    case "infographic":
-      return "bg-orange-100/80 text-orange-700";
     case "article":
       return "bg-emerald-100/80 text-emerald-700";
+    case "pdf":
+      return "bg-rose-100/80 text-rose-700";
+    case "video":
+      return "bg-purple-100/80 text-purple-700";
+    case "infographic":
+      return "bg-orange-100/80 text-orange-700";
   }
 }
 
 function formatResourceType(type: ResourceType): string {
   switch (type) {
+    case "article":
+      return "Article";
     case "pdf":
       return "PDF";
     case "video":
       return "Video";
     case "infographic":
       return "Infographic";
-    case "article":
-      return "Article";
   }
 }
 
 function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString("en-IN", {
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "Unknown date";
+  }
+
+  return parsedDate.toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
 }
 
+function formatCount(value: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    notation: value >= 1000 ? "compact" : "standard",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
 export default function NutritionistResourcesPage() {
   const router = useRouter();
 
-  const [resources, setResources] = useState<NutriResourceListItemDTO[]>([]);
+  const [resources, setResources] = useState<NutriResourceDTO[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
 
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebounce(searchInput, 400);
@@ -150,255 +179,337 @@ export default function NutritionistResourcesPage() {
     NutriResourceSortBy.LATEST,
   );
 
-  const searchRef = useRef(debouncedSearch);
-  const statusRef = useRef(status);
-  const typeRef = useRef(type);
-  const categoryRef = useRef(category);
-  const sortByRef = useRef(sortBy);
-
-  const cursorRef = useRef<string | null>(null);
-  const hasMoreRef = useRef(true);
-
-  const fetchingRef = useRef(false);
-  const resettingRef = useRef(false);
-
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
   const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    searchRef.current = debouncedSearch;
-    statusRef.current = status;
-    typeRef.current = type;
-    categoryRef.current = category;
-    sortByRef.current = sortBy;
-  }, [debouncedSearch, status, type, category, sortBy]);
+  const requestIdRef = useRef(0);
+  const cursorRef = useRef<string | null>(null);
+  const hasMoreRef = useRef(false);
+  const fetchingRef = useRef(false);
+  const loadingMoreRef = useRef(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const buildQuery = useCallback(
     (cursor: string | null): GetNutriResourcesQueryDTO => {
       const query: GetNutriResourcesQueryDTO = {
         limit: PAGE_LIMIT,
-        sortBy: sortByRef.current,
+        sortBy,
       };
 
-      if (cursor) query.cursor = cursor;
-      if (searchRef.current.trim()) query.search = searchRef.current.trim();
-      if (statusRef.current !== "all") query.status = statusRef.current;
-      if (typeRef.current !== "all") query.type = typeRef.current;
-      if (categoryRef.current !== "all") query.category = categoryRef.current;
+      if (cursor) {
+        query.cursor = cursor;
+      }
+
+      const search = debouncedSearch.trim();
+
+      if (search) {
+        query.search = search;
+      }
+
+      if (status !== "all") {
+        query.status = status;
+      }
+
+      if (type !== "all") {
+        query.type = type;
+      }
+
+      if (category !== "all") {
+        query.category = category;
+      }
 
       return query;
     },
-    [],
+    [debouncedSearch, status, type, category, sortBy],
   );
 
   const fetchResources = useCallback(
     async (reset: boolean) => {
+      if (fetchingRef.current) {
+        return;
+      }
+
+      if (!reset && !hasMoreRef.current) {
+        return;
+      }
+
+      fetchingRef.current = true;
+      loadingMoreRef.current = !reset;
+
       if (reset) {
-        if (resettingRef.current) return;
-        resettingRef.current = true;
-        fetchingRef.current = true;
+        const requestId = ++requestIdRef.current;
+
         cursorRef.current = null;
-        hasMoreRef.current = true;
-        setHasMore(true);
+        hasMoreRef.current = false;
+
+        setResources([]);
+        setHasMore(false);
         setInitialLoading(true);
         setError(null);
-      } else {
-        if (fetchingRef.current || !hasMoreRef.current) return;
-        fetchingRef.current = true;
-        setLoadingMore(true);
+        setLoadingMore(false);
+
+        try {
+          const result = await nutriResourceService.getResources(
+            buildQuery(null),
+          );
+
+          if (requestId !== requestIdRef.current) {
+            return;
+          }
+
+          setResources(result.items);
+          cursorRef.current = result.nextCursor;
+          hasMoreRef.current = result.hasMore;
+          setHasMore(result.hasMore);
+        } catch {
+          if (requestId === requestIdRef.current) {
+            setResources([]);
+            setError("Couldn't load your resources. Please try again.");
+          }
+        } finally {
+          if (requestId === requestIdRef.current) {
+            fetchingRef.current = false;
+            loadingMoreRef.current = false;
+            setInitialLoading(false);
+            setLoadingMore(false);
+          }
+        }
+
+        return;
       }
+
+      const requestId = requestIdRef.current;
+      const cursor = cursorRef.current;
+
+      setLoadingMore(true);
 
       try {
         const result = await nutriResourceService.getResources(
-          buildQuery(cursorRef.current),
+          buildQuery(cursor),
         );
-        const { items, nextCursor, hasMore: more } = result;
 
-        setResources((previous) => (reset ? items : [...previous, ...items]));
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
 
-        cursorRef.current = nextCursor;
-        hasMoreRef.current = more;
-        setHasMore(more);
+        setResources((previous) => {
+          const existingIds = new Set(
+            previous.map((resource) => resource.resourceId),
+          );
+
+          const newItems = result.items.filter(
+            (resource) => !existingIds.has(resource.resourceId),
+          );
+
+          return [...previous, ...newItems];
+        });
+
+        cursorRef.current = result.nextCursor;
+        hasMoreRef.current = result.hasMore;
+        setHasMore(result.hasMore);
       } catch {
-        setError("Couldn't load your resources. Please try again.");
-        if (reset) setResources([]);
+        if (requestId === requestIdRef.current) {
+          setError("Couldn't load more resources. Please try again.");
+        }
       } finally {
-        fetchingRef.current = false;
-        resettingRef.current = false;
-        setInitialLoading(false);
-        setLoadingMore(false);
+        if (requestId === requestIdRef.current) {
+          fetchingRef.current = false;
+          loadingMoreRef.current = false;
+          setLoadingMore(false);
+        }
       }
     },
     [buildQuery],
   );
 
   useEffect(() => {
-    fetchResources(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, status, type, category, sortBy]);
+    void fetchResources(true);
+  }, [fetchResources]);
 
   useEffect(() => {
     const node = sentinelRef.current;
-    if (!node) return;
 
-    observerRef.current?.disconnect();
-    observerRef.current = new IntersectionObserver(
+    if (!node || initialLoading || error || !hasMore) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
+
         if (
-          entry.isIntersecting &&
+          entry?.isIntersecting &&
           hasMoreRef.current &&
-          !fetchingRef.current
+          !fetchingRef.current &&
+          !loadingMoreRef.current
         ) {
-          fetchResources(false);
+          void fetchResources(false);
         }
       },
       { rootMargin: "200px" },
     );
-    observerRef.current.observe(node);
 
-    return () => observerRef.current?.disconnect();
-  }, [fetchResources, resources.length]);
+    observer.observe(node);
 
-  const isEmpty = !initialLoading && !error && resources.length === 0;
+    return () => observer.disconnect();
+  }, [fetchResources, resources.length, initialLoading, error, hasMore]);
 
   const activeFilterCount =
-    (status !== "all" ? 1 : 0) +
-    (type !== "all" ? 1 : 0) +
-    (category !== "all" ? 1 : 0);
+    Number(status !== "all") +
+    Number(type !== "all") +
+    Number(category !== "all");
 
   const handleOpenResource = useCallback(
     (resourceId: string) => {
-      if (navigatingId) return;
+      if (navigatingId !== null) {
+        return;
+      }
+
       setNavigatingId(resourceId);
       router.push(`/nutritionist/resources/${resourceId}`);
     },
-    [router, navigatingId],
+    [navigatingId, router],
   );
+
+  const handleCardKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>, resourceId: string) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      handleOpenResource(resourceId);
+    },
+    [handleOpenResource],
+  );
+
+  const isEmpty = !initialLoading && !error && resources.length === 0;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 sm:pt-10">
+        <header className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Resources
             </h1>
-            <p className="text-sm text-slate-500 font-medium mt-1">
+            <p className="mt-1 text-sm font-medium text-slate-500">
               Manage your educational resources and content
             </p>
           </div>
 
           <button
+            type="button"
             onClick={() => router.push("/nutritionist/resources/create")}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-xs transition-colors"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-emerald-800"
           >
             <Plus size={17} />
             Create Resource
           </button>
-        </div>
+        </header>
 
-        {/* FILTER BAR */}
-        <div className="bg-white border border-slate-200/80 rounded-lg p-3.5 mb-6 shadow-xs">
-          <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
-            <div className="relative flex-1 min-w-[200px]">
+        <section
+          aria-label="Resource filters"
+          className="mb-6 rounded-lg border border-slate-200/80 bg-white p-3.5 shadow-xs"
+        >
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative min-w-[200px] flex-1">
               <Search
                 size={16}
+                aria-hidden="true"
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
               />
               <input
-                type="text"
+                type="search"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(event) => setSearchInput(event.target.value)}
                 placeholder="Search resources"
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                aria-label="Search resources"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm font-medium outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
               />
             </div>
 
-            <div className="hidden lg:block h-8 w-px bg-slate-200" />
+            <div className="hidden h-8 w-px bg-slate-200 lg:block" />
 
             <div className="flex items-center gap-1.5">
-              <SlidersHorizontal size={14} className="text-slate-400" />
+              <SlidersHorizontal
+                size={14}
+                aria-hidden="true"
+                className="text-slate-400"
+              />
               {activeFilterCount > 0 && (
-                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-md px-1.5 py-0.5">
+                <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
                   {activeFilterCount} active
                 </span>
               )}
             </div>
 
             <div className="flex flex-wrap gap-2.5">
-              <select
+              <FilterSelect
+                label="Status"
                 value={status}
-                onChange={(e) =>
-                  setStatus(e.target.value as ResourceStatus | "all")
-                }
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
-              >
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                options={STATUS_OPTIONS}
+                onChange={(value) => setStatus(value as ResourceStatus | "all")}
+              />
 
-              <select
+              <FilterSelect
+                label="Type"
                 value={type}
-                onChange={(e) =>
-                  setType(e.target.value as ResourceType | "all")
-                }
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
-              >
-                {TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                options={TYPE_OPTIONS}
+                onChange={(value) => setType(value as ResourceType | "all")}
+              />
 
-              <select
+              <FilterSelect
+                label="Category"
                 value={category}
-                onChange={(e) =>
-                  setCategory(e.target.value as ResourceCategory | "all")
+                options={CATEGORY_OPTIONS}
+                onChange={(value) =>
+                  setCategory(value as ResourceCategory | "all")
                 }
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
-              >
-                {CATEGORY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+              />
 
-              <select
+              <FilterSelect
+                label="Sort by"
                 value={sortBy}
-                onChange={(e) =>
-                  setSortBy(e.target.value as NutriResourceSortBy)
-                }
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                options={SORT_OPTIONS}
+                onChange={(value) => setSortBy(value as NutriResourceSortBy)}
+              />
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* CONTENT */}
         {initialLoading ? (
           <LoadingGrid />
-        ) : error ? (
-          <ErrorState message={error} onRetry={() => fetchResources(true)} />
+        ) : error && resources.length === 0 ? (
+          <ErrorState
+            message={error}
+            onRetry={() => void fetchResources(true)}
+          />
         ) : isEmpty ? (
-          <EmptyState />
+          <EmptyState
+            hasFilters={Boolean(searchInput.trim() || activeFilterCount)}
+          />
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {error && (
+              <div
+                role="alert"
+                className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3"
+              >
+                <p className="text-sm text-rose-700">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    void fetchResources(false);
+                  }}
+                  className="text-sm font-semibold text-rose-700 underline underline-offset-2"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {resources.map((resource) => (
                 <ResourceCard
                   key={resource.resourceId}
@@ -406,24 +517,26 @@ export default function NutritionistResourcesPage() {
                   isNavigating={navigatingId === resource.resourceId}
                   disabled={navigatingId !== null}
                   onOpen={handleOpenResource}
+                  onKeyDown={handleCardKeyDown}
                 />
               ))}
             </div>
 
-            <div ref={sentinelRef} className="h-1" />
+            <div ref={sentinelRef} className="h-1" aria-hidden="true" />
 
             {loadingMore && (
-              <div className="flex justify-center py-8">
-                <RefreshCw
-                  className="animate-spin text-emerald-600"
-                  size={20}
-                />
+              <div
+                className="flex justify-center py-8"
+                role="status"
+                aria-label="Loading more resources"
+              >
+                <Loader2 className="animate-spin text-emerald-600" size={22} />
               </div>
             )}
 
             {!hasMore && resources.length > 0 && (
-              <p className="text-center text-xs font-semibold text-slate-400 uppercase tracking-wider py-8">
-                {`You've reached the end`}
+              <p className="py-8 text-center text-xs font-semibold uppercase tracking-wider text-slate-400">
+                You&apos;ve reached the end
               </p>
             )}
           </>
@@ -433,102 +546,128 @@ export default function NutritionistResourcesPage() {
   );
 }
 
+function FilterSelect<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: T;
+  options: { label: string; value: T }[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(event) => onChange(event.target.value as T)}
+      className="cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 function ResourceCard({
   resource,
   isNavigating,
   disabled,
   onOpen,
+  onKeyDown,
 }: {
-  resource: NutriResourceListItemDTO;
+  resource: NutriResourceDTO;
   isNavigating: boolean;
   disabled: boolean;
   onOpen: (resourceId: string) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLDivElement>, resourceId: string) => void;
 }) {
   const Icon = getResourceIcon(resource.type);
 
   return (
     <div
-      role="button"
+      role="link"
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
-      onClick={() => !disabled && onOpen(resource.resourceId)}
-      onKeyDown={(e) => {
-        if (!disabled && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
+      aria-label={`View resource: ${resource.title}`}
+      onClick={() => {
+        if (!disabled) {
           onOpen(resource.resourceId);
         }
       }}
-      className={`group relative bg-white rounded-lg border border-slate-200/80 shadow-xs flex flex-col overflow-hidden text-left transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
+      onKeyDown={(event) => onKeyDown(event, resource.resourceId)}
+      className={`group relative flex flex-col overflow-hidden rounded-lg border border-slate-200/80 bg-white text-left shadow-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 ${
         disabled
           ? isNavigating
-            ? "opacity-100 cursor-wait"
-            : "opacity-50 cursor-not-allowed"
-          : "cursor-pointer hover:shadow-sm hover:border-slate-300"
+            ? "cursor-wait"
+            : "cursor-not-allowed opacity-50"
+          : "cursor-pointer hover:border-slate-300 hover:shadow-sm"
       }`}
     >
-      {/* THUMBNAIL */}
-      <div className="relative h-36 shrink-0 overflow-hidden bg-slate-100">
-        {resource.thumbnailUrl ? (
-          <Image
-            src={resource.thumbnailUrl}
-            alt=""
-            fill
-            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover"
-          />
-        ) : (
-          <div
-            className={`w-full h-full flex items-center justify-center ${getResourceIconClasses(resource.type)}`}
-          >
-            <Icon size={28} strokeWidth={1.75} />
-          </div>
-        )}
+      <div
+        className={`relative flex h-36 shrink-0 items-center justify-center overflow-hidden ${getResourceIconClasses(resource.type)}`}
+      >
+        <Icon size={36} strokeWidth={1.5} aria-hidden="true" />
 
-        <span className="absolute top-2 left-2 inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-white/90 text-slate-700 border border-slate-200">
-          <Icon size={11} />
+        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+          <Icon size={11} aria-hidden="true" />
           {formatResourceType(resource.type)}
         </span>
 
         <span
-          className={`absolute top-2 right-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-md border capitalize bg-white/90 ${statusBadgeClasses(resource.status)}`}
+          className={`absolute right-2 top-2 rounded-md border bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold capitalize ${statusBadgeClasses(resource.status)}`}
         >
           {resource.status}
         </span>
 
         {isNavigating && (
-          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <Loader2 size={20} className="animate-spin text-emerald-700" />
+          <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+            <Loader2
+              size={22}
+              className="animate-spin text-emerald-700"
+              aria-label="Opening resource"
+            />
           </div>
         )}
       </div>
 
-      {/* BODY */}
-      <div className="flex flex-col flex-1 p-3.5">
-        <h3 className="font-bold text-sm leading-snug text-slate-900 line-clamp-2 mb-1">
+      <div className="flex flex-1 flex-col p-3.5">
+        <h2 className="mb-1 line-clamp-2 text-sm font-bold leading-snug text-slate-900">
           {resource.title}
-        </h3>
+        </h2>
 
-        <p className="text-xs text-slate-500 leading-snug line-clamp-2 mb-2.5">
+        <p className="mb-2.5 line-clamp-2 text-xs leading-snug text-slate-500">
           {resource.description}
         </p>
 
-        <span className="self-start text-[10px] font-semibold text-emerald-700 bg-emerald-50 rounded-md px-1.5 py-0.5 mb-3">
+        <span className="mb-3 self-start rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700">
           {formatCategoryLabel(resource.category)}
         </span>
 
-        <div className="mt-auto pt-2.5 border-t border-slate-100">
-          <div className="flex items-center justify-between mb-2.5">
+        <div className="mt-auto border-t border-slate-100 pt-2.5">
+          <div className="mb-2.5 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5">
               <Stat icon={Eye} value={resource.viewCount} />
               <Stat icon={Heart} value={resource.likeCount} />
-              <Stat icon={Bookmark} value={resource.bookmarkCount} />
             </div>
-            <span className="text-[10px] font-medium text-slate-400">
+
+            <time
+              dateTime={
+                Number.isNaN(new Date(resource.createdAt).getTime())
+                  ? undefined
+                  : new Date(resource.createdAt).toISOString()
+              }
+              className="text-[10px] font-medium text-slate-400"
+            >
               {formatDate(resource.createdAt)}
-            </span>
+            </time>
           </div>
 
-          <div className="flex items-center justify-center gap-1 text-xs font-semibold text-emerald-700 group-hover:text-emerald-800 py-1.5 rounded-md bg-emerald-50/80">
+          <div className="flex items-center justify-center gap-1 rounded-md bg-emerald-50/80 py-1.5 text-xs font-semibold text-emerald-700 group-hover:text-emerald-800">
             {isNavigating ? (
               <>
                 <Loader2 size={13} className="animate-spin" />
@@ -553,27 +692,33 @@ function ResourceCard({
 function Stat({ icon: Icon, value }: { icon: typeof Eye; value: number }) {
   return (
     <div className="flex items-center gap-1 text-slate-400">
-      <Icon size={12} />
-      <span className="text-[11px] font-semibold text-slate-600">{value}</span>
+      <Icon size={12} aria-hidden="true" />
+      <span className="text-[11px] font-semibold text-slate-600">
+        {formatCount(value)}
+      </span>
     </div>
   );
 }
 
 function LoadingGrid() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {Array.from({ length: 8 }).map((_, index) => (
+    <div
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      aria-label="Loading resources"
+      role="status"
+    >
+      {Array.from({ length: 8 }, (_, index) => (
         <div
           key={index}
-          className="bg-white rounded-lg border border-slate-200/80 overflow-hidden animate-pulse"
+          className="animate-pulse overflow-hidden rounded-lg border border-slate-200/80 bg-white"
         >
           <div className="h-36 bg-slate-200" />
           <div className="p-3.5">
-            <div className="h-3.5 bg-slate-200 rounded w-4/5 mb-2" />
-            <div className="h-3 bg-slate-200 rounded w-full mb-1.5" />
-            <div className="h-3 bg-slate-200 rounded w-2/3 mb-3" />
-            <div className="h-4 bg-slate-100 rounded w-16 mb-3" />
-            <div className="h-4 bg-slate-100 rounded" />
+            <div className="mb-2 h-3.5 w-4/5 rounded bg-slate-200" />
+            <div className="mb-1.5 h-3 w-full rounded bg-slate-200" />
+            <div className="mb-3 h-3 w-2/3 rounded bg-slate-200" />
+            <div className="mb-3 h-4 w-16 rounded bg-slate-100" />
+            <div className="h-8 rounded bg-slate-100" />
           </div>
         </div>
       ))}
@@ -581,15 +726,21 @@ function LoadingGrid() {
   );
 }
 
-function EmptyState() {
+function EmptyState({ hasFilters }: { hasFilters: boolean }) {
   return (
-    <div className="bg-white rounded-lg py-20 text-center border border-dashed border-slate-300">
-      <div className="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+    <div className="rounded-lg border border-dashed border-slate-300 bg-white py-20 text-center">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
         <Inbox className="text-emerald-600" size={24} />
       </div>
-      <h3 className="text-base font-bold text-slate-600">No resources found</h3>
-      <p className="text-sm text-slate-400 mt-1">
-        Try adjusting your filters or search
+
+      <h2 className="text-base font-bold text-slate-700">
+        {hasFilters ? "No matching resources" : "No resources yet"}
+      </h2>
+
+      <p className="mt-1 text-sm text-slate-400">
+        {hasFilters
+          ? "Try changing your search or filters."
+          : "Create your first educational resource to get started."}
       </p>
     </div>
   );
@@ -603,14 +754,20 @@ function ErrorState({
   onRetry: () => void;
 }) {
   return (
-    <div className="bg-white rounded-lg py-20 text-center border border-slate-200/80">
-      <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4">
+    <div
+      role="alert"
+      className="rounded-lg border border-slate-200/80 bg-white py-20 text-center"
+    >
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-rose-50">
         <AlertCircle className="text-rose-600" size={24} />
       </div>
-      <h3 className="text-base font-bold text-slate-600">{message}</h3>
+
+      <h2 className="text-base font-bold text-slate-600">{message}</h2>
+
       <button
+        type="button"
         onClick={onRetry}
-        className="mt-4 inline-flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors"
+        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-800"
       >
         <RefreshCw size={14} />
         Retry

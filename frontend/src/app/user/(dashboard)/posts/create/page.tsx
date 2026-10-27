@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, Send } from "lucide-react";
+import axios from "axios";
 
 import { userPostService } from "@/services/user/userPost.service";
 import { PostMediaPicker } from "@/components/user/posts/PostMediaPicker";
@@ -21,7 +22,7 @@ export default function CreatePostPage() {
   const hasMedia = file !== null;
   const canSubmit = (hasContent || hasMedia) && !isSubmitting;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -29,17 +30,26 @@ export default function CreatePostPage() {
       setError("Add a caption or attach media before publishing.");
       return;
     }
+
     if (!canSubmit) return;
 
     setIsSubmitting(true);
+
     try {
-      const response = await userPostService.createPost(
+      await userPostService.createPost(
         { content: hasContent ? trimmedContent : undefined },
         file ?? undefined,
       );
-      router.push(`/user/posts/${response.data._id}`);
-    } catch {
-      setError("We couldn't publish your post. Please try again.");
+
+      router.push("/user/posts");
+    } catch (error: unknown) {
+      const message = axios.isAxiosError<{ message?: string }>(error)
+        ? (error.response?.data?.message ?? error.message)
+        : error instanceof Error
+          ? error.message
+          : "We couldn't publish your post. Please try again.";
+
+      setError(message || "We couldn't publish your post. Please try again.");
       setIsSubmitting(false);
     }
   };
@@ -62,6 +72,7 @@ export default function CreatePostPage() {
             Create Post
           </h1>
         </div>
+
         <p className="mt-1.5 text-xs font-medium text-slate-500 sm:text-sm">
           Share an update, a win, or a moment from your journey.
         </p>
@@ -77,8 +88,9 @@ export default function CreatePostPage() {
             onChange={(e) => setContent(e.target.value.slice(0, MAX_LENGTH))}
             placeholder="What's on your mind?"
             rows={6}
-            className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-700 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3.5 text-sm font-medium text-slate-700 transition-colors focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
           />
+
           <div className="mt-1.5 flex items-center justify-between">
             <span className="text-[11px] font-medium text-slate-400">
               Add a caption, attach media, or both.
@@ -93,6 +105,7 @@ export default function CreatePostPage() {
           <label className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             Media
           </label>
+
           <div className="max-w-xs">
             <PostMediaPicker
               file={file}
@@ -103,7 +116,10 @@ export default function CreatePostPage() {
         </div>
 
         {error && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-semibold text-rose-700">
+          <div
+            role="alert"
+            className="rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-xs font-semibold text-rose-700"
+          >
             {error}
           </div>
         )}
@@ -117,6 +133,7 @@ export default function CreatePostPage() {
           >
             Cancel
           </button>
+
           <button
             type="submit"
             disabled={!canSubmit}

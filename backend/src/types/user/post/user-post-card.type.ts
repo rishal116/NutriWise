@@ -7,9 +7,10 @@ export interface IUserPostCard {
     url: string;
     type: PostMediaType;
   };
+  viewCount: number;
   likeCount: number;
   commentCount: number;
-  bookmarkCount: number;
+  isLikedByMe: boolean;
+  isViewedByMe: boolean;
   createdAt: Date;
-  updatedAt: Date;
 }

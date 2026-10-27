@@ -1,21 +1,14 @@
-import { IPostComment } from "../../../models/postComment.model";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { PostCommentResponseDto } from "../../../dtos/post/post-comment-response.dto";
 
 export interface IPostCommentService {
-  createComment(
-    postId: string,
-    userId: string,
-    content: string,
-  ): Promise<IPostComment>;
+  createComment(postId: string, userId: string, content: string): Promise<void>;
 
   getComments(
     postId: string,
     limit?: number,
-    cursor?: { createdAt: Date; id: string },
-  ): Promise<{
-    comments: IPostComment[];
-    nextCursor: { createdAt: Date; id: string } | null;
-    hasMore: boolean;
-  }>;
+    cursor?: string,
+  ): Promise<InfiniteScrollResponseDTO<PostCommentResponseDto>>;
 
   deleteComment(commentId: string, userId: string): Promise<void>;
 }

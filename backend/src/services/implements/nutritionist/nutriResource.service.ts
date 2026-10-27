@@ -29,12 +29,10 @@ export class NutriResourceService implements INutriResourceService {
   private validateResourceFiles(
     type: ResourceType,
     file?: Express.Multer.File,
-    thumbnail?: Express.Multer.File,
   ): void {
     const MAX_PDF_SIZE = 10 * 1024 * 1024;
     const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
     const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-    const MAX_THUMBNAIL_SIZE = 5 * 1024 * 1024;
 
     if (type === "article" && file) {
       throw new CustomError(
@@ -115,59 +113,31 @@ export class NutriResourceService implements INutriResourceService {
         );
       }
     }
-
-    if (thumbnail) {
-      const allowedThumbnailTypes = ["image/jpeg", "image/png", "image/webp"];
-
-      if (!allowedThumbnailTypes.includes(thumbnail.mimetype)) {
-        throw new CustomError(
-          "Thumbnail must be a JPG, PNG, or WebP image.",
-          StatusCode.BAD_REQUEST,
-        );
-      }
-
-      if (thumbnail.size > MAX_THUMBNAIL_SIZE) {
-        throw new CustomError(
-          "Thumbnail size must not exceed 5 MB.",
-          StatusCode.BAD_REQUEST,
-        );
-      }
-    }
   }
 
   async createResource(
     nutritionistId: string,
     dto: CreateNutriResourceDTO,
     file?: Express.Multer.File,
-    thumbnail?: Express.Multer.File,
-  ): Promise<NutriResourceDetailsResponseDTO> {
+  ): Promise<void> {
     logger.debug("Creating resource. nutritionistId=%s", nutritionistId);
 
     const validatedDto = await validateDto(CreateNutriResourceDTO, dto);
-
     const nutritionistObjectId = new Types.ObjectId(nutritionistId);
 
-    this.validateResourceFiles(dto.type, file, thumbnail);
+    this.validateResourceFiles(dto.type, file);
+
     let fileUrl: string | undefined;
-    let thumbnailUrl: string | undefined;
 
     if (file) {
       const uploadRes = await uploadToCloudinary(file, "nutriwise/resources");
       fileUrl = uploadRes.secureUrl;
     }
 
-    if (thumbnail) {
-      const uploadRes = await uploadToCloudinary(
-        thumbnail,
-        "nutriwise/resources/thumbnails",
-      );
-      thumbnailUrl = uploadRes.secureUrl;
-    }
-
     const resource = await this._nutriResourceRepository.create({
       ...validatedDto,
       fileUrl,
-      thumbnailUrl,
+
       createdBy: nutritionistObjectId,
     });
 
@@ -176,10 +146,6 @@ export class NutriResourceService implements INutriResourceService {
       resource._id,
       nutritionistId,
     );
-
-    const projection = NutriResourceDetailsMapper.fromResource(resource);
-
-    return NutriResourceDetailsMapper.toDTO(projection);
   }
 
   async getResources(
@@ -239,49 +205,58 @@ export class NutriResourceService implements INutriResourceService {
     nutritionistId: string,
     params: GetNutriResourceParamsDTO,
     dto: UpdateNutriResourceDTO,
-  ): Promise<NutriResourceDetailsResponseDTO> {
+  ): Promise<void> {
     logger.debug(
       "Updating resource. nutritionistId=%s resourceId=%s",
       nutritionistId,
       params.resourceId,
     );
+
     const validatedParams = await validateDto(
       GetNutriResourceParamsDTO,
       params,
     );
     const validatedDto = await validateDto(UpdateNutriResourceDTO, dto);
+
     const resource = await this._nutriResourceRepository.findResourceDetails(
       validatedParams.resourceId,
       nutritionistId,
     );
+
     if (!resource) {
       throw new CustomError("Resource not found", StatusCode.NOT_FOUND);
     }
+
     if (resource.status === "archived") {
       throw new CustomError(
         "Archived resources cannot be updated",
         StatusCode.BAD_REQUEST,
       );
     }
+
     const updatedResource = await this._nutriResourceRepository.updateById(
       validatedParams.resourceId,
       validatedDto,
     );
+
     if (!updatedResource) {
       throw new CustomError(
         "Resource update failed",
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
-    return NutriResourceDetailsMapper.toDTO(
-      NutriResourceDetailsMapper.fromResource(updatedResource),
+
+    logger.info(
+      "Resource updated. resourceId=%s nutritionistId=%s",
+      validatedParams.resourceId,
+      nutritionistId,
     );
   }
 
   async publishResource(
     nutritionistId: string,
     params: GetNutriResourceParamsDTO,
-  ): Promise<NutriResourceDetailsResponseDTO> {
+  ): Promise<void> {
     logger.debug(
       "Publishing resource. nutritionistId=%s resourceId=%s",
       nutritionistId,
@@ -293,26 +268,38 @@ export class NutriResourceService implements INutriResourceService {
       params,
     );
 
-    const resource = await this._nutriResourceRepository.publishResource(
-      validatedParams.resourceId,
-      nutritionistId,
-      new Date(),
+    const updatedCount = await this._nutriResourceRepository.updateOne(
+      {
+        _id: validatedParams.resourceId,
+        createdBy: new Types.ObjectId(nutritionistId),
+        status: "draft",
+      },
+      {
+        $set: {
+          status: "published",
+          publishedAt: new Date(),
+        },
+      },
     );
 
-    if (!resource) {
+    if (updatedCount === 0) {
       throw new CustomError(
         "Resource not found or cannot be published",
         StatusCode.BAD_REQUEST,
       );
     }
 
-    return NutriResourceDetailsMapper.toDTO(resource);
+    logger.info(
+      "Resource published. resourceId=%s nutritionistId=%s",
+      validatedParams.resourceId,
+      nutritionistId,
+    );
   }
 
   async archiveResource(
     nutritionistId: string,
     params: GetNutriResourceParamsDTO,
-  ): Promise<NutriResourceDetailsResponseDTO> {
+  ): Promise<void> {
     logger.debug(
       "Archiving resource. nutritionistId=%s resourceId=%s",
       nutritionistId,
@@ -324,18 +311,30 @@ export class NutriResourceService implements INutriResourceService {
       params,
     );
 
-    const resource = await this._nutriResourceRepository.archiveResource(
-      validatedParams.resourceId,
-      nutritionistId,
+    const updatedCount = await this._nutriResourceRepository.updateOne(
+      {
+        _id: validatedParams.resourceId,
+        createdBy: new Types.ObjectId(nutritionistId),
+        status: "published",
+      },
+      {
+        $set: {
+          status: "archived",
+        },
+      },
     );
 
-    if (!resource) {
+    if (updatedCount === 0) {
       throw new CustomError(
         "Resource not found or cannot be archived",
         StatusCode.BAD_REQUEST,
       );
     }
 
-    return NutriResourceDetailsMapper.toDTO(resource);
+    logger.info(
+      "Resource archived. resourceId=%s nutritionistId=%s",
+      validatedParams.resourceId,
+      nutritionistId,
+    );
   }
 }

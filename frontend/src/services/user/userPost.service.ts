@@ -1,15 +1,9 @@
 import { clientApi } from "@/lib/axios/clientApi";
-
 import { USER_POST_ROUTES } from "@/routes/user";
-
 import { CreatePostDTO } from "@/dtos/user/post/create-post.dto";
 import { UpdatePostDTO } from "@/dtos/user/post/update-post.dto";
 import { PostListQueryDTO } from "@/dtos/user/post/post-list-query.dto";
-import {
-  PostCardResponseDTO,
-  PostDetailsResponseDTO,
-} from "@/dtos/user/post/post-response.dto";
-
+import { PostCardResponseDTO } from "@/dtos/user/post/post-response.dto";
 import { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 import { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
 
@@ -17,7 +11,7 @@ export const userPostService = {
   async createPost(
     data: CreatePostDTO,
     file?: File,
-  ): Promise<ApiResponseDTO<PostDetailsResponseDTO>> {
+  ): Promise<ApiResponseDTO<void>> {
     const formData = new FormData();
 
     if (data.content !== undefined) {
@@ -28,7 +22,7 @@ export const userPostService = {
       formData.append("media", file);
     }
 
-    const res = await clientApi.post<ApiResponseDTO<PostDetailsResponseDTO>>(
+    const res = await clientApi.post<ApiResponseDTO<void>>(
       USER_POST_ROUTES.CREATE,
       formData,
     );
@@ -50,8 +44,8 @@ export const userPostService = {
 
   async getPostDetails(
     postId: string,
-  ): Promise<ApiResponseDTO<PostDetailsResponseDTO>> {
-    const res = await clientApi.get<ApiResponseDTO<PostDetailsResponseDTO>>(
+  ): Promise<ApiResponseDTO<PostCardResponseDTO>> {
+    const res = await clientApi.get<ApiResponseDTO<PostCardResponseDTO>>(
       USER_POST_ROUTES.DETAILS(postId),
     );
 
@@ -62,7 +56,7 @@ export const userPostService = {
     postId: string,
     data: UpdatePostDTO,
     file?: File,
-  ): Promise<ApiResponseDTO<PostDetailsResponseDTO>> {
+  ): Promise<ApiResponseDTO<void>> {
     const formData = new FormData();
 
     if (data.content !== undefined) {
@@ -73,7 +67,7 @@ export const userPostService = {
       formData.append("media", file);
     }
 
-    const res = await clientApi.patch<ApiResponseDTO<PostDetailsResponseDTO>>(
+    const res = await clientApi.patch<ApiResponseDTO<void>>(
       USER_POST_ROUTES.UPDATE(postId),
       formData,
     );

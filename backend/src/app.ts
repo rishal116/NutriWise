@@ -11,6 +11,7 @@ import nutritionistRoutes from "./routes/nutritionist";
 import chatRoutes from "./routes/chat";
 import publicRoutes from "./routes/public";
 import postRoutes from "./routes/post";
+import resourceRoutes from "./routes/resource";
 
 import { errorMiddleware } from "./middlewares/error.middleware";
 import stripeRoutes from "./routes/common/stripe.routes";
@@ -70,6 +71,8 @@ app.use("/api/nutritionists", nutritionistRoutes);
 
 app.use("/api/chat", chatRoutes);
 app.use("/api/posts", postRoutes);
+
+app.use("/api/resources", resourceRoutes);
 
 app.use(errorMiddleware);
 

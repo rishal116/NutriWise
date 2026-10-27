@@ -14,8 +14,7 @@ export interface INutriResourceService {
     nutritionistId: string,
     dto: CreateNutriResourceDTO,
     file?: Express.Multer.File,
-    thumbnail?: Express.Multer.File,
-  ): Promise<NutriResourceDetailsResponseDTO>;
+  ): Promise<void>;
 
   getResources(
     nutritionistId: string,
@@ -31,15 +30,15 @@ export interface INutriResourceService {
     nutritionistId: string,
     params: GetNutriResourceParamsDTO,
     dto: UpdateNutriResourceDTO,
-  ): Promise<NutriResourceDetailsResponseDTO>;
+  ): Promise<void>;
 
   publishResource(
     nutritionistId: string,
     params: GetNutriResourceParamsDTO,
-  ): Promise<NutriResourceDetailsResponseDTO>;
+  ): Promise<void>;
 
   archiveResource(
     nutritionistId: string,
     params: GetNutriResourceParamsDTO,
-  ): Promise<NutriResourceDetailsResponseDTO>;
+  ): Promise<void>;
 }
