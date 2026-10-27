@@ -1,43 +1,10 @@
-import {
-  ArrowUpRight,
-  Download,
-  Eye,
-  FileText,
-} from "lucide-react";
+import { ArrowUpRight, FileText } from "lucide-react";
 import Link from "next/link";
 
-interface DashboardResources {
-  published: number;
-  totalViews: number;
-  totalDownloads: number;
-}
+import type { NutriDashboardOverviewDTO } from "@/dtos/nutritionist/dashboard/nutri-dashboard-response.dto";
 
 interface DashboardResourceOverviewProps {
-  resources: DashboardResources;
-}
-
-function Metric({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof Eye;
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-      <div className="flex items-center gap-2">
-        <Icon size={15} className="text-slate-400" />
-
-        <span className="text-xs font-medium text-slate-400">{label}</span>
-      </div>
-
-      <p className="mt-2 text-xl font-bold text-slate-900">
-        {value.toLocaleString("en-IN")}
-      </p>
-    </div>
-  );
+  resources: NutriDashboardOverviewDTO["resources"];
 }
 
 export default function DashboardResourceOverview({
@@ -53,11 +20,10 @@ export default function DashboardResourceOverview({
 
           <div>
             <h2 className="text-base font-bold text-slate-900">
-              Resource performance
+              Resource overview
             </h2>
-
             <p className="text-xs text-slate-400">
-              How your published resources are performing
+              Your educational content
             </p>
           </div>
         </div>
@@ -72,44 +38,46 @@ export default function DashboardResourceOverview({
       </div>
 
       <div className="mt-7">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-4xl font-bold tracking-tight text-slate-900">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <p className="text-2xl font-bold text-slate-900">
+              {resources.total.toLocaleString("en-IN")}
+            </p>
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              Total resources
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+            <p className="text-2xl font-bold text-emerald-700">
               {resources.published.toLocaleString("en-IN")}
             </p>
-
-            <p className="mt-1 text-sm text-slate-500">
-              published resources
+            <p className="mt-1 text-xs font-medium text-emerald-700/70">
+              Published
             </p>
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <Metric
-            icon={Eye}
-            label="Total views"
-            value={resources.totalViews}
-          />
-
-          <Metric
-            icon={Download}
-            label="Downloads"
-            value={resources.totalDownloads}
-          />
+        <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <p className="text-lg font-bold text-slate-900">
+            {resources.draft.toLocaleString("en-IN")}
+          </p>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Draft resources
+          </p>
         </div>
 
-        {resources.published === 0 ? (
+        {resources.published === 0 && (
           <div className="mt-4 rounded-xl border border-dashed border-slate-200 p-4">
             <p className="text-sm font-semibold text-slate-700">
               No published resources
             </p>
-
             <p className="mt-1 text-xs leading-5 text-slate-400">
-              Publish your first educational resource to start tracking
-              engagement.
+              Publish your first educational resource to make it available to
+              your audience.
             </p>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   );

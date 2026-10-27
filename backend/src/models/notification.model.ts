@@ -1,4 +1,4 @@
-import { Schema, model, Types } from "mongoose";
+import { model, Schema, Types } from "mongoose";
 
 export enum NotificationType {
   SYSTEM = "system",
@@ -10,25 +10,15 @@ export enum NotificationType {
 
 export interface INotification {
   _id: Types.ObjectId;
-
   recipientId: Types.ObjectId;
-
   senderId?: Types.ObjectId | null;
-
   type: NotificationType;
-
   title: string;
-
   message: string;
-
-  data?: Record<string, unknown>;
-
+  data?: Map<string, unknown>;
   isRead: boolean;
-
   readAt?: Date | null;
-
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -39,45 +29,38 @@ const notificationSchema = new Schema<INotification>(
       ref: "User",
       required: true,
     },
-
     senderId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       default: null,
     },
-
     type: {
       type: String,
       enum: Object.values(NotificationType),
-      required: true,
       default: NotificationType.INFO,
+      required: true,
     },
-
     title: {
       type: String,
       required: true,
       trim: true,
       maxlength: 120,
     },
-
     message: {
       type: String,
       required: true,
       trim: true,
       maxlength: 500,
     },
-
     data: {
       type: Map,
       of: Schema.Types.Mixed,
       default: undefined,
     },
-
     isRead: {
       type: Boolean,
       default: false,
     },
-
     readAt: {
       type: Date,
       default: null,

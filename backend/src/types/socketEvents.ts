@@ -1,4 +1,10 @@
 import { MessageResponseDTO } from "../dtos/chat/message-response.dto";
+import type { NotificationResponseDTO } from "../dtos/notification/notification-response.dto";
+
+export interface NotificationSocketPayload {
+  notification: NotificationResponseDTO;
+  unreadCount: number;
+}
 
 export interface SocketEvents {
 
@@ -33,6 +39,14 @@ export interface SocketEvents {
   conversationUpdated: ConversationUpdatePayload;
 
   "conversation:updated": ConversationUpdatePayload;
+
+  newNotification: NotificationSocketPayload;
+
+  "notification:new": NotificationSocketPayload;
+
+  "notification:count": {
+    unreadCount: number;
+  };
 
 }
 

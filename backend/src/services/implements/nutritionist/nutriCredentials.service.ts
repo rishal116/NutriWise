@@ -1,12 +1,16 @@
 import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
+
 import { TYPES } from "../../../types/types";
 import { UserRole } from "../../../enums/user.enum";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { CustomError } from "../../../utils/customError";
+
 import type { NutritionistCredentialsDTO } from "../../../dtos/nutritionist/profile/nutritionist-credentials.dto";
 import type { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import type { INutritionistProfileRepository } from "../../../repositories/interfaces/nutritionist/INutriProfileRepository";
+
+import { NutritionistCredentialsMapper } from "../../../mappers/nutritionist/profile/nutritionist-credentials.mapper";
 
 @injectable()
 export class NutritionistCredentialsService {
@@ -18,7 +22,9 @@ export class NutritionistCredentialsService {
     private readonly nutritionistProfileRepository: INutritionistProfileRepository,
   ) {}
 
-  async getCredentials(userId: string): Promise<NutritionistCredentialsDTO> {
+  async getCredentials(
+    userId: string,
+  ): Promise<NutritionistCredentialsDTO> {
     if (!Types.ObjectId.isValid(userId)) {
       throw new CustomError(
         "Invalid nutritionist user ID",
@@ -34,7 +40,10 @@ export class NutritionistCredentialsService {
       user.isBlocked ||
       !user.roles.includes(UserRole.NUTRITIONIST)
     ) {
-      throw new CustomError("Nutritionist not found", StatusCode.NOT_FOUND);
+      throw new CustomError(
+        "Nutritionist not found",
+        StatusCode.NOT_FOUND,
+      );
     }
 
     const profile =
@@ -47,39 +56,6 @@ export class NutritionistCredentialsService {
       );
     }
 
-    return {
-      fullName: user.fullName,
-      username: user.username,
-      profileImage: user.profileImage ?? null,
-
-      qualifications: profile.qualifications.map((qualification) => ({
-        degree: qualification.degree,
-        institution: qualification.institution,
-        year: qualification.year,
-      })),
-
-      specializations: [...profile.specializations],
-
-      experiences: profile.experiences.map((experience) => ({
-        role: experience.role,
-        organization: experience.organization,
-        durationYears: experience.durationYears,
-      })),
-
-      bio: profile.bio ?? null,
-      languages: [...profile.languages],
-
-      certifications: profile.certifications.map((certification) => ({
-        name: certification.name,
-        issuedBy: certification.issuedBy,
-        certificateUrl: certification.certificateUrl,
-      })),
-
-      totalExperienceYears: profile.totalExperienceYears,
-      coachLevel: profile.coachLevel,
-      rating: profile.rating,
-      totalReviews: profile.totalReviews,
-      totalPeopleCoached: profile.totalPeopleCoached,
-    };
+    return NutritionistCredentialsMapper.toDTO(user, profile);
   }
 }

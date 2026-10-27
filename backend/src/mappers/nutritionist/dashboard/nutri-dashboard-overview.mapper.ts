@@ -1,44 +1,62 @@
 import type { NutriDashboardOverviewDTO } from "../../../dtos/nutritionist/dashboard/nutri-dashboard-overview.dto";
-import type { INutritionistDashboardOverviewProjection } from "../../../types/nutritionist/dashboard/nutritionist-dashboard-overview.projection";
+import type { INutriDashboardOverviewProjection } from "../../../types/nutritionist/dashboard/nutri-dashboard-overview.projection";
 
 export const toNutriDashboardOverviewDTO = (
-  projection: INutritionistDashboardOverviewProjection,
-): NutriDashboardOverviewDTO => {
-  return {
-    summary: {
-      totalClients: projection.summary.totalClients,
-      activeClients: projection.summary.activeClients,
-      totalPrograms: projection.summary.totalPrograms,
-      activePrograms: projection.summary.activePrograms,
-      publishedPlans: projection.summary.publishedPlans,
-      totalPlanPurchases: projection.summary.totalPlanPurchases,
-      totalGroups: projection.summary.totalGroups,
-      publishedResources: projection.summary.publishedResources,
-    },
+  projection: INutriDashboardOverviewProjection,
+): NutriDashboardOverviewDTO => ({
+  clients: {
+    total: projection.clients.total,
+    active: projection.clients.active,
+  },
 
-    programs: {
-      upcoming: projection.programs.upcoming,
-      active: projection.programs.active,
-      paused: projection.programs.paused,
-      completed: projection.programs.completed,
-      cancelled: projection.programs.cancelled,
-    },
+  earnings: {
+    total: projection.earnings.total,
+    thisMonth: projection.earnings.thisMonth,
+    currency: projection.earnings.currency,
+  },
 
-    groups: {
-      total: projection.groups.total,
-      totalMembers: projection.groups.totalMembers,
-    },
+  plans: {
+    published: projection.plans.published,
+    draft: projection.plans.draft,
+  },
 
-    resources: {
-      published: projection.resources.published,
-      totalViews: projection.resources.totalViews,
-      totalDownloads: projection.resources.totalDownloads,
-    },
+  programs: {
+    upcoming: projection.programs.upcoming,
+    active: projection.programs.active,
+    paused: projection.programs.paused,
+    completed: projection.programs.completed,
+    cancelled: projection.programs.cancelled,
+  },
 
-    recentActivity: projection.recentActivity.map((activity) => ({
-      type: activity.type,
-      title: activity.title,
-      createdAt: activity.createdAt,
-    })),
-  };
-};
+  meetings: {
+    upcoming: projection.meetings.upcoming,
+    ongoing: projection.meetings.ongoing,
+    completed: projection.meetings.completed,
+    cancelled: projection.meetings.cancelled,
+  },
+
+  sessions: {
+    draft: projection.sessions.draft,
+    scheduled: projection.sessions.scheduled,
+    live: projection.sessions.live,
+    completed: projection.sessions.completed,
+    cancelled: projection.sessions.cancelled,
+  },
+
+  reviews: {
+    total: projection.reviews.total,
+    averageRating: projection.reviews.averageRating,
+  },
+
+  resources: {
+    total: projection.resources.total,
+    published: projection.resources.published,
+    draft: projection.resources.draft,
+  },
+
+  groups: {
+    total: projection.groups.total,
+    active: projection.groups.active,
+    inactive: projection.groups.inactive,
+  },
+});

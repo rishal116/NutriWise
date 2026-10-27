@@ -22,7 +22,7 @@ export function redirectAuthenticatedUsers(req: NextRequest): NextResponse {
     if (!payload?.userId || !payload.activeRole) {
       return NextResponse.next();
     }
-
+    console.log("[Auth Redirect] Active role:", payload.activeRole);
     switch (payload.activeRole) {
       case UserRole.ADMIN:
         return NextResponse.redirect(new URL("/admin/dashboard", req.url));

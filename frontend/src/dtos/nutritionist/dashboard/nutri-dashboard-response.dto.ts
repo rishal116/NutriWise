@@ -1,27 +1,18 @@
-export type NutriDashboardActivityType =
-  | "client_joined"
-  | "program_started"
-  | "program_completed"
-  | "plan_purchased"
-  | "group_created"
-  | "resource_published";
-
-export interface NutriDashboardActivityDTO {
-  type: NutriDashboardActivityType;
-  title: string;
-  createdAt: string;
-}
-
 export interface NutriDashboardOverviewDTO {
-  summary: {
-    totalClients: number;
-    activeClients: number;
-    totalPrograms: number;
-    activePrograms: number;
-    publishedPlans: number;
-    totalPlanPurchases: number;
-    totalGroups: number;
-    publishedResources: number;
+  clients: {
+    total: number;
+    active: number;
+  };
+
+  earnings: {
+    total: number;
+    thisMonth: number;
+    currency: string;
+  };
+
+  plans: {
+    published: number;
+    draft: number;
   };
 
   programs: {
@@ -32,16 +23,35 @@ export interface NutriDashboardOverviewDTO {
     cancelled: number;
   };
 
-  groups: {
+  meetings: {
+    upcoming: number;
+    ongoing: number;
+    completed: number;
+    cancelled: number;
+  };
+
+  sessions: {
+    draft: number;
+    scheduled: number;
+    live: number;
+    completed: number;
+    cancelled: number;
+  };
+
+  reviews: {
     total: number;
-    totalMembers: number;
+    averageRating: number;
   };
 
   resources: {
+    total: number;
     published: number;
-    totalViews: number;
-    totalDownloads: number;
+    draft: number;
   };
 
-  recentActivity: NutriDashboardActivityDTO[];
+  groups: {
+    total: number;
+    active: number;
+    inactive: number;
+  };
 }
