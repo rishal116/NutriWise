@@ -2,7 +2,9 @@ import { injectable } from "inversify";
 import { getIO } from "../../../infrastructures/socket/socket.server";
 import { ISocketService } from "../../interfaces/socket/ISocketService";
 import { MessageResponseDTO } from "../../../dtos/chat/message-response.dto";
+import type { NotificationResponseDTO } from "../../../dtos/notification/notification-response.dto";
 import { ConversationUpdatePayload } from "../../../types/socketEvents";
+import logger from "../../../utils/logger";
 
 @injectable()
 export class SocketService implements ISocketService {
@@ -59,4 +61,47 @@ export class SocketService implements ISocketService {
     io.to(rooms).emit("conversation:updated", data);
   }
 
-}
+  emitNewNotification(
+    recipientId: string,
+    notification: NotificationResponseDTO,
+    unreadCount: number
+  ): void {
+    try {
+      const io = getIO();
+      const payload = { notification, unreadCount };
+      io.to(`user:${recipientId}`).emit("newNotification", payload);
+      io.to(`user:${recipientId}`).emit("notification:new", payload);
+      io.to(`user:${recipientId}`).emit("notification:count", { unreadCount });
+      logger.info("Emitted newNotification event to socket room", {
+        recipientId,
+        notificationId: notification.id,
+        unreadCount,
+      });
+    } catch (error) {
+      logger.warn("Failed to emit newNotification socket event", {
+        recipientId,
+        error,
+      });
+    }
+  }
+
+  emitNotificationCount(
+    recipientId: string,
+    unreadCount: number
+  ): void {
+    try {
+      const io = getIO();
+      io.to(`user:${recipientId}`).emit("notification:count", { unreadCount });
+      logger.info("Emitted notification:count event to socket room", {
+        recipientId,
+        unreadCount,
+      });
+    } catch (error) {
+      logger.warn("Failed to emit notification:count socket event", {
+        recipientId,
+        error,
+      });
+    }
+  }
+
+}

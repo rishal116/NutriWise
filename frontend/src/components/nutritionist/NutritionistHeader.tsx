@@ -1,182 +1,156 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
-import { Bell, LogOut, CheckCircle2, Check } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch, useSelector } from "react-redux";
+import { LogOut, Check } from "lucide-react";
 
 import { userAuthService } from "@/services/user/userAuth.service";
-import { logout, setAccessToken, setUser } from "@/redux/slices/authSlice";
-import type { RootState } from "@/redux/store";
-import Logo from "../common/Logo";
+import {
+  logout,
+  setAccessToken,
+  setActiveRole,
+} from "@/redux/slices/authSlice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { tokenStorage } from "@/lib/auth/tokenStorage";
+import NotificationBell from "@/components/notification/NotificationBell";
+import Logo from "../common/Logo";
+
+type Role = "user" | "nutritionist";
+
+const ROLE_COOKIE = "nutriwise_active_role";
+const ROLES: { value: Role; label: string }[] = [
+  { value: "nutritionist", label: "Nutritionist" },
+  { value: "user", label: "User" },
+];
+
+const HEADER_CLASS =
+  "sticky top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-sm";
+const CONTAINER_CLASS =
+  "mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8";
 
 export default function NutritionistHeader() {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const user = useSelector((state: RootState) => state.auth.user);
-  const initialized = useSelector((state: RootState) => state.auth.initialized);
+  const user = useAppSelector((s) => s.auth.user);
+  const initialized = useAppSelector((s) => s.auth.initialized);
 
-  const [switching, setSwitching] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const notifRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const activeRole = user?.activeRole ?? "user";
+  const isApprovedNutritionist =
+    !!user?.roles.includes("nutritionist") &&
+    user.nutritionistStatus === "approved";
+  const canSwitchToUser = !!user?.roles.includes("user");
 
-  console.log({
-    initialized,
-    hasUser: Boolean(user),
-    activeRole: user?.activeRole,
-  });
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-
-      if (notifRef.current && !notifRef.current.contains(target)) {
-        setNotifOpen(false);
-      }
-
-      if (menuRef.current && !menuRef.current.contains(target)) {
-        setMenuOpen(false);
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        closeMenu();
       }
     };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeMenu();
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
     };
-  }, []);
+  }, [menuOpen, closeMenu]);
 
-  const handleSwitchRole = async (role: "user" | "nutritionist") => {
-    if (!user || role === user.activeRole || switching) {
+  useEffect(() => {
+    if (!initialized) return;
+    if (!user) router.replace("/login");
+    else if (!isApprovedNutritionist) router.replace("/user/dashboard");
+  }, [initialized, user, isApprovedNutritionist, router]);
+
+  const handleSwitchRole = async (role: Role) => {
+    if (!user || switching || role === activeRole) return;
+
+    if (role === "nutritionist" && !isApprovedNutritionist) {
+      router.replace("/user/dashboard");
       return;
     }
 
     setSwitching(true);
+    closeMenu();
 
     try {
-      const response = await userAuthService.switchRole(role);
+      const res = await userAuthService.switchRole(role);
+      const token = res.data?.accessToken;
+      if (!res.success || !token) throw new Error("Role switching failed.");
 
-      if (!response.success || !response.data?.accessToken) {
-        throw new Error("Role switching failed.");
-      }
+      tokenStorage.set(token);
+      dispatch(setAccessToken(token));
+      dispatch(setActiveRole(role));
 
-      const accessToken = response.data.accessToken;
+      const secure = window.location.protocol === "https:" ? "; Secure" : "";
+      document.cookie = `${ROLE_COOKIE}=${role}; Path=/; SameSite=Lax${secure}`;
 
-      tokenStorage.set(accessToken);
-
-      // Synchronize Redux.
-      dispatch(setAccessToken(accessToken));
-
-      dispatch(
-        setUser({
-          ...user,
-          activeRole: role,
-        }),
+      window.location.assign(
+        role === "nutritionist" ? "/nutritionist/dashboard" : "/user/dashboard",
       );
-
-      router.push(
-        role === "user" ? "/user/dashboard" : "/nutritionist/dashboard",
-      );
-    } catch {
-      // Keep the current client-side role state if switching fails.
-    } finally {
+    } catch (err) {
+      console.error("Failed to switch role:", err);
       setSwitching(false);
-      setMenuOpen(false);
     }
   };
 
   const handleLogout = async () => {
     if (loggingOut) return;
-
     setLoggingOut(true);
 
     try {
       await userAuthService.logout();
-    } catch {
+    } catch (err) {
+      console.error("Logout request failed:", err);
     } finally {
       tokenStorage.remove();
+      document.cookie = `${ROLE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
       dispatch(logout());
       router.replace("/login");
     }
   };
 
-  const canSwitchToUser = user?.roles.includes("user");
-
   if (!initialized) {
     return (
-      <header className="sticky top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-sm">
-        <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className={HEADER_CLASS}>
+        <div className={CONTAINER_CLASS}>
           <div className="h-8 w-32 animate-pulse rounded-xl bg-slate-100" />
           <div className="flex items-center gap-2">
             <div className="h-10 w-10 animate-pulse rounded-xl bg-slate-100" />
-            <div className="h-11 w-11 animate-pulse rounded-full bg-slate-100" />
+            <div className="h-9 w-9 animate-pulse rounded-full bg-slate-100" />
           </div>
         </div>
       </header>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-    <header className="sticky top-0 z-50 h-16 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-sm">
-      <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className={HEADER_CLASS}>
+      <div className={CONTAINER_CLASS}>
         <Logo href="/nutritionist/dashboard" />
 
         <div className="flex items-center gap-2">
-          <div className="sm:relative" ref={notifRef}>
-            <button
-              type="button"
-              onClick={() => setNotifOpen((open) => !open)}
-              aria-label="Notifications"
-              aria-haspopup="true"
-              aria-expanded={notifOpen}
-              className={`flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 ${
-                notifOpen
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600"
-              }`}
-            >
-              <Bell className="h-5 w-5" />
-            </button>
-
-            {notifOpen && (
-              <div className="absolute inset-x-4 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg sm:inset-x-auto sm:right-0 sm:w-96">
-                <div className="border-b border-emerald-100 bg-emerald-50/40 px-4 py-3">
-                  <h3 className="text-sm font-bold tracking-tight text-emerald-900">
-                    Notifications
-                  </h3>
-                </div>
-                <div className="px-4 py-10 text-center">
-                  <CheckCircle2
-                    className="mx-auto mb-3 text-emerald-200"
-                    size={36}
-                  />
-                  <p className="text-sm font-medium text-slate-500">
-                    All caught up!
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+          <NotificationBell notificationsHref="/nutritionist/notifications" />
 
           <div className="relative" ref={menuRef}>
             <button
               type="button"
-              onClick={() => setMenuOpen((open) => !open)}
+              onClick={() => setMenuOpen((v) => !v)}
               aria-label="Account menu"
               aria-haspopup="true"
               aria-expanded={menuOpen}
-              className="flex items-center gap-2.5 rounded-full border border-transparent p-1 transition-colors duration-150 hover:border-slate-200/80 hover:bg-slate-50 lg:pr-3"
+              className="flex items-center gap-2.5 rounded-full border border-transparent p-1 transition-colors hover:border-slate-200/80 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 lg:pr-3"
             >
               <div className="hidden min-w-0 text-right lg:block">
                 <p className="max-w-[10rem] truncate text-xs font-semibold text-slate-900">
@@ -191,11 +165,12 @@ export default function NutritionistHeader() {
                 <Image
                   src={user.profileImage || "/images/images.jpg"}
                   fill
-                  className="rounded-full border-2 border-white object-cover shadow-xs"
+                  sizes="36px"
+                  className="rounded-full border-2 border-white object-cover"
                   alt="Profile"
                   unoptimized
                 />
-                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
               </div>
             </button>
 
@@ -205,7 +180,7 @@ export default function NutritionistHeader() {
                   <p className="truncate text-sm font-semibold text-slate-900">
                     {user.fullName}
                   </p>
-                  <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
+                  <p className="mt-0.5 truncate text-xs text-slate-500">
                     {user.email}
                   </p>
                 </div>
@@ -215,25 +190,27 @@ export default function NutritionistHeader() {
                     <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-700/70">
                       Viewing as
                     </p>
-                    <div className="flex items-center gap-1 rounded-xl border border-slate-200/80 bg-slate-50 p-1">
-                      {(["nutritionist", "user"] as const).map((role) => (
-                        <button
-                          key={role}
-                          type="button"
-                          onClick={() => handleSwitchRole(role)}
-                          disabled={switching}
-                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
-                            user.activeRole === role
-                              ? "bg-emerald-700 text-white shadow-xs"
-                              : "text-slate-500 hover:bg-white hover:text-slate-800"
-                          }`}
-                        >
-                          {user.activeRole === role && (
-                            <Check className="h-3 w-3" />
-                          )}
-                          {role === "user" ? "User" : "Nutritionist"}
-                        </button>
-                      ))}
+                    <div className="flex gap-1 rounded-xl border border-slate-200/80 bg-slate-50 p-1">
+                      {ROLES.map(({ value, label }) => {
+                        const active = activeRole === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => handleSwitchRole(value)}
+                            disabled={switching}
+                            aria-pressed={active}
+                            className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                              active
+                                ? "bg-emerald-700 text-white"
+                                : "text-slate-500 hover:bg-white hover:text-slate-800"
+                            }`}
+                          >
+                            {active && <Check className="h-3 w-3" />}
+                            {label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -243,7 +220,7 @@ export default function NutritionistHeader() {
                     type="button"
                     onClick={handleLogout}
                     disabled={loggingOut}
-                    className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50"
+                    className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left text-sm font-medium text-rose-600 transition-colors hover:bg-rose-50 disabled:opacity-50 focus-visible:outline-none focus-visible:bg-rose-50"
                   >
                     <LogOut className="h-4 w-4" />
                     {loggingOut ? "Logging out..." : "Log out"}

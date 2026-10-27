@@ -446,7 +446,7 @@ import { INutriDashboardController } from "../controllers/interfaces/nutritionis
 import { NutriDashboardController } from "../controllers/implementations/nutritionist/nutriDashboard.controller";
 import { INutriDashboardService } from "../services/interfaces/nutritionist/INutriDashboardService";
 import { NutriDashboardService } from "../services/implements/nutritionist/nutriDashboard.service";
-import { NutritionistDashboardRepository } from "../repositories/implements/nutritionist/nutriDashboard.repository";
+import { NutriDashboardRepository } from "../repositories/implements/nutritionist/nutriDashboard.repository";
 import { ISessionStripeCheckoutHandlerService } from "../services/interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
 import { SessionStripeCheckoutHandlerService } from "../services/implements/common/stripe/sessionStripeCheckoutHandler.service";
 import { IPublicPostController } from "../controllers/interfaces/public/IPublicPostController";
@@ -527,6 +527,9 @@ import { IResourceLikeController } from "../controllers/interfaces/resource/IRes
 import { ResourceLikeController } from "../controllers/implementations/resource/resourceLike.controller";
 import { IResourceCommentController } from "../controllers/interfaces/resource/IResourceCommentController";
 import { ResourceCommentController } from "../controllers/implementations/resource/resourceComment.controller";
+import { INotificationController } from "../controllers/interfaces/common/INotificationController";
+import { NotificationController } from "../controllers/implementations/common/notification.controller";
+import { INutriDashboardRepository } from "../repositories/interfaces/nutritionist/INutriDashboardRepository";
 
 const container = new Container();
 
@@ -1013,8 +1016,8 @@ container
 
 // ---------- Repositories ----------
 container
-  .bind<INutriDashboardService>(TYPES.INutriDashboardRepository)
-  .to(NutritionistDashboardRepository);
+  .bind<INutriDashboardRepository>(TYPES.INutriDashboardRepository)
+  .to(NutriDashboardRepository);
 
 container
   .bind<INutriClientRepository>(TYPES.INutriClientRepository)
@@ -1295,5 +1298,12 @@ container
 container
   .bind<IResourceCommentController>(TYPES.IResourceCommentController)
   .to(ResourceCommentController);
+
+  container
+  .bind<INotificationController>(TYPES.INotificationController)
+  .to(NotificationController);
+
+  
+
 
 export { container };

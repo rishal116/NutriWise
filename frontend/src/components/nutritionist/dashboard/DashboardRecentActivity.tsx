@@ -1,77 +1,92 @@
 import {
   ArrowUpRight,
   BookOpen,
+  CalendarCheck,
+  CalendarX,
   CheckCircle2,
   FileText,
-  MessageCircle,
   ShoppingBag,
+  Star,
   UserPlus,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import type { NutriDashboardActivityDTO } from "@/dtos/nutritionist/dashboard/nutri-dashboard-response.dto";
+
+import type {
+  NutriDashboardActivityType,
+  NutriDashboardRecentActivityItemDTO,
+} from "@/dtos/nutritionist/dashboard/nutri-dashboard-recent-activities.dto";
 
 interface DashboardRecentActivityProps {
-  activities: NutriDashboardActivityDTO[];
+  activities: NutriDashboardRecentActivityItemDTO[];
 }
 
-function getActivityIcon(
-  type: NutriDashboardActivityDTO["type"],
-) {
-  switch (type) {
-    case "client_joined":
-      return UserPlus;
-
-    case "program_started":
-      return BookOpen;
-
-    case "program_completed":
-      return CheckCircle2;
-
-    case "plan_purchased":
-      return ShoppingBag;
-
-    case "group_created":
-      return MessageCircle;
-
-    case "resource_published":
-      return FileText;
-  }
-}
-
-function getActivityStyle(
-  type: NutriDashboardActivityDTO["type"],
-) {
-  switch (type) {
-    case "client_joined":
-      return "bg-emerald-50 text-emerald-600";
-
-    case "program_started":
-      return "bg-blue-50 text-blue-600";
-
-    case "program_completed":
-      return "bg-violet-50 text-violet-600";
-
-    case "plan_purchased":
-      return "bg-amber-50 text-amber-600";
-
-    case "group_created":
-      return "bg-cyan-50 text-cyan-600";
-
-    case "resource_published":
-      return "bg-rose-50 text-rose-600";
-  }
-}
+const ACTIVITY_CONFIG: Record<
+  NutriDashboardActivityType,
+  { icon: LucideIcon; className: string }
+> = {
+  plan_purchase: {
+    icon: ShoppingBag,
+    className: "bg-amber-50 text-amber-600",
+  },
+  program_joined: {
+    icon: UserPlus,
+    className: "bg-emerald-50 text-emerald-600",
+  },
+  program_completed: {
+    icon: CheckCircle2,
+    className: "bg-violet-50 text-violet-600",
+  },
+  meeting_booked: {
+    icon: CalendarCheck,
+    className: "bg-blue-50 text-blue-600",
+  },
+  meeting_cancelled: {
+    icon: CalendarX,
+    className: "bg-rose-50 text-rose-600",
+  },
+  session_scheduled: {
+    icon: CalendarCheck,
+    className: "bg-cyan-50 text-cyan-600",
+  },
+  session_completed: {
+    icon: CheckCircle2,
+    className: "bg-violet-50 text-violet-600",
+  },
+  review_received: {
+    icon: Star,
+    className: "bg-amber-50 text-amber-600",
+  },
+  plan_published: {
+    icon: BookOpen,
+    className: "bg-indigo-50 text-indigo-600",
+  },
+  resource_published: {
+    icon: FileText,
+    className: "bg-emerald-50 text-emerald-600",
+  },
+};
 
 function formatActivityTime(dateString: string): string {
   const date = new Date(dateString);
-  const now = Date.now();
-  const difference = now - date.getTime();
+  const timestamp = date.getTime();
 
-  if (Number.isNaN(date.getTime())) {
+  if (Number.isNaN(timestamp)) {
     return "Recently";
   }
 
-  const minute = 60 * 1000;
+  const difference = Date.now() - timestamp;
+
+  if (difference < 0) {
+    return date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
+  const minute = 60_000;
   const hour = 60 * minute;
   const day = 24 * hour;
 
@@ -100,6 +115,8 @@ function formatActivityTime(dateString: string): string {
 export default function DashboardRecentActivity({
   activities,
 }: DashboardRecentActivityProps) {
+  const visibleActivities = activities.slice(0, 6);
+
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
       <div className="flex items-start justify-between gap-4">
@@ -107,7 +124,6 @@ export default function DashboardRecentActivity({
           <h2 className="text-base font-bold text-slate-900">
             Recent activity
           </h2>
-
           <p className="mt-1 text-xs text-slate-400">
             Latest activity across your practice
           </p>
@@ -115,37 +131,36 @@ export default function DashboardRecentActivity({
 
         <Link
           href="/nutritionist"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+          className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
         >
           Overview
           <ArrowUpRight size={13} />
         </Link>
       </div>
 
-      {activities.length === 0 ? (
+      {visibleActivities.length === 0 ? (
         <div className="mt-7 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
           <p className="text-sm font-semibold text-slate-700">
             No recent activity
           </p>
-
           <p className="mt-1 text-xs leading-5 text-slate-400">
-            New client, program, purchase, group, and resource activity will
-            appear here.
+            New purchases, program updates, meetings, reviews, and published
+            content will appear here.
           </p>
         </div>
       ) : (
-        <div className="mt-5 divide-y divide-slate-100">
-          {activities.slice(0, 6).map((activity, index) => {
-            const Icon = getActivityIcon(activity.type);
-            const iconStyle = getActivityStyle(activity.type);
+        <ul className="mt-5 divide-y divide-slate-100">
+          {visibleActivities.map((activity) => {
+            const config = ACTIVITY_CONFIG[activity.type];
+            const Icon = config.icon;
 
             return (
-              <div
-                key={`${activity.type}-${activity.createdAt}-${index}`}
+              <li
+                key={activity.id}
                 className="flex items-center gap-3 py-3.5 first:pt-1"
               >
                 <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconStyle}`}
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${config.className}`}
                 >
                   <Icon size={16} />
                 </div>
@@ -154,15 +169,17 @@ export default function DashboardRecentActivity({
                   <p className="truncate text-sm font-semibold text-slate-800">
                     {activity.title}
                   </p>
-
+                  <p className="mt-0.5 truncate text-xs text-slate-500">
+                    {activity.description}
+                  </p>
                   <p className="mt-0.5 text-xs text-slate-400">
                     {formatActivityTime(activity.createdAt)}
                   </p>
                 </div>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </div>
   );

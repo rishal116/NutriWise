@@ -14,7 +14,7 @@ import postRoutes from "./routes/post";
 import resourceRoutes from "./routes/resource";
 
 import { errorMiddleware } from "./middlewares/error.middleware";
-import stripeRoutes from "./routes/common/stripe.routes";
+import { notificationRoutes, stripeRoutes } from "./routes/common";
 
 dotenv.config();
 
@@ -71,7 +71,7 @@ app.use("/api/nutritionists", nutritionistRoutes);
 
 app.use("/api/chat", chatRoutes);
 app.use("/api/posts", postRoutes);
-
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/resources", resourceRoutes);
 
 app.use(errorMiddleware);

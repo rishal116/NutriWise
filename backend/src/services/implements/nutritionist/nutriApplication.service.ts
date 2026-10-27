@@ -164,9 +164,9 @@ export class NutritionistApplicationService implements INutritionistApplicationS
       message: isReapplication
         ? `${nutritionist.fullName} resubmitted their nutritionist application for review.`
         : `${nutritionist.fullName} submitted a new nutritionist application for review.`,
-      data: {
-        applicantId: nutritionist._id.toString(),
-      },
+      data: new Map<string, unknown>([
+        ["applicantId", nutritionist._id.toString()],
+      ]),
     });
   }
 

@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -11,15 +10,11 @@ export function middleware(req: NextRequest) {
     const activeRole = req.cookies.get("nutriwise_active_role")?.value;
 
     if (activeRole === "nutritionist") {
-      return NextResponse.redirect(
-        new URL("/nutritionist/dashboard", req.url),
-      );
+      return NextResponse.redirect(new URL("/nutritionist/dashboard", req.url));
     }
 
     if (activeRole === "admin") {
-      return NextResponse.redirect(
-        new URL("/admin/dashboard", req.url),
-      );
+      return NextResponse.redirect(new URL("/admin/dashboard", req.url));
     }
   }
 
@@ -29,18 +24,3 @@ export function middleware(req: NextRequest) {
 
   return NextResponse.next();
 }
-
-export const config = {
-  matcher: [
-    "/",
-    "/login",
-    "/signup",
-    "/verify-otp/:path*",
-    "/forgot-password",
-    "/reset-password/:path*",
-    "/user/:path*",
-    "/nutritionist/:path*",
-    "/admin/:path*",
-    "/complete-profile/:path*",
-  ],
-};
