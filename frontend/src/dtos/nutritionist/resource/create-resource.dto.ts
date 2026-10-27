@@ -13,6 +13,4 @@ export interface CreateNutriResourceDTO {
   content?: string;
 
   category: ResourceCategory;
-
-
 }

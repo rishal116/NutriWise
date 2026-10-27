@@ -1,6 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { User } from "@/types/user/user.types";
-import { tokenStorage } from "@/lib/auth/tokenStorage";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -30,12 +29,6 @@ const authSlice = createSlice({
 
     setAccessToken(state, action: PayloadAction<string | null>) {
       state.accessToken = action.payload;
-
-      if (action.payload) {
-        tokenStorage.set(action.payload);
-      } else {
-        tokenStorage.remove();
-      }
     },
 
     logout(state) {
@@ -44,8 +37,6 @@ const authSlice = createSlice({
       state.accessToken = null;
       state.loading = false;
       state.initialized = true;
-
-      tokenStorage.remove();
     },
 
     setLoading(state, action: PayloadAction<boolean>) {

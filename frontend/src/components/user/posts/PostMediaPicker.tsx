@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ImagePlus, Play, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 
 const ACCEPTED_TYPES = [
   "image/jpeg",
@@ -12,17 +12,14 @@ const ACCEPTED_TYPES = [
   "video/mp4",
   "video/webm",
 ];
+
 const MAX_SIZE_MB = 25;
 
 interface PostMediaPickerProps {
   file: File | null;
-  /** Existing media URL/type from the server (edit mode only). Hidden once a new file is picked. */
   existingMediaUrl?: string | null;
   existingMediaIsVideo?: boolean;
   onSelectFile: (file: File | null) => void;
-  /** Called when the user clears the picker — clears a newly picked file, or asks the
-   *  parent to drop the existing media. Note: UpdatePostDTO has no field to tell the
-   *  backend "remove media" — confirm with backend how a removal should be sent, if at all. */
   onClear: () => void;
 }
 
@@ -42,8 +39,10 @@ export function PostMediaPicker({
       setLocalPreviewUrl(null);
       return;
     }
+
     const objectUrl = URL.createObjectURL(file);
     setLocalPreviewUrl(objectUrl);
+
     return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
 
@@ -51,51 +50,65 @@ export function PostMediaPicker({
   const isVideo = file
     ? file.type.startsWith("video/")
     : Boolean(existingMediaIsVideo);
-  const isGif = file ? file.type === "image/gif" : false;
+
+  const isGif = file
+    ? file.type === "image/gif"
+    : Boolean(previewUrl?.toLowerCase().split("?")[0].endsWith(".gif"));
 
   const handleFile = (candidate: File) => {
     setError(null);
 
     if (!ACCEPTED_TYPES.includes(candidate.type)) {
       setError(
-        "Unsupported file type. Use JPEG, PNG, WEBP, GIF, MP4, or WEBM.",
+        "Unsupported file type. Use JPEG, PNG, WebP, GIF, MP4, or WebM.",
       );
+      if (inputRef.current) inputRef.current.value = "";
       return;
     }
+
     if (candidate.size > MAX_SIZE_MB * 1024 * 1024) {
-      setError(`File is too large — max ${MAX_SIZE_MB}MB.`);
+      setError(`File is too large. Maximum size is ${MAX_SIZE_MB}MB.`);
+      if (inputRef.current) inputRef.current.value = "";
       return;
     }
 
     onSelectFile(candidate);
   };
 
+  const handleClear = () => {
+    onClear();
+    setError(null);
+
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+  };
+
   if (previewUrl) {
     return (
       <div>
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+        <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
           {isVideo ? (
-            <>
-              <video
-                src={previewUrl}
-                className="h-full w-full object-cover"
-                muted
-                preload="metadata"
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-slate-900/20">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                  <Play className="h-4 w-4 fill-slate-900 text-slate-900" />
-                </span>
-              </div>
-            </>
-          ) : (
-            <Image
+            <video
+              key={previewUrl}
               src={previewUrl}
-              alt=""
-              fill
-              unoptimized
-              className="object-cover"
-            />
+              controls
+              playsInline
+              preload="metadata"
+              className="block max-h-96 w-full object-contain"
+            >
+              Your browser does not support video playback.
+            </video>
+          ) : (
+            <div className="relative aspect-[4/3] w-full">
+              <Image
+                src={previewUrl}
+                alt="Post media preview"
+                fill
+                unoptimized
+                className="object-contain"
+              />
+            </div>
           )}
 
           {isGif && (
@@ -106,20 +119,38 @@ export function PostMediaPicker({
 
           <button
             type="button"
-            onClick={() => {
-              onClear();
-              setError(null);
-              if (inputRef.current) inputRef.current.value = "";
-            }}
-            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/70 text-white transition-colors hover:bg-slate-900"
+            onClick={handleClear}
             aria-label="Remove media"
+            className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900/70 text-white transition-colors hover:bg-slate-900"
           >
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
+
         {error && (
-          <p className="mt-2 text-xs font-medium text-rose-600">{error}</p>
+          <p role="alert" className="mt-2 text-xs font-medium text-rose-600">
+            {error}
+          </p>
         )}
+
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="mt-2 text-xs font-semibold text-emerald-700 hover:text-emerald-800"
+        >
+          Choose a different file
+        </button>
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_TYPES.join(",")}
+          className="hidden"
+          onChange={(e) => {
+            const picked = e.target.files?.[0];
+            if (picked) handleFile(picked);
+          }}
+        />
       </div>
     );
   }
@@ -137,6 +168,7 @@ export function PostMediaPicker({
           Optional · up to {MAX_SIZE_MB}MB
         </span>
       </button>
+
       <input
         ref={inputRef}
         type="file"
@@ -147,8 +179,11 @@ export function PostMediaPicker({
           if (picked) handleFile(picked);
         }}
       />
+
       {error && (
-        <p className="mt-2 text-xs font-medium text-rose-600">{error}</p>
+        <p role="alert" className="mt-2 text-xs font-medium text-rose-600">
+          {error}
+        </p>
       )}
     </div>
   );

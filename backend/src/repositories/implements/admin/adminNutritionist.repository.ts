@@ -1,5 +1,4 @@
 import { PipelineStage, Types } from "mongoose";
-
 import { BaseRepository } from "../common/base.repository";
 import { IAdminNutritionistRepository } from "../../interfaces/admin/IAdminNutritionistRepository";
 import {
@@ -213,7 +212,9 @@ export class AdminNutritionistRepository
         {
           $match: {
             userId: new Types.ObjectId(userId),
-            applicationStatus: "approved",
+            applicationStatus: {
+              $in: ["pending", "approved", "rejected"],
+            },
           },
         },
         {

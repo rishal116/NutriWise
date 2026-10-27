@@ -21,12 +21,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-import { logout } from "@/redux/slices/authSlice";
+import { logout, setAccessToken } from "@/redux/slices/authSlice";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { RootState } from "@/redux/store";
 import Logo from "./Logo";
 import { showLoading, hideLoading } from "@/redux/slices/uiSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { tokenStorage } from "@/lib/auth/tokenStorage";
 
 type NutritionistCtaKey = "none" | "pending" | "rejected" | "approved";
 
@@ -202,8 +203,18 @@ export default function Header() {
     if (!user || role === activeRole || switching) return;
 
     setSwitching(true);
+
     try {
-      await userAuthService.switchRole(role);
+      const response = await userAuthService.switchRole(role);
+
+      if (!response.success || !response.data?.accessToken) {
+        throw new Error("Failed to switch role.");
+      }
+
+      const accessToken = response.data.accessToken;
+
+      tokenStorage.set(accessToken);
+      dispatch(setAccessToken(accessToken));
 
       dispatch({
         type: "auth/setActiveRole",
@@ -213,6 +224,8 @@ export default function Header() {
       router.push(
         role === "nutritionist" ? "/nutritionist/dashboard" : "/user/dashboard",
       );
+    } catch (error) {
+      console.error(error);
     } finally {
       setSwitching(false);
     }

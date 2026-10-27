@@ -1,12 +1,12 @@
 import { Type } from "class-transformer";
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 
 export const POST_SORT_OPTIONS = [
   "latest",
   "oldest",
   "most_liked",
   "most_commented",
-  "most_bookmarked",
+  "most_viewed",
 ] as const;
 
 export type PostSortOption = (typeof POST_SORT_OPTIONS)[number];
@@ -24,8 +24,8 @@ export class PostListQueryDTO {
   search?: string;
 
   @IsOptional()
-  @IsEnum(POST_SORT_OPTIONS)
-  sortBy?: PostSortOption;
+  @IsIn(POST_SORT_OPTIONS)
+  sortBy?: PostSortOption = "latest";
 
   @IsOptional()
   @IsString()

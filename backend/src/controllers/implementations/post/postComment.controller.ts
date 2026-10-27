@@ -20,29 +20,19 @@ export class PostCommentController implements IPostCommentController {
     const { content } = req.body;
     const userId = req.user!.userId;
 
-    const result = await this._postCommentService.createComment(
-      postId,
-      userId,
-      content,
-    );
+    await this._postCommentService.createComment(postId, userId, content);
 
     res.status(StatusCode.CREATED).json({
       success: true,
       message: "Comment created successfully",
-      data: result,
     });
   });
 
   getComments = asyncHandler(async (req: Request, res: Response) => {
     const { postId } = req.params;
     const limit = Number(req.query.limit) || 10;
-    const cursorCreatedAt = req.query.cursorCreatedAt;
-    const cursorId = req.query.cursorId;
-
     const cursor =
-      typeof cursorCreatedAt === "string" && typeof cursorId === "string"
-        ? { createdAt: new Date(cursorCreatedAt), id: cursorId }
-        : undefined;
+      typeof req.query.cursor === "string" ? req.query.cursor : undefined;
 
     const result = await this._postCommentService.getComments(
       postId,

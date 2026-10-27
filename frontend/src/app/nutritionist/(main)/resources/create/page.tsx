@@ -16,27 +16,21 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { nutriResourceService } from "@/services/nutritionist/nutriResource.service";
+import { nutriResourceService } from "@/services/nutritionist/nutri-resource.service";
 import type { CreateNutriResourceDTO } from "@/dtos/nutritionist/resource/create-resource.dto";
 import {
   RESOURCE_CATEGORIES,
   type ResourceType,
 } from "@/types/nutritionist/resource/resource.types";
-
 import {
   createResourceSchema,
   type CreateResourceFormValues,
 } from "@/validations/nutritionist/resource/create-resource.validation";
 
-// ---------------------------------------------------------------------------
-// Static config
-// ---------------------------------------------------------------------------
-
 const TYPE_CARDS: {
   value: ResourceType;
   label: string;
   hint: string;
-  fileHint?: string;
   icon: typeof FileText;
   accent: string;
 }[] = [
@@ -50,16 +44,14 @@ const TYPE_CARDS: {
   {
     value: "pdf",
     label: "PDF",
-    hint: "Downloadable file",
-    fileHint: "PDF · Max 10 MB",
+    hint: "PDF file",
     icon: File,
     accent: "rose",
   },
   {
     value: "video",
     label: "Video",
-    hint: "Upload video",
-    fileHint: "MP4 or WebM · Max 100 MB",
+    hint: "Video content",
     icon: Video,
     accent: "purple",
   },
@@ -67,59 +59,47 @@ const TYPE_CARDS: {
     value: "infographic",
     label: "Infographic",
     hint: "Image content",
-    fileHint: "JPG, PNG or WebP · Max 10 MB",
     icon: ImageIcon,
     accent: "orange",
   },
 ];
 
-const ACCENT_CLASSES: Record<
-  string,
-  {
-    active: string;
-    icon: string;
-  }
-> = {
+const ACCENT_CLASSES: Record<string, { active: string; icon: string }> = {
   emerald: {
     active: "border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-500/20",
     icon: "bg-emerald-100/80 text-emerald-700",
   },
-
   rose: {
     active: "border-rose-500 bg-rose-50/60 ring-2 ring-rose-500/20",
     icon: "bg-rose-100/80 text-rose-700",
   },
-
   purple: {
     active: "border-purple-500 bg-purple-50/60 ring-2 ring-purple-500/20",
     icon: "bg-purple-100/80 text-purple-700",
   },
-
   orange: {
     active: "border-orange-500 bg-orange-50/60 ring-2 ring-orange-500/20",
     icon: "bg-orange-100/80 text-orange-700",
   },
 };
 
-const ACCEPT_MAP: Record<string, string> = {
+const ACCEPT_MAP: Partial<Record<ResourceType, string>> = {
   pdf: "application/pdf",
   video: "video/mp4,video/webm",
   infographic: "image/jpeg,image/png,image/webp",
 };
-// ---------------------------------------------------------------------------
-// Reusable bits
-// ---------------------------------------------------------------------------
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
+
   return (
-    <p className="text-xs font-semibold text-rose-600 mt-1.5">{message}</p>
+    <p className="mt-1.5 text-xs font-semibold text-rose-600">{message}</p>
   );
 }
 
 function CharCount({ value, max }: { value: string; max: number }) {
   return (
-    <p className="text-[11px] font-medium text-slate-400 mt-1 text-right">
+    <p className="mt-1 text-right text-[11px] font-medium text-slate-400">
       {value.length}/{max}
     </p>
   );
@@ -129,71 +109,74 @@ function FileDropField({
   label,
   accept,
   hint,
-  fileName,
-  fileSizeLabel,
+  file,
   onSelect,
   onClear,
   error,
 }: {
   label: string;
   accept: string;
-  hint?: string;
-  fileName?: string;
-  fileSizeLabel?: string;
+  hint: string;
+  file?: File;
   onSelect: (file: File) => void;
   onClear: () => void;
   error?: string;
 }) {
+  const inputId = `resource-file-${label.toLowerCase().replace(/\s+/g, "-")}`;
+
   return (
     <div>
-      <label className="block text-xs font-semibold text-slate-700 mb-2">
+      <label
+        htmlFor={inputId}
+        className="mb-2 block text-xs font-semibold text-slate-700"
+      >
         {label}
       </label>
 
-      {hint && (
-        <p className="text-[11px] font-medium text-slate-400 mb-2">{hint}</p>
-      )}
+      <p className="mb-2 text-[11px] font-medium text-slate-400">{hint}</p>
 
-      {fileName ? (
-        <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+      {file ? (
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">
-              {fileName}
+            <p className="truncate text-sm font-semibold text-slate-800">
+              {file.name}
             </p>
-
-            {fileSizeLabel && (
-              <p className="text-[11px] text-slate-400">{fileSizeLabel}</p>
-            )}
+            <p className="text-[11px] text-slate-400">
+              {formatFileSize(file.size)}
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onClear}
-            className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
+            aria-label={`Remove ${file.name}`}
+            className="shrink-0 rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-200"
           >
             <X size={16} />
           </button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 rounded-xl py-8 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/40 transition-colors">
+        <label
+          htmlFor={inputId}
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 py-8 transition-colors hover:border-emerald-400 hover:bg-emerald-50/40"
+        >
           <UploadCloud size={22} className="text-slate-400" />
-
           <span className="text-xs font-semibold text-slate-500">
             Click to upload
           </span>
-
           <input
+            id={inputId}
             type="file"
             accept={accept}
             className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
+            onChange={(event) => {
+              const selectedFile = event.currentTarget.files?.[0];
 
-              if (file) {
-                onSelect(file);
+              if (selectedFile) {
+                onSelect(selectedFile);
               }
 
-              e.target.value = "";
+              event.currentTarget.value = "";
             }}
           />
         </label>
@@ -207,6 +190,7 @@ function FileDropField({
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -217,13 +201,8 @@ function formatCategoryLabel(value: string): string {
     .join(" ");
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
-
 export default function CreateResourcePage() {
   const router = useRouter();
-
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -241,7 +220,6 @@ export default function CreateResourcePage() {
       type: "article",
       content: "",
       file: undefined,
-      thumbnail: undefined,
       category: RESOURCE_CATEGORIES[0],
     },
   });
@@ -250,7 +228,6 @@ export default function CreateResourcePage() {
   const description = watch("description");
   const content = watch("content") ?? "";
   const file = watch("file");
-  const thumbnail = watch("thumbnail");
 
   const handleFileSelect = useCallback(
     (selectedFile: File) => {
@@ -269,47 +246,32 @@ export default function CreateResourcePage() {
     });
   }, [setValue]);
 
-  const handleThumbnailSelect = useCallback(
-    (selectedFile: File) => {
-      setValue("thumbnail", selectedFile, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    },
-    [setValue],
-  );
-
-  const handleThumbnailClear = useCallback(() => {
-    setValue("thumbnail", undefined, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-  }, [setValue]);
-
   const onSubmit = async (values: CreateResourceFormValues) => {
     setSubmitting(true);
 
     try {
       const dto: CreateNutriResourceDTO = {
-        title: values.title,
-        description: values.description,
+        title: values.title.trim(),
+        description: values.description.trim(),
         type: values.type,
-        content: values.content || undefined,
         category: values.category,
+        ...(values.type === "article" && values.content?.trim()
+          ? { content: values.content.trim() }
+          : {}),
       };
 
-      await nutriResourceService.createResource(
-        dto,
-        values.file,
-        values.thumbnail,
-      );
+      await nutriResourceService.createResource(dto, values.file);
 
-      toast.success("Resource created");
-
-      router.push(`/nutritionist/resources`);
+      toast.success("Resource created successfully");
+      router.push("/nutritionist/resources");
     } catch (error) {
       console.error("Create resource failed:", error);
-      toast.error("Couldn't create the resource. Please try again.");
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Couldn't create the resource. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -317,79 +279,87 @@ export default function CreateResourcePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
-        {/* HEADER */}
-        <div className="mb-8">
+      <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6 sm:pt-10">
+        <header className="mb-8">
           <button
             type="button"
             onClick={() => router.push("/nutritionist/resources")}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-emerald-700 transition-colors mb-5"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-700"
           >
             <ArrowLeft size={16} />
             Back to Resources
           </button>
 
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Create Resource
           </h1>
-          <p className="text-sm text-slate-500 font-medium mt-1">
+          <p className="mt-1 text-sm font-medium text-slate-500">
             Add educational content, guides, videos, and useful resources for
             your clients.
           </p>
-        </div>
-
-        {/* FORM */}
+        </header>
         <form
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={handleSubmit(onSubmit, (errors) => {
+            console.error("Resource validation errors:", errors);
+            toast.error("Please fix the form validation errors.");
+          })}
           className="space-y-6"
           noValidate
         >
-          {/* BASIC INFORMATION */}
-          <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="mb-6">
               <h2 className="text-base font-bold text-slate-900">
                 Basic Information
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="mt-1 text-xs text-slate-400">
                 Provide the main information about your resource.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label
+                htmlFor="resource-title"
+                className="mb-2 block text-xs font-semibold text-slate-700"
+              >
                 Title
               </label>
               <input
+                id="resource-title"
                 type="text"
+                maxLength={200}
                 {...register("title")}
                 placeholder="e.g. Understanding Macronutrients"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
               />
               <FieldError message={errors.title?.message} />
             </div>
 
             <div className="mt-5">
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label
+                htmlFor="resource-description"
+                className="mb-2 block text-xs font-semibold text-slate-700"
+              >
                 Description
               </label>
               <textarea
-                {...register("description")}
+                id="resource-description"
                 rows={4}
+                maxLength={1000}
+                {...register("description")}
                 placeholder="A short summary clients will see in the resource list"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+                className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
               />
               <CharCount value={description ?? ""} max={1000} />
               <FieldError message={errors.description?.message} />
             </div>
           </section>
 
-          {/* RESOURCE TYPE */}
-          <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="mb-6">
               <h2 className="text-base font-bold text-slate-900">
                 Resource Type
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="mt-1 text-xs text-slate-400">
                 Choose the type of content you want to create.
               </p>
             </div>
@@ -398,7 +368,7 @@ export default function CreateResourcePage() {
               control={control}
               name="type"
               render={({ field }) => (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {TYPE_CARDS.map((card) => {
                     const Icon = card.icon;
                     const active = field.value === card.value;
@@ -408,18 +378,32 @@ export default function CreateResourcePage() {
                       <button
                         key={card.value}
                         type="button"
-                        onClick={() => field.onChange(card.value)}
+                        aria-pressed={active}
+                        onClick={() => {
+                          field.onChange(card.value);
+                          setValue("file", undefined, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                          setValue(
+                            "content",
+                            card.value === "article" ? content : "",
+                            {
+                              shouldValidate: true,
+                            },
+                          );
+                        }}
                         className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-center transition-all ${
                           active
                             ? accent.active
                             : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                         }`}
                       >
-                        <div
-                          className={`w-9 h-9 rounded-lg flex items-center justify-center ${accent.icon}`}
+                        <span
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg ${accent.icon}`}
                         >
                           <Icon size={16} />
-                        </div>
+                        </span>
                         <span className="text-xs font-bold text-slate-800">
                           {card.label}
                         </span>
@@ -434,119 +418,83 @@ export default function CreateResourcePage() {
             />
           </section>
 
-          {/* CONTENT */}
-          <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="mb-6">
               <h2 className="text-base font-bold text-slate-900">Content</h2>
-
-              <p className="text-xs text-slate-400 mt-1">
-                Add the main content or resource file.
+              <p className="mt-1 text-xs text-slate-400">
+                Add the main content or upload your resource file.
               </p>
             </div>
 
-            <div className="space-y-5">
-              {/* ARTICLE */}
-              {type === "article" && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-2">
-                    Article content
-                  </label>
-
-                  <textarea
-                    {...register("content")}
-                    rows={10}
-                    placeholder="Write the full article content here"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-y"
-                  />
-
-                  <CharCount value={content} max={20000} />
-
-                  <FieldError message={errors.content?.message} />
-                </div>
-              )}
-
-              {/* PDF */}
-              {type === "pdf" && (
-                <FileDropField
-                  label="PDF file"
-                  accept={ACCEPT_MAP.pdf}
-                  hint="PDF · Max 10 MB"
-                  fileName={file?.name}
-                  fileSizeLabel={file ? formatFileSize(file.size) : undefined}
-                  onSelect={handleFileSelect}
-                  onClear={handleFileClear}
-                  error={errors.file?.message}
+            {type === "article" ? (
+              <div>
+                <label
+                  htmlFor="resource-content"
+                  className="mb-2 block text-xs font-semibold text-slate-700"
+                >
+                  Article content
+                </label>
+                <textarea
+                  id="resource-content"
+                  rows={10}
+                  maxLength={20000}
+                  {...register("content")}
+                  placeholder="Write the full article content here"
+                  className="w-full resize-y rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
                 />
-              )}
-
-              {/* VIDEO */}
-              {type === "video" && (
-                <FileDropField
-                  label="Video file"
-                  accept={ACCEPT_MAP.video}
-                  hint="MP4 or WebM · Max 100 MB"
-                  fileName={file?.name}
-                  fileSizeLabel={file ? formatFileSize(file.size) : undefined}
-                  onSelect={handleFileSelect}
-                  onClear={handleFileClear}
-                  error={errors.file?.message}
-                />
-              )}
-
-              {/* INFOGRAPHIC */}
-              {type === "infographic" && (
-                <FileDropField
-                  label="Image file"
-                  accept={ACCEPT_MAP.infographic}
-                  hint="JPG, PNG or WebP · Max 10 MB"
-                  fileName={file?.name}
-                  fileSizeLabel={file ? formatFileSize(file.size) : undefined}
-                  onSelect={handleFileSelect}
-                  onClear={handleFileClear}
-                  error={errors.file?.message}
-                />
-              )}
-
-              {/* THUMBNAIL */}
-              <div className="pt-1 border-t border-slate-100">
-                <FileDropField
-                  label="Cover thumbnail (optional)"
-                  accept="image/jpeg,image/png,image/webp"
-                  hint="JPG, PNG or WebP · Max 5 MB"
-                  fileName={thumbnail?.name}
-                  fileSizeLabel={
-                    thumbnail ? formatFileSize(thumbnail.size) : undefined
-                  }
-                  onSelect={handleThumbnailSelect}
-                  onClear={handleThumbnailClear}
-                  error={errors.thumbnail?.message}
-                />
+                <CharCount value={content} max={20000} />
+                <FieldError message={errors.content?.message} />
               </div>
-            </div>
+            ) : (
+              <FileDropField
+                label={
+                  type === "pdf"
+                    ? "PDF file"
+                    : type === "video"
+                      ? "Video file"
+                      : "Infographic image"
+                }
+                accept={ACCEPT_MAP[type] ?? ""}
+                hint={
+                  type === "pdf"
+                    ? "PDF · Max 10 MB"
+                    : type === "video"
+                      ? "MP4 or WebM · Max 100 MB"
+                      : "JPG, PNG or WebP · Max 10 MB"
+                }
+                file={file}
+                onSelect={handleFileSelect}
+                onClear={handleFileClear}
+                error={errors.file?.message}
+              />
+            )}
           </section>
 
-          {/* ORGANIZATION */}
-          <section className="bg-white border border-slate-200/80 rounded-2xl shadow-xs p-6">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
             <div className="mb-6">
               <h2 className="text-base font-bold text-slate-900">
                 Organization
               </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Categorize your resource so it can be easily discovered.
+              <p className="mt-1 text-xs text-slate-400">
+                Categorize your resource so clients can discover it easily.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label
+                htmlFor="resource-category"
+                className="mb-2 block text-xs font-semibold text-slate-700"
+              >
                 Category
               </label>
               <select
+                id="resource-category"
                 {...register("category")}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none transition-all focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
               >
-                {RESOURCE_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {formatCategoryLabel(cat)}
+                {RESOURCE_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {formatCategoryLabel(category)}
                   </option>
                 ))}
               </select>
@@ -554,13 +502,12 @@ export default function CreateResourcePage() {
             </div>
           </section>
 
-          {/* ACTIONS */}
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => router.push("/nutritionist/resources")}
               disabled={submitting}
-              className="px-5 py-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all disabled:opacity-50"
+              className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition-all hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>
@@ -568,7 +515,7 @@ export default function CreateResourcePage() {
             <button
               type="submit"
               disabled={submitting}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-700 text-white text-sm font-semibold hover:bg-emerald-800 transition-all disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting && <Loader2 size={16} className="animate-spin" />}
               {submitting ? "Creating..." : "Create Resource"}

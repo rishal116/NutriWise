@@ -1,20 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Heart, MessageCircle, RefreshCw, Send } from "lucide-react";
 
 import { publicPostService } from "@/services/public/publicPost.service";
-import { postCommentService } from "@/services/post/postComment.service";
-import { postLikeService } from "@/services/post/postLike.service";
-
-import type { PublicPostListItemDTO } from "@/dtos/public/post/public-post-list-item.dto";
-import type {
-  PostCommentDTO,
-  PostCommentListDTO,
-} from "@/services/post/postComment.service";
+import { postCommentService } from "@/services/post/post-comment.service";
+import { postLikeService } from "@/services/post/post-like.service";
+import { postViewService } from "@/services/post/post-view.service";
+import { Eye } from "lucide-react";
+import type { PostCardResponseDTO } from "@/dtos/user/post/post-response.dto";
+import type { PostCommentResponseDto } from "@/dtos/post/post-comment-response.dto";
 
 const PAGE_SIZE = 10;
 
@@ -22,7 +21,7 @@ const relativeFormatter = new Intl.RelativeTimeFormat("en", {
   numeric: "auto",
 });
 
-function formatRelativeTime(date: string): string {
+function formatRelativeTime(date: string | Date): string {
   const timestamp = new Date(date).getTime();
 
   if (Number.isNaN(timestamp)) {
@@ -63,10 +62,8 @@ function getErrorMessage(error: unknown): string {
 
 function PostMedia({
   media,
-  authorName,
 }: {
-  media: NonNullable<PublicPostListItemDTO["media"]>;
-  authorName: string;
+  media: NonNullable<PostCardResponseDTO["media"]>;
 }) {
   if (media.type.toLowerCase() === "video") {
     return (
@@ -88,7 +85,7 @@ function PostMedia({
     <div className="relative mt-4 aspect-[16/10] overflow-hidden rounded-xl bg-gray-100">
       <Image
         src={media.url}
-        alt={`Post media by ${authorName}`}
+        alt="Community post media"
         fill
         sizes="(max-width: 768px) 100vw, 768px"
         className="object-contain"
@@ -97,17 +94,31 @@ function PostMedia({
   );
 }
 
-function CommentItem({ comment }: { comment: PostCommentDTO }) {
+function CommentItem({ comment }: { comment: PostCommentResponseDto }) {
+  const initial = comment.username.trim().charAt(0).toUpperCase() || "U";
+
   return (
     <article className="flex gap-3 py-4">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800">
-        <span aria-hidden>{comment.userId.charAt(0).toUpperCase() || "U"}</span>
-      </div>
+      {comment.profileImage ? (
+        <div className="relative size-9 shrink-0 overflow-hidden rounded-full bg-emerald-100">
+          <Image
+            src={comment.profileImage}
+            alt={`${comment.username}'s profile`}
+            fill
+            sizes="36px"
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800">
+          <span aria-hidden="true">{initial}</span>
+        </div>
+      )}
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-sm font-semibold text-gray-900">
-            Community member
+            {comment.username}
           </span>
           <span className="text-xs text-gray-400">
             {formatRelativeTime(comment.createdAt)}
@@ -126,14 +137,14 @@ export default function PostDetailsPage() {
   const params = useParams<{ postId: string }>();
   const postId = params.postId;
 
-  const [post, setPost] = useState<PublicPostListItemDTO | null>(null);
-  const [comments, setComments] = useState<PostCommentDTO[]>([]);
+  const [post, setPost] = useState<PostCardResponseDTO | null>(null);
+  const [comments, setComments] = useState<PostCommentResponseDto[]>([]);
   const [commentCount, setCommentCount] = useState(0);
-
   const [content, setContent] = useState("");
-  const [nextCursor, setNextCursor] =
-    useState<PostCommentListDTO["nextCursor"]>(null);
-  const [hasMore, setHasMore] = useState(true);
+
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+
+  const [hasMore, setHasMore] = useState(false);
 
   const [loadingPost, setLoadingPost] = useState(true);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -141,10 +152,47 @@ export default function PostDetailsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [liking, setLiking] = useState(false);
 
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [commentError, setCommentError] = useState<string | null>(null);
+
+  const commentsRequestRef = useRef(false);
+  const commentsRequestIdRef = useRef(0);
+  const nextCursorRef = useRef<string | null>(null);
+  const hasMoreRef = useRef(false);
+
+  useEffect(() => {
+    if (!post || post.isViewedByMe) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const recordView = async () => {
+      try {
+        const response = await postViewService.viewPost(post._id);
+
+        if (!cancelled && response.success) {
+          setPost((current) =>
+            current
+              ? {
+                  ...current,
+                  isViewedByMe: true,
+                  viewCount: current.viewCount + 1,
+                }
+              : current,
+          );
+        }
+      } catch (viewError: unknown) {
+        console.error("Failed to record post view:", viewError);
+      }
+    };
+
+    void recordView();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [post]);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,7 +204,7 @@ export default function PostDetailsPage() {
       try {
         const response = await publicPostService.getPostDetails(postId);
 
-        if (!response.success) {
+        if (!response.success || !response.data) {
           throw new Error(response.message || "Unable to load this post.");
         }
 
@@ -166,8 +214,6 @@ export default function PostDetailsPage() {
 
         setPost(response.data);
         setCommentCount(response.data.commentCount);
-        setIsLiked(response.data.isLiked);
-        setLikeCount(response.data.likeCount);
       } catch (fetchError: unknown) {
         if (!cancelled) {
           setError(getErrorMessage(fetchError));
@@ -181,6 +227,9 @@ export default function PostDetailsPage() {
 
     if (postId) {
       void fetchPost();
+    } else {
+      setError("Invalid post ID.");
+      setLoadingPost(false);
     }
 
     return () => {
@@ -190,13 +239,16 @@ export default function PostDetailsPage() {
 
   const fetchComments = useCallback(
     async (loadMore = false) => {
-      if (loadMore && (!hasMore || loadingMore)) {
+      if (commentsRequestRef.current) {
         return;
       }
 
-      if (!loadMore && loadingComments) {
+      if (loadMore && !hasMoreRef.current) {
         return;
       }
+
+      const requestId = ++commentsRequestIdRef.current;
+      commentsRequestRef.current = true;
 
       if (loadMore) {
         setLoadingMore(true);
@@ -207,42 +259,68 @@ export default function PostDetailsPage() {
       setCommentError(null);
 
       try {
+        const cursor = loadMore ? nextCursorRef.current : null;
+
         const response = await postCommentService.getComments(
           postId,
           PAGE_SIZE,
-          loadMore && nextCursor ? nextCursor : undefined,
+          cursor ?? undefined,
         );
 
-        if (!response.success) {
+        if (!response.success || !response.data) {
           throw new Error(response.message || "Unable to load comments.");
+        }
+
+        if (requestId !== commentsRequestIdRef.current) {
+          return;
         }
 
         const result = response.data;
 
         setComments((current) =>
-          loadMore ? [...current, ...result.comments] : result.comments,
+          loadMore ? [...current, ...result.items] : result.items,
         );
+
+        nextCursorRef.current = result.nextCursor;
+        hasMoreRef.current = result.hasMore;
+
         setNextCursor(result.nextCursor);
         setHasMore(result.hasMore);
       } catch (fetchError: unknown) {
-        setCommentError(getErrorMessage(fetchError));
+        if (requestId === commentsRequestIdRef.current) {
+          setCommentError(getErrorMessage(fetchError));
+        }
       } finally {
-        setLoadingComments(false);
-        setLoadingMore(false);
+        if (requestId === commentsRequestIdRef.current) {
+          commentsRequestRef.current = false;
+          setLoadingComments(false);
+          setLoadingMore(false);
+        }
       }
     },
-    [hasMore, loadingComments, loadingMore, nextCursor, postId],
+    [postId],
   );
 
   useEffect(() => {
-    void fetchComments();
-    // Load the first page when the post ID changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postId]);
+    commentsRequestIdRef.current += 1;
+    commentsRequestRef.current = false;
+    nextCursorRef.current = null;
+    hasMoreRef.current = false;
 
-  const handleCreateComment = async (
-    event: React.FormEvent<HTMLFormElement>,
-  ) => {
+    setComments([]);
+    setNextCursor(null);
+    setHasMore(false);
+    setCommentError(null);
+
+    void fetchComments();
+
+    return () => {
+      commentsRequestIdRef.current += 1;
+      commentsRequestRef.current = false;
+    };
+  }, [postId, fetchComments]);
+
+  const handleCreateComment = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedContent = content.trim();
@@ -260,11 +338,11 @@ export default function PostDetailsPage() {
         trimmedContent,
       );
 
-      if (!response.success) {
+      if (!response.success || !response.data) {
         throw new Error(response.message || "Unable to create comment.");
       }
 
-      setComments((current) => [response.data, ...current]);
+      setComments((current) => [response.data!, ...current]);
       setContent("");
       setCommentCount((current) => current + 1);
     } catch (submitError: unknown) {
@@ -279,28 +357,42 @@ export default function PostDetailsPage() {
       return;
     }
 
-    const previousIsLiked = isLiked;
-    const previousLikeCount = likeCount;
+    const previousIsLiked = post.isLikedByMe;
+    const previousLikeCount = post.likeCount;
     const nextIsLiked = !previousIsLiked;
 
     setLiking(true);
-    setIsLiked(nextIsLiked);
-    setLikeCount((current) => current + (nextIsLiked ? 1 : -1));
+
+    setPost((current) =>
+      current
+        ? {
+            ...current,
+            isLikedByMe: nextIsLiked,
+            likeCount: Math.max(0, current.likeCount + (nextIsLiked ? 1 : -1)),
+          }
+        : current,
+    );
 
     try {
       const response = nextIsLiked
-        ? await postLikeService.likePost(postId)
-        : await postLikeService.unlikePost(postId);
+        ? await postLikeService.likePost(post._id)
+        : await postLikeService.unlikePost(post._id);
 
       if (!response.success) {
         throw new Error(response.message || "Unable to update like.");
       }
+    } catch (likeError: unknown) {
+      setPost((current) =>
+        current
+          ? {
+              ...current,
+              isLikedByMe: previousIsLiked,
+              likeCount: previousLikeCount,
+            }
+          : current,
+      );
 
-      setIsLiked(response.data.isLiked);
-      setLikeCount(response.data.likeCount);
-    } catch {
-      setIsLiked(previousIsLiked);
-      setLikeCount(previousLikeCount);
+      setError(getErrorMessage(likeError));
     } finally {
       setLiking(false);
     }
@@ -323,7 +415,7 @@ export default function PostDetailsPage() {
     return (
       <main className="mx-auto max-w-3xl px-4 py-10">
         <Link
-          href="/communities"
+          href="/communities/posts"
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft size={16} />
@@ -342,7 +434,7 @@ export default function PostDetailsPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:py-8">
       <Link
-        href="/communities"
+        href="/communities/posts"
         className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-emerald-700"
       >
         <ArrowLeft size={17} />
@@ -351,25 +443,13 @@ export default function PostDetailsPage() {
 
       <article className="mt-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <header className="flex items-center gap-3">
-          <div className="relative size-11 shrink-0 overflow-hidden rounded-full bg-emerald-100">
-            {post.author.profileImage ? (
-              <Image
-                src={post.author.profileImage}
-                alt={post.author.name}
-                fill
-                sizes="44px"
-                className="object-cover"
-              />
-            ) : (
-              <span className="flex size-full items-center justify-center font-semibold text-emerald-800">
-                {post.author.name.charAt(0).toUpperCase() || "?"}
-              </span>
-            )}
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+            <MessageCircle size={20} className="text-emerald-800" />
           </div>
 
           <div className="min-w-0">
-            <h1 className="truncate text-sm font-semibold text-gray-900">
-              {post.author.name}
+            <h1 className="text-sm font-semibold text-gray-900">
+              Community post
             </h1>
             <p className="text-xs text-gray-400">
               {formatRelativeTime(post.createdAt)}
@@ -383,27 +463,34 @@ export default function PostDetailsPage() {
           </p>
         )}
 
-        {post.media && (
-          <PostMedia media={post.media} authorName={post.author.name} />
-        )}
+        {post.media && <PostMedia media={post.media} />}
 
         <footer className="mt-5 flex items-center gap-5 border-t border-gray-100 pt-4">
           <button
             type="button"
             onClick={() => void handleLike()}
             disabled={liking}
-            aria-pressed={isLiked}
+            aria-pressed={post.isLikedByMe}
             className={`inline-flex items-center gap-2 text-sm transition ${
-              isLiked ? "text-rose-600" : "text-gray-500 hover:text-rose-600"
-            }`}
+              post.isLikedByMe
+                ? "text-rose-600"
+                : "text-gray-500 hover:text-rose-600"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
-            <Heart size={19} className={isLiked ? "fill-current" : ""} />
-            {likeCount} {likeCount === 1 ? "like" : "likes"}
+            <Heart
+              size={19}
+              className={post.isLikedByMe ? "fill-current" : ""}
+            />
+            {post.likeCount} {post.likeCount === 1 ? "like" : "likes"}
           </button>
 
           <div className="inline-flex items-center gap-2 text-sm text-emerald-700">
             <MessageCircle size={19} />
             {commentCount} {commentCount === 1 ? "comment" : "comments"}
+          </div>
+          <div className="inline-flex items-center gap-2 text-sm text-gray-500">
+            <Eye size={19} />
+            {post.viewCount} {post.viewCount === 1 ? "view" : "views"}
           </div>
         </footer>
       </article>
@@ -458,7 +545,8 @@ export default function PostDetailsPage() {
             <button
               type="button"
               onClick={() => void fetchComments()}
-              className="mt-2 font-medium underline"
+              disabled={loadingComments}
+              className="mt-2 font-medium underline disabled:opacity-50"
             >
               Retry
             </button>
@@ -467,7 +555,7 @@ export default function PostDetailsPage() {
 
         <div className="mt-5 divide-y divide-gray-100 border-t border-gray-100">
           {comments.map((comment) => (
-            <CommentItem key={comment._id} comment={comment} />
+            <CommentItem key={comment.id} comment={comment} />
           ))}
 
           {loadingComments && comments.length === 0 && (
@@ -494,7 +582,7 @@ export default function PostDetailsPage() {
             <button
               type="button"
               onClick={() => void fetchComments(true)}
-              disabled={loadingMore}
+              disabled={loadingMore || loadingComments}
               className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
             >
               {loadingMore && <RefreshCw size={15} className="animate-spin" />}

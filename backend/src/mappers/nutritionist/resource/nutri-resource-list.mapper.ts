@@ -1,5 +1,5 @@
 import { NutriResourceListItemDTO } from "../../../dtos/nutritionist/resource/resource-list-response.dto";
-import { INutriResourceListProjection } from "../../../types/nutritionist/resource/nutri-resource-list.projection";
+import { INutriResourceListProjection } from "../../../types/nutritionist/resource/nutri-resource.projection";
 
 export class NutriResourceListMapper {
   static toDTO(

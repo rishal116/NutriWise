@@ -58,17 +58,51 @@ function isIgnoredRoute(url?: string): boolean {
 let refreshPromise: Promise<string> | null = null;
 
 export function refreshAccessToken(): Promise<string> {
+  console.log("[Auth] Refresh requested", {
+    hasStoredToken: Boolean(tokenStorage.get()),
+    hasReduxToken: Boolean(store.getState().auth.accessToken),
+  });
+
   if (!refreshPromise) {
     refreshPromise = userAuthService
       .refreshToken()
       .then((response) => {
-        if (!response.accessToken) {
-          throw new Error("Refresh response did not contain an access token.");
+        console.log("[Auth] Refresh response received", {
+          success: response.success,
+          hasAccessToken: Boolean(response.data?.accessToken),
+        });
+
+        if (!response.success || !response.data?.accessToken) {
+          throw new Error(
+            "Refresh response did not contain a valid access token.",
+          );
         }
 
-        store.dispatch(setAccessToken(response.accessToken));
+        const accessToken = response.data.accessToken;
 
-        return response.accessToken;
+        tokenStorage.set(accessToken);
+        store.dispatch(setAccessToken(accessToken));
+
+        console.log("[Auth] Access token saved", {
+          hasStoredToken: Boolean(tokenStorage.get()),
+          hasReduxToken: Boolean(store.getState().auth.accessToken),
+        });
+
+        return accessToken;
+      })
+      .catch((error: unknown) => {
+        console.error("[Auth] Refresh failed", {
+          message:
+            error instanceof Error ? error.message : "Unknown refresh error",
+          status: axios.isAxiosError(error)
+            ? error.response?.status
+            : undefined,
+          responseData: axios.isAxiosError(error)
+            ? error.response?.data
+            : undefined,
+        });
+
+        throw error;
       })
       .finally(() => {
         refreshPromise = null;

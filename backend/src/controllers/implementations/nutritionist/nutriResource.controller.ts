@@ -26,27 +26,23 @@ export class NutriResourceController implements INutriResourceController {
 
   createResource = asyncHandler(async (req: Request, res: Response) => {
     const nutritionistId = req.user!.userId;
-
     const dto: CreateNutriResourceDTO = req.body;
 
-    const files = req.files as {
-      file?: Express.Multer.File[];
-      thumbnail?: Express.Multer.File[];
-    };
+    const files = req.files as
+      | {
+          file?: Express.Multer.File[];
+        }
+      | undefined;
 
-    const file = files?.file?.[0];
-    const thumbnail = files?.thumbnail?.[0];
-
-    const resource = await this._nutriResourceService.createResource(
+    await this._nutriResourceService.createResource(
       nutritionistId,
       dto,
-      file,
-      thumbnail,
+      files?.file?.[0],
     );
 
     res.status(StatusCode.CREATED).json({
       success: true,
-      data: resource,
+      message: "Resource created successfully",
     });
   });
 
@@ -103,7 +99,7 @@ export class NutriResourceController implements INutriResourceController {
 
     const dto: UpdateNutriResourceDTO = req.body;
 
-    const resource = await this._nutriResourceService.updateResource(
+    await this._nutriResourceService.updateResource(
       nutritionistId,
       params,
       dto,
@@ -111,7 +107,7 @@ export class NutriResourceController implements INutriResourceController {
 
     res.status(StatusCode.OK).json({
       success: true,
-      data: resource,
+      message: "Resource updated successfully",
     });
   });
 
@@ -122,14 +118,11 @@ export class NutriResourceController implements INutriResourceController {
       resourceId: req.params.resourceId,
     };
 
-    const resource = await this._nutriResourceService.publishResource(
-      nutritionistId,
-      params,
-    );
+    await this._nutriResourceService.publishResource(nutritionistId, params);
 
     res.status(StatusCode.OK).json({
       success: true,
-      data: resource,
+      message: "Resource published successfully",
     });
   });
 
@@ -140,14 +133,11 @@ export class NutriResourceController implements INutriResourceController {
       resourceId: req.params.resourceId,
     };
 
-    const resource = await this._nutriResourceService.archiveResource(
-      nutritionistId,
-      params,
-    );
+    await this._nutriResourceService.archiveResource(nutritionistId, params);
 
     res.status(StatusCode.OK).json({
       success: true,
-      data: resource,
+      message: "Resource archived successfully",
     });
   });
 }

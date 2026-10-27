@@ -3,14 +3,16 @@ import { PipelineStage, Types } from "mongoose";
 import { BaseRepository } from "../common/base.repository";
 import { IPost, PostModel } from "../../../models/post.model";
 import { IPublicPostRepository } from "../../interfaces/public/IPublicPostRepository";
-import { PublicPostListQueryDTO } from "../../../dtos/public/post/public-post-list-query.dto";
-import {
-  IPublicPostListItemProjection,
-  IPublicPostListProjectionWithCursor,
-} from "../../../types/public/post/public-post-list-item.projection";
-import { IPublicPostDetailsProjection } from "../../../types/public/post/public-post-details.projection";
+import { PostViewModel } from "../../../models/postView.schema";
+import { PostLikeModel } from "../../../models/postLike.model";
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-import { decodeCursor, encodeCursor } from "../../../utils/cursor.util";
+import { IUserPost } from "../../../types/user/post/user-post.type";
+import { IPublicPost } from "../../../types/post/public-post.type";
+import { encodeCursor, decodeCursor } from "../../../utils/cursor.util";
+
+interface IPostCardWithCursor extends IUserPost {
+  cursorId: Types.ObjectId;
+}
 
 @injectable()
 export class PublicPostRepository
@@ -21,70 +23,36 @@ export class PublicPostRepository
     super(PostModel);
   }
 
-  async findPublicPosts(
-    query: PublicPostListQueryDTO,
-    userId?: string,
-  ): Promise<CursorPaginationResult<IPublicPostListItemProjection>> {
-    return this.findPublicPostsByFilter(query, undefined, userId);
-  }
+  async browsePublicPosts(
+    userId?: string | Types.ObjectId,
+    limit = 12,
+    cursor?: string,
+  ): Promise<CursorPaginationResult<IPublicPost>> {
+    const userObjectId =
+      typeof userId === "string" && Types.ObjectId.isValid(userId)
+        ? new Types.ObjectId(userId)
+        : userId instanceof Types.ObjectId
+          ? userId
+          : undefined;
 
-  async findPublicPostsByAuthor(
-    authorId: string | Types.ObjectId,
-    query: PublicPostListQueryDTO,
-  ): Promise<CursorPaginationResult<IPublicPostListItemProjection>> {
-    if (!Types.ObjectId.isValid(authorId)) {
-      throw new Error("Invalid author ID");
-    }
-
-    return this.findPublicPostsByFilter(query, authorId);
-  }
-
-  private async findPublicPostsByFilter(
-    query: PublicPostListQueryDTO,
-    authorId?: string | Types.ObjectId,
-    userId?: string,
-  ): Promise<CursorPaginationResult<IPublicPostListItemProjection>> {
-    const {
-      limit = 12,
-      cursor,
-      search,
-      mediaType,
-      sortBy = "latest",
-      authorId: queryAuthorId,
-    } = query;
-
-    const sortDirection = sortBy === "oldest" ? 1 : -1;
-
-    const sortStage: Record<string, 1 | -1> = {
-      createdAt: sortDirection,
-      _id: sortDirection,
-    };
-
-    const cursorSortKey = `${sortBy}:createdAt:${sortDirection}`;
-
-    const match: Record<string, unknown> = {};
-
-    const selectedAuthorId = authorId ?? queryAuthorId;
-
-    if (selectedAuthorId) {
-      if (!Types.ObjectId.isValid(selectedAuthorId)) {
-        throw new Error("Invalid author ID");
-      }
-
-      match.authorId = new Types.ObjectId(selectedAuthorId);
-    }
-
-    if (mediaType) {
-      match["media.type"] = mediaType;
-    }
-
+    const cursorData = decodeCursor(cursor);
     const pipeline: PipelineStage[] = [];
 
-    if (Object.keys(match).length > 0) {
-      pipeline.push({ $match: match });
+    if (cursorData) {
+      if (!Types.ObjectId.isValid(cursorData.id)) {
+        throw new Error("Invalid cursor");
+      }
+
+      pipeline.push({
+        $match: {
+          _id: { $lt: new Types.ObjectId(cursorData.id) },
+        },
+      });
     }
 
     pipeline.push(
+      { $sort: { _id: -1 } },
+      { $limit: limit + 1 },
       {
         $lookup: {
           from: "users",
@@ -93,142 +61,100 @@ export class PublicPostRepository
           as: "author",
         },
       },
-      {
-        $unwind: "$author",
-      },
+      { $unwind: "$author" },
     );
 
-    if (search?.trim()) {
-      const escapedSearch = search
-        .trim()
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-      pipeline.push({
-        $match: {
-          $or: [
-            {
-              content: {
-                $regex: escapedSearch,
-                $options: "i",
+    if (userObjectId) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: PostViewModel.collection.name,
+            let: { postId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$postId", "$$postId"] },
+                      { $eq: ["$userId", userObjectId] },
+                    ],
+                  },
+                },
               },
-            },
-            {
-              "author.fullName": {
-                $regex: escapedSearch,
-                $options: "i",
-              },
-            },
-          ],
+              { $limit: 1 },
+              { $project: { _id: 1 } },
+            ],
+            as: "viewedByMe",
+          },
         },
-      });
-    }
-
-    const cursorData = decodeCursor(cursor);
-
-    if (cursorData) {
-      if (
-        cursorData.sortKey !== cursorSortKey ||
-        !Types.ObjectId.isValid(cursorData.id) ||
-        typeof cursorData.value !== "string" ||
-        Number.isNaN(Date.parse(cursorData.value))
-      ) {
-        throw new Error("Invalid cursor");
-      }
-
-      const cursorValue = new Date(cursorData.value);
-      const comparisonOperator = sortDirection === -1 ? "$lt" : "$gt";
-
-      pipeline.push({
-        $match: {
-          $or: [
-            {
-              createdAt: {
-                [comparisonOperator]: cursorValue,
+        {
+          $lookup: {
+            from: PostLikeModel.collection.name,
+            let: { postId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$postId", "$$postId"] },
+                      { $eq: ["$userId", userObjectId] },
+                    ],
+                  },
+                },
               },
-            },
-            {
-              createdAt: cursorValue,
-              _id: {
-                [comparisonOperator]: new Types.ObjectId(cursorData.id),
-              },
-            },
-          ],
+              { $limit: 1 },
+              { $project: { _id: 1 } },
+            ],
+            as: "likedByMe",
+          },
         },
-      });
-    }
-
-    pipeline.push({ $sort: sortStage }, { $limit: limit + 1 });
-
-    if (userId && Types.ObjectId.isValid(userId)) {
-      pipeline.push({
-        $lookup: {
-          from: "postlikes",
-          let: { postId: "$_id" },
-          pipeline: [
-            {
-              $match: {
-                userId: new Types.ObjectId(userId),
-                $expr: { $eq: ["$postId", "$$postId"] },
-              },
-            },
-            { $limit: 1 },
-            { $project: { _id: 1 } },
-          ],
-          as: "userLike",
-        },
-      });
+      );
     }
 
     pipeline.push({
       $project: {
-        _id: 0,
-        postId: { $toString: "$_id" },
+        _id: { $toString: "$_id" },
         content: 1,
         media: 1,
+        viewCount: 1,
         likeCount: 1,
-        isLiked: userId
-          ? { $gt: [{ $size: "$userLike" }, 0] }
-          : { $literal: false },
         commentCount: 1,
-        bookmarkCount: 1,
+        isLikedByMe: userObjectId
+          ? { $gt: [{ $size: "$likedByMe" }, 0] }
+          : { $literal: false },
+        isViewedByMe: userObjectId
+          ? { $gt: [{ $size: "$viewedByMe" }, 0] }
+          : { $literal: false },
         createdAt: 1,
-        updatedAt: 1,
         author: {
           authorId: { $toString: "$author._id" },
           name: "$author.fullName",
           profileImage: "$author.profileImage",
         },
-        cursorId: { $toString: "$_id" },
-        cursorValue: "$createdAt",
+        cursorId: "$_id",
       },
     });
 
-    const result =
-      await this._model.aggregate<IPublicPostListProjectionWithCursor>(
-        pipeline,
-      );
+    const result = await this._model.aggregate<IPostCardWithCursor>(pipeline);
 
     const hasMore = result.length > limit;
     const items = hasMore ? result.slice(0, limit) : result;
+    const lastItem = items[items.length - 1];
 
-    let nextCursor: string | null = null;
+    const nextCursor =
+      hasMore && lastItem
+        ? encodeCursor({
+            id: lastItem.cursorId.toString(),
+            value: lastItem.cursorId.toString(),
+          })
+        : null;
 
-    if (hasMore && items.length > 0) {
-      const lastItem = items[items.length - 1];
-
-      nextCursor = encodeCursor({
-        id: lastItem.cursorId,
-        value: lastItem.cursorValue.toISOString(),
-        sortKey: cursorSortKey,
-      });
-    }
-
-    const postItems: IPublicPostListItemProjection[] = items.map(
-      ({ cursorId: _cursorId, cursorValue: _cursorValue, ...post }) => post,
+    const cleanItems: IPublicPost[] = items.map(
+      ({ cursorId: _cursorId, ...item }) => item as IPublicPost,
     );
 
     return {
-      items: postItems,
+      items: cleanItems,
       nextCursor,
       hasMore,
     };
@@ -236,15 +162,23 @@ export class PublicPostRepository
 
   async findPublicPostDetails(
     postId: string | Types.ObjectId,
-  ): Promise<IPublicPostDetailsProjection | null> {
+    userId?: string | Types.ObjectId,
+  ): Promise<IPublicPost | null> {
     if (!Types.ObjectId.isValid(postId)) {
-      return null;
+      throw new Error("Invalid post ID");
     }
+
+    const userObjectId =
+      typeof userId === "string" && Types.ObjectId.isValid(userId)
+        ? new Types.ObjectId(userId)
+        : userId instanceof Types.ObjectId
+          ? userId
+          : undefined;
 
     const postObjectId =
       typeof postId === "string" ? new Types.ObjectId(postId) : postId;
 
-    const result = await this._model.aggregate<IPublicPostDetailsProjection>([
+    const pipeline: PipelineStage[] = [
       {
         $match: {
           _id: postObjectId,
@@ -258,29 +192,81 @@ export class PublicPostRepository
           as: "author",
         },
       },
-      {
-        $unwind: "$author",
-      },
-      {
-        $project: {
-          _id: 0,
-          postId: { $toString: "$_id" },
-          content: 1,
-          media: 1,
-          likeCount: 1,
-          commentCount: 1,
-          bookmarkCount: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          author: {
-            authorId: { $toString: "$author._id" },
-            name: "$author.fullName",
-            profileImage: "$author.profileImage",
+      { $unwind: "$author" },
+    ];
+
+    if (userObjectId) {
+      pipeline.push(
+        {
+          $lookup: {
+            from: PostLikeModel.collection.name,
+            let: { postId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$postId", "$$postId"] },
+                      { $eq: ["$userId", userObjectId] },
+                    ],
+                  },
+                },
+              },
+              { $limit: 1 },
+              { $project: { _id: 1 } },
+            ],
+            as: "likedByMe",
           },
         },
-      },
-    ]);
+        {
+          $lookup: {
+            from: PostViewModel.collection.name,
+            let: { postId: "$_id" },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$postId", "$$postId"] },
+                      { $eq: ["$userId", userObjectId] },
+                    ],
+                  },
+                },
+              },
+              { $limit: 1 },
+              { $project: { _id: 1 } },
+            ],
+            as: "viewedByMe",
+          },
+        },
+      );
+    }
 
-    return result[0] ?? null;
+    pipeline.push({
+      $project: {
+        _id: { $toString: "$_id" },
+        content: 1,
+        media: 1,
+        viewCount: 1,
+        likeCount: 1,
+        commentCount: 1,
+        isLikedByMe: userObjectId
+          ? { $gt: [{ $size: "$likedByMe" }, 0] }
+          : { $literal: false },
+        isViewedByMe: userObjectId
+          ? { $gt: [{ $size: "$viewedByMe" }, 0] }
+          : { $literal: false },
+        createdAt: 1,
+        author: {
+          authorId: { $toString: "$author._id" },
+          name: "$author.fullName",
+          profileImage: "$author.profileImage",
+        },
+      },
+    });
+
+    const [post] = await this._model.aggregate<IPublicPost>(pipeline);
+
+    return post ?? null;
   }
 }

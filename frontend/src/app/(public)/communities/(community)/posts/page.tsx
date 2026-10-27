@@ -2,36 +2,40 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Bookmark, Heart, MessageCircle, RefreshCw } from "lucide-react";
-
-import { publicPostService } from "@/services/public/publicPost.service";
-import type { PublicPostListItemDTO } from "@/dtos/public/post/public-post-list-item.dto";
-import { postLikeService } from "@/services/post/postLike.service";
+import { Eye, Heart, MessageCircle, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+import type { PublicPostResponseDTO } from "@/dtos/post/public-post-response.dto"; 
+import { publicPostService } from "@/services/public/publicPost.service";
+import { postLikeService } from "@/services/post/post-like.service";
 
 interface PostsPageProps {
   preview?: boolean;
 }
 
-const PAGE_SIZE = 10;
 const PREVIEW_SIZE = 2;
 
-const RELATIVE_UNITS: { unit: Intl.RelativeTimeFormatUnit; seconds: number }[] =
-  [
-    { unit: "year", seconds: 31_536_000 },
-    { unit: "month", seconds: 2_592_000 },
-    { unit: "week", seconds: 604_800 },
-    { unit: "day", seconds: 86_400 },
-    { unit: "hour", seconds: 3_600 },
-    { unit: "minute", seconds: 60 },
-  ];
+const RELATIVE_UNITS: {
+  unit: Intl.RelativeTimeFormatUnit;
+  seconds: number;
+}[] = [
+  { unit: "year", seconds: 31_536_000 },
+  { unit: "month", seconds: 2_592_000 },
+  { unit: "week", seconds: 604_800 },
+  { unit: "day", seconds: 86_400 },
+  { unit: "hour", seconds: 3_600 },
+  { unit: "minute", seconds: 60 },
+];
 
 const relativeFormatter = new Intl.RelativeTimeFormat("en", {
   numeric: "auto",
 });
-const countFormatter = new Intl.NumberFormat("en", { notation: "compact" });
 
-function formatRelativeTime(date: string): string {
+const countFormatter = new Intl.NumberFormat("en", {
+  notation: "compact",
+});
+
+function formatRelativeTime(date: string | Date): string {
   const timestamp = new Date(date).getTime();
 
   if (Number.isNaN(timestamp)) {
@@ -55,33 +59,10 @@ function getErrorMessage(error: unknown): string {
     : "Unable to load posts. Please try again.";
 }
 
-function Avatar({ name, src }: { name: string; src?: string | null }) {
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800 sm:size-11">
-      {src && !failed ? (
-        <Image
-          src={src}
-          alt={name}
-          fill
-          sizes="44px"
-          className="object-cover"
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <span aria-hidden>{name.charAt(0).toUpperCase() || "?"}</span>
-      )}
-    </div>
-  );
-}
-
 function PostMedia({
   media,
-  authorName,
 }: {
-  media: NonNullable<PublicPostListItemDTO["media"]>;
-  authorName: string;
+  media: NonNullable<PublicPostResponseDTO["media"]>;
 }) {
   const isVideo = media.type.toLowerCase() === "video";
 
@@ -101,7 +82,7 @@ function PostMedia({
         <div className="relative aspect-[4/3] w-full sm:aspect-[16/10]">
           <Image
             src={media.url}
-            alt={`Post media by ${authorName}`}
+            alt="Community post media"
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 80vw, 640px"
             className="object-cover"
@@ -115,67 +96,75 @@ function PostMedia({
 const PostCard = memo(function PostCard({
   post,
 }: {
-  post: PublicPostListItemDTO;
+  post: PublicPostResponseDTO;
 }) {
-  const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [isLikedByMe, setIsLikedByMe] = useState(post.isLikedByMe);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [isLiking, setIsLiking] = useState(false);
   const [likeError, setLikeError] = useState<string | null>(null);
+
   const router = useRouter();
 
+  useEffect(() => {
+    setIsLikedByMe(post.isLikedByMe);
+    setLikeCount(post.likeCount);
+  }, [post.isLikedByMe, post.likeCount]);
+
   const openPostDetails = useCallback(() => {
-    router.push(`/communities/posts/${post.postId}`);
-  }, [post.postId, router]);
+    router.push(`/communities/posts/${post._id}`);
+  }, [post._id, router]);
 
   const handleLike = useCallback(async () => {
     if (isLiking) {
       return;
     }
 
-    const previousIsLiked = isLiked;
+    const previousIsLikedByMe = isLikedByMe;
     const previousLikeCount = likeCount;
-    const nextIsLiked = !previousIsLiked;
+    const nextIsLikedByMe = !previousIsLikedByMe;
 
     setIsLiking(true);
     setLikeError(null);
-
-    // Optimistically update the UI.
-    setIsLiked(nextIsLiked);
-    setLikeCount((count) => count + (nextIsLiked ? 1 : -1));
+    setIsLikedByMe(nextIsLikedByMe);
+    setLikeCount((count) => Math.max(0, count + (nextIsLikedByMe ? 1 : -1)));
 
     try {
-      const response = nextIsLiked
-        ? await postLikeService.likePost(post.postId)
-        : await postLikeService.unlikePost(post.postId);
+      const response = nextIsLikedByMe
+        ? await postLikeService.likePost(post._id)
+        : await postLikeService.unlikePost(post._id);
 
       if (!response.success) {
         throw new Error(response.message || "Unable to update like.");
       }
-
-      // Use the authoritative values returned by the backend.
-      setIsLiked(response.data.isLiked);
-      setLikeCount(response.data.likeCount);
     } catch (error: unknown) {
-      // Roll back the optimistic update if the request fails.
-      setIsLiked(previousIsLiked);
+      setIsLikedByMe(previousIsLikedByMe);
       setLikeCount(previousLikeCount);
-
-      setLikeError(
-        error instanceof Error
-          ? error.message
-          : "Unable to update like. Please try again.",
-      );
+      setLikeError(getErrorMessage(error));
     } finally {
       setIsLiking(false);
     }
-  }, [isLiked, isLiking, likeCount, post.postId]);
+  }, [isLikedByMe, isLiking, likeCount, post._id]);
 
   return (
     <article className="flex gap-3 px-4 py-4 transition-colors hover:bg-gray-50/60 sm:gap-4 sm:px-5">
-      <Avatar name={post.author.name} src={post.author.profileImage} />
+      <div className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-100 text-sm font-semibold text-emerald-800 sm:size-11">
+        {post.author.profileImage ? (
+          <Image
+            src={post.author.profileImage}
+            alt={`${post.author.name}'s profile`}
+            fill
+            sizes="44px"
+            className="object-cover"
+          />
+        ) : (
+          <span aria-hidden>
+            {post.author.name.trim().charAt(0).toUpperCase() || "U"}
+          </span>
+        )}
+      </div>
 
       <div className="min-w-0 flex-1">
-        <header className="flex min-w-0 items-baseline gap-x-2">
+        <header className="flex min-w-0 flex-wrap items-baseline gap-x-2">
           <h3 className="truncate text-sm font-semibold text-gray-900 sm:text-base">
             {post.author.name}
           </h3>
@@ -191,24 +180,23 @@ const PostCard = memo(function PostCard({
           </p>
         )}
 
-        {post.media && (
-          <PostMedia media={post.media} authorName={post.author.name} />
-        )}
+        {post.media && <PostMedia media={post.media} />}
 
         <footer className="mt-3 flex items-center gap-6 text-gray-500">
           <button
             type="button"
             onClick={() => void handleLike()}
             disabled={isLiking}
-            aria-pressed={isLiked}
+            aria-pressed={isLikedByMe}
             aria-label={`${likeCount} likes`}
-            title={likeError ?? (isLiked ? "Unlike post" : "Like post")}
+            title={likeError ?? (isLikedByMe ? "Unlike post" : "Like post")}
             className={`inline-flex items-center gap-1.5 text-sm transition-colors disabled:cursor-wait disabled:opacity-60 ${
-              isLiked ? "text-rose-600" : "text-gray-500 hover:text-rose-600"
+              isLikedByMe
+                ? "text-rose-600"
+                : "text-gray-500 hover:text-rose-600"
             }`}
           >
-            <Heart size={18} className={isLiked ? "fill-current" : ""} />
-
+            <Heart size={18} className={isLikedByMe ? "fill-current" : ""} />
             {countFormatter.format(likeCount)}
           </button>
 
@@ -223,11 +211,16 @@ const PostCard = memo(function PostCard({
           </button>
 
           <span
-            className="ml-auto inline-flex items-center gap-1.5 text-sm"
-            aria-label={`${post.bookmarkCount} bookmarks`}
+            className={`ml-auto inline-flex items-center gap-1.5 text-sm ${
+              post.isViewedByMe ? "text-emerald-700" : "text-gray-500"
+            }`}
+            aria-label={`${post.viewCount} views${
+              post.isViewedByMe ? ", already viewed by you" : ""
+            }`}
+            title={post.isViewedByMe ? "You have viewed this post" : "Views"}
           >
-            <Bookmark size={18} />
-            {countFormatter.format(post.bookmarkCount)}
+            <Eye size={18} />
+            {countFormatter.format(post.viewCount)}
           </span>
         </footer>
 
@@ -245,6 +238,7 @@ function PostSkeleton() {
   return (
     <div className="flex animate-pulse gap-3 px-4 py-4 sm:gap-4 sm:px-5">
       <div className="size-10 shrink-0 rounded-full bg-gray-200 sm:size-11" />
+
       <div className="flex-1 space-y-3">
         <div className="h-4 w-2/5 rounded bg-gray-200" />
         <div className="h-3 w-full rounded bg-gray-100" />
@@ -256,7 +250,7 @@ function PostSkeleton() {
 }
 
 export default function PostsPage({ preview = false }: PostsPageProps) {
-  const [posts, setPosts] = useState<PublicPostListItemDTO[]>([]);
+  const [posts, setPosts] = useState<PublicPostResponseDTO[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -286,15 +280,13 @@ export default function PostsPage({ preview = false }: PostsPageProps) {
       }
 
       try {
-        const response = await publicPostService.getPosts({
-          limit: preview ? PREVIEW_SIZE : PAGE_SIZE,
-          sortBy: "latest",
-          ...(loadMore && nextCursorRef.current
-            ? { cursor: nextCursorRef.current }
-            : {}),
-        });
+        const response = await publicPostService.getPosts(
+          loadMore ? (nextCursorRef.current ?? undefined) : undefined,
+        );
+        console.log(response);
+        
 
-        if (!response.success) {
+        if (!response.success || !response.data) {
           throw new Error(response.message || "Unable to load posts.");
         }
 
@@ -306,6 +298,7 @@ export default function PostsPage({ preview = false }: PostsPageProps) {
         setPosts((current) =>
           loadMore ? [...current, ...result.items] : result.items,
         );
+
         setHasMore(result.hasMore);
       } catch (fetchError: unknown) {
         setError(getErrorMessage(fetchError));
@@ -346,6 +339,8 @@ export default function PostsPage({ preview = false }: PostsPageProps) {
 
     return () => observer.disconnect();
   }, [error, fetchPosts, hasMore, loading, loadingMore, preview]);
+
+  const visiblePosts = preview ? posts.slice(0, PREVIEW_SIZE) : posts;
 
   return (
     <section className="mx-auto w-full max-w-2xl">
@@ -388,8 +383,8 @@ export default function PostsPage({ preview = false }: PostsPageProps) {
           </div>
         )}
 
-        {posts.map((post) => (
-          <PostCard key={post.postId} post={post} />
+        {visiblePosts.map((post) => (
+          <PostCard key={post._id} post={post} />
         ))}
 
         {error && posts.length > 0 && (

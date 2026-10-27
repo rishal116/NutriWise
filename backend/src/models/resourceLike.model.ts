@@ -1,6 +1,7 @@
 import { model, Schema, Types } from "mongoose";
 
 export interface IResourceLike {
+  _id: Types.ObjectId;
   resourceId: Types.ObjectId;
   userId: Types.ObjectId;
   createdAt: Date;
@@ -14,7 +15,6 @@ const resourceLikeSchema = new Schema<IResourceLike>(
       ref: "Resource",
       required: true,
     },
-
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",

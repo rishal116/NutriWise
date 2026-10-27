@@ -1,15 +1,16 @@
-import { ClientSession, Types } from "mongoose";
 import { injectable } from "inversify";
+import { PipelineStage, Types } from "mongoose";
 
 import { BaseRepository } from "../common/base.repository";
-import {
-  IPostCommentCursor,
-  IPostCommentRepository,
-} from "../../interfaces/post/IPostCommentRepository";
+import { IPostCommentRepository } from "../../interfaces/post/IPostCommentRepository";
 import {
   IPostComment,
   PostCommentModel,
 } from "../../../models/postComment.model";
+import { UserModel } from "../../../models/user.model";
+import { IPostCommentResponse } from "../../../types/post/post-comment-response.type";
+import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
+import { decodeCursor, encodeCursor } from "../../../utils/cursor.util";
 
 @injectable()
 export class PostCommentRepository
@@ -23,54 +24,89 @@ export class PostCommentRepository
   async findByPostId(
     postId: Types.ObjectId,
     limit: number,
-    cursor?: IPostCommentCursor,
-  ): Promise<IPostComment[]> {
-    const filter = cursor
+    cursor?: string,
+  ): Promise<CursorPaginationResult<IPostCommentResponse>> {
+    const decodedCursor = decodeCursor(cursor);
+
+    if (
+      decodedCursor &&
+      (typeof decodedCursor.value !== "string" ||
+        !Number.isFinite(new Date(decodedCursor.value).getTime()))
+    ) {
+      throw new Error("Invalid comment cursor");
+    }
+
+    const parsedCursor = decodedCursor
       ? {
-          postId,
-          $or: [
-            { createdAt: { $lt: cursor.createdAt } },
-            {
-              createdAt: cursor.createdAt,
-              _id: { $lt: cursor.id },
-            },
-          ],
+          createdAt: new Date(decodedCursor.value as string),
+          id: new Types.ObjectId(decodedCursor.id),
         }
-      : { postId };
+      : undefined;
 
-    return this._model
-      .find(filter)
-      .sort({ createdAt: -1, _id: -1 })
-      .limit(limit + 1)
-      .lean<IPostComment[]>()
+    const pipeline: PipelineStage[] = [
+      {
+        $match: {
+          postId,
+          ...(parsedCursor
+            ? {
+                $or: [
+                  { createdAt: { $lt: parsedCursor.createdAt } },
+                  {
+                    createdAt: parsedCursor.createdAt,
+                    _id: { $lt: parsedCursor.id },
+                  },
+                ],
+              }
+            : {}),
+        },
+      },
+      { $sort: { createdAt: -1, _id: -1 } },
+      { $limit: limit + 1 },
+      {
+        $lookup: {
+          from: UserModel.collection.name,
+          localField: "userId",
+          foreignField: "_id",
+          as: "commenter",
+        },
+      },
+      {
+        $unwind: {
+          path: "$commenter",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: { $toString: "$_id" },
+          postId: { $toString: "$postId" },
+          username: "$commenter.username",
+          profileImage: "$commenter.profileImage",
+          content: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ];
+
+    const results = await this._model
+      .aggregate<IPostCommentResponse>(pipeline)
       .exec();
-  }
 
-  async deleteById(
-    commentId: Types.ObjectId,
-    session?: ClientSession,
-  ): Promise<boolean> {
-    const query = this._model.deleteOne({ _id: commentId });
+    const hasMore = results.length > limit;
+    const items = hasMore ? results.slice(0, limit) : results;
+    const lastComment = items.at(-1);
 
-    if (session) {
-      query.session(session);
-    }
-
-    const result = await query.exec();
-
-    return result.deletedCount > 0;
-  }
-
-  async countByPostId(
-    postId: Types.ObjectId,
-    session?: ClientSession,
-  ): Promise<number> {
-    const query = this._model.countDocuments({ postId });
-
-    if (session) {
-      query.session(session);
-    }
-
-    return query.exec();
+    return {
+      items,
+      hasMore,
+      nextCursor:
+        hasMore && lastComment
+          ? encodeCursor({
+              value: lastComment.createdAt,
+              id: lastComment._id,
+            })
+          : null,
+    };
   }
 }

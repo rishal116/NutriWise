@@ -13,6 +13,7 @@ import {
   Settings,
   X,
   FileText,
+  Heart,
   BarChart3,
   ChevronsLeft,
   ChevronsRight,
@@ -64,6 +65,7 @@ const navSections: NavSection[] = [
     title: "Community",
     items: [
       { name: "My Posts", href: "/user/posts", icon: FileText },
+      { name: "Liked Posts", href: "/user/liked-posts", icon: Heart },
       { name: "Messages", href: "/user/messages", icon: MessageCircle },
     ],
   },

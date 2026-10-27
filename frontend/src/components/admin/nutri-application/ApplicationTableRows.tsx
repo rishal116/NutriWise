@@ -103,7 +103,7 @@ export default function ApplicationTableRows({
 
                 <td className="px-6 py-4 text-right">
                   <Link
-                    href={`/admin/nutritionists/applications/${application.userId}`}
+                    href={`/admin/nutritionists/${application.userId}`}
                     className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold text-emerald-600 transition hover:bg-emerald-50"
                   >
                     <ExternalLink size={14} />

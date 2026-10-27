@@ -1,13 +1,15 @@
-import { IPostMedia } from "../../../models/post.model";
+import { PostMediaType } from "../../common/post-media.type";
 
 export interface IUserPostDetails {
   _id: string;
-  authorId: string;
   content?: string;
-  media?: IPostMedia;
+  media?: {
+    url: string;
+    type: PostMediaType;
+  };
+  viewCount: number;
   likeCount: number;
   commentCount: number;
-  bookmarkCount: number;
+  isLikedByMe: boolean;
   createdAt: Date;
-  updatedAt: Date;
 }

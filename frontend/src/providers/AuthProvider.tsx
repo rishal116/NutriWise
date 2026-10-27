@@ -53,10 +53,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     const initializeAuth = async () => {
       try {
-        const storedToken = tokenStorage.get();
+        let accessToken = tokenStorage.get();
 
-        if (storedToken) {
-          dispatch(setAccessToken(storedToken));
+        if (accessToken) {
+          dispatch(setAccessToken(accessToken));
 
           try {
             const response = await userAuthService.getMe();
@@ -72,18 +72,12 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             return;
           } catch {
             if (!isMounted) return;
+
+            // The stored token may be expired. Try refreshing below.
           }
         }
 
-        if (isAuthPage(pathname) && !storedToken) {
-          if (isMounted) {
-            syncActiveRoleCookie(undefined);
-            dispatch(logout());
-          }
-          return;
-        }
-
-        const accessToken = await refreshAccessToken();
+        accessToken = await refreshAccessToken();
 
         if (!isMounted) return;
 
@@ -100,10 +94,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         syncActiveRoleCookie(response.data.activeRole);
         dispatch(setUser(response.data));
       } catch {
-        if (isMounted) {
-          syncActiveRoleCookie(undefined);
-          dispatch(logout());
-        }
+        if (!isMounted) return;
+
+        tokenStorage.remove();
+        syncActiveRoleCookie(undefined);
+        dispatch(logout());
       }
     };
 
@@ -112,7 +107,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       isMounted = false;
     };
-  }, [dispatch, initialized, pathname]);
+  }, [dispatch, initialized]);
 
   useEffect(() => {
     if (!initialized || !user) return;

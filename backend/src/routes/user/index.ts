@@ -17,6 +17,7 @@ import userChallengeTrackingRoutes from "./user-challenge-tracking.route";
 import userDashboardRouter from "./dashboard.route";
 import reviewRoutes from "./review.route";
 import healthProgressRoutes from "./health-progress.route";
+import userLikedPostRoutes from "./user-liked-post.route";
 
 const router = express.Router();
 
@@ -43,6 +44,8 @@ router.use("/programs/:programId/days", userActivityTrackingRoutes);
 router.use("/meetings", userMeetingRoutes);
 
 router.use("/posts", userPostRoutes);
+
+router.use("/liked-posts", userLikedPostRoutes);
 
 router.use("/challenges", userChallengeRoutes);
 

@@ -9,13 +9,10 @@ export interface PostCardResponseDTO {
   _id: string;
   content?: string;
   media?: PostMediaResponseDTO;
+  viewCount: number;
   likeCount: number;
   commentCount: number;
-  bookmarkCount: number;
+  isLikedByMe: boolean;
+  isViewedByMe: boolean;
   createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface PostDetailsResponseDTO extends PostCardResponseDTO {
-  authorId: string;
 }

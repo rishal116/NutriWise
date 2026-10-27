@@ -1,10 +1,12 @@
-export enum PostSortOption {
-  LATEST = "latest",
-  OLDEST = "oldest",
-  MOST_LIKED = "most_liked",
-  MOST_COMMENTED = "most_commented",
-  MOST_BOOKMARKED = "most_bookmarked",
-}
+export const POST_SORT_OPTIONS = [
+  "latest",
+  "oldest",
+  "most_liked",
+  "most_commented",
+  "most_viewed",
+] as const;
+
+export type PostSortOption = (typeof POST_SORT_OPTIONS)[number];
 
 export interface PostListQueryDTO {
   limit?: number;
