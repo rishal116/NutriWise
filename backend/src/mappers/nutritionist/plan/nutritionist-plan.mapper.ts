@@ -21,7 +21,6 @@ export const toNutritionistPlanModel = (
   description: dto.description,
   durationDays: dto.durationDays,
   price: dto.price,
-  currency: dto.currency ?? "inr",
   features: dto.features,
   status: dto.status ?? "draft",
 });
@@ -33,7 +32,6 @@ export const toPlanDTO = (plan: INutritionistPlan): PlanDTO => ({
   description: plan.description,
   durationDays: plan.durationDays,
   price: plan.price,
-  currency: plan.currency,
   features: plan.features,
   status: plan.status,
   createdAt: plan.createdAt,
@@ -56,9 +54,7 @@ export const toNutritionistPlanUpdateModel = (
   ...(dto.price !== undefined && {
     price: dto.price,
   }),
-  ...(dto.currency !== undefined && {
-    currency: dto.currency,
-  }),
+
   ...(dto.features !== undefined && {
     features: dto.features,
   }),

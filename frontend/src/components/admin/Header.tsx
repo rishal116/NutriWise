@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, ChevronDown, User, Settings, LogOut } from "lucide-react";
+import { Menu, ChevronDown, LogOut } from "lucide-react";
 import type { User as UserType } from "@/types/user/user.types";
 import { userAuthService } from "@/services/user/userAuth.service";
+import { clearAuthSession } from "@/lib/auth/clearAuthSession";
 
 const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   dashboard: { title: "Dashboard", subtitle: "System overview & analytics" },
@@ -47,7 +47,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
     const fetchUser = async () => {
       try {
         const response = await userAuthService.getMe();
-        setUser(response.data);
+
+        setUser(response.data ?? null);
       } catch (error) {
         console.error("Failed to fetch user:", error);
         router.push("/login");
@@ -71,11 +72,15 @@ export default function Header({ onMenuClick }: HeaderProps) {
   }, []);
 
   const handleLogout = async () => {
+    setOpen(false);
+
     try {
       await userAuthService.logout();
-      router.push("/login");
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("Logout request failed:", error);
+    } finally {
+      clearAuthSession();
+      router.replace("/login");
     }
   };
 
@@ -134,24 +139,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 : "opacity-0 scale-95 pointer-events-none"
             }`}
           >
-            <div className="py-1.5">
-              <Link
-                href="/admin/profile"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-admin-text hover:bg-admin-surface-hover transition-colors"
-              >
-                <User size={15} className="text-admin-muted" />
-                Profile
-              </Link>
-              <Link
-                href="/admin/settings"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-admin-text hover:bg-admin-surface-hover transition-colors"
-              >
-                <Settings size={15} className="text-admin-muted" />
-                Settings
-              </Link>
-            </div>
             <div className="border-t border-admin-border py-1.5">
               <button
                 onClick={handleLogout}

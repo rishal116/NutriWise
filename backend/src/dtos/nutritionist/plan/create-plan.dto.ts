@@ -11,7 +11,7 @@ import {
 
 import { Type } from "class-transformer";
 
-import { CURRENCY, Currency } from "../../../constants/currency.constants";
+
 
 import {
   PLAN_STATUS,
@@ -45,10 +45,6 @@ export class CreatePlanDTO {
   @IsNumber()
   @Min(0)
   price!: number;
-
-  @IsOptional()
-  @IsEnum([CURRENCY])
-  currency?: Currency = CURRENCY;
 
   @IsArray()
   @IsString({ each: true })

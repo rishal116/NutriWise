@@ -9,6 +9,7 @@ import type { UserDashboardTodayTrackingDTO } from "@/dtos/user/dashboard/user-d
 import type { UserDashboardWeeklyProgressDTO } from "@/dtos/user/dashboard/user-dashboard-weekly-progress.dto";
 import type { UserDashboardConsultationsDTO } from "@/dtos/user/dashboard/user-dashboard-consultations.dto";
 import type { UserDashboardPaymentOverviewDTO } from "@/dtos/user/dashboard/user-dashboard-payment-overview.dto";
+import { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
 
 export const userDashboardService = {
   async getOverview(): Promise<ApiResponseDTO<UserDashboardOverviewDTO>> {

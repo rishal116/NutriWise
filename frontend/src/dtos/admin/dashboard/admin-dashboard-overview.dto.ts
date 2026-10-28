@@ -24,39 +24,44 @@ export interface AdminDashboardActivityDTO {
 export interface AdminDashboardOverviewDTO {
   summary: {
     totalUsers: number;
+    newUsers: number;
+    blockedUsers: number;
+    deletedUsers: number;
+    unverifiedUsers: number;
     totalNutritionists: number;
     pendingNutritionistApplications: number;
     totalPurchases: number;
     totalRevenue: number;
+    refundedAmount: number;
+    netRevenue: number;
+    commissionEarned: number;
   };
-
   nutritionists: {
     approved: number;
     pending: number;
     rejected: number;
     blocked: number;
   };
-
   challenges: {
     total: number;
     published: number;
     draft: number;
     archived: number;
   };
-
   coaching: {
     publishedPlans: number;
     purchases: number;
     activePrograms: number;
+    upcomingPrograms: number;
+    pausedPrograms: number;
+    completedPrograms: number;
+    cancelledPrograms: number;
   };
-
   trends: {
     users: AdminDashboardTrendDTO[];
     revenue: AdminDashboardTrendDTO[];
     nutritionists: AdminDashboardTrendDTO[];
   };
-
   attention: AdminDashboardAttentionDTO[];
-
   recentActivity: AdminDashboardActivityDTO[];
 }

@@ -1,5 +1,5 @@
 import { injectable } from "inversify";
-import { FilterQuery, Types, UpdateResult } from "mongoose";
+import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 
 import { BaseRepository } from "../../common/base.repository";
 import {
@@ -30,16 +30,20 @@ export class UserProgramRepository
   async findActiveByUserAndNutritionist(
     userId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
+    session?: ClientSession,
   ): Promise<IUserProgram | null> {
-    return this._model
-      .findOne({
-        userId,
-        nutritionistId,
-        status: "active",
-        endDate: { $gt: new Date() },
-      })
-      .lean<IUserProgram | null>()
-      .exec();
+    const query = this._model.findOne({
+      userId,
+      nutritionistId,
+      status: "active",
+      endDate: { $gt: new Date() },
+    });
+
+    if (session) {
+      query.session(session);
+    }
+
+    return query.lean<IUserProgram | null>().exec();
   }
 
   async findLatestProgram(

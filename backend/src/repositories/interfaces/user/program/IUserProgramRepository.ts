@@ -1,4 +1,4 @@
-import { FilterQuery, Types, UpdateResult } from "mongoose";
+import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 
 import { IBaseRepository } from "../../common/IBaseRepository";
 import { IUserProgram } from "../../../../models/userProgram.model";
@@ -8,6 +8,7 @@ export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   findActiveByUserAndNutritionist(
     userId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
+    session?: ClientSession,
   ): Promise<IUserProgram | null>;
 
   findLatestProgram(

@@ -61,7 +61,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       trim: true,
     },
-    
+
     birthDate: {
       type: Date,
       validate: {

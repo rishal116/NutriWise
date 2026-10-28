@@ -7,6 +7,7 @@ export const PAYMENT_STATUSES = [
   "failed",
   "refunded",
 ] as const;
+
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 export const PAYMENT_PROVIDERS = ["stripe"] as const;
@@ -17,6 +18,7 @@ export const PAYMENT_RESOURCE_TYPES = [
   "consultation_session",
   "session_registration",
 ] as const;
+
 export type PaymentResourceType = (typeof PAYMENT_RESOURCE_TYPES)[number];
 
 export interface IPayment {

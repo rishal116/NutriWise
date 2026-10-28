@@ -27,8 +27,8 @@ import { nutritionistApplicationService } from "@/services/nutritionist/nutriApp
 import {
   SPECIALIZATIONS,
   LANGUAGES,
-  SpecializationType,
-  LanguageType,
+  type Specialization,
+  type Language,
 } from "@/types/nutritionist.types";
 import {
   nutritionistApplicationSchema,
@@ -36,7 +36,7 @@ import {
 } from "@/validations/nutritionist-application.validation";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
-const specializationLabels: Record<SpecializationType, string> = {
+const specializationLabels: Record<Specialization, string> = {
   weight_loss: "Weight Loss",
   weight_gain: "Weight Gain",
   sports_nutrition: "Sports Nutrition",
@@ -54,7 +54,7 @@ const specializationLabels: Record<SpecializationType, string> = {
   general_wellness: "General Wellness",
 };
 
-const languageLabels: Record<LanguageType, string> = {
+const languageLabels: Record<Language, string> = {
   english: "English",
   hindi: "Hindi",
   malayalam: "Malayalam",
@@ -264,7 +264,7 @@ export default function NutritionistApplicationFormPage() {
     };
   }, [reset]);
 
-  const toggleSpecialization = (value: SpecializationType) => {
+  const toggleSpecialization = (value: Specialization) => {
     const current = selectedSpecializations ?? [];
     setValue(
       "specializations",
@@ -275,7 +275,7 @@ export default function NutritionistApplicationFormPage() {
     );
   };
 
-  const toggleLanguage = (value: LanguageType) => {
+  const toggleLanguage = (value: Language) => {
     const current = selectedLanguages ?? [];
     setValue(
       "languages",

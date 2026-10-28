@@ -15,7 +15,7 @@ export class StripeService implements IStripeService {
       line_items: [
         {
           price_data: {
-            currency: stripeCheckoutInput.currency,
+            currency: "inr",
 
             product_data: {
               name: stripeCheckoutInput.title,
@@ -30,13 +30,15 @@ export class StripeService implements IStripeService {
       ],
 
       success_url: stripeCheckoutInput.successUrl,
-
       cancel_url: stripeCheckoutInput.cancelUrl,
-
       metadata: stripeCheckoutInput.metadata,
     });
 
-    return checkoutSession.url!;
+    if (!checkoutSession.url) {
+      throw new Error("Stripe Checkout URL was not returned.");
+    }
+
+    return checkoutSession.url;
   }
 
   async retrieveCheckoutSession(
@@ -45,4 +47,3 @@ export class StripeService implements IStripeService {
     return stripe.checkout.sessions.retrieve(sessionId);
   }
 }
-

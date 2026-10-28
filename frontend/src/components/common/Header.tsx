@@ -23,11 +23,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import {
-  logout,
-  setAccessToken,
-  setActiveRole,
-} from "@/redux/slices/authSlice";
+import { setAccessToken, setActiveRole } from "@/redux/slices/authSlice";
 import { showLoading, hideLoading } from "@/redux/slices/uiSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import type { RootState } from "@/redux/store";
@@ -36,6 +32,7 @@ import { tokenStorage } from "@/lib/auth/tokenStorage";
 import Logo from "./Logo";
 import { UserRole } from "@/types/user/user.types";
 import NotificationBell from "@/components/notification/NotificationBell";
+import { clearAuthSession } from "@/lib/auth/clearAuthSession";
 
 type Role = "user" | "nutritionist";
 type CtaKey = "none" | "pending" | "rejected" | "approved";
@@ -249,13 +246,15 @@ export default function Header() {
 
   const handleLogout = async () => {
     dispatch(showLoading("Logging out..."));
+
     try {
       await userAuthService.logout();
-      dispatch(logout());
-      router.replace("/");
     } catch (err) {
-      console.error(err);
+      console.error("Logout request failed:", err);
     } finally {
+      clearAuthSession();
+      router.replace("/");
+
       setTimeout(() => dispatch(hideLoading()), 300);
     }
   };

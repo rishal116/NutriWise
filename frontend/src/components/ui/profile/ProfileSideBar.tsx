@@ -18,6 +18,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   type LucideIcon,
+  CalendarDays,
 } from "lucide-react";
 
 interface NavItem {
@@ -58,6 +59,11 @@ const navSections: NavSection[] = [
       { name: "My Programs", href: "/user/programs", icon: Calendar },
       { name: "My Challenges", href: "/user/challenges", icon: Trophy },
       { name: "Meetings", href: "/user/meetings", icon: Video },
+      {
+        name: "Sessions",
+        href: "/user/sessions",
+        icon: CalendarDays,
+      },
       { name: "Progress", href: "/user/progress", icon: BarChart3 },
     ],
   },

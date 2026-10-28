@@ -16,3 +16,4 @@ export * from "./dashboard.routes";
 export * from "./review.routes";
 export * from "./health-progress.routes";
 export * from "./user-payment.routes";
+export * from "./user-session.routes";
