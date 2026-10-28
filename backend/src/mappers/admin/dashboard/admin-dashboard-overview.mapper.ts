@@ -1,17 +1,24 @@
 import type { AdminDashboardOverviewDTO } from "../../../dtos/admin/dashboard/admin-dashboard-overview.dto";
-import type { IAdminDashboardOverviewProjection } from "../../../types/admin/dashboard/admin-dashboard-overview.projection";
+import type { AdminDashboardOverview } from "../../../types/admin/dashboard/admin-dashboard.types";
 
 export const mapAdminDashboardOverviewToDTO = (
-  projection: IAdminDashboardOverviewProjection,
+  projection: AdminDashboardOverview,
 ): AdminDashboardOverviewDTO => {
   return {
     summary: {
       totalUsers: projection.summary.totalUsers,
+      newUsers: projection.summary.newUsers,
+      blockedUsers: projection.summary.blockedUsers,
+      deletedUsers: projection.summary.deletedUsers,
+      unverifiedUsers: projection.summary.unverifiedUsers,
       totalNutritionists: projection.summary.totalNutritionists,
       pendingNutritionistApplications:
         projection.summary.pendingNutritionistApplications,
       totalPurchases: projection.summary.totalPurchases,
       totalRevenue: projection.summary.totalRevenue,
+      refundedAmount: projection.summary.refundedAmount,
+      netRevenue: projection.summary.netRevenue,
+      commissionEarned: projection.summary.commissionEarned,
     },
 
     nutritionists: {
@@ -32,6 +39,10 @@ export const mapAdminDashboardOverviewToDTO = (
       publishedPlans: projection.coaching.publishedPlans,
       purchases: projection.coaching.purchases,
       activePrograms: projection.coaching.activePrograms,
+      upcomingPrograms: projection.coaching.upcomingPrograms,
+      pausedPrograms: projection.coaching.pausedPrograms,
+      completedPrograms: projection.coaching.completedPrograms,
+      cancelledPrograms: projection.coaching.cancelledPrograms,
     },
 
     trends: {

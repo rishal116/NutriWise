@@ -1,232 +1,196 @@
-"use client";
+import Link from "next/link";
+import { Bricolage_Grotesque } from "next/font/google";
+import { Award, Heart, Target, Users, type LucideIcon } from "lucide-react";
 
-import React from "react";
-import { Heart, Users, Award, Target, Sparkles, TrendingUp } from "lucide-react";
+const font = Bricolage_Grotesque({ subsets: ["latin"], display: "swap" });
+
+type Stat = { number: string; label: string };
+type Value = { icon: LucideIcon; title: string; description: string };
+type Member = { name: string; role: string };
+
+const stats: Stat[] = [
+  { number: "100K+", label: "Active users" },
+  { number: "50+", label: "Expert nutritionists" },
+  { number: "200+", label: "Challenges completed" },
+  { number: "4.9 / 5", label: "Average rating" },
+];
+
+const values: Value[] = [
+  {
+    icon: Heart,
+    title: "Health first",
+    description:
+      "Every recommendation is evidence-based and built around your wellbeing, not trends.",
+  },
+  {
+    icon: Users,
+    title: "Community driven",
+    description:
+      "Share your progress, swap recipes, and keep each other going.",
+  },
+  {
+    icon: Award,
+    title: "Expert guidance",
+    description:
+      "Certified nutritionists review your goals and adjust your plan as you go.",
+  },
+  {
+    icon: Target,
+    title: "Goal oriented",
+    description:
+      "Set realistic targets and get the tools to reach them without crash diets.",
+  },
+];
+
+const team: Member[] = [
+  { name: "Sarah Johnson", role: "Founder & CEO" },
+  { name: "Michael Chen", role: "Head of Nutrition" },
+  { name: "Emily Davis", role: "Community Manager" },
+  { name: "David Brown", role: "Chief Technology Officer" },
+];
+
+const focusRing =
+  "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#F0B429]";
 
 export default function AboutPage() {
-  const values = [
-    {
-      icon: Heart,
-      title: "Health First",
-      description: "We prioritize your wellbeing above all else, providing evidence-based nutrition guidance.",
-      gradient: "from-emerald-500 to-teal-600"
-    },
-    {
-      icon: Users,
-      title: "Community Driven",
-      description: "Building a supportive community where everyone can share their journey and inspire others.",
-      gradient: "from-teal-500 to-cyan-600"
-    },
-    {
-      icon: Award,
-      title: "Expert Guidance",
-      description: "Access to certified nutritionists and wellness experts dedicated to your success.",
-      gradient: "from-emerald-600 to-teal-700"
-    },
-    {
-      icon: Target,
-      title: "Goal Oriented",
-      description: "Helping you set realistic goals and providing the tools to achieve them sustainably.",
-      gradient: "from-teal-600 to-cyan-700"
-    }
-  ];
-
-  const stats = [
-    { number: "100K+", label: "Active Users" },
-    { number: "50+", label: "Expert Nutritionists" },
-    { number: "200+", label: "Challenges Completed" },
-    { number: "4.9★", label: "Average Rating" }
-  ];
-
-  const team = [
-    {
-      initial: "S",
-      name: "Sarah Johnson",
-      role: "Founder & CEO",
-      gradient: "from-emerald-400 to-teal-500"
-    },
-    {
-      initial: "M",
-      name: "Michael Chen",
-      role: "Head of Nutrition",
-      gradient: "from-teal-400 to-cyan-500"
-    },
-    {
-      initial: "E",
-      name: "Emily Davis",
-      role: "Community Manager",
-      gradient: "from-emerald-500 to-teal-600"
-    },
-    {
-      initial: "D",
-      name: "David Brown",
-      role: "Chief Technology Officer",
-      gradient: "from-teal-500 to-cyan-600"
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
-      
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-20 sm:py-24 lg:py-32">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-400 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-400 rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm font-semibold text-emerald-700">About NutriWise</span>
-          </div>
-          
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            Empowering Your{" "}
-            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent">
-              Wellness Journey
-            </span>
+    <div
+      className={`${font.className} min-h-screen bg-[#F7F8F3] text-[#10231C] antialiased`}
+    >
+      {/* Hero */}
+      <section className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 sm:py-24 lg:grid-cols-[1.2fr_1fr] lg:items-center lg:gap-16 lg:px-8 lg:py-28">
+        <div>
+          <h1 className="text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl lg:text-7xl">
+            Eat well without the guesswork.
           </h1>
-          
-          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            NutriWise is more than just a nutrition app—it's a comprehensive wellness platform designed to help you achieve your health goals through personalized guidance, expert support, and a thriving community.
+          <p className="mt-8 max-w-xl text-lg leading-relaxed text-[#10231C]/75 sm:text-xl">
+            NutriWise pairs you with certified nutritionists, daily challenges,
+            and a community that keeps you going, so healthy habits actually
+            last.
           </p>
+          <Link
+            href="/signup"
+            className={`mt-10 inline-block rounded-full bg-[#10231C] px-7 py-3.5 font-bold text-[#F7F8F3] transition-colors hover:bg-[#2F6B4F] ${focusRing}`}
+          >
+            Get started
+          </Link>
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="py-12 bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
-            {stats.map((stat, idx) => (
-              <div key={idx} className="space-y-2">
-                <div className="text-3xl sm:text-4xl font-bold">{stat.number}</div>
-                <div className="text-sm sm:text-base opacity-90">{stat.label}</div>
+        <aside
+          aria-label="NutriWise in numbers"
+          className="w-full max-w-md border-2 border-[#10231C] bg-white p-5 lg:justify-self-end"
+        >
+          <h2 className="text-3xl font-extrabold leading-none tracking-tight">
+            NutriWise facts
+          </h2>
+          <p className="mt-1 text-sm text-[#10231C]/70">
+            Serving members since 2020
+          </p>
+          <div className="mt-3 h-3 bg-[#10231C]" />
+          <dl>
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="flex items-baseline justify-between gap-4 border-b border-[#10231C]/25 py-3 last:border-b-0"
+              >
+                <dt className="font-medium">{stat.label}</dt>
+                <dd className="text-3xl font-extrabold tracking-tight">
+                  {stat.number}
+                </dd>
               </div>
             ))}
-          </div>
-        </div>
+          </dl>
+          <div className="h-1.5 bg-[#10231C]" />
+        </aside>
       </section>
 
-      {/* Our Story Section */}
-      <section className="py-16 sm:py-20 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
-                Our Story
-              </h2>
-              <div className="space-y-4 text-gray-600 leading-relaxed">
-                <p>
-                  Founded in 2020, NutriWise was born from a simple vision: to make professional nutrition guidance accessible to everyone, regardless of their location or budget.
-                </p>
-                <p>
-                  We noticed that many people struggled to maintain healthy eating habits due to lack of personalized guidance, accountability, and community support. That's why we created a platform that combines expert nutritionist consultations with engaging challenges and a supportive community.
-                </p>
-                <p>
-                  Today, we're proud to serve over 100,000 users worldwide, helping them transform their relationships with food and achieve lasting wellness results.
-                </p>
-              </div>
-            </div>
-            
-            <div className="relative">
-              <div className="aspect-square rounded-3xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-500">
-                <TrendingUp className="w-40 h-40 text-white opacity-90" />
-              </div>
-              <div className="absolute -top-6 -right-6 w-32 h-32 bg-emerald-300 rounded-full opacity-20 blur-2xl"></div>
-              <div className="absolute -bottom-6 -left-6 w-40 h-40 bg-teal-300 rounded-full opacity-20 blur-2xl"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Our Values Section */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Our Core Values
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              The principles that guide everything we do
+      {/* Story */}
+      <section className="border-t border-[#10231C]/15">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-12 lg:gap-12 lg:px-8">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:col-span-4">
+            Our story
+          </h2>
+          <div className="space-y-5 text-lg leading-relaxed text-[#10231C]/80 lg:col-span-7">
+            <p>
+              We started NutriWise in 2020 to make professional nutrition
+              guidance available to everyone, whatever their location or budget.
+            </p>
+            <p>
+              Most people don&rsquo;t fail at healthy eating from lack of
+              willpower. They lack personal guidance, accountability, and people
+              to do it with. So we built one place that combines expert
+              consultations, engaging challenges, and a supportive community.
+            </p>
+            <p>
+              Today, over 100,000 members use NutriWise to change how they think
+              about food and to keep the results.
             </p>
           </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {values.map((value, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-6 lg:p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group"
-              >
-                <div className={`w-14 h-14 bg-gradient-to-br ${value.gradient} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
-                  <value.icon className="w-7 h-7 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  {value.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {value.description}
-                </p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
-      {/* Our Team Section */}
-      <section className="py-16 sm:py-20 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12 lg:mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Meet Our Team
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              The passionate people behind NutriWise
-            </p>
-          </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, idx) => (
-              <div
-                key={idx}
-                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 overflow-hidden group"
+      {/* Values */}
+      <section className="bg-[#10231C] text-[#F7F8F3]">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <h2 className="max-w-2xl text-3xl font-extrabold tracking-tight sm:text-4xl">
+            What goes into every plan
+          </h2>
+          <ul className="mt-12 grid gap-x-12 md:grid-cols-2">
+            {values.map((value) => (
+              <li
+                key={value.title}
+                className="flex gap-5 border-t border-[#F7F8F3]/25 py-8"
               >
-                <div className={`h-48 bg-gradient-to-br ${member.gradient} flex items-center justify-center relative overflow-hidden`}>
-                  <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-bold text-4xl group-hover:scale-110 transition-transform">
-                    {member.initial}
-                  </div>
-                </div>
-                <div className="p-6 text-center">
-                  <h3 className="text-xl font-bold text-gray-900 mb-1">
-                    {member.name}
-                  </h3>
-                  <p className="text-emerald-600 font-medium">
-                    {member.role}
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#F0B429] text-[#10231C]">
+                  <value.icon className="h-6 w-6" aria-hidden="true" />
+                </span>
+                <div>
+                  <h3 className="text-xl font-bold">{value.title}</h3>
+                  <p className="mt-2 max-w-md leading-relaxed text-[#F7F8F3]/75">
+                    {value.description}
                   </p>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 sm:py-20 lg:py-24 bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl"></div>
-        </div>
-        
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Ready to Start Your Journey?
+      {/* Team */}
+      <section>
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+            The people behind NutriWise
           </h2>
-          <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Join thousands of members who are already transforming their health with NutriWise.
-          </p>
-          <button className="px-8 sm:px-10 py-4 bg-white text-emerald-600 text-lg font-bold rounded-full hover:bg-gray-100 transition-all transform hover:scale-105 shadow-2xl">
-            Get Started Today
-          </button>
+          <ul className="mt-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            {team.map((member) => (
+              <li key={member.name}>
+                <div
+                  aria-hidden="true"
+                  className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2F6B4F] text-3xl font-extrabold text-[#F7F8F3]"
+                >
+                  {member.name.charAt(0)}
+                </div>
+                <h3 className="mt-4 text-xl font-bold">{member.name}</h3>
+                <p className="text-[#10231C]/70">{member.role}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-[#F0B429]">
+        <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-4 py-16 sm:px-6 sm:py-20 md:flex-row md:items-center md:justify-between lg:px-8">
+          <h2 className="max-w-xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            Start with one small change.
+          </h2>
+          <Link
+            href="/signup"
+            className="shrink-0 rounded-full bg-[#10231C] px-8 py-4 text-lg font-bold text-[#F7F8F3] transition-colors hover:bg-[#2F6B4F] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#10231C]"
+          >
+            Create your free account
+          </Link>
         </div>
       </section>
     </div>

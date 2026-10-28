@@ -1,4 +1,4 @@
-import { FilterQuery, Types } from "mongoose";
+import {  FilterQuery, Types } from "mongoose";
 
 import { IBaseRepository } from "../../common/IBaseRepository";
 import { IUserPlan } from "../../../../models/userPlan.model";

@@ -6,15 +6,12 @@ import { useRouter } from "next/navigation";
 import { LogOut, Check } from "lucide-react";
 
 import { userAuthService } from "@/services/user/userAuth.service";
-import {
-  logout,
-  setAccessToken,
-  setActiveRole,
-} from "@/redux/slices/authSlice";
+import { setAccessToken, setActiveRole } from "@/redux/slices/authSlice";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { tokenStorage } from "@/lib/auth/tokenStorage";
 import NotificationBell from "@/components/notification/NotificationBell";
 import Logo from "../common/Logo";
+import { clearAuthSession } from "@/lib/auth/clearAuthSession";
 
 type Role = "user" | "nutritionist";
 
@@ -105,6 +102,7 @@ export default function NutritionistHeader() {
 
   const handleLogout = async () => {
     if (loggingOut) return;
+
     setLoggingOut(true);
 
     try {
@@ -112,9 +110,7 @@ export default function NutritionistHeader() {
     } catch (err) {
       console.error("Logout request failed:", err);
     } finally {
-      tokenStorage.remove();
-      document.cookie = `${ROLE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
-      dispatch(logout());
+      clearAuthSession();
       router.replace("/login");
     }
   };

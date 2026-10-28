@@ -24,12 +24,17 @@ export class PaymentRepository
     return payment;
   }
 
-  async existsByCheckoutSessionId(checkoutSessionId: string): Promise<boolean> {
-    return (
-      (await this._model.exists({
-        checkoutSessionId,
-      })) !== null
-    );
+  async existsByCheckoutSessionId(
+    checkoutSessionId: string,
+    session?: ClientSession,
+  ): Promise<boolean> {
+    const query = this._model.exists({ checkoutSessionId });
+
+    if (session) {
+      query.session(session);
+    }
+
+    return (await query.exec()) !== null;
   }
 
   async findByCheckoutSessionId(

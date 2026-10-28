@@ -17,7 +17,6 @@ export interface AdminDashboardActivityDTO {
     | "nutritionist_approved"
     | "challenge_published"
     | "purchase_completed";
-
   title: string;
   createdAt: string;
 }
@@ -25,10 +24,17 @@ export interface AdminDashboardActivityDTO {
 export interface AdminDashboardOverviewDTO {
   summary: {
     totalUsers: number;
+    newUsers: number;
+    blockedUsers: number;
+    deletedUsers: number;
+    unverifiedUsers: number;
     totalNutritionists: number;
     pendingNutritionistApplications: number;
     totalPurchases: number;
     totalRevenue: number;
+    refundedAmount: number;
+    netRevenue: number;
+    commissionEarned: number;
   };
 
   nutritionists: {
@@ -49,6 +55,10 @@ export interface AdminDashboardOverviewDTO {
     publishedPlans: number;
     purchases: number;
     activePrograms: number;
+    upcomingPrograms: number;
+    pausedPrograms: number;
+    completedPrograms: number;
+    cancelledPrograms: number;
   };
 
   trends: {

@@ -40,13 +40,20 @@ export default function NutritionistApplicationStatusPage() {
   const [fetchError, setFetchError] = useState(false);
   const router = useRouter();
 
-  const fetchStatus = async () => {
+  const fetchStatus = async (): Promise<void> => {
     try {
       setLoading(true);
       setFetchError(false);
-      const res = await nutritionistApplicationService.getApplicationStatus();
-      setStatus(res.data);
-    } catch (error) {
+
+      const response =
+        await nutritionistApplicationService.getApplicationStatus();
+
+      if (!response.data) {
+        throw new Error("Application status data is unavailable.");
+      }
+
+      setStatus(response.data);
+    } catch (error: unknown) {
       setFetchError(true);
       toast.error(getErrorMessage(error));
     } finally {

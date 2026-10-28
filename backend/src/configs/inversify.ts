@@ -536,6 +536,30 @@ import { IUserPaymentRepository } from "../repositories/interfaces/user/account/
 import { UserPaymentRepository } from "../repositories/implements/user/account/userPayment.repository";
 import { IUserPaymentService } from "../services/interfaces/user/account/IUserPaymentService";
 import { UserPaymentService } from "../services/implements/user/account/userPayment.service";
+import { IAdminPaymentController } from "../controllers/interfaces/admin/IAdminPaymentController";
+import { AdminPaymentController } from "../controllers/implementations/admin/adminPayment.controller";
+import { IAdminPaymentService } from "../services/interfaces/admin/IAdminPaymentService";
+import { AdminPaymentService } from "../services/implements/admin/adminPayment.service";
+import { IAdminPaymentRepository } from "../repositories/interfaces/admin/IAdminPaymentRepository";
+import { AdminPaymentRepository } from "../repositories/implements/admin/adminPayment.repository";
+import { IAdminResourceController } from "../controllers/interfaces/admin/IAdminResourceController";
+import { AdminResourceController } from "../controllers/implementations/admin/adminResource.controller";
+import { IAdminResourceService } from "../services/interfaces/admin/IAdminResourceService";
+import { AdminResourceService } from "../services/implements/admin/adminResource.service";
+import { IAdminResourceRepository } from "../repositories/interfaces/admin/IAdminResourceRepository";
+import { AdminResourceRepository } from "../repositories/implements/admin/adminResource.repository";
+import { IAdminPostRepository } from "../repositories/interfaces/admin/IAdminPostRepository";
+import { AdminPostRepository } from "../repositories/implements/admin/adminPost.repository";
+import { IAdminPostService } from "../services/interfaces/admin/IAdminPostService";
+import { AdminPostService } from "../services/implements/admin/adminPost.service";
+import { IAdminPostController } from "../controllers/interfaces/admin/IAdminPostController";
+import { AdminPostController } from "../controllers/implementations/admin/adminPost.controller";
+import { IUserSessionController } from "../controllers/interfaces/user/IUserSessionController";
+import { UserSessionController } from "../controllers/implementations/user/userSession.controller";
+import { IUserSessionService } from "../services/interfaces/user/IUserSessionService";
+import { UserSessionService } from "../services/implements/user/userSession.service";
+import { IUserSessionRepository } from "../repositories/interfaces/user/session/IUserSessionRepository";
+import { UserSessionRepository } from "../repositories/implements/user/session/userSession.repository";
 
 const container = new Container();
 
@@ -1313,12 +1337,58 @@ container
   .bind<IUserPaymentController>(TYPES.IUserPaymentController)
   .to(UserPaymentController);
 
-  container
+container
   .bind<IUserPaymentRepository>(TYPES.IUserPaymentRepository)
   .to(UserPaymentRepository);
 
-  container
+container
   .bind<IUserPaymentService>(TYPES.IUserPaymentService)
   .to(UserPaymentService);
+
+container
+  .bind<IAdminPaymentController>(TYPES.IAdminPaymentController)
+  .to(AdminPaymentController);
+
+container
+  .bind<IAdminPaymentService>(TYPES.IAdminPaymentService)
+  .to(AdminPaymentService);
+
+container
+  .bind<IAdminPaymentRepository>(TYPES.IAdminPaymentRepository)
+  .to(AdminPaymentRepository);
+
+container
+  .bind<IAdminResourceController>(TYPES.IAdminResourceController)
+  .to(AdminResourceController);
+
+container
+  .bind<IAdminResourceService>(TYPES.IAdminResourceService)
+  .to(AdminResourceService);
+
+container
+  .bind<IAdminResourceRepository>(TYPES.IAdminResourceRepository)
+  .to(AdminResourceRepository);
+
+container
+  .bind<IAdminPostRepository>(TYPES.IAdminPostRepository)
+  .to(AdminPostRepository);
+
+container.bind<IAdminPostService>(TYPES.IAdminPostService).to(AdminPostService);
+
+container
+  .bind<IAdminPostController>(TYPES.IAdminPostController)
+  .to(AdminPostController);
+
+container
+  .bind<IUserSessionController>(TYPES.IUserSessionController)
+  .to(UserSessionController);
+  
+container
+  .bind<IUserSessionService>(TYPES.IUserSessionService)
+  .to(UserSessionService);
+
+container
+  .bind<IUserSessionRepository>(TYPES.IUserSessionRepository)
+  .to(UserSessionRepository);
 
 export { container };

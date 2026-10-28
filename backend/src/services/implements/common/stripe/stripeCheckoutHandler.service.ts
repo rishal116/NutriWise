@@ -17,6 +17,8 @@ import { INutritionistPlanRepository } from "../../../../repositories/interfaces
 import { IUserProgramProgressRepository } from "../../../../repositories/interfaces/user/tracking/IUserProgramProgressRepository";
 import { IConversationService } from "../../../interfaces/chat/IConversationService";
 
+const COMMISSION_RATE = 10;
+
 @injectable()
 export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerService {
   constructor(
@@ -72,20 +74,15 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       );
     }
 
-    if (!session.payment_intent) {
-      throw new CustomError(
-        "Stripe payment intent not found.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
     if (
+      !session.payment_intent ||
       session.amount_total === null ||
       session.amount_total === undefined ||
-      session.currency?.toUpperCase() !== CURRENCY
+      session.currency?.toLowerCase() !== CURRENCY ||
+      session.amount_total <= 0
     ) {
       throw new CustomError(
-        "Stripe payment amount or currency is invalid.",
+        "Stripe payment details are invalid.",
         StatusCode.BAD_REQUEST,
       );
     }
@@ -109,17 +106,19 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       );
     }
 
-    if (plan.price * 100 !== session.amount_total) {
-      throw new CustomError(
-        "Stripe payment amount does not match the plan price.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
     if (plan.nutritionistId.toString() !== nutritionistIdValue) {
       throw new CustomError(
         "Nutritionist does not own this plan.",
         StatusCode.FORBIDDEN,
+      );
+    }
+
+    const expectedAmountInPaise = Math.round(plan.price * 100);
+
+    if (expectedAmountInPaise !== session.amount_total) {
+      throw new CustomError(
+        "Stripe payment amount does not match the plan price.",
+        StatusCode.BAD_REQUEST,
       );
     }
 
@@ -141,7 +140,17 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         ? session.payment_intent
         : session.payment_intent.id;
 
-    const amount = session.amount_total / 100;
+    // Calculate monetary amounts in paise to avoid floating-point errors.
+    const amountInPaise = session.amount_total;
+    const commissionInPaise = Math.round(
+      (amountInPaise * COMMISSION_RATE) / 100,
+    );
+    const nutritionistAmountInPaise = amountInPaise - commissionInPaise;
+
+    const amount = amountInPaise / 100;
+    const commissionAmount = commissionInPaise / 100;
+    const nutritionistAmount = nutritionistAmountInPaise / 100;
+
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + plan.durationDays);
@@ -152,7 +161,10 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       dbSession.startTransaction();
 
       const duplicatePayment =
-        await this._paymentRepository.existsByCheckoutSessionId(session.id);
+        await this._paymentRepository.existsByCheckoutSessionId(
+          session.id,
+          dbSession,
+        );
 
       if (duplicatePayment) {
         await dbSession.abortTransaction();
@@ -163,7 +175,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         return;
       }
 
-      const userPlan = await this._userPlanRepository.createWithSession(
+      const userPlan = await this._userPlanRepository.create(
         {
           userId,
           nutritionistId,
@@ -182,7 +194,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         dbSession,
       );
 
-      const userProgram = await this._userProgramRepository.createWithSession(
+      const userProgram = await this._userProgramRepository.create(
         {
           userId,
           nutritionistId,
@@ -196,7 +208,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         dbSession,
       );
 
-      await this._userProgramProgressRepository.createWithSession(
+      await this._userProgramProgressRepository.create(
         {
           userId,
           userProgramId: userProgram._id,
@@ -213,7 +225,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         dbSession,
       );
 
-      await this._paymentRepository.createWithSession(
+      await this._paymentRepository.create(
         {
           userId,
           sellerId: nutritionistId,
@@ -223,6 +235,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
           status: "paid",
           amount,
           currency: CURRENCY,
+          commissionAmount,
           checkoutSessionId: session.id,
           paymentIntentId,
           itemSnapshot: {
@@ -240,6 +253,9 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         dbSession,
       );
 
+      // Preserve the current escrow accounting behavior.
+      // Commission allocation and seller payouts must be handled by
+      // the wallet's release/payout workflow.
       await this._walletRepository.creditEscrow(
         adminWallet._id.toString(),
         amount,
@@ -252,6 +268,11 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         checkoutSessionId: session.id,
         userPlanId: userPlan._id.toString(),
         userProgramId: userProgram._id.toString(),
+        grossAmount: amount,
+        commissionRate: COMMISSION_RATE,
+        commissionAmount,
+        nutritionistAmount,
+        currency: CURRENCY,
       });
     } catch (error) {
       if (dbSession.inTransaction()) {
@@ -260,7 +281,13 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
 
       logger.error("Stripe checkout processing failed.", {
         checkoutSessionId: session.id,
-        error,
+        error:
+          error instanceof Error
+            ? {
+                message: error.message,
+                stack: error.stack,
+              }
+            : String(error),
       });
 
       throw error;

@@ -5,7 +5,6 @@ import { IConversationService } from "../../interfaces/chat/IConversationService
 import { IConversationRepository } from "../../../repositories/interfaces/chat/IConversationRepository";
 import { IConversationMemberRepository } from "../../../repositories/interfaces/chat/IConversationMemberRepository";
 import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
-import { IUserPlanRepository } from "../../../repositories/interfaces/user/program/IUserPlanRepository";
 import { CreateDirectConversationDTO } from "../../../dtos/chat/createConversation.dto";
 import { ConversationResponseDTO } from "../../../dtos/chat/conversation-response.dto";
 import { ConversationMapper } from "../../../mappers/chat/conversation.mapper";
@@ -17,6 +16,7 @@ import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-
 import { toConversationListItemDTO } from "../../../mappers/chat/conversation-list.mapper";
 import { ConversationListFilter } from "../../../types/chat/conversation-list.types";
 import { ConversationListItemDTO } from "../../../dtos/chat/conversation-list-item.dto";
+import { IUserProgramRepository } from "../../../repositories/interfaces/user/program/IUserProgramRepository";
 
 @injectable()
 export class ConversationService implements IConversationService {
@@ -30,8 +30,8 @@ export class ConversationService implements IConversationService {
     @inject(TYPES.IUserRepository)
     private readonly _userRepository: IUserRepository,
 
-    @inject(TYPES.IUserPlanRepository)
-    private readonly _userPlanRepository: IUserPlanRepository,
+    @inject(TYPES.IUserProgramRepository)
+    private readonly _userProgramRepository: IUserProgramRepository,
   ) {}
 
   async createDirectConversation(
@@ -59,14 +59,14 @@ export class ConversationService implements IConversationService {
 
     if (!conversation) {
       const activePlan1 =
-        await this._userPlanRepository.findActiveByUserAndNutritionist(
+        await this._userProgramRepository.findActiveByUserAndNutritionist(
           dto.currentUserId,
           dto.otherUserId,
           session,
         );
 
       const activePlan2 =
-        await this._userPlanRepository.findActiveByUserAndNutritionist(
+        await this._userProgramRepository.findActiveByUserAndNutritionist(
           dto.otherUserId,
           dto.currentUserId,
           session,
@@ -80,7 +80,7 @@ export class ConversationService implements IConversationService {
       }
 
       if (session) {
-        conversation = await this._conversationRepository.createWithSession(
+        conversation = await this._conversationRepository.create(
           {
             chatType: "direct",
             directKey,
