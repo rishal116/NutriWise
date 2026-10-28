@@ -1,188 +1,100 @@
 "use client";
 
-import { Lock, ChevronRight, Bell, Shield, UserX, Globe, Moon, HelpCircle, Mail, Smartphone } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Bell, ChevronRight, Lock } from "lucide-react";
+
+const settingsGroups = [
+  {
+    title: "Account",
+    items: [
+      {
+        icon: Lock,
+        label: "Change Password",
+        description: "Update your password and keep your account secure.",
+        href: "/user/settings/change-password",
+        color: "text-emerald-600",
+        bgColor: "bg-emerald-50",
+      },
+    ],
+  },
+  {
+    title: "Preferences",
+    items: [
+      {
+        icon: Bell,
+        label: "Notifications",
+        description: "Manage your notification preferences.",
+        href: "/user/notifications",
+        color: "text-amber-600",
+        bgColor: "bg-amber-50",
+      },
+    ],
+  },
+];
 
 export default function SettingsPage() {
   const router = useRouter();
 
-  const settingsGroups = [
-    {
-      title: "Account",
-      items: [
-        {
-          icon: Lock,
-          label: "Change Password",
-          description: "Update your password and security settings",
-          onClick: () => router.push("/user/settings/change-password"),
-          color: "text-emerald-600",
-          bgColor: "bg-emerald-50"
-        },
-        {
-          icon: Mail,
-          label: "Email Preferences",
-          description: "Manage your email and communication settings",
-          onClick: () => {},
-          color: "text-teal-600",
-          bgColor: "bg-teal-50"
-        },
-        {
-          icon: Smartphone,
-          label: "Two-Factor Authentication",
-          description: "Add an extra layer of security",
-          onClick: () => {},
-          color: "text-cyan-600",
-          bgColor: "bg-cyan-50",
-          badge: "Recommended"
-        }
-      ]
-    },
-    {
-      title: "Preferences",
-      items: [
-        {
-          icon: Bell,
-          label: "Notifications",
-          description: "Configure push and email notifications",
-          onClick: () => {},
-          color: "text-amber-600",
-          bgColor: "bg-amber-50"
-        },
-        {
-          icon: Globe,
-          label: "Language & Region",
-          description: "Set your language and timezone",
-          onClick: () => {},
-          color: "text-blue-600",
-          bgColor: "bg-blue-50"
-        },
-        {
-          icon: Moon,
-          label: "Appearance",
-          description: "Customize theme and display options",
-          onClick: () => {},
-          color: "text-purple-600",
-          bgColor: "bg-purple-50"
-        }
-      ]
-    },
-    {
-      title: "Privacy & Security",
-      items: [
-        {
-          icon: Shield,
-          label: "Privacy Settings",
-          description: "Control your data and privacy options",
-          onClick: () => {},
-          color: "text-indigo-600",
-          bgColor: "bg-indigo-50"
-        }
-      ]
-    },
-    {
-      title: "Support",
-      items: [
-        {
-          icon: HelpCircle,
-          label: "Help & Support",
-          description: "Get help and contact support",
-          onClick: () => {},
-          color: "text-slate-600",
-          bgColor: "bg-slate-50"
-        }
-      ]
-    },
-    {
-      title: "Danger Zone",
-      items: [
-        {
-          icon: UserX,
-          label: "Delete Account",
-          description: "Permanently delete your account and data",
-          onClick: () => {},
-          color: "text-red-600",
-          bgColor: "bg-red-50"
-        }
-      ]
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-      <div className="max-w-4xl mx-auto p-6 lg:p-8">
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
+      <div className="mx-auto max-w-4xl p-6 lg:p-8">
+        <header className="mb-10">
+          <h1 className="mb-3 bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-4xl font-bold text-transparent lg:text-5xl">
             Settings
           </h1>
-          <p className="text-gray-600 text-lg">
-            Manage your account preferences and settings
+          <p className="text-lg text-gray-600">
+            Manage your account security and notification preferences.
           </p>
-        </div>
+        </header>
 
-        {/* Settings Groups */}
         <div className="space-y-8">
           {settingsGroups.map((group) => (
-            <div key={group.title} className="space-y-4">
-              {/* Group Title */}
+            <section key={group.title} className="space-y-4">
               <div className="flex items-center gap-3">
-                <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">
+                <h2 className="text-sm font-bold uppercase tracking-wider text-gray-500">
                   {group.title}
                 </h2>
-                <div className="flex-1 h-px bg-gradient-to-r from-gray-200 to-transparent"></div>
+                <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent" />
               </div>
 
-              {/* Group Items */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                {group.items.map((item, index) => (
-                  <button
-                    key={item.label}
-                    onClick={item.onClick}
-                    className={`
-                      w-full flex items-center justify-between px-6 py-5 
-                      hover:bg-gray-50 transition-all duration-200 group
-                      ${index !== group.items.length - 1 ? 'border-b border-gray-100' : ''}
-                    `}
-                  >
-                    <div className="flex items-start gap-4 flex-1">
-                      {/* Icon */}
-                      <div className={`${item.bgColor} p-3 rounded-xl group-hover:scale-110 transition-transform duration-200`}>
-                        <item.icon className={item.color} size={20} />
-                      </div>
+              <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
 
-                      {/* Content */}
-                      <div className="flex-1 text-left">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors">
-                            {item.label}
-                          </span>
-                          {item.badge && (
-                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full">
-                              {item.badge}
-                            </span>
-                          )}
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => router.push(item.href)}
+                      className="group flex w-full items-center justify-between gap-4 px-5 py-5 text-left transition-colors hover:bg-gray-50 sm:px-6"
+                    >
+                      <div className="flex min-w-0 flex-1 items-start gap-4">
+                        <div
+                          className={`${item.bgColor} rounded-xl p-3 transition-transform duration-200 group-hover:scale-105`}
+                        >
+                          <Icon className={item.color} size={20} />
                         </div>
-                        <p className="text-sm text-gray-500">
-                          {item.description}
-                        </p>
+
+                        <div className="min-w-0 flex-1">
+                          <h3 className="mb-1 font-semibold text-gray-900 transition-colors group-hover:text-emerald-600">
+                            {item.label}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {item.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Arrow */}
-                    <ChevronRight 
-                      className="text-gray-400 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all duration-200 flex-shrink-0 ml-4" 
-                      size={20}
-                    />
-                  </button>
-                ))}
+                      <ChevronRight
+                        className="shrink-0 text-gray-400 transition-all group-hover:translate-x-1 group-hover:text-emerald-600"
+                        size={20}
+                      />
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+            </section>
           ))}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-12 text-center text-sm text-gray-500">
-          <p>Need help? Contact our support team anytime.</p>
         </div>
       </div>
     </div>

@@ -530,6 +530,12 @@ import { ResourceCommentController } from "../controllers/implementations/resour
 import { INotificationController } from "../controllers/interfaces/common/INotificationController";
 import { NotificationController } from "../controllers/implementations/common/notification.controller";
 import { INutriDashboardRepository } from "../repositories/interfaces/nutritionist/INutriDashboardRepository";
+import { IUserPaymentController } from "../controllers/interfaces/user/IUserPaymentController";
+import { UserPaymentController } from "../controllers/implementations/user/userPayment.controller";
+import { IUserPaymentRepository } from "../repositories/interfaces/user/account/IUserPaymentRepository";
+import { UserPaymentRepository } from "../repositories/implements/user/account/userPayment.repository";
+import { IUserPaymentService } from "../services/interfaces/user/account/IUserPaymentService";
+import { UserPaymentService } from "../services/implements/user/account/userPayment.service";
 
 const container = new Container();
 
@@ -1299,11 +1305,20 @@ container
   .bind<IResourceCommentController>(TYPES.IResourceCommentController)
   .to(ResourceCommentController);
 
-  container
+container
   .bind<INotificationController>(TYPES.INotificationController)
   .to(NotificationController);
 
-  
+container
+  .bind<IUserPaymentController>(TYPES.IUserPaymentController)
+  .to(UserPaymentController);
 
+  container
+  .bind<IUserPaymentRepository>(TYPES.IUserPaymentRepository)
+  .to(UserPaymentRepository);
+
+  container
+  .bind<IUserPaymentService>(TYPES.IUserPaymentService)
+  .to(UserPaymentService);
 
 export { container };
