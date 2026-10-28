@@ -1,4 +1,7 @@
 export const TYPES = {
+  IUserPaymentController:Symbol.for("IUserPaymentController"),
+  IUserPaymentService:Symbol.for("IUserPaymentService"),
+  IUserPaymentRepository:Symbol.for("IUserPaymentRepository"),
   INotificationController: Symbol.for(" INotificationController"),
   IResourceCommentController: Symbol.for("IResourceCommentController"),
   IResourceLikeController: Symbol.for("IResourceLikeController"),

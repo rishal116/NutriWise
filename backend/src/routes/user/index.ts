@@ -14,10 +14,11 @@ import userMeetingRoutes from "./user-meeting.route";
 import userPostRoutes from "./user-post.route";
 import userChallengeRoutes from "./user-challenge.route";
 import userChallengeTrackingRoutes from "./user-challenge-tracking.route";
-import userDashboardRouter from "./dashboard.route";
+import userDashboardRouter from "./user-dashboard.routes";
 import reviewRoutes from "./review.route";
 import healthProgressRoutes from "./health-progress.route";
 import userLikedPostRoutes from "./user-liked-post.route";
+import userPaymentRoutes from "./user-payment.routes";
 
 const router = express.Router();
 
@@ -56,5 +57,6 @@ router.use("/dashboard", userDashboardRouter);
 router.use("/reviews", reviewRoutes);
 
 router.use("/health/progress", healthProgressRoutes);
+router.use("/payments", userPaymentRoutes);
 
 export default router;
