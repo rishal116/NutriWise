@@ -10,7 +10,7 @@ export default function UserStatusTabs({
   onChange,
 }: UserStatusTabsProps) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-lg bg-slate-100 p-1">
+    <div className="inline-flex items-center gap-1 rounded-xl bg-admin-bg p-1">
       {STATUS_FILTERS.map((filter) => {
         const active = value === filter.value;
 
@@ -20,10 +20,10 @@ export default function UserStatusTabs({
             type="button"
             onClick={() => onChange(filter.value)}
             aria-pressed={active}
-            className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60 ${
               active
-                ? "bg-white text-slate-900 shadow-sm"
-                : "text-slate-500 hover:text-slate-700"
+                ? "bg-admin-surface text-admin-accent shadow-sm"
+                : "text-admin-muted hover:text-admin-text"
             }`}
           >
             {filter.label}

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -20,22 +21,26 @@ export default function WelcomeOverlay() {
     const showWelcome = async () => {
       try {
         const response = await userAuthService.getMe();
-        if (!cancelled) {
-          setAdminName(response.data.fullName?.split(" ")[0] ?? "Admin");
-        }
+
+        if (cancelled) return;
+
+        const fullName = response.data?.fullName;
+        setAdminName(fullName?.trim().split(/\s+/)[0] || "Admin");
       } catch {
         if (cancelled) return;
       }
 
       if (cancelled) return;
+
       sessionStorage.setItem(WELCOME_SESSION_KEY, "true");
       setMounted(true);
+
       requestAnimationFrame(() => {
         if (!cancelled) setVisible(true);
       });
     };
 
-    showWelcome();
+    void showWelcome();
 
     return () => {
       cancelled = true;
@@ -44,16 +49,23 @@ export default function WelcomeOverlay() {
 
   useEffect(() => {
     if (!visible) return;
-    const hideTimer = setTimeout(() => setVisible(false), VISIBLE_DURATION);
+
+    const hideTimer = setTimeout(
+      () => setVisible(false),
+      VISIBLE_DURATION,
+    );
+
     return () => clearTimeout(hideTimer);
   }, [visible]);
 
   useEffect(() => {
     if (!mounted || visible) return;
+
     const unmountTimer = setTimeout(
       () => setMounted(false),
       TRANSITION_DURATION,
     );
+
     return () => clearTimeout(unmountTimer);
   }, [mounted, visible]);
 

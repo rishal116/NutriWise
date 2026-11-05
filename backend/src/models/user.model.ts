@@ -7,8 +7,10 @@ export interface IUser {
   fullName: string;
   username: string;
   email: string;
+  phone?: string;
   gender?: Gender;
   profileImage?: string;
+  profileImagePublicId?: string | null;
   birthDate?: Date;
   password?: string;
   googleId?: string;
@@ -52,6 +54,11 @@ const userSchema = new Schema<IUser>(
       trim: true,
     },
 
+    phone: {
+      type: String,
+      trim: true,
+    },
+
     gender: {
       type: String,
       enum: Object.values(Gender),
@@ -59,6 +66,12 @@ const userSchema = new Schema<IUser>(
 
     profileImage: {
       type: String,
+      trim: true,
+    },
+
+    profileImagePublicId: {
+      type: String,
+      default: null,
       trim: true,
     },
 

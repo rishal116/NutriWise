@@ -300,4 +300,16 @@ export const TYPES = {
   IAdminChallengeDayRepository: Symbol.for("IAdminChallengeDayRepository"),
   IAdminDashboardRepository: Symbol.for("IAdminDashboardRepository"),
   IAdminPlanRepository: Symbol.for("IAdminPlanRepository"),
+
+  // User Auth Services
+  ISignupService: Symbol.for("ISignupService"),
+  ILoginService: Symbol.for("ILoginService"),
+  IPasswordResetService: Symbol.for("IPasswordResetService"),
+  IRoleSwitchService: Symbol.for("IRoleSwitchService"),
+  IUserContextService: Symbol.for("IUserContextService"),
+
+  // User Auth Controllers
+  IUserPasswordController: Symbol.for("IUserPasswordController"),
+  IUserContextController: Symbol.for("IUserContextController"),
+  IUserRoleController: Symbol.for("IUserRoleController"),
 } as const;

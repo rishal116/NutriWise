@@ -10,10 +10,10 @@ export const COACH_LEVEL_LABELS: Record<CoachLevel, string> = {
 };
 
 export const COACH_LEVEL_STYLES: Record<CoachLevel, string> = {
-  beginner: "bg-slate-100 text-slate-600",
-  verified: "bg-sky-50 text-sky-600",
-  expert: "bg-violet-50 text-violet-600",
-  top_coach: "bg-amber-50 text-amber-600",
+  beginner: "bg-admin-surface-hover text-admin-muted",
+  verified: "bg-admin-pastel-blue text-admin-text",
+  expert: "bg-admin-pastel-purple text-admin-text",
+  top_coach: "bg-admin-warning/15 text-admin-warning",
 };
 
 export const COACH_LEVEL_OPTIONS: { value: CoachLevelFilter; label: string }[] =

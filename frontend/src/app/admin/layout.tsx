@@ -1,8 +1,10 @@
+
 "use client";
 
 import { useState } from "react";
-import Sidebar from "@/components/admin/Sidebar";
-import Header from "@/components/admin/Header";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminHeader from "@/components/admin/AdminHeader";
+import AdminThemeProvider from "@/components/providers/AdminThemeProvider";
 
 export default function AdminLayout({
   children,
@@ -13,25 +15,28 @@ export default function AdminLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-admin-bg flex">
-      <Sidebar
-        collapsed={collapsed}
-        setCollapsed={setCollapsed}
-        mobileOpen={mobileOpen}
-        setMobileOpen={setMobileOpen}
-      />
-
+    <AdminThemeProvider>
       <div
-        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out ${
-          collapsed ? "lg:ml-20" : "lg:ml-64"
-        }`}
+        id="admin-dashboard"
+        className="flex min-h-screen flex-col bg-admin-bg"
       >
-        <Header onMenuClick={() => setMobileOpen(true)} />
+        <AdminHeader onMenuClick={() => setMobileOpen(true)} />
 
-        <main className="pt-8 px-4 md:px-8 pb-10">
-          <div className="mx-auto max-w-[1400px]">{children}</div>
-        </main>
+        <div className="flex min-h-0 flex-1">
+          <AdminSidebar
+            collapsed={collapsed}
+            setCollapsed={setCollapsed}
+            mobileOpen={mobileOpen}
+            setMobileOpen={setMobileOpen}
+          />
+
+          <main className="min-w-0 flex-1 px-4 pb-10 pt-8 md:px-8">
+            <div className="mx-auto max-w-[1400px]">
+              {children}
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminThemeProvider>
   );
 }

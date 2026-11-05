@@ -253,9 +253,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         dbSession,
       );
 
-      // Preserve the current escrow accounting behavior.
-      // Commission allocation and seller payouts must be handled by
-      // the wallet's release/payout workflow.
+     
       await this._walletRepository.creditEscrow(
         adminWallet._id.toString(),
         amount,

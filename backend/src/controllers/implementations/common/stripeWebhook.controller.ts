@@ -3,6 +3,8 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "../../../types/types";
 import { asyncHandler } from "../../../utils/asyncHandler";
+import { CustomError } from "../../../utils/customError";
+import { sendResponse } from "../../../utils/responseHandler";
 
 import { IStripeWebhookController } from "../../interfaces/common/IStripeWebhookController";
 import { IStripeWebhookService } from "../../../services/interfaces/common/stripe/IStripeWebhookService";
@@ -19,11 +21,10 @@ export class StripeWebhookController implements IStripeWebhookController {
     const signature = req.headers["stripe-signature"];
 
     if (typeof signature !== "string") {
-      res.status(400).json({
-        message: "Missing Stripe signature.",
-      });
-
-      return;
+      throw new CustomError(
+        "Missing Stripe signature.",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
     await this._stripeWebhookService.handleWebhook(
@@ -31,8 +32,11 @@ export class StripeWebhookController implements IStripeWebhookController {
       signature,
     );
 
-    res.status(StatusCode.OK).json({
-      received: true,
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      "Stripe webhook received successfully.",
+      { received: true },
+    );
   });
 }

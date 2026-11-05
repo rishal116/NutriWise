@@ -1,5 +1,5 @@
-import { IBaseRepository } from "../../common/IBaseRepository";
-import { IUser } from "../../../../models/user.model";
+import type { IUser } from "../../../../models/user.model";
+import type { IBaseRepository } from "../../common/IBaseRepository";
 
 export interface IUserRepository extends IBaseRepository<IUser> {
   findByEmail(email: string): Promise<IUser | null>;
@@ -15,6 +15,4 @@ export interface IUserRepository extends IBaseRepository<IUser> {
   getProfileImageById(
     userId: string,
   ): Promise<Pick<IUser, "profileImage"> | null>;
-
-  
 }

@@ -1,41 +1,38 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../../types/types";
-import { IUserProfileController } from "../../interfaces/user/IUserProfileController";
-import { IUserProfileService } from "../../../services/interfaces/user/IUserProfileService";
+import type { IUserProfileController } from "../../interfaces/user/IUserProfileController";
+import type { IUserProfileService } from "../../../services/interfaces/user/IUserProfileService";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { asyncHandler } from "../../../utils/asyncHandler";
+import { sendResponse } from "../../../utils/responseHandler";
 import { USER_MESSAGES, COMMON_MESSAGES } from "../../../constants";
 
 @injectable()
 export class UserProfileController implements IUserProfileController {
   constructor(
     @inject(TYPES.IUserProfileService)
-    private _userProfileService: IUserProfileService,
+    private readonly _userProfileService: IUserProfileService,
   ) {}
 
   getProfile = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
     const user = await this._userProfileService.getProfile(userId);
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: COMMON_MESSAGES.SUCCESS,
-      data: user,
-    });
+    return sendResponse(res, StatusCode.OK, COMMON_MESSAGES.SUCCESS, user);
   });
 
   updateProfile = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.user!;
-    const profileData = req.body;
     const updatedUser = await this._userProfileService.updateProfile(
       userId,
-      profileData,
+      req.body,
     );
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: USER_MESSAGES.PROFILE_UPDATED,
-      data: updatedUser,
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      USER_MESSAGES.PROFILE_UPDATED,
+      updatedUser,
+    );
   });
 
   updateProfileImage = asyncHandler(async (req: Request, res: Response) => {
@@ -44,10 +41,11 @@ export class UserProfileController implements IUserProfileController {
       userId,
       req.file!,
     );
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: USER_MESSAGES.PROFILE_UPDATED,
-      data: updatedProfile,
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      USER_MESSAGES.PROFILE_UPDATED,
+      updatedProfile,
+    );
   });
 }

@@ -12,7 +12,6 @@ import { NutritionistPlanBrowsingController } from "../controllers/implementatio
 import { OnboardingController } from "../controllers/implementations/user/onboarding.controller";
 import { ReviewController } from "../controllers/implementations/user/review.controller";
 import { UserAccountController } from "../controllers/implementations/user/userAccount.controller";
-import { UserAuthController } from "../controllers/implementations/user/userAuth.controller";
 import { UserMeetingController } from "../controllers/implementations/user/userMeeting.controller";
 import { UserProfileController } from "../controllers/implementations/user/userProfile.controller";
 import { UserProgramController } from "../controllers/implementations/user/userProgram.controller";
@@ -27,10 +26,9 @@ import { NutritionistBrowsingService } from "../services/implements/user/discove
 import { NutritionistPlanBrowsingService } from "../services/implements/user/discovery/nutriPlanBrowsing.service";
 import { OnboardingService } from "../services/implements/user/account/onboarding.service";
 import { ReviewService } from "../services/implements/user/discovery/review.service";
-import { UserAccountService } from "../services/implements/user/account/userAccount.service";
-import { UserAuthService } from "../services/implements/user/account/userAuth.service";
+import { UserAccountService } from "../services/implements/user/user-account.service";
 import { UserMeetingService } from "../services/implements/user/meeting/userMeeting.service";
-import { UserProfileService } from "../services/implements/user/userProfile.service";
+import { UserProfileService } from "../services/implements/user/user-profile.service";
 import { UserProgramService } from "../services/implements/user/program/userProgram.service";
 import { UserProgramDayService } from "../services/implements/user/program/userProgramDay.service";
 import { UserDayTrackingService } from "../services/implements/user/tracking/userDayTracking.service";
@@ -68,7 +66,6 @@ import { INutritionistPlanBrowsingController } from "../controllers/interfaces/u
 import { IOnboardingController } from "../controllers/interfaces/user/IOnboardingController";
 import { IReviewController } from "../controllers/interfaces/user/IReviewController";
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
-import { IUserAuthController } from "../controllers/interfaces/user/IUserAuthController";
 import { IUserMeetingController } from "../controllers/interfaces/user/IUserMeetingController";
 import { IUserProfileController } from "../controllers/interfaces/user/IUserProfileController";
 import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
@@ -86,7 +83,6 @@ import { IReviewService } from "../services/interfaces/user/discovery/IReviewSer
 
 import { IOnboardingService } from "../services/interfaces/user/IOnboardingService";
 import { IUserAccountService } from "../services/interfaces/user/IUserAccountService";
-import { IUserAuthService } from "../services/interfaces/user/IUserAuthService";
 import { IUserMeetingService } from "../services/interfaces/user/IUserMeetingService";
 import { IUserProfileService } from "../services/interfaces/user/IUserProfileService";
 
@@ -560,6 +556,24 @@ import { IUserSessionService } from "../services/interfaces/user/IUserSessionSer
 import { UserSessionService } from "../services/implements/user/userSession.service";
 import { IUserSessionRepository } from "../repositories/interfaces/user/session/IUserSessionRepository";
 import { UserSessionRepository } from "../repositories/implements/user/session/userSession.repository";
+import { IUserAuthController } from "../controllers/interfaces/user/auth/IUserAuthController";
+import { UserAuthController } from "../controllers/implementations/user/auth/user-auth.controller";
+import { IUserPasswordController } from "../controllers/interfaces/user/auth/IUserPasswordController";
+import { UserPasswordController } from "../controllers/implementations/user/auth/user-password.controller";
+import { IUserContextController } from "../controllers/interfaces/user/auth/IUserContextController";
+import { UserContextController } from "../controllers/implementations/user/auth/user-context.controller";
+import { IUserRoleController } from "../controllers/interfaces/user/auth/IUserRoleController";
+import { UserRoleController } from "../controllers/implementations/user/auth/user-role.controller";
+import { ISignupService } from "../services/interfaces/user/auth/ISignupService";
+import { SignupService } from "../services/implements/user/auth/signup.service";
+import { ILoginService } from "../services/interfaces/user/auth/ILoginService";
+import { LoginService } from "../services/implements/user/auth/login.service";
+import { IPasswordResetService } from "../services/interfaces/user/auth/IPasswordResetService";
+import { PasswordResetService } from "../services/implements/user/auth/password-reset.service";
+import { RoleSwitchService } from "../services/implements/user/auth/role-switch.service";
+import { IRoleSwitchService } from "../services/interfaces/user/auth/IRoleSwitchService";
+import { IUserContextService } from "../services/interfaces/user/IUserContextService";
+import { UserContextService } from "../services/implements/user/user-context.service";
 
 const container = new Container();
 
@@ -614,10 +628,6 @@ container.bind<IReviewController>(TYPES.IReviewController).to(ReviewController);
 container
   .bind<IUserAccountController>(TYPES.IUserAccountController)
   .to(UserAccountController);
-
-container
-  .bind<IUserAuthController>(TYPES.IUserAuthController)
-  .to(UserAuthController);
 
 container
   .bind<IUserProfileController>(TYPES.IUserProfileController)
@@ -684,8 +694,6 @@ container.bind<IReviewService>(TYPES.IReviewService).to(ReviewService);
 container
   .bind<IUserAccountService>(TYPES.IUserAccountService)
   .to(UserAccountService);
-
-container.bind<IUserAuthService>(TYPES.IUserAuthService).to(UserAuthService);
 
 container
   .bind<IUserMeetingService>(TYPES.IUserMeetingService)
@@ -1382,7 +1390,7 @@ container
 container
   .bind<IUserSessionController>(TYPES.IUserSessionController)
   .to(UserSessionController);
-  
+
 container
   .bind<IUserSessionService>(TYPES.IUserSessionService)
   .to(UserSessionService);
@@ -1390,5 +1398,44 @@ container
 container
   .bind<IUserSessionRepository>(TYPES.IUserSessionRepository)
   .to(UserSessionRepository);
+
+// User Auth Controllers
+container
+  .bind<IUserAuthController>(TYPES.IUserAuthController)
+  .to(UserAuthController);
+
+container
+  .bind<IUserPasswordController>(TYPES.IUserPasswordController)
+  .to(UserPasswordController);
+
+container
+  .bind<IUserContextController>(TYPES.IUserContextController)
+  .to(UserContextController);
+
+container
+  .bind<IUserRoleController>(TYPES.IUserRoleController)
+  .to(UserRoleController);
+
+
+  // User Auth Services
+container
+  .bind<ISignupService>(TYPES.ISignupService)
+  .to(SignupService);
+
+container
+  .bind<ILoginService>(TYPES.ILoginService)
+  .to(LoginService);
+
+container
+  .bind<IPasswordResetService>(TYPES.IPasswordResetService)
+  .to(PasswordResetService);
+
+container
+  .bind<IRoleSwitchService>(TYPES.IRoleSwitchService)
+  .to(RoleSwitchService);
+
+container
+  .bind<IUserContextService>(TYPES.IUserContextService)
+  .to(UserContextService);
 
 export { container };

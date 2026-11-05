@@ -3,9 +3,9 @@ import { CheckCircle2, Circle } from "lucide-react";
 import { UserRole } from "@/enums/user/user.enum";
 
 const ROLE_STYLES: Record<UserRole, string> = {
-  [UserRole.ADMIN]: "bg-violet-50 text-violet-600",
-  [UserRole.NUTRITIONIST]: "bg-emerald-50 text-emerald-600",
-  [UserRole.USER]: "bg-slate-100 text-slate-600",
+  [UserRole.ADMIN]: "bg-admin-pastel-purple text-admin-text",
+  [UserRole.NUTRITIONIST]: "bg-admin-accent-soft text-admin-accent",
+  [UserRole.USER]: "bg-admin-surface-hover text-admin-muted",
 };
 
 export function RoleBadge({ role }: { role: UserRole }) {
@@ -26,7 +26,7 @@ export function ProfileStatus({ completed }: { completed: boolean }) {
   return (
     <span
       className={`inline-flex items-center gap-1 text-xs font-semibold ${
-        completed ? "text-emerald-600" : "text-slate-400"
+        completed ? "text-admin-success" : "text-admin-muted"
       }`}
     >
       <Icon size={14} />
@@ -39,12 +39,14 @@ export function AccountStatusBadge({ blocked }: { blocked: boolean }) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider ${
-        blocked ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
+        blocked
+          ? "bg-admin-danger-soft text-admin-danger"
+          : "bg-admin-pastel-green text-admin-success"
       }`}
     >
       <span
         className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
-          blocked ? "bg-red-600" : "bg-emerald-600"
+          blocked ? "bg-admin-danger" : "bg-admin-success"
         }`}
       />
       {blocked ? "Blocked" : "Active"}

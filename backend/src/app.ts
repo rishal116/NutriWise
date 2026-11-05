@@ -1,6 +1,7 @@
+import "./configs/env";
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -15,8 +16,6 @@ import resourceRoutes from "./routes/resource";
 
 import { errorMiddleware } from "./middlewares/error.middleware";
 import { notificationRoutes, stripeRoutes } from "./routes/common";
-
-dotenv.config();
 
 const app = express();
 

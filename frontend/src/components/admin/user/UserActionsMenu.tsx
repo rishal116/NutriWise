@@ -10,6 +10,9 @@ interface UserActionsMenuProps {
   onToggleBlock: () => void;
 }
 
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60";
+
 export default function UserActionsMenu({
   fullName,
   isBlocked,
@@ -57,21 +60,21 @@ export default function UserActionsMenu({
         aria-label={`Actions for ${fullName}`}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="rounded-lg border border-transparent p-1.5 transition-all hover:border-slate-200 hover:bg-white"
+        className={`rounded-lg border border-transparent p-1.5 transition-colors hover:border-admin-border hover:bg-admin-surface ${focusRing}`}
       >
-        <MoreHorizontal size={18} className="text-slate-400" />
+        <MoreHorizontal size={18} className="text-admin-muted" />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-slate-200 bg-white p-1 text-left shadow-xl"
+          className="absolute right-0 top-9 z-20 w-44 rounded-xl border border-admin-border bg-admin-surface p-1 text-left shadow-xl shadow-admin-text/10"
         >
           <button
             type="button"
             role="menuitem"
             onClick={run(onView)}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-admin-text transition-colors hover:bg-admin-surface-hover ${focusRing}`}
           >
             <ExternalLink size={14} />
             View Profile
@@ -81,10 +84,10 @@ export default function UserActionsMenu({
             type="button"
             role="menuitem"
             onClick={run(onToggleBlock)}
-            className={`mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+            className={`mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${focusRing} ${
               isBlocked
-                ? "text-emerald-600 hover:bg-emerald-50"
-                : "text-red-600 hover:bg-red-50"
+                ? "text-admin-success hover:bg-admin-success/10"
+                : "text-admin-danger hover:bg-admin-danger/10"
             }`}
           >
             <BlockIcon size={14} />

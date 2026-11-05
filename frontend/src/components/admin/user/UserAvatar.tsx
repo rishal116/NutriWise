@@ -15,13 +15,13 @@ export default function UserAvatar({ fullName, src }: UserAvatarProps) {
         alt={fullName}
         width={40}
         height={40}
-        className="h-10 w-10 shrink-0 rounded-full border border-slate-200 object-cover"
+        className="h-10 w-10 shrink-0 rounded-full border border-admin-border object-cover"
       />
     );
   }
 
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-emerald-50 text-xs font-bold text-emerald-600">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-admin-border bg-admin-accent-soft text-xs font-bold text-admin-accent">
       {getInitials(fullName)}
     </div>
   );

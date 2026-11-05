@@ -19,25 +19,23 @@ export default function AdminUserDetailsPage() {
   if (error || !user) return <UserDetailsError error={error} onRetry={retry} />;
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <Link
-          href="/admin/users"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-teal-700"
-        >
-          <ArrowLeft size={16} />
-          Back to users
-        </Link>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <Link
+        href="/admin/users"
+        className="inline-flex items-center gap-2 rounded-lg text-sm font-medium text-admin-muted transition-colors hover:text-admin-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60"
+      >
+        <ArrowLeft size={16} />
+        Back to users
+      </Link>
 
-        <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <UserProfileCard user={user} />
+      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <UserProfileCard user={user} />
 
-          <div className="space-y-6">
-            <UserAccountSection user={user} />
-            <UserHealthSection health={user.healthDetails} />
-          </div>
+        <div className="space-y-6">
+          <UserAccountSection user={user} />
+          <UserHealthSection health={user.healthDetails} />
         </div>
       </div>
-    </main>
+    </div>
   );
 }

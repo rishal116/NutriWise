@@ -25,8 +25,7 @@ export default function ApplicationTable() {
   const debouncedSearch = useDebounce(search, 500);
 
   const [sortBy, setSortBy] = useState<SortBy>("newest");
-  const [statusFilter, setStatusFilter] =
-    useState<StatusFilter>("pending");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("pending");
 
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -43,8 +42,7 @@ export default function ApplicationTable() {
         await adminNutritionistApplicationService.getApplications({
           search: debouncedSearch.trim() || undefined,
           sortBy,
-          applicationStatus:
-            statusFilter === "all" ? undefined : statusFilter,
+          applicationStatus: statusFilter === "all" ? undefined : statusFilter,
           cursor,
           limit: PAGE_SIZE,
         });
@@ -57,9 +55,7 @@ export default function ApplicationTable() {
       const pagination = response.data;
 
       if (!response.success || !pagination) {
-        throw new Error(
-          response.message || "Failed to fetch applications",
-        );
+        throw new Error(response.message || "Failed to fetch applications");
       }
 
       setApplications((previous) => {
@@ -71,9 +67,7 @@ export default function ApplicationTable() {
 
         return [
           ...previous,
-          ...pagination.items.filter(
-            (item) => !existingIds.has(item.id),
-          ),
+          ...pagination.items.filter((item) => !existingIds.has(item.id)),
         ];
       });
 
@@ -163,13 +157,7 @@ export default function ApplicationTable() {
     observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [
-    fetchApplications,
-    hasMore,
-    isLoading,
-    isLoadingMore,
-    nextCursor,
-  ]);
+  }, [fetchApplications, hasMore, isLoading, isLoadingMore, nextCursor]);
 
   const handleClearFilters = () => {
     setSearch("");
@@ -178,12 +166,10 @@ export default function ApplicationTable() {
   };
 
   const hasActiveFilters =
-    Boolean(search.trim()) ||
-    sortBy !== "newest" ||
-    statusFilter !== "pending";
+    Boolean(search.trim()) || sortBy !== "newest" || statusFilter !== "pending";
 
   return (
-    <div className="bg-white">
+    <div className="bg-admin-surface">
       <ApplicationFilters
         search={search}
         sortBy={sortBy}
@@ -191,9 +177,7 @@ export default function ApplicationTable() {
         hasActiveFilters={hasActiveFilters}
         onSearchChange={setSearch}
         onSort={() =>
-          setSortBy((current) =>
-            current === "newest" ? "oldest" : "newest",
-          )
+          setSortBy((current) => (current === "newest" ? "oldest" : "newest"))
         }
         onStatusChange={setStatusFilter}
         onClearFilters={handleClearFilters}
@@ -201,10 +185,11 @@ export default function ApplicationTable() {
 
       <div className="relative">
         {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/70 pt-16 backdrop-blur-[1px]">
+          <div className="absolute inset-0 z-10 flex items-start justify-center bg-admin-surface/60 pt-16">
             <Loader2
               size={20}
-              className="animate-spin text-slate-400"
+              className="animate-spin text-admin-muted"
+              aria-label="Loading applications"
             />
           </div>
         )}
@@ -215,14 +200,12 @@ export default function ApplicationTable() {
         />
       </div>
 
-      <div
-        ref={sentinelRef}
-        className="flex h-16 items-center justify-center"
-      >
+      <div ref={sentinelRef} className="flex h-16 items-center justify-center">
         {isLoadingMore && (
           <Loader2
             size={18}
-            className="animate-spin text-slate-400"
+            className="animate-spin text-admin-muted"
+            aria-label="Loading more applications"
           />
         )}
 
@@ -230,7 +213,7 @@ export default function ApplicationTable() {
           !isLoadingMore &&
           !hasMore &&
           applications.length > 0 && (
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs font-medium text-admin-muted">
               No more applications
             </span>
           )}

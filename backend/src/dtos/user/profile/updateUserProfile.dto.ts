@@ -6,6 +6,7 @@ import {
   Length,
   Matches,
 } from "class-validator";
+
 import { Gender } from "../../../enums/user.enum";
 
 export class UpdateUserProfileDto {
@@ -15,7 +16,10 @@ export class UpdateUserProfileDto {
   fullName?: string;
 
   @IsOptional()
-  @Matches(/^\+[1-9]\d{1,14}$/)
+  @IsString()
+  @Matches(/^\+?[1-9]\d{7,14}$/, {
+    message: "Please provide a valid phone number.",
+  })
   phone?: string;
 
   @IsOptional()
