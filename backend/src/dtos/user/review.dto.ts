@@ -1,9 +1,8 @@
-
 export interface ReviewResponseDTO {
   id: string;
   userId: string;
-  userName?: string;           
-  userProfileImage?: string;  
+  userName?: string;
+  userProfileImage?: string;
   nutritionistId?: string;
   planId?: string;
   rating: number;

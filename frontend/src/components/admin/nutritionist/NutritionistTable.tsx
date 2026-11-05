@@ -65,7 +65,7 @@ export default function NutritionistTable() {
   const SortIcon = sortBy === "newest" ? ArrowDown : ArrowUp;
 
   return (
-    <div className="bg-white">
+    <div className="bg-admin-surface">
       <NutritionistToolbar
         search={search}
         onSearchChange={setSearch}
@@ -79,26 +79,34 @@ export default function NutritionistTable() {
 
       <div className="relative overflow-x-auto">
         {isRefreshing && (
-          <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/70 pt-16 backdrop-blur-[1px]">
+          <div className="absolute inset-0 z-10 flex items-start justify-center bg-admin-surface/60 pt-16">
             <Loader2
               size={20}
-              className="animate-spin text-slate-400"
+              className="animate-spin text-admin-muted"
               aria-label="Refreshing nutritionists"
             />
           </div>
         )}
 
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-100 bg-slate-50/50 font-medium text-slate-500">
+          <thead className="border-b border-admin-border bg-admin-surface-hover font-medium text-admin-muted">
             <tr>
-              <th className="px-6 py-4 font-semibold">Nutritionist</th>
-              <th className="hidden px-6 py-4 font-semibold sm:table-cell">
+              <th scope="col" className="px-6 py-4 font-semibold">
+                Nutritionist
+              </th>
+              <th
+                scope="col"
+                className="hidden px-6 py-4 font-semibold sm:table-cell"
+              >
                 Level
               </th>
-              <th className="hidden px-6 py-4 font-semibold md:table-cell">
+              <th
+                scope="col"
+                className="hidden px-6 py-4 font-semibold md:table-cell"
+              >
                 Rating
               </th>
-              <th className="hidden px-6 py-4 lg:table-cell">
+              <th scope="col" className="hidden px-6 py-4 lg:table-cell">
                 <button
                   type="button"
                   onClick={() =>
@@ -107,21 +115,28 @@ export default function NutritionistTable() {
                     )
                   }
                   aria-label={`Sort by join date, currently ${sortBy}`}
-                  className="flex items-center gap-1 font-semibold text-slate-600 transition-colors hover:text-slate-900"
+                  className="flex items-center gap-1 font-semibold text-admin-muted transition-colors hover:text-admin-text"
                 >
                   Joined
                   <SortIcon size={13} />
                 </button>
               </th>
-              <th className="px-6 py-4 text-center font-semibold">Status</th>
-              <th className="px-6 py-4 text-right font-semibold">Actions</th>
+              <th scope="col" className="px-6 py-4 text-center font-semibold">
+                Status
+              </th>
+              <th scope="col" className="px-6 py-4 text-right font-semibold">
+                Actions
+              </th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-admin-border">
             {nutritionists.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-14 text-center text-slate-400">
+                <td
+                  colSpan={6}
+                  className="py-14 text-center text-admin-muted"
+                >
                   {isLoading ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 size={18} className="animate-spin" />
@@ -153,7 +168,7 @@ export default function NutritionistTable() {
         {isLoadingMore && (
           <Loader2
             size={18}
-            className="animate-spin text-slate-400"
+            className="animate-spin text-admin-muted"
             aria-label="Loading more nutritionists"
           />
         )}
@@ -161,7 +176,7 @@ export default function NutritionistTable() {
           !isLoadingMore &&
           !hasMore &&
           nutritionists.length > 0 && (
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs font-medium text-admin-muted">
               No more nutritionists
             </span>
           )}

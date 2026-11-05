@@ -1,8 +1,16 @@
-"use client";
+import type { Metadata } from "next";
 
-import NotificationsPage from "@/components/admin/Notification";
+import NotificationsPage from "@/components/notification/NotificationPage";
 
-export default async function Page() {
+export const metadata: Metadata = {
+  title: "Notifications | NutriWise",
+  description: "View and manage your latest notifications on NutriWise.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
-  return <NotificationsPage/>;
+export default function Page() {
+  return <NotificationsPage />;
 }

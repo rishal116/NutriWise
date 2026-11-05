@@ -8,7 +8,6 @@ import { IConversationRepository } from "../../../repositories/interfaces/chat/I
 import { IMessageRepository } from "../../../repositories/interfaces/chat/IMessageRepository";
 import { IConversationMemberRepository } from "../../../repositories/interfaces/chat/IConversationMemberRepository";
 import { IMessageReceiptRepository } from "../../../repositories/interfaces/chat/IMessageReceiptRepository";
-import { IUserPlanRepository } from "../../../repositories/interfaces/user/program/IUserPlanRepository";
 
 import { SendMessageDTO } from "../../../dtos/chat/sendMessage.dto";
 import { MessageResponseDTO } from "../../../dtos/chat/message-response.dto";
@@ -25,6 +24,7 @@ import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
 import logger from "../../../utils/logger";
+import { IUserProgramRepository } from "../../../repositories/interfaces/user/program/IUserProgramRepository";
 
 @injectable()
 export class MessageService implements IMessageService {
@@ -44,8 +44,8 @@ export class MessageService implements IMessageService {
     @inject(TYPES.IMessageReceiptRepository)
     private readonly _messageReceiptRepository: IMessageReceiptRepository,
 
-    @inject(TYPES.IUserPlanRepository)
-    private readonly _userPlanRepository: IUserPlanRepository,
+    @inject(TYPES.IUserProgramRepository)
+    private readonly _userProgramRepository: IUserProgramRepository,
   ) {}
 
   private async validateCoachingAuthorization(
@@ -88,12 +88,12 @@ export class MessageService implements IMessageService {
 
       if (otherMember) {
         const activePlan1 =
-          await this._userPlanRepository.findActiveByUserAndNutritionist(
+          await this._userProgramRepository.findActiveByUserAndNutritionist(
             senderId,
             otherMember.userId.toString(),
           );
         const activePlan2 =
-          await this._userPlanRepository.findActiveByUserAndNutritionist(
+          await this._userProgramRepository.findActiveByUserAndNutritionist(
             otherMember.userId.toString(),
             senderId,
           );

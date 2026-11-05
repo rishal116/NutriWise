@@ -1,5 +1,7 @@
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
+export class ApiResponseDTO<T = null> {
+  constructor(
+    public readonly success: boolean,
+    public readonly message: string,
+    public readonly data?: T,
+  ) {}
 }

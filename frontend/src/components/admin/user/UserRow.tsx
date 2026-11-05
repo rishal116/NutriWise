@@ -27,17 +27,17 @@ function UserRow({ user, onRequestToggleBlock }: UserRowProps) {
   };
 
   return (
-    <tr className="transition-colors hover:bg-slate-50/50">
+    <tr className="transition-colors hover:bg-admin-surface-hover">
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <UserAvatar fullName={user.fullName} src={user.profileImage} />
 
           <div className="flex min-w-0 flex-col">
-            <span className="truncate text-[13px] font-bold text-slate-900">
+            <span className="truncate text-[13px] font-bold text-admin-text">
               {user.fullName}
             </span>
 
-            <span className="truncate text-xs text-slate-500">
+            <span className="truncate text-xs text-admin-muted">
               @{user.username} · {user.email}
             </span>
 
@@ -52,7 +52,7 @@ function UserRow({ user, onRequestToggleBlock }: UserRowProps) {
         <RoleBadge role={user.activeRole} />
       </td>
 
-      <td className="hidden px-6 py-4 font-medium text-slate-500 lg:table-cell">
+      <td className="hidden px-6 py-4 font-medium text-admin-muted lg:table-cell">
         {formatDate(user.createdAt)}
       </td>
 

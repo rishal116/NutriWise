@@ -1,4 +1,4 @@
-import {
+import type {
   ClientSession,
   FilterQuery,
   Model,
@@ -6,7 +6,7 @@ import {
   UpdateQuery,
 } from "mongoose";
 
-import { IBaseRepository } from "../../interfaces/common/IBaseRepository";
+import type { IBaseRepository } from "../../interfaces/common/IBaseRepository";
 
 export class BaseRepository<T> implements IBaseRepository<T> {
   protected readonly _model: Model<T>;
@@ -21,7 +21,7 @@ export class BaseRepository<T> implements IBaseRepository<T> {
       session ? { session } : undefined,
     );
 
-    return document;
+    return document.toObject() as T;
   }
 
   async findOne(filter: FilterQuery<T>): Promise<T | null> {
@@ -41,13 +41,14 @@ export class BaseRepository<T> implements IBaseRepository<T> {
     update: UpdateQuery<T>,
     session?: ClientSession,
   ): Promise<T | null> {
-    const query = this._model.findByIdAndUpdate(id, update, {
-      new: true,
-      runValidators: true,
-      ...(session ? { session } : {}),
-    });
-
-    return query.lean<T | null>().exec();
+    return this._model
+      .findByIdAndUpdate(id, update, {
+        new: true,
+        runValidators: true,
+        ...(session ? { session } : {}),
+      })
+      .lean<T | null>()
+      .exec();
   }
 
   async updateOne(

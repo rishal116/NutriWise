@@ -36,8 +36,8 @@ export default function UserAccountSection({
         ]}
       />
 
-      <div className="mt-6 border-t border-slate-100 pt-5">
-        <p className="text-xs font-medium text-slate-500">Assigned roles</p>
+      <div className="mt-6 border-t border-admin-border pt-5">
+        <p className="text-xs font-medium text-admin-muted">Assigned roles</p>
         <ul className="mt-2 flex flex-wrap gap-2">
           {user.roles.map((role) => {
             const isActive = role === user.activeRole;
@@ -47,8 +47,8 @@ export default function UserAccountSection({
                 key={role}
                 className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
                   isActive
-                    ? "bg-teal-50 text-teal-800"
-                    : "bg-slate-100 text-slate-600"
+                    ? "bg-admin-accent-soft text-admin-accent"
+                    : "bg-admin-surface-hover text-admin-muted"
                 }`}
               >
                 {formatLabel(role)}

@@ -16,9 +16,9 @@ export const STATUS_FILTERS: {
 ];
 
 export const STATUS_STYLES: Record<ApplicationStatus, string> = {
-  pending: "bg-amber-50 text-amber-600",
-  approved: "bg-emerald-50 text-emerald-600",
-  rejected: "bg-red-50 text-red-600",
+  pending: "bg-admin-warning/15 text-admin-warning",
+  approved: "bg-admin-pastel-green text-admin-success",
+  rejected: "bg-admin-danger-soft text-admin-danger",
 };
 
 export function formatDate(value: string | Date): string {

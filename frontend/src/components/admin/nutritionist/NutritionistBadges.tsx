@@ -22,10 +22,10 @@ export function RatingDisplay({
   totalReviews: number;
 }) {
   return (
-    <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700">
-      <Star size={13} className="fill-amber-400 text-amber-400" />
+    <span className="inline-flex items-center gap-1 text-xs font-bold text-admin-text">
+      <Star size={13} className="fill-admin-warning text-admin-warning" />
       {rating.toFixed(1)}
-      <span className="font-medium text-slate-400">({totalReviews})</span>
+      <span className="font-medium text-admin-muted">({totalReviews})</span>
     </span>
   );
 }

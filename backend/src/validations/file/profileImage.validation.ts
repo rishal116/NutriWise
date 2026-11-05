@@ -1,6 +1,14 @@
 import { CustomError } from "../../utils/customError";
 import { StatusCode } from "../../enums/statusCode.enum";
 
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export const validateProfileImage = (
   file?: Express.Multer.File,
 ): void => {
@@ -11,22 +19,14 @@ export const validateProfileImage = (
     );
   }
 
-  const allowedMimeTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ];
-
-  if (!allowedMimeTypes.includes(file.mimetype)) {
+  if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
     throw new CustomError(
       "Only JPEG, PNG and WebP images are allowed",
       StatusCode.BAD_REQUEST,
     );
   }
 
-  const maxSize = 5 * 1024 * 1024;
-
-  if (file.size > maxSize) {
+  if (file.size > MAX_FILE_SIZE) {
     throw new CustomError(
       "Image size must not exceed 5 MB",
       StatusCode.BAD_REQUEST,

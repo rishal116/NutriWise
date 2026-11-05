@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -55,19 +54,19 @@ export default function UserTable() {
   const SortIcon = sortBy === "newest" ? ArrowDown : ArrowUp;
 
   return (
-    <div className="bg-white">
+    <div className="bg-admin-surface">
       {/* Toolbar */}
-      <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-admin-border p-4 lg:flex-row lg:items-center lg:justify-between">
         <UserStatusTabs value={status} onChange={setStatus} />
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full items-center gap-3 lg:w-auto">
           <UserSearchBar value={search} onChange={setSearch} />
 
           {hasActiveFilters && (
             <button
               type="button"
               onClick={clearFilters}
-              className="shrink-0 text-xs font-semibold text-teal-700 transition hover:text-teal-800"
+              className="shrink-0 text-xs font-semibold text-admin-accent transition hover:text-admin-accent-hover"
             >
               Clear
             </button>
@@ -78,17 +77,17 @@ export default function UserTable() {
       {/* Table */}
       <div className="relative overflow-x-auto">
         {isRefreshing && (
-          <div className="absolute inset-0 z-10 flex items-start justify-center bg-white/70 pt-16 backdrop-blur-[1px]">
+          <div className="absolute inset-0 z-10 flex items-start justify-center bg-admin-surface/60 pt-16">
             <Loader2
               size={20}
-              className="animate-spin text-slate-400"
+              className="animate-spin text-admin-muted"
               aria-label="Refreshing users"
             />
           </div>
         )}
 
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-100 bg-slate-50/50 font-medium text-slate-500">
+          <thead className="border-b border-admin-border bg-admin-surface-hover font-medium text-admin-muted">
             <tr>
               <th scope="col" className="px-6 py-4 font-semibold">
                 User
@@ -113,7 +112,7 @@ export default function UserTable() {
                     )
                   }
                   aria-label={`Sort by join date, currently ${sortBy}`}
-                  className="flex items-center gap-1 font-semibold text-slate-600 transition-colors hover:text-slate-900"
+                  className="flex items-center gap-1 font-semibold text-admin-muted transition-colors hover:text-admin-text"
                 >
                   Joined
                   <SortIcon size={13} aria-hidden="true" />
@@ -136,12 +135,12 @@ export default function UserTable() {
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-admin-border">
             {users.length === 0 ? (
               <tr>
                 <td
                   colSpan={5}
-                  className="py-14 text-center text-slate-400"
+                  className="py-14 text-center text-admin-muted"
                 >
                   {isLoading ? (
                     <span className="inline-flex items-center gap-2">
@@ -175,7 +174,7 @@ export default function UserTable() {
         {isLoadingMore && (
           <Loader2
             size={18}
-            className="animate-spin text-slate-400"
+            className="animate-spin text-admin-muted"
             aria-label="Loading more users"
           />
         )}
@@ -184,7 +183,7 @@ export default function UserTable() {
           !isLoadingMore &&
           !hasMore &&
           users.length > 0 && (
-            <span className="text-xs font-medium text-slate-400">
+            <span className="text-xs font-medium text-admin-muted">
               No more users
             </span>
           )}

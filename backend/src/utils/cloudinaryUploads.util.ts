@@ -1,5 +1,3 @@
-import { Readable } from "stream";
-
 import cloudinary from "../configs/couldinary";
 
 export interface CloudinaryUploadResult {
@@ -8,49 +6,37 @@ export interface CloudinaryUploadResult {
   resourceType: "image" | "video" | "raw";
 }
 
-export const uploadToCloudinary = (
+export const uploadToCloudinary = async (
   file: Express.Multer.File,
   folder: string,
 ): Promise<CloudinaryUploadResult> => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: "auto",
-      },
-      (error, result) => {
-        if (error) {
-          reject(error);
-          return;
-        }
+  const result = await cloudinary.uploader.upload(
+    `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
+    {
+      folder,
+      resource_type: "auto",
+    },
+  );
 
-        if (!result) {
-          reject(new Error("Cloudinary upload returned no result"));
-          return;
-        }
-
-        resolve({
-          secureUrl: result.secure_url,
-          publicId: result.public_id,
-          resourceType:
-            result.resource_type === "video"
-              ? "video"
-              : result.resource_type === "raw"
-                ? "raw"
-                : "image",
-        });
-      },
-    );
-
-    Readable.from(file.buffer).pipe(uploadStream);
-  });
+  return {
+    secureUrl: result.secure_url,
+    publicId: result.public_id,
+    resourceType:
+      result.resource_type === "video"
+        ? "video"
+        : result.resource_type === "raw"
+          ? "raw"
+          : "image",
+  };
 };
 
 export const uploadMultipleToCloudinary = async (
   files: Express.Multer.File[],
   folder: string,
 ): Promise<CloudinaryUploadResult[]> => {
-  return Promise.all(files.map((file) => uploadToCloudinary(file, folder)));
+  return Promise.all(
+    files.map((file) => uploadToCloudinary(file, folder)),
+  );
 };
 
 export const deleteFromCloudinary = async (
