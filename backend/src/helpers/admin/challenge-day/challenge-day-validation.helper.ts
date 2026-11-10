@@ -41,15 +41,3 @@ export function validateChallengeDayNumber(
     );
   }
 }
-
-export function validateChallengeDayOwnership(
-  actualChallengeId: Types.ObjectId,
-  expectedChallengeId: string,
-): void {
-  if (actualChallengeId.toString() !== expectedChallengeId) {
-    throw new CustomError(
-      "Challenge day does not belong to this challenge",
-      StatusCode.BAD_REQUEST,
-    );
-  }
-}

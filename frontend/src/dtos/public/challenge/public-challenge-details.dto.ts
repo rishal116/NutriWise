@@ -33,6 +33,9 @@ export interface PublicChallengeDetailsDTO {
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
   durationDays: number;
+  goals: string[];
+  benefits: string[];
+  tags: string[];
   days: PublicChallengeDayDTO[];
   participation: PublicChallengeParticipationDTO;
 }

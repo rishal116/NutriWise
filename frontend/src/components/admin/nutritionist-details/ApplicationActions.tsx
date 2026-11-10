@@ -14,6 +14,12 @@ interface ApplicationActionsProps {
   onReject: (reason: string) => Promise<boolean>;
 }
 
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60";
+
+const DANGER_BUTTON =
+  "bg-admin-danger-soft text-admin-danger transition-colors hover:bg-admin-danger/15 disabled:opacity-50";
+
 export default function ApplicationActions({
   status,
   rejectionReason,
@@ -40,8 +46,8 @@ export default function ApplicationActions({
     <div className="flex flex-wrap items-center gap-3">
       {isRejecting ? (
         <form
-          onSubmit={handleSubmit}
-          className="flex w-full flex-col gap-2 rounded-xl border border-slate-200 bg-white p-1.5 shadow-sm focus-within:border-emerald-400 sm:w-auto sm:flex-row sm:items-center"
+          onSubmit={(event) => void handleSubmit(event)}
+          className="flex w-full flex-col gap-2 rounded-xl border border-admin-border bg-admin-surface p-1.5 shadow-sm shadow-admin-text/5 transition-colors focus-within:border-admin-accent sm:w-auto sm:flex-row sm:items-center"
         >
           <input
             type="text"
@@ -49,7 +55,7 @@ export default function ApplicationActions({
             onChange={(event) => setReason(event.target.value)}
             placeholder="Reason for rejection..."
             aria-label="Reason for rejection"
-            className="min-w-0 bg-transparent px-3 py-2 text-sm font-medium outline-none placeholder:text-slate-400 sm:w-64"
+            className="min-w-0 bg-transparent px-3 py-2 text-sm font-medium text-admin-text outline-none placeholder:text-admin-muted sm:w-64"
           />
 
           <div className="flex gap-2">
@@ -57,14 +63,14 @@ export default function ApplicationActions({
               type="button"
               onClick={() => setIsRejecting(false)}
               disabled={isLoading}
-              className="flex-1 rounded-lg px-3 py-2 text-xs font-bold text-slate-500 transition hover:text-slate-700 sm:flex-none"
+              className={`flex-1 rounded-lg px-3 py-2 text-xs font-bold text-admin-muted transition-colors hover:text-admin-text disabled:opacity-50 sm:flex-none ${FOCUS_RING}`}
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading || !reason.trim()}
-              className="flex flex-1 items-center justify-center rounded-lg bg-rose-50 px-4 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50 sm:flex-none"
+              className={`flex flex-1 items-center justify-center rounded-lg px-4 py-2 text-xs font-bold sm:flex-none ${DANGER_BUTTON} ${FOCUS_RING}`}
             >
               {isLoading ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -79,7 +85,7 @@ export default function ApplicationActions({
           type="button"
           onClick={startRejecting}
           disabled={isLoading}
-          className="flex items-center gap-2 rounded-xl bg-rose-50 px-5 py-2.5 text-sm font-bold text-rose-600 transition hover:bg-rose-100 disabled:opacity-60"
+          className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold ${DANGER_BUTTON} ${FOCUS_RING}`}
         >
           <XCircle size={16} />
           {status === "rejected" ? "Update reason" : "Reject"}
@@ -90,7 +96,7 @@ export default function ApplicationActions({
         type="button"
         onClick={onApprove}
         disabled={isLoading}
-        className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-100 transition hover:bg-emerald-700 disabled:opacity-60"
+        className={`flex items-center gap-2 rounded-xl bg-admin-accent px-5 py-2.5 text-sm font-bold text-admin-accent-fg transition-colors hover:bg-admin-accent-hover disabled:opacity-60 ${FOCUS_RING}`}
       >
         {isLoading ? (
           <Loader2 size={16} className="animate-spin" />

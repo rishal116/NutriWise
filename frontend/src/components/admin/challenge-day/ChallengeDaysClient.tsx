@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -66,32 +65,32 @@ export default function ChallengeDaysClient({
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl animate-pulse space-y-4">
-          <div className="h-8 w-64 rounded bg-slate-200" />
-          <div className="h-48 rounded-2xl bg-white" />
-        </div>
-      </main>
+      <div
+        role="status"
+        aria-label="Loading challenge days"
+        className="mx-auto max-w-7xl animate-pulse space-y-4"
+      >
+        <div className="h-8 w-64 rounded bg-admin-border" />
+        <div className="h-48 rounded-2xl border border-admin-border bg-admin-surface" />
+      </div>
     );
   }
 
   if (error || !initialData) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-sm text-red-600">
-            {error ?? "Unable to load challenge days."}
-          </p>
+      <div className="mx-auto max-w-7xl rounded-2xl border border-admin-border bg-admin-surface p-6 shadow-sm shadow-admin-text/5">
+        <p role="alert" className="text-sm font-medium text-admin-danger">
+          {error ?? "Unable to load challenge days."}
+        </p>
 
-          <button
-            type="button"
-            onClick={() => setRetryCount((count) => count + 1)}
-            className="mt-4 rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800"
-          >
-            Retry
-          </button>
-        </div>
-      </main>
+        <button
+          type="button"
+          onClick={() => setRetryCount((count) => count + 1)}
+          className="mt-4 rounded-xl bg-admin-accent px-4 py-2 text-sm font-semibold text-admin-accent-fg transition-colors hover:bg-admin-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60"
+        >
+          Retry
+        </button>
+      </div>
     );
   }
 

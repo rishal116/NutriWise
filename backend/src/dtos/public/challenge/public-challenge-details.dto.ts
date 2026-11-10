@@ -22,6 +22,9 @@ export class PublicChallengeDetailsDTO {
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
   durationDays: number;
+  goals: string[];
+  benefits: string[];
+  tags: string[];
   days: PublicChallengeDayListItem[];
 
   participation: {
@@ -43,6 +46,9 @@ export class PublicChallengeDetailsDTO {
     difficulty: ChallengeDifficulty;
     accessType: ChallengeAccessType;
     durationDays: number;
+    goals: string[];
+    benefits: string[];
+    tags: string[];
     days: PublicChallengeDayListItem[];
     participation: {
       userChallengeId?: string;
@@ -62,6 +68,9 @@ export class PublicChallengeDetailsDTO {
     this.difficulty = data.difficulty;
     this.accessType = data.accessType;
     this.durationDays = data.durationDays;
+    this.goals = data.goals;
+    this.benefits = data.benefits;
+    this.tags = data.tags;
     this.days = data.days;
     this.participation = data.participation;
   }

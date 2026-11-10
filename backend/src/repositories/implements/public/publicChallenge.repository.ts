@@ -204,17 +204,18 @@ export class PublicChallengeRepository
       {
         $project: {
           _id: 0,
-          id: {
-            $toString: "$_id",
-          },
+          id: { $toString: "$_id" },
           title: 1,
           description: 1,
           instructions: 1,
-          coverImageUrl: 1,
+          thumbnailUrl: 1,
           category: 1,
           difficulty: 1,
           accessType: 1,
           durationDays: 1,
+          goals: 1,
+          benefits: 1,
+          tags: 1,
         },
       },
     ]);
@@ -313,9 +314,7 @@ export class PublicChallengeRepository
       {
         $project: {
           _id: 0,
-          id: {
-            $toString: "$_id",
-          },
+          id: { $toString: "$_id" },
           dayNumber: 1,
           title: 1,
           description: 1,
@@ -324,15 +323,14 @@ export class PublicChallengeRepository
               input: "$activities",
               as: "activity",
               in: {
-                id: {
-                  $toString: "$$activity._id",
-                },
+                id: { $toString: "$$activity._id" },
                 type: "$$activity.type",
                 title: "$$activity.title",
                 description: "$$activity.description",
                 instructions: "$$activity.instructions",
                 valueType: "$$activity.valueType",
                 targetValue: "$$activity.targetValue",
+                maxValue: "$$activity.maxValue",
                 unit: "$$activity.unit",
                 estimatedDurationMinutes: "$$activity.estimatedDurationMinutes",
                 imageUrl: "$$activity.imageUrl",

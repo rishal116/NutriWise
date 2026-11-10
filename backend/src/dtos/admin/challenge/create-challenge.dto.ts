@@ -1,9 +1,12 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsEnum,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -13,19 +16,21 @@ import {
   CHALLENGE_ACCESS_TYPES,
   CHALLENGE_CATEGORIES,
   CHALLENGE_DIFFICULTIES,
-  ChallengeAccessType,
-  ChallengeCategory,
-  ChallengeDifficulty,
+  type ChallengeAccessType,
+  type ChallengeCategory,
+  type ChallengeDifficulty,
 } from "../../../models/challenge.model";
 
 export class CreateChallengeDTO {
   @IsString()
   @IsNotEmpty()
+  @Matches(/\S/, { message: "Title cannot contain only whitespace" })
   @MaxLength(150)
   title!: string;
 
   @IsString()
   @IsNotEmpty()
+  @Matches(/\S/, { message: "Description cannot contain only whitespace" })
   @MaxLength(3000)
   description!: string;
 
@@ -47,4 +52,19 @@ export class CreateChallengeDTO {
   @Min(1)
   @Max(365)
   durationDays!: number;
+
+  @IsArray()
+  @ArrayNotEmpty({ message: "At least one challenge goal is required" })
+  @IsString({ each: true })
+  goals!: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  benefits?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tags?: string[];
 }

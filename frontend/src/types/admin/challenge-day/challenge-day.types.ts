@@ -5,12 +5,11 @@ export const CHALLENGE_ACTIVITY_TYPES = [
   "meditation",
   "breathing",
   "sleep",
-  "habit",
+  "healthy_habit",
   "education",
   "stretching",
   "recovery",
   "measurement",
-  "custom",
 ] as const;
 
 export type ChallengeActivityType = (typeof CHALLENGE_ACTIVITY_TYPES)[number];

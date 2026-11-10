@@ -21,13 +21,7 @@ declare module "axios" {
   }
 }
 
-interface RetryRequestConfig extends InternalAxiosRequestConfig {
-  _retry?: boolean;
-}
-
 interface ApiErrorResponse {
-  success: boolean;
-  message: string;
   code?: string;
 }
 
@@ -47,62 +41,26 @@ const ignoredRoutes = [
   AUTH_ROUTES.REFRESH_TOKEN,
 ];
 
-function isIgnoredRoute(url?: string): boolean {
-  if (!url) {
-    return false;
-  }
-
-  return ignoredRoutes.some((route) => url.includes(route));
-}
+const isIgnoredRoute = (url?: string): boolean =>
+  Boolean(url && ignoredRoutes.some((route) => url.includes(route)));
 
 let refreshPromise: Promise<string> | null = null;
 
 export function refreshAccessToken(): Promise<string> {
-  console.log("[Auth] Refresh requested", {
-    hasStoredToken: Boolean(tokenStorage.get()),
-    hasReduxToken: Boolean(store.getState().auth.accessToken),
-  });
-
   if (!refreshPromise) {
     refreshPromise = userAuthService
       .refreshToken()
       .then((response) => {
-        console.log("[Auth] Refresh response received", {
-          success: response.success,
-          hasAccessToken: Boolean(response.data?.accessToken),
-        });
+        const accessToken = response.data?.accessToken;
 
-        if (!response.success || !response.data?.accessToken) {
-          throw new Error(
-            "Refresh response did not contain a valid access token.",
-          );
+        if (!response.success || !accessToken) {
+          throw new Error("Unable to refresh access token.");
         }
-
-        const accessToken = response.data.accessToken;
 
         tokenStorage.set(accessToken);
         store.dispatch(setAccessToken(accessToken));
 
-        console.log("[Auth] Access token saved", {
-          hasStoredToken: Boolean(tokenStorage.get()),
-          hasReduxToken: Boolean(store.getState().auth.accessToken),
-        });
-
         return accessToken;
-      })
-      .catch((error: unknown) => {
-        console.error("[Auth] Refresh failed", {
-          message:
-            error instanceof Error ? error.message : "Unknown refresh error",
-          status: axios.isAxiosError(error)
-            ? error.response?.status
-            : undefined,
-          responseData: axios.isAxiosError(error)
-            ? error.response?.data
-            : undefined,
-        });
-
-        throw error;
       })
       .finally(() => {
         refreshPromise = null;
@@ -112,57 +70,53 @@ export function refreshAccessToken(): Promise<string> {
   return refreshPromise;
 }
 
-clientApi.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const authState = store.getState().auth;
-    const accessToken = authState.accessToken ?? tokenStorage.get();
+clientApi.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const authState = store.getState().auth;
+  const accessToken = authState.accessToken ?? tokenStorage.get();
 
-    if (accessToken) {
-      config.headers.set("Authorization", `Bearer ${accessToken}`);
-    } else {
-      config.headers.delete("Authorization");
+  if (accessToken) {
+    config.headers.set("Authorization", `Bearer ${accessToken}`);
+  } else {
+    config.headers.delete("Authorization");
+  }
+
+  if (config.requiresAuth && authState.initialized) {
+    if (!authState.isAuthenticated) {
+      redirectToLogin();
+
+      return Promise.reject(
+        new AxiosError(
+          "Authentication required.",
+          "ERR_UNAUTHENTICATED",
+          config,
+        ),
+      );
     }
+  }
 
-    if (config.requiresAuth && authState.initialized) {
-      if (!authState.isAuthenticated) {
-        redirectToLogin();
-
-        return Promise.reject(
-          new AxiosError(
-            "Action requires authentication.",
-            "ERR_UNAUTHENTICATED",
-            config,
-          ),
-        );
-      }
-    }
-
-    return config;
-  },
-  (error: unknown) => Promise.reject(error),
-);
+  return config;
+});
 
 clientApi.interceptors.response.use(
   (response) => response,
 
   async (error: AxiosError<ApiErrorResponse>) => {
-    const originalRequest = error.config as RetryRequestConfig | undefined;
+    const originalRequest = error.config;
 
-    if (!originalRequest || isIgnoredRoute(originalRequest.url)) {
+    if (
+      !originalRequest ||
+      isIgnoredRoute(originalRequest.url) ||
+      error.response?.status !== 401
+    ) {
       return Promise.reject(error);
     }
 
-    if (error.response?.status !== 401) {
-      return Promise.reject(error);
-    }
-
-    const code = error.response.data?.code;
-    const shouldRefreshToken = [
+    const shouldRefresh = [
       "ACCESS_TOKEN_EXPIRED",
       "ACCESS_TOKEN_MISSING",
-    ].includes(code ?? "");
+    ].includes(error.response.data?.code ?? "");
 
-    if (shouldRefreshToken && !originalRequest._retry) {
+    if (shouldRefresh && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {

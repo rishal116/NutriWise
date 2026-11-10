@@ -1,5 +1,6 @@
 import { injectable } from "inversify";
 import { PipelineStage, Types } from "mongoose";
+
 import { ChallengeModel, IChallenge } from "../../../models/challenge.model";
 import { IAdminChallengeRepository } from "../../interfaces/admin/IAdminChallengeRepository";
 import { BaseRepository } from "../common/base.repository";
@@ -108,7 +109,6 @@ export class AdminChallengeRepository
           _id: 0,
           id: { $toString: "$_id" },
           title: 1,
-
           thumbnailUrl: 1,
           category: 1,
           difficulty: 1,
@@ -169,7 +169,12 @@ export class AdminChallengeRepository
           difficulty: 1,
           accessType: 1,
           durationDays: 1,
+          goals: 1,
+          benefits: 1,
+          tags: 1,
           status: 1,
+          createdAt: 1,
+          updatedAt: 1,
         },
       },
     ]);

@@ -60,7 +60,7 @@ export class UpdateChallengeActivityDTO {
   unit?: string;
 
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(0)
   estimatedDurationMinutes?: number;
 

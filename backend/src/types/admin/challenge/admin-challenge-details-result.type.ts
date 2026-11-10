@@ -15,5 +15,10 @@ export interface AdminChallengeDetailsResult {
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
   durationDays: number;
+  goals: string[];
+  benefits: string[];
+  tags: string[];
   status: ChallengeStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }

@@ -18,6 +18,7 @@ export interface IPublicChallengeRepository extends IBaseRepository<IChallenge> 
 
   findChallengeById(
     challengeId: string,
+    userId?: string,
   ): Promise<PublicChallengeDetailsResult | null>;
 
   findChallengeDays(challengeId: string): Promise<PublicChallengeDayListItem[]>;

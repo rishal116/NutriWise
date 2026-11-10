@@ -13,9 +13,9 @@ export default function DetailsCard({
   children,
 }: DetailsCardProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <h2 className="flex items-center gap-2.5 font-semibold text-slate-900">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+    <section className="rounded-2xl border border-admin-border bg-admin-surface p-5 shadow-sm shadow-admin-text/5 sm:p-6">
+      <h2 className="flex items-center gap-2.5 font-semibold text-admin-text">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-admin-accent-soft text-admin-accent">
           <Icon size={18} />
         </span>
         {title}
@@ -27,5 +27,5 @@ export default function DetailsCard({
 }
 
 export function EmptyText({ children }: { children: ReactNode }) {
-  return <p className="text-sm font-medium text-slate-400">{children}</p>;
+  return <p className="text-sm font-medium text-admin-muted">{children}</p>;
 }

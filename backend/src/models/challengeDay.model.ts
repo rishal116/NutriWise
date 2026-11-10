@@ -7,12 +7,11 @@ export const CHALLENGE_ACTIVITY_TYPES = [
   "meditation",
   "breathing",
   "sleep",
-  "habit",
+  "healthy_habit",
   "education",
   "stretching",
   "recovery",
   "measurement",
-  "custom",
 ] as const;
 
 export type ChallengeActivityType = (typeof CHALLENGE_ACTIVITY_TYPES)[number];
@@ -34,6 +33,7 @@ export interface IChallengeActivity {
   instructions?: string;
   valueType: ChallengeActivityValueType;
   targetValue?: number;
+  maxValue?: number;
   unit?: string;
   estimatedDurationMinutes?: number;
   imageUrl?: string;
@@ -92,6 +92,15 @@ const ChallengeActivitySchema = new Schema<IChallengeActivity>(
         message: "Target value must be a finite number.",
       },
     },
+    maxValue: {
+      type: Number,
+      min: 0,
+      validate: {
+        validator: (value: number | undefined) =>
+          value === undefined || Number.isFinite(value),
+        message: "Maximum value must be a finite number.",
+      },
+    },
     unit: {
       type: String,
       trim: true,
@@ -142,6 +151,31 @@ const ChallengeActivitySchema = new Schema<IChallengeActivity>(
     versionKey: false,
   },
 );
+
+ChallengeActivitySchema.pre("validate", function () {
+  if (
+    this.targetValue !== undefined &&
+    this.maxValue !== undefined &&
+    this.targetValue > this.maxValue
+  ) {
+    this.invalidate(
+      "maxValue",
+      "Maximum value must be greater than or equal to target value.",
+    );
+  }
+
+  if (
+    this.valueType === "boolean" &&
+    (this.targetValue !== undefined ||
+      this.maxValue !== undefined ||
+      this.unit !== undefined)
+  ) {
+    this.invalidate(
+      "valueType",
+      "Boolean activities cannot have numeric targets or units.",
+    );
+  }
+});
 
 const ChallengeDaySchema = new Schema<IChallengeDay>(
   {

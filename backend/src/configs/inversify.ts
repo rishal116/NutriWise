@@ -391,7 +391,7 @@ import { IAdminChallengeRepository } from "../repositories/interfaces/admin/IAdm
 import { IAdminChallengeDayController } from "../controllers/interfaces/admin/IAdminChallengeDayController";
 import { AdminChallengeDayController } from "../controllers/implementations/admin/adminChallengeDay.controller";
 import { IAdminChallengeDayService } from "../services/interfaces/admin/IAdminChallengeDayService";
-import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDAy.service";
+import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDay.service";
 import { IAdminChallengeDayRepository } from "../repositories/interfaces/admin/IAdminChallengeDayRepository";
 import { AdminChallengeDayRepository } from "../repositories/implements/admin/adminChallengeDay.repository";
 import { IPublicChallengeController } from "../controllers/interfaces/public/IPublicChallengeController";
@@ -574,6 +574,8 @@ import { RoleSwitchService } from "../services/implements/user/auth/role-switch.
 import { IRoleSwitchService } from "../services/interfaces/user/auth/IRoleSwitchService";
 import { IUserContextService } from "../services/interfaces/user/IUserContextService";
 import { UserContextService } from "../services/implements/user/user-context.service";
+import { ICloudinaryService } from "../services/interfaces/common/ICloudinaryService";
+import { CloudinaryService } from "../services/implements/common/cloudinary.service";
 
 const container = new Container();
 
@@ -1437,5 +1439,10 @@ container
 container
   .bind<IUserContextService>(TYPES.IUserContextService)
   .to(UserContextService);
+
+  container
+  .bind<ICloudinaryService>(TYPES.ICloudinaryService)
+  .to(CloudinaryService)
+
 
 export { container };

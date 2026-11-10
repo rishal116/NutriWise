@@ -15,17 +15,20 @@ import type { CoachLevel } from "@/types/nutritionist.types";
 import CoachLevelSelect from "./CoachLevelSelect";
 import { formatDate, formatLabel } from "./nutritionist-details.utils";
 
-const FALLBACK_STYLE = "bg-slate-100 text-slate-600";
+const FALLBACK_STYLE = "bg-admin-surface-hover text-admin-muted";
+const SUCCESS_STYLE = "bg-admin-pastel-green text-admin-success";
+const WARNING_STYLE = "bg-admin-warning/15 text-admin-warning";
+const DANGER_STYLE = "bg-admin-danger-soft text-admin-danger";
 
 const APPLICATION_STYLES: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700",
-  approved: "bg-emerald-50 text-emerald-700",
-  rejected: "bg-rose-50 text-rose-700",
+  pending: WARNING_STYLE,
+  approved: SUCCESS_STYLE,
+  rejected: DANGER_STYLE,
 };
 
 const AVAILABILITY_STYLES: Record<string, string> = {
-  available: "bg-emerald-50 text-emerald-700",
-  busy: "bg-amber-50 text-amber-700",
+  available: SUCCESS_STYLE,
+  busy: WARNING_STYLE,
   offline: FALLBACK_STYLE,
 };
 
@@ -45,11 +48,21 @@ function Pill({
   );
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  tone: string;
+}) {
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
-      <p className="text-[10px] font-bold uppercase text-slate-400">{label}</p>
-      <p className="mt-1 text-lg font-bold text-slate-900">{value}</p>
+    <div className={`rounded-xl p-3 ${tone}`}>
+      <p className="text-[10px] font-bold uppercase text-admin-text/70">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-bold text-admin-text">{value}</p>
     </div>
   );
 }
@@ -65,10 +78,10 @@ function MetaRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <Icon size={16} className="shrink-0 text-slate-400" />
+      <Icon size={16} className="shrink-0 text-admin-muted" />
       <div className="min-w-0">
-        <dt className="text-xs text-slate-500">{label}</dt>
-        <dd className="break-words text-sm font-medium text-slate-800">
+        <dt className="text-xs text-admin-muted">{label}</dt>
+        <dd className="break-words text-sm font-medium text-admin-text">
           {value}
         </dd>
       </div>
@@ -113,11 +126,11 @@ export default function NutritionistProfileCard({
   ];
 
   return (
-    <aside className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:sticky lg:top-6 lg:self-start">
-      <div className="h-20 bg-gradient-to-r from-emerald-600 to-teal-500" />
+    <aside className="overflow-hidden rounded-2xl border border-admin-border bg-admin-surface shadow-sm shadow-admin-text/5 lg:sticky lg:top-24 lg:self-start">
+      <div className="h-20 bg-linear-to-r from-admin-accent-hover to-admin-accent" />
 
       <div className="px-5 pb-6 sm:px-6">
-        <div className="relative -mt-12 flex size-24 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-emerald-50 text-emerald-300">
+        <div className="relative -mt-12 flex size-24 items-center justify-center overflow-hidden rounded-2xl border-4 border-admin-surface bg-admin-accent-soft text-admin-accent/40">
           {details.profileImage ? (
             <Image
               src={details.profileImage}
@@ -131,11 +144,13 @@ export default function NutritionistProfileCard({
           )}
         </div>
 
-        <h1 className="mt-4 break-words text-xl font-bold text-slate-900">
+        <h1 className="mt-4 break-words text-xl font-bold text-admin-text">
           {details.fullName}
         </h1>
-        <p className="text-sm text-slate-500">@{details.username}</p>
-        <p className="mt-1 break-all text-sm text-slate-500">{details.email}</p>
+        <p className="text-sm text-admin-muted">@{details.username}</p>
+        <p className="mt-1 break-all text-sm text-admin-muted">
+          {details.email}
+        </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <Pill
@@ -152,24 +167,27 @@ export default function NutritionistProfileCard({
           >
             {details.availabilityStatus}
           </Pill>
-          {details.isBlocked && (
-            <Pill className="bg-rose-50 text-rose-700">Blocked</Pill>
-          )}
+          {details.isBlocked && <Pill className={DANGER_STYLE}>Blocked</Pill>}
         </div>
 
-        <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-slate-800">
-          <Star size={16} className="fill-amber-400 text-amber-400" />
+        <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-admin-text">
+          <Star size={16} className="fill-admin-warning text-admin-warning" />
           {details.rating.toFixed(1)}
-          <span className="font-medium text-slate-400">
+          <span className="font-medium text-admin-muted">
             ({details.totalReviews} reviews)
           </span>
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <Stat label="Clients coached" value={details.totalPeopleCoached} />
+          <Stat
+            label="Clients coached"
+            value={details.totalPeopleCoached}
+            tone="bg-admin-pastel-blue"
+          />
           <Stat
             label="Experience"
             value={`${details.totalExperienceYears} yrs`}
+            tone="bg-admin-pastel-green"
           />
         </div>
 
@@ -181,7 +199,7 @@ export default function NutritionistProfileCard({
           />
         </div>
 
-        <dl className="mt-6 space-y-4 border-t border-slate-100 pt-5">
+        <dl className="mt-6 space-y-4 border-t border-admin-border pt-5">
           {meta.map((item) => (
             <MetaRow key={item.label} {...item} />
           ))}

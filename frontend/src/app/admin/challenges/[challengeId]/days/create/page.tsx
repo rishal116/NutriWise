@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import ChallengeDayForm from "@/components/admin/challenge-day/ChallengeDayForm";
+import ChallengeDayForm from "@/components/admin/challenge-day/form/ChallengeDayForm";
 
 interface CreateChallengeDayPageProps {
   params: Promise<{

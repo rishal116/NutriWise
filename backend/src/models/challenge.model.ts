@@ -7,7 +7,6 @@ export const CHALLENGE_CATEGORIES = [
   "sleep",
   "mindfulness",
   "healthy_habits",
-  "wellness",
   "weight_management",
 ] as const;
 
@@ -35,10 +34,14 @@ export interface IChallenge {
   description: string;
   instructions?: string;
   thumbnailUrl?: string;
+  thumbnailPublicId?: string;
   category: ChallengeCategory;
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
   durationDays: number;
+  goals: string[];
+  benefits: string[];
+  tags: string[];
   status: ChallengeStatus;
   createdBy: Types.ObjectId;
   createdAt: Date;
@@ -68,6 +71,10 @@ const ChallengeSchema = new Schema<IChallenge>(
       type: String,
       trim: true,
     },
+    thumbnailPublicId: {
+      type: String,
+      trim: true,
+    },
     category: {
       type: String,
       enum: CHALLENGE_CATEGORIES,
@@ -82,13 +89,28 @@ const ChallengeSchema = new Schema<IChallenge>(
       type: String,
       enum: CHALLENGE_ACCESS_TYPES,
       required: true,
-      default: "free",
     },
     durationDays: {
       type: Number,
       required: true,
       min: 1,
       max: 365,
+    },
+    goals: {
+      type: [String],
+      required: true,
+      validate: {
+        validator: (value: string[]) => value.length > 0,
+        message: "At least one challenge goal is required",
+      },
+    },
+    benefits: {
+      type: [String],
+      default: [],
+    },
+    tags: {
+      type: [String],
+      default: [],
     },
     status: {
       type: String,
@@ -107,8 +129,6 @@ const ChallengeSchema = new Schema<IChallenge>(
   },
 );
 
-ChallengeSchema.index({ status: 1, accessType: 1 });
-ChallengeSchema.index({ category: 1, difficulty: 1, status: 1 });
 ChallengeSchema.index({ status: 1, createdAt: -1, _id: -1 });
 
 export const ChallengeModel = model<IChallenge>("Challenge", ChallengeSchema);

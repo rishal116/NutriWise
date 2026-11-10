@@ -56,7 +56,6 @@ export class UserChallengeRepository
     const { cursor, limit = 12, search, status, sortBy = "newest" } = query;
 
     const userObjectId = new Types.ObjectId(userId);
-
     const decodedCursor = decodeCursor(cursor);
 
     const { field, order } = USER_CHALLENGE_SORT_FIELD_MAP[sortBy];
@@ -150,34 +149,22 @@ export class UserChallengeRepository
           },
 
           title: "$challenge.title",
-
           thumbnailUrl: "$challenge.thumbnailUrl",
-
           category: "$challenge.category",
-
           difficulty: "$challenge.difficulty",
-
           accessType: "$challenge.accessType",
-
           durationDays: "$challenge.durationDays",
 
           status: 1,
-
           currentDay: 1,
-
           progressPercentage: 1,
-
           currentStreak: 1,
-
           longestStreak: 1,
-
           joinedAt: 1,
-
           completedAt: 1,
 
           cursorId: "$_id",
-
-          cursorValue: "$createdAt",
+          cursorValue: `$${field}`,
         },
       },
     );
@@ -186,7 +173,6 @@ export class UserChallengeRepository
       await this._model.aggregate<UserChallengeListWithCursor>(pipeline);
 
     const hasMore = result.length > limit;
-
     const items = hasMore ? result.slice(0, limit) : result;
 
     const lastItem = items[items.length - 1];
@@ -223,7 +209,6 @@ export class UserChallengeRepository
     }
 
     const userChallengeObjectId = new Types.ObjectId(userChallengeId);
-
     const userObjectId = new Types.ObjectId(userId);
 
     const result = await this._model.aggregate<UserChallengeDetailsResult>([
@@ -233,7 +218,6 @@ export class UserChallengeRepository
           userId: userObjectId,
         },
       },
-
       {
         $lookup: {
           from: ChallengeModel.collection.name,
@@ -242,11 +226,9 @@ export class UserChallengeRepository
           as: "challenge",
         },
       },
-
       {
         $unwind: "$challenge",
       },
-
       {
         $lookup: {
           from: ChallengeDayModel.collection.name,
@@ -269,17 +251,12 @@ export class UserChallengeRepository
             {
               $project: {
                 _id: 0,
-
                 id: {
                   $toString: "$_id",
                 },
-
                 dayNumber: 1,
-
                 title: 1,
-
                 description: 1,
-
                 activities: {
                   $map: {
                     input: "$activities",
@@ -288,13 +265,13 @@ export class UserChallengeRepository
                       id: {
                         $toString: "$$activity._id",
                       },
-
                       type: "$$activity.type",
                       title: "$$activity.title",
                       description: "$$activity.description",
                       instructions: "$$activity.instructions",
                       valueType: "$$activity.valueType",
                       targetValue: "$$activity.targetValue",
+                      maxValue: "$$activity.maxValue",
                       unit: "$$activity.unit",
                       estimatedDurationMinutes:
                         "$$activity.estimatedDurationMinutes",
@@ -311,7 +288,6 @@ export class UserChallengeRepository
           as: "days",
         },
       },
-
       {
         $lookup: {
           from: UserChallengeProgressModel.collection.name,
@@ -334,19 +310,15 @@ export class UserChallengeRepository
             {
               $project: {
                 _id: 0,
-
                 id: {
                   $toString: "$_id",
                 },
-
                 challengeDayId: {
                   $toString: "$challengeDayId",
                 },
-
                 activityId: {
                   $toString: "$activityId",
                 },
-
                 completedAt: 1,
               },
             },
@@ -354,15 +326,12 @@ export class UserChallengeRepository
           as: "progress",
         },
       },
-
       {
         $project: {
           _id: 0,
-
           id: {
             $toString: "$_id",
           },
-
           status: 1,
           joinedAt: 1,
           startedAt: 1,
@@ -371,28 +340,23 @@ export class UserChallengeRepository
           currentStreak: 1,
           longestStreak: 1,
           completedAt: 1,
-
           challenge: {
             id: {
               $toString: "$challenge._id",
             },
-
             title: "$challenge.title",
             description: "$challenge.description",
             instructions: "$challenge.instructions",
-            coverImageUrl: "$challenge.coverImageUrl",
+            thumbnailUrl: "$challenge.thumbnailUrl",
             category: "$challenge.category",
             difficulty: "$challenge.difficulty",
             accessType: "$challenge.accessType",
             durationDays: "$challenge.durationDays",
           },
-
           days: 1,
-
           progress: 1,
         },
       },
-
       {
         $limit: 1,
       },

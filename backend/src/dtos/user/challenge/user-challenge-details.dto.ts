@@ -19,6 +19,7 @@ export class UserChallengeActivityDTO {
   instructions?: string;
   valueType!: ChallengeActivityValueType;
   targetValue?: number;
+  maxValue?: number;
   unit?: string;
   estimatedDurationMinutes?: number;
   imageUrl?: string;
@@ -71,7 +72,7 @@ export class UserChallengeDetailsDTO {
     title: string;
     description: string;
     instructions?: string;
-    coverImageUrl?: string;
+    thumbnailUrl?: string;
     category: ChallengeCategory;
     difficulty: ChallengeDifficulty;
     accessType: ChallengeAccessType;

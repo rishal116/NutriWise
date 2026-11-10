@@ -43,7 +43,7 @@ export default function UserChallengeDetailsPage({
         const response =
           await userChallengeService.getChallengeDetails(userChallengeId);
 
-        setChallenge(response.data);
+        setChallenge(response.data ?? null);
       } catch (error) {
         console.error("Failed to fetch challenge:", error);
       } finally {

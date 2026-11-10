@@ -6,7 +6,6 @@ import {
   IChallengeDay,
 } from "../../../models/challengeDay.model";
 import { AdminChallengeDayListQueryDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-list-query.dto";
-import { AdminChallengeDayDetailsDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-details.dto";
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 import { decodeCursor, encodeCursor } from "../../../utils/cursor.util";
 import { AdminChallengeDayListProjection } from "../../../types/admin/challenge-day/admin-challenge-day.projection";
@@ -146,7 +145,7 @@ export class AdminChallengeDayRepository
   async findDayById(
     challengeId: string,
     dayId: string,
-  ): Promise<AdminChallengeDayDetailsDTO | null> {
+  ): Promise<IChallengeDay | null> {
     if (
       !Types.ObjectId.isValid(challengeId) ||
       !Types.ObjectId.isValid(dayId)
@@ -154,34 +153,31 @@ export class AdminChallengeDayRepository
       return null;
     }
 
-    const result = await this._model.aggregate<AdminChallengeDayDetailsDTO>([
+    return this._model
+      .findOne({
+        _id: new Types.ObjectId(dayId),
+        challengeId: new Types.ObjectId(challengeId),
+      })
+      .exec();
+  }
+
+  async findDayNumbersByChallengeId(challengeId: string): Promise<number[]> {
+    const challengeObjectId = new Types.ObjectId(challengeId);
+
+    const days = await this._model.aggregate<{ dayNumber: number }>([
       {
         $match: {
-          _id: new Types.ObjectId(dayId),
-          challengeId: new Types.ObjectId(challengeId),
+          challengeId: challengeObjectId,
         },
       },
-
       {
         $project: {
           _id: 0,
-
-          id: {
-            $toString: "$_id",
-          },
-
-          challengeId: {
-            $toString: "$challengeId",
-          },
-
           dayNumber: 1,
-          title: 1,
-          description: 1,
-          activities: 1,
         },
       },
     ]);
 
-    return result[0] ?? null;
+    return days.map(({ dayNumber }) => dayNumber);
   }
 }

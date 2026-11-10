@@ -35,48 +35,46 @@ export default function AdminNutritionistProfilePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="group inline-flex items-center gap-1.5 self-start text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-600"
-          >
-            <ChevronLeft
-              size={16}
-              className="transition-transform group-hover:-translate-x-0.5"
-            />
-            Back
-          </button>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="group inline-flex items-center gap-1.5 self-start rounded-lg text-sm font-semibold text-admin-muted transition-colors hover:text-admin-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60"
+        >
+          <ChevronLeft
+            size={16}
+            className="transition-transform group-hover:-translate-x-0.5"
+          />
+          Back
+        </button>
 
-          <ApplicationActions
+        <ApplicationActions
+          status={details.applicationStatus}
+          rejectionReason={details.rejectionReason}
+          isLoading={isActionLoading}
+          onApprove={approve}
+          onReject={reject}
+        />
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+        <NutritionistProfileCard
+          details={details}
+          isUpdatingLevel={isUpdatingLevel}
+          onCoachLevelChange={updateCoachLevel}
+        />
+
+        <div className="min-w-0 space-y-6">
+          <ApplicationStatusBanner
             status={details.applicationStatus}
             rejectionReason={details.rejectionReason}
-            isLoading={isActionLoading}
-            onApprove={approve}
-            onReject={reject}
           />
-        </header>
-
-        <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-          <NutritionistProfileCard
-            details={details}
-            isUpdatingLevel={isUpdatingLevel}
-            onCoachLevelChange={updateCoachLevel}
-          />
-
-          <div className="min-w-0 space-y-6">
-            <ApplicationStatusBanner
-              status={details.applicationStatus}
-              rejectionReason={details.rejectionReason}
-            />
-            <NutritionistAboutSection details={details} />
-            <NutritionistExperienceSection experiences={details.experiences} />
-            <NutritionistDocumentsSection details={details} />
-          </div>
+          <NutritionistAboutSection details={details} />
+          <NutritionistExperienceSection experiences={details.experiences} />
+          <NutritionistDocumentsSection details={details} />
         </div>
       </div>
-    </main>
+    </div>
   );
 }

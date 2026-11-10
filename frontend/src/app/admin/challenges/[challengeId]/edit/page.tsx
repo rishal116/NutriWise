@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import ChallengeEditClient from "@/components/admin/challenge/ChallengeEditClient";
 

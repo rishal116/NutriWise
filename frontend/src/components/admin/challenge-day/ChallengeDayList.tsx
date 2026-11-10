@@ -16,6 +16,11 @@ interface ChallengeDayListProps {
 
 const LIMIT = 12;
 
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60";
+
+const primaryButton = `inline-flex items-center justify-center gap-1.5 rounded-xl bg-admin-accent px-4 py-2.5 text-sm font-semibold text-admin-accent-fg transition-colors hover:bg-admin-accent-hover ${focusRing}`;
+
 export default function ChallengeDayList({
   challengeId,
   initialData,
@@ -84,7 +89,7 @@ export default function ChallengeDayList({
   }, [fetchMore]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-4xl">
       <PageHeader challengeId={challengeId} />
 
       {days.length === 0 ? (
@@ -107,7 +112,7 @@ export default function ChallengeDayList({
       )}
 
       {!hasMore && days.length > 0 && (
-        <p className="mt-6 text-center text-xs font-medium text-slate-400">
+        <p className="mt-6 text-center text-xs font-medium text-admin-muted">
           All challenge days loaded
         </p>
       )}
@@ -120,7 +125,7 @@ function PageHeader({ challengeId }: { challengeId: string }) {
     <div className="flex flex-col gap-4">
       <Link
         href={`/admin/challenges/${challengeId}`}
-        className="inline-flex w-fit items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-500 transition-colors duration-150 hover:text-emerald-700"
+        className={`inline-flex w-fit items-center gap-1.5 rounded-lg text-sm font-semibold text-admin-muted transition-colors hover:text-admin-accent ${focusRing}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Back to challenge
@@ -128,17 +133,17 @@ function PageHeader({ challengeId }: { challengeId: string }) {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-2xl font-bold text-admin-text">
             Challenge Days
           </h1>
-          <p className="mt-1 text-sm font-medium text-slate-500">
+          <p className="text-sm font-medium text-admin-muted">
             Manage the days and activities included in this challenge.
           </p>
         </div>
 
         <Link
           href={`/admin/challenges/${challengeId}/days/create`}
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:bg-emerald-800"
+          className={primaryButton}
         >
           <Plus className="h-4 w-4" />
           Add Day
@@ -159,25 +164,25 @@ function DayCard({
     <li>
       <Link
         href={`/admin/challenges/${challengeId}/days/${day.id}`}
-        className="group flex items-center gap-4 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-5"
+        className={`group flex items-center gap-4 rounded-2xl border border-admin-border bg-admin-surface p-4 shadow-sm shadow-admin-text/5 transition-colors hover:border-admin-accent/40 hover:bg-admin-surface-hover sm:p-5 ${focusRing}`}
       >
-        <span className="flex shrink-0 items-center rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 sm:text-sm">
+        <span className="flex shrink-0 items-center rounded-lg bg-admin-pastel-green px-3 py-2 text-xs font-bold text-admin-accent sm:text-sm">
           Day {day.dayNumber}
         </span>
 
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold text-slate-900 sm:text-base">
+          <h3 className="truncate text-sm font-semibold text-admin-text sm:text-base">
             {day.title || "Untitled day"}
           </h3>
 
-          <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-slate-400 sm:text-xs">
+          <p className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-admin-muted sm:text-xs">
             <ListChecks className="h-3.5 w-3.5" />
             {day.activityCount}{" "}
             {day.activityCount === 1 ? "Activity" : "Activities"}
           </p>
         </div>
 
-        <ChevronRight className="h-5 w-5 shrink-0 text-slate-300 transition-all duration-150 group-hover:translate-x-1 group-hover:text-emerald-600" />
+        <ChevronRight className="h-5 w-5 shrink-0 text-admin-muted transition-transform duration-150 group-hover:translate-x-1 group-hover:text-admin-accent" />
       </Link>
     </li>
   );
@@ -185,18 +190,20 @@ function DayCard({
 
 function EmptyState({ challengeId }: { challengeId: string }) {
   return (
-    <div className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white/50 px-6 py-16 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-        <ListChecks className="h-6 w-6 text-emerald-600" />
+    <div className="mt-6 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-admin-border bg-admin-surface/60 px-6 py-16 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-admin-pastel-green">
+        <ListChecks className="h-6 w-6 text-admin-accent" />
       </div>
-      <p className="text-sm font-bold text-slate-700">No challenge days yet</p>
-      <p className="max-w-xs text-xs sm:text-sm font-medium text-slate-500">
+      <p className="text-sm font-bold text-admin-text">
+        No challenge days yet
+      </p>
+      <p className="max-w-xs text-xs font-medium text-admin-muted sm:text-sm">
         Create the first day to start building out the schedule for this
         challenge.
       </p>
       <Link
         href={`/admin/challenges/${challengeId}/days/create`}
-        className="mt-1 inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-xs transition-all duration-150 hover:-translate-y-0.5 hover:bg-emerald-800"
+        className={`mt-1 ${primaryButton}`}
       >
         <Plus className="h-4 w-4" />
         Create First Day
@@ -207,12 +214,12 @@ function EmptyState({ challengeId }: { challengeId: string }) {
 
 function SkeletonRow() {
   return (
-    <li className="flex items-center gap-4 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
-      <div className="h-8 w-16 shrink-0 animate-pulse rounded-lg bg-slate-200" />
+    <li className="flex items-center gap-4 rounded-2xl border border-admin-border bg-admin-surface p-4 sm:p-5">
+      <div className="h-8 w-16 shrink-0 animate-pulse rounded-lg bg-admin-border" />
       <div className="min-w-0 flex-1 space-y-2">
-        <div className="h-4 w-1/3 animate-pulse rounded bg-slate-200" />
-        <div className="h-3 w-2/3 animate-pulse rounded bg-slate-200" />
-        <div className="h-3 w-1/4 animate-pulse rounded bg-slate-200" />
+        <div className="h-4 w-1/3 animate-pulse rounded bg-admin-border" />
+        <div className="h-3 w-2/3 animate-pulse rounded bg-admin-border" />
+        <div className="h-3 w-1/4 animate-pulse rounded bg-admin-border" />
       </div>
     </li>
   );

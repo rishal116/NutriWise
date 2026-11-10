@@ -1,51 +1,45 @@
+
 import type { Area } from "react-easy-crop";
 
-import type { ActivityFormValue } from "./challenge-day-form.types";
+import type { ActivityFormValue } from "../challenge-day-form.types";
 
 export const IMAGE_MAX_SIZE = 5 * 1024 * 1024;
 export const VIDEO_MAX_SIZE = 50 * 1024 * 1024;
 export const MAX_VIDEO_DURATION_SECONDS = 120;
+
 export const IMAGE_ACCEPTED_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
-];
+] as const;
+
 export const VIDEO_ACCEPTED_TYPES = [
   "video/mp4",
   "video/webm",
   "video/quicktime",
-];
+] as const;
+
 export const IMAGE_ASPECT = 16 / 9;
 
 export function createEmptyActivity(): ActivityFormValue {
   return {
-    type: "custom",
+    type: "",
     title: "",
     description: "",
     instructions: "",
-    valueType: "boolean",
+    valueType: "",
+    targetValue: undefined,
+    maxValue: undefined,
     unit: "",
+    estimatedDurationMinutes: undefined,
     isRequired: true,
-    configuration: {},
     imageFile: null,
     videoFile: null,
+    existingImageUrl: undefined,
+    existingVideoUrl: undefined,
     removeImage: false,
     removeVideo: false,
   };
-}
-
-export function cleanConfiguration(
-  configuration: Record<string, unknown>,
-): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(configuration).filter(([, value]) => {
-      if (value === undefined || value === null || value === "") {
-        return false;
-      }
-
-      return !Array.isArray(value) || value.length > 0;
-    }),
-  );
 }
 
 export function getVideoDuration(file: File): Promise<number> {
@@ -71,7 +65,7 @@ export function getVideoDuration(file: File): Promise<number> {
 
 function createImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const image = new window.Image();
+    const image = new Image();
 
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Unable to load image."));
@@ -115,9 +109,9 @@ export async function getCroppedImageFile(
     throw new Error("Unable to create cropped image.");
   }
 
-  return new File(
-    [blob],
-    fileName.replace(/\.[^/.]+$/, ".webp"),
-    { type: "image/webp" },
-  );
+  const outputFileName = fileName.replace(/\.[^/.]+$/, ".webp");
+
+  return new File([blob], outputFileName, {
+    type: "image/webp",
+  });
 }

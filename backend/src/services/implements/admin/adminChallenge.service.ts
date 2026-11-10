@@ -1,8 +1,9 @@
 import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
 import { TYPES } from "../../../types/types";
-import { IAdminChallengeService } from "../../interfaces/admin/IAdminChallengeService";
-import { IAdminChallengeRepository } from "../../../repositories/interfaces/admin/IAdminChallengeRepository";
+import type { IAdminChallengeService } from "../../interfaces/admin/IAdminChallengeService";
+import type { IAdminChallengeRepository } from "../../../repositories/interfaces/admin/IAdminChallengeRepository";
+import type { ICloudinaryService } from "../../interfaces/common/ICloudinaryService";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import logger from "../../../utils/logger";
@@ -15,17 +16,21 @@ import { UpdateChallengeDTO } from "../../../dtos/admin/challenge/update-challen
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { toAdminChallengeCardDTO } from "../../../mappers/admin/challenge/admin-challenge-list.mapper";
 import { toAdminChallengeDetailsDTO } from "../../../mappers/admin/challenge/admin-challenge-details.mapper";
-import { uploadToCloudinary } from "../../../utils/cloudinaryUploads.util";
-import {
-  deleteChallengeImage,
-  validateChallengeId,
-} from "../../../utils/adminChallenge.util";
+import { validateChallengeId } from "../../../utils/adminChallenge.util";
+import { parseArrayField } from "../../../utils/challenge-form-data.util";
+import { IAdminChallengeDayRepository } from "../../../repositories/interfaces/admin/IAdminChallengeDayRepository";
 
 @injectable()
 export class AdminChallengeService implements IAdminChallengeService {
   constructor(
     @inject(TYPES.IAdminChallengeRepository)
     private readonly _adminChallengeRepository: IAdminChallengeRepository,
+
+    @inject(TYPES.IAdminChallengeDayRepository)
+    private readonly _adminChallengeDayRepository: IAdminChallengeDayRepository,
+
+    @inject(TYPES.ICloudinaryService)
+    private readonly _cloudinaryService: ICloudinaryService,
   ) {}
 
   async createChallenge(
@@ -34,45 +39,50 @@ export class AdminChallengeService implements IAdminChallengeService {
     thumbnailFile?: Express.Multer.File,
   ): Promise<void> {
     logger.info("Creating challenge", {
-      title: data.title,
-      adminId,
       hasThumbnail: Boolean(thumbnailFile),
     });
 
-    const validatedData = await validateDto(CreateChallengeDTO, data);
+    const transformedData = {
+      ...data,
+      durationDays: Number(data.durationDays),
+      goals: parseArrayField(data.goals, "goals"),
+      benefits: parseArrayField(data.benefits, "benefits"),
+      tags: parseArrayField(data.tags, "tags"),
+    };
+
+    const validatedData = await validateDto(
+      CreateChallengeDTO,
+      transformedData,
+    );
 
     if (!Types.ObjectId.isValid(adminId)) {
       throw new CustomError("Invalid admin ID", StatusCode.BAD_REQUEST);
     }
 
-    let thumbnailUrl: string | undefined;
-
-    if (thumbnailFile) {
-      const uploadResult = await uploadToCloudinary(
-        thumbnailFile,
-        "nutriwise/challenges",
-      );
-
-      thumbnailUrl = uploadResult.secureUrl;
-    }
+    const uploadedAsset = thumbnailFile
+      ? await this._cloudinaryService.upload(
+          thumbnailFile,
+          "nutriwise/challenges",
+        )
+      : undefined;
 
     const challenge = await this._adminChallengeRepository.create({
       ...validatedData,
-      thumbnailUrl,
+      thumbnailUrl: uploadedAsset?.secureUrl,
+      thumbnailPublicId: uploadedAsset?.publicId,
       createdBy: new Types.ObjectId(adminId),
     });
 
     logger.info("Challenge created successfully", {
       challengeId: challenge._id.toString(),
+      hasThumbnail: Boolean(uploadedAsset),
     });
   }
 
   async browseChallenges(
     query: AdminChallengeListQueryDTO,
   ): Promise<InfiniteScrollResponseDTO<AdminChallengeCardDTO>> {
-    logger.info("Browsing admin challenges", {
-      query,
-    });
+    logger.info("Browsing admin challenges");
 
     const validatedQuery = await validateDto(AdminChallengeListQueryDTO, query);
 
@@ -83,8 +93,9 @@ export class AdminChallengeService implements IAdminChallengeService {
       toAdminChallengeCardDTO(challenge),
     );
 
-    logger.info("Admin challenges fetched successfully", {
+    logger.info("Admin challenges retrieved successfully", {
       count: items.length,
+      hasMore: result.hasMore,
     });
 
     return new InfiniteScrollResponseDTO(
@@ -95,9 +106,7 @@ export class AdminChallengeService implements IAdminChallengeService {
   }
 
   async getChallenge(challengeId: string): Promise<AdminChallengeDetailsDTO> {
-    logger.info("Fetching challenge details", {
-      challengeId,
-    });
+    logger.info("Fetching challenge details", { challengeId });
 
     validateChallengeId(challengeId);
 
@@ -107,6 +116,10 @@ export class AdminChallengeService implements IAdminChallengeService {
     if (!challenge) {
       throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
     }
+
+    logger.info("Challenge details retrieved successfully", {
+      challengeId,
+    });
 
     return toAdminChallengeDetailsDTO(challenge);
   }
@@ -124,7 +137,23 @@ export class AdminChallengeService implements IAdminChallengeService {
 
     validateChallengeId(challengeId);
 
-    const validatedData = await validateDto(UpdateChallengeDTO, data);
+    const transformedData = {
+      ...data,
+      ...(data.goals !== undefined && {
+        goals: parseArrayField(data.goals, "goals"),
+      }),
+      ...(data.benefits !== undefined && {
+        benefits: parseArrayField(data.benefits, "benefits"),
+      }),
+      ...(data.tags !== undefined && {
+        tags: parseArrayField(data.tags, "tags"),
+      }),
+    };
+
+    const validatedData = await validateDto(
+      UpdateChallengeDTO,
+      transformedData,
+    );
 
     const existingChallenge =
       await this._adminChallengeRepository.findById(challengeId);
@@ -133,27 +162,32 @@ export class AdminChallengeService implements IAdminChallengeService {
       throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
     }
 
-    let thumbnailUrl = existingChallenge.thumbnailUrl;
+    const { removeThumbnail, ...challengeData } = validatedData;
 
-    if (thumbnailFile) {
-      const uploadResult = await uploadToCloudinary(
-        thumbnailFile,
-        "nutriwise/challenges",
-      );
+    const uploadedAsset = thumbnailFile
+      ? await this._cloudinaryService.upload(
+          thumbnailFile,
+          "nutriwise/challenges",
+        )
+      : undefined;
 
-      thumbnailUrl = uploadResult.secureUrl;
-    } else if (validatedData.removeThumbnail) {
-      thumbnailUrl = undefined;
-    }
-
-    const { removeThumbnail: _removeThumbnail, ...challengeData } =
-      validatedData;
+    const shouldRemoveThumbnail = !thumbnailFile && removeThumbnail;
 
     const updatedChallenge = await this._adminChallengeRepository.updateById(
       challengeId,
       {
         ...challengeData,
-        thumbnailUrl,
+        ...(uploadedAsset
+          ? {
+              thumbnailUrl: uploadedAsset.secureUrl,
+              thumbnailPublicId: uploadedAsset.publicId,
+            }
+          : shouldRemoveThumbnail
+            ? {
+                thumbnailUrl: undefined,
+                thumbnailPublicId: undefined,
+              }
+            : {}),
       },
     );
 
@@ -164,14 +198,16 @@ export class AdminChallengeService implements IAdminChallengeService {
       );
     }
 
-    if (
-      existingChallenge.thumbnailUrl &&
-      existingChallenge.thumbnailUrl !== thumbnailUrl
-    ) {
-      await deleteChallengeImage(existingChallenge.thumbnailUrl);
+    const thumbnailChanged = Boolean(uploadedAsset) || shouldRemoveThumbnail;
+
+    if (thumbnailChanged && existingChallenge.thumbnailPublicId) {
+      await this.cleanupAsset(existingChallenge.thumbnailPublicId);
     }
 
-    logger.info("Challenge updated successfully", { challengeId });
+    logger.info("Challenge updated successfully", {
+      challengeId,
+      thumbnailChanged,
+    });
   }
 
   async deleteChallenge(challengeId: string): Promise<void> {
@@ -204,18 +240,18 @@ export class AdminChallengeService implements IAdminChallengeService {
       );
     }
 
-    if (challenge.thumbnailUrl) {
-      await deleteChallengeImage(challenge.thumbnailUrl);
+    if (challenge.thumbnailPublicId) {
+      await this.cleanupAsset(challenge.thumbnailPublicId);
     }
 
-    logger.info("Challenge deleted successfully", { challengeId });
+    logger.info("Challenge deleted successfully", {
+      challengeId,
+      hadThumbnail: Boolean(challenge.thumbnailPublicId),
+    });
   }
-  
 
   async publishChallenge(challengeId: string): Promise<void> {
-    logger.info("Publishing challenge", {
-      challengeId,
-    });
+    logger.info("Publishing challenge", { challengeId });
 
     validateChallengeId(challengeId);
 
@@ -240,11 +276,31 @@ export class AdminChallengeService implements IAdminChallengeService {
       );
     }
 
+    const dayNumbers =
+      await this._adminChallengeDayRepository.findDayNumbersByChallengeId(
+        challengeId,
+      );
+
+    const existingDays = new Set(dayNumbers);
+
+    const missingDays = Array.from(
+      { length: challenge.durationDays },
+      (_, index) => index + 1,
+    ).filter((dayNumber) => !existingDays.has(dayNumber));
+
+    if (
+      missingDays.length > 0 ||
+      dayNumbers.length !== challenge.durationDays
+    ) {
+      throw new CustomError(
+        `Cannot publish challenge. Missing or duplicate challenge days. Expected ${challenge.durationDays} days. Missing days: ${missingDays.join(", ") || "None"}.`,
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
     const updated = await this._adminChallengeRepository.updateById(
       challengeId,
-      {
-        status: "published",
-      },
+      { status: "published" },
     );
 
     if (!updated) {
@@ -254,8 +310,17 @@ export class AdminChallengeService implements IAdminChallengeService {
       );
     }
 
-    logger.info("Challenge published successfully", {
-      challengeId,
-    });
+    logger.info("Challenge published successfully", { challengeId });
+  }
+
+  private async cleanupAsset(publicId: string): Promise<void> {
+    try {
+      await this._cloudinaryService.delete(publicId);
+    } catch (error) {
+      logger.error("Cloudinary asset cleanup failed", {
+        publicId,
+        error,
+      });
+    }
   }
 }

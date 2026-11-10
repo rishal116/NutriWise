@@ -1,4 +1,11 @@
-import { IsInt, IsNotEmpty, IsString, MaxLength, Min } from "class-validator";
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from "class-validator";
 
 export class CreateChallengeDayDTO {
   @IsInt()
@@ -17,5 +24,6 @@ export class CreateChallengeDayDTO {
 
   activities!: unknown;
 
+  @IsOptional()
   activityMediaIndexes?: unknown;
 }

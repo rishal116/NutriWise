@@ -1,4 +1,4 @@
-import {
+import type {
   ChallengeAccessType,
   ChallengeCategory,
   ChallengeDifficulty,
@@ -12,4 +12,7 @@ export interface CreateChallengeDTO {
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
   durationDays: number;
+  goals: string[];
+  benefits?: string[];
+  tags?: string[];
 }

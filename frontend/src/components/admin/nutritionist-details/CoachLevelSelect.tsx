@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { ChevronDown } from "lucide-react";
 
 import type { CoachLevel } from "@/types/nutritionist.types";
 
@@ -23,24 +24,36 @@ export default function CoachLevelSelect({
     <div>
       <label
         htmlFor={id}
-        className="text-xs font-semibold uppercase tracking-wide text-slate-400"
+        className="text-xs font-semibold uppercase tracking-wide text-admin-muted"
       >
         Coach level
       </label>
 
-      <select
-        id={id}
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value as CoachLevel)}
-        className="mt-1.5 w-full cursor-pointer rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-bold text-emerald-700 outline-none transition hover:border-emerald-300 focus:ring-2 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {LEVELS.map((level) => (
-          <option key={level} value={level}>
-            {COACH_LEVEL_LABELS[level]}
-          </option>
-        ))}
-      </select>
+      <div className="relative mt-1.5">
+        <select
+          id={id}
+          value={value}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value as CoachLevel)}
+          className="w-full cursor-pointer appearance-none rounded-xl border border-admin-border bg-admin-surface-hover py-2.5 pl-4 pr-10 text-sm font-bold text-admin-accent outline-none transition-colors hover:border-admin-accent focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {LEVELS.map((level) => (
+            <option
+              key={level}
+              value={level}
+              className="bg-admin-surface text-admin-text"
+            >
+              {COACH_LEVEL_LABELS[level]}
+            </option>
+          ))}
+        </select>
+
+        <ChevronDown
+          size={16}
+          aria-hidden="true"
+          className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-admin-muted"
+        />
+      </div>
     </div>
   );
 }

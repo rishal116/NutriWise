@@ -44,7 +44,8 @@ export const defaultFormState: ChallengeFormState = {
   category: "nutrition",
   difficulty: "beginner",
   accessType: "free",
-  durationDays: 7,
+  durationDays: 0,
+  goals: [],
 };
 
 export const selectClassName =

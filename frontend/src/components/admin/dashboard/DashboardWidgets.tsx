@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { ComponentType, ReactNode } from "react";
@@ -32,6 +31,9 @@ interface StatusRowProps {
   barClassName: string;
 }
 
+const CARD_CLASS =
+  "rounded-2xl border border-admin-border bg-admin-surface p-5 shadow-sm shadow-admin-text/5";
+
 export function formatNumber(value: number): string {
   return value.toLocaleString("en-IN");
 }
@@ -48,8 +50,11 @@ export function formatTrendDate(value: string): string {
 
   if (!year || !month || !day) return value;
 
-  return new Date(Number(year), Number(month) - 1, Number(day))
-    .toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+  ).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 }
 
 export function KpiCard({
@@ -61,7 +66,7 @@ export function KpiCard({
   iconBackgroundClassName,
 }: KpiCardProps) {
   return (
-    <article className="rounded-2xl border border-admin-border bg-admin-surface p-5 shadow-sm">
+    <article className={CARD_CLASS}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-wide text-admin-muted">
@@ -72,7 +77,9 @@ export function KpiCard({
           </p>
           <p className="mt-1 text-xs text-admin-muted">{description}</p>
         </div>
-        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBackgroundClassName}`}>
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBackgroundClassName}`}
+        >
           <Icon className={`h-5 w-5 ${iconClassName}`} />
         </div>
       </div>
@@ -95,29 +102,42 @@ export function TrendChart({
   const paddingBottom = 34;
   const usableWidth = chartWidth - paddingX * 2;
   const usableHeight = chartHeight - paddingTop - paddingBottom;
+  const baseline = paddingTop + usableHeight;
   const maxValue = Math.max(...data.map((item) => item.value), 1);
 
   const points = data.map((item, index) => ({
     item,
-    x: data.length === 1
-      ? chartWidth / 2
-      : paddingX + (index / (data.length - 1)) * usableWidth,
+    x:
+      data.length === 1
+        ? chartWidth / 2
+        : paddingX + (index / (data.length - 1)) * usableWidth,
     y: paddingTop + usableHeight - (item.value / maxValue) * usableHeight,
   }));
 
-  const labelIndexes = data.length <= 7
-    ? data.map((_, index) => index)
-    : [...new Set([0, Math.floor(data.length / 2), data.length - 1])];
+  const linePoints = points.map(({ x, y }) => `${x},${y}`);
+
+  const areaPoints = [
+    `${points[0]?.x ?? paddingX},${baseline}`,
+    ...linePoints,
+    `${points[points.length - 1]?.x ?? paddingX},${baseline}`,
+  ].join(" ");
+
+  const labelIndexes =
+    data.length <= 7
+      ? data.map((_, index) => index)
+      : [...new Set([0, Math.floor(data.length / 2), data.length - 1])];
 
   return (
-    <section className="rounded-2xl border border-admin-border bg-admin-surface p-5 shadow-sm">
+    <section className={CARD_CLASS}>
       <h2 className="text-base font-bold text-admin-text">{title}</h2>
       <p className="mt-1 text-xs text-admin-muted">{description}</p>
 
       {data.length === 0 ? (
         <div className="flex h-64 flex-col items-center justify-center text-center">
           <BarChart3 className="h-8 w-8 text-admin-muted/50" />
-          <p className="mt-3 text-sm font-medium text-admin-muted">{emptyMessage}</p>
+          <p className="mt-3 text-sm font-medium text-admin-muted">
+            {emptyMessage}
+          </p>
         </div>
       ) : (
         <>
@@ -137,18 +157,23 @@ export function TrendChart({
                     x2={chartWidth - paddingX}
                     y1={y}
                     y2={y}
-                    stroke="currentColor"
-                    strokeOpacity="0.08"
+                    stroke="var(--admin-border)"
                     strokeDasharray="4 5"
                   />
                 );
               })}
 
+              <polygon
+                points={areaPoints}
+                fill="currentColor"
+                fillOpacity="0.08"
+              />
+
               <polyline
-                points={points.map(({ x, y }) => `${x},${y}`).join(" ")}
+                points={linePoints.join(" ")}
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="3"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -158,10 +183,10 @@ export function TrendChart({
                   key={`${item.date}-${item.value}`}
                   cx={x}
                   cy={y}
-                  r="4"
-                  fill="currentColor"
+                  r="3.5"
+                  fill="var(--admin-surface)"
                   stroke="currentColor"
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                 />
               ))}
 
@@ -175,8 +200,7 @@ export function TrendChart({
                     x={point.x}
                     y={chartHeight - 8}
                     textAnchor="middle"
-                    fill="currentColor"
-                    opacity="0.55"
+                    fill="var(--admin-text-muted)"
                     fontSize="11"
                   >
                     {formatTrendDate(point.item.date)}
@@ -195,7 +219,9 @@ export function TrendChart({
             </span>
             <span className="text-xs text-admin-muted">
               Peak:{" "}
-              <strong className="text-admin-text">{valueFormatter(maxValue)}</strong>
+              <strong className="text-admin-text">
+                {valueFormatter(maxValue)}
+              </strong>
             </span>
           </div>
         </>
@@ -216,9 +242,11 @@ export function StatusRow({
     <div>
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-medium text-admin-text">{label}</span>
-        <span className="text-sm font-bold text-admin-text">{formatNumber(value)}</span>
+        <span className="text-sm font-bold text-admin-text">
+          {formatNumber(value)}
+        </span>
       </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-admin-bg">
         <div
           className={`h-full rounded-full transition-all ${barClassName}`}
           style={{ width: `${percentage}%` }}
@@ -238,7 +266,7 @@ export function OverviewCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-admin-border bg-admin-surface p-5 shadow-sm">
+    <section className={CARD_CLASS}>
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-admin-accent-soft text-admin-accent">
           <Icon className="h-4 w-4" />
