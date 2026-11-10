@@ -5,24 +5,24 @@ export function ChallengeSectionSkeleton() {
   return (
     <section className="space-y-4" aria-hidden="true">
       <div className="flex items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <div className="h-5 w-1 rounded-full bg-muted" />
-        <div className="h-7 w-40 animate-pulse rounded-md bg-muted" />
+        <div className="h-5 w-1 rounded-full bg-[#047857]/40" />
+        <div className="h-7 w-40 animate-pulse rounded-md bg-[#D1FAE5]" />
       </div>
 
       <div className="scrollbar-none flex gap-4 overflow-hidden px-4 sm:gap-5 sm:px-6 lg:px-8">
         {Array.from({ length: 5 }).map((_, index) => (
           <div
             key={index}
-            className={`shrink-0 overflow-hidden rounded-2xl border border-border/70 bg-card ${CARD_WIDTH_CLASSES}`}
+            className={`shrink-0 overflow-hidden rounded-2xl border border-[#D1FAE5] bg-white shadow-sm ${CARD_WIDTH_CLASSES}`}
           >
-            <div className="aspect-[4/5] animate-pulse bg-muted" />
+            <div className="aspect-[4/5] animate-pulse bg-[#ECFDF5]" />
             <div className="space-y-2.5 p-4">
-              <div className="h-5 w-4/5 animate-pulse rounded bg-muted" />
+              <div className="h-5 w-4/5 animate-pulse rounded bg-[#D1FAE5]" />
               <div className="space-y-2">
-                <div className="h-3 w-full animate-pulse rounded bg-muted" />
-                <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-full animate-pulse rounded bg-[#ECFDF5]" />
+                <div className="h-3 w-3/4 animate-pulse rounded bg-[#ECFDF5]" />
               </div>
-              <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-1/2 animate-pulse rounded bg-[#ECFDF5]" />
             </div>
           </div>
         ))}

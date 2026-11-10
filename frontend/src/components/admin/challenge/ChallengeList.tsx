@@ -162,13 +162,13 @@ export default function ChallengeList() {
       {error && (
         <div
           role="alert"
-          className="rounded-lg border border-rose-200 bg-rose-50/60 px-4 py-3 text-xs text-rose-800"
+          className="rounded-xl border border-admin-danger/30 bg-admin-danger-soft px-4 py-3 text-sm font-medium text-admin-danger"
         >
           {error}
           <button
             type="button"
             onClick={() => void fetchChallenges()}
-            className="ml-2 font-semibold underline underline-offset-2"
+            className="ml-2 rounded font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-danger/50"
           >
             Retry
           </button>
@@ -195,15 +195,15 @@ export default function ChallengeList() {
                 type="button"
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-admin-border bg-admin-surface px-5 py-2.5 text-sm font-semibold text-admin-text shadow-sm shadow-admin-text/5 transition-colors hover:bg-admin-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? "Loading..." : "Load More"}
               </button>
             </div>
           )}
 
-          {loading && challenges.length > 0 && (
-            <p className="text-center text-sm text-slate-500">
+          {loading && !hasMore && (
+            <p className="text-center text-sm text-admin-muted">
               Loading challenges...
             </p>
           )}

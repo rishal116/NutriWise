@@ -2,6 +2,8 @@ import {
   IsBoolean,
   IsEnum,
   IsInt,
+  IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -20,6 +22,7 @@ export class CreateChallengeActivityDTO {
   type!: ChallengeActivityType;
 
   @IsString()
+  @IsNotEmpty()
   @MaxLength(150)
   title!: string;
 
@@ -37,6 +40,7 @@ export class CreateChallengeActivityDTO {
   valueType!: ChallengeActivityValueType;
 
   @IsOptional()
+  @IsNumber()
   @Min(0)
   targetValue?: number;
 
@@ -46,6 +50,7 @@ export class CreateChallengeActivityDTO {
   unit?: string;
 
   @IsOptional()
+  @IsInt()
   @Min(0)
   estimatedDurationMinutes?: number;
 

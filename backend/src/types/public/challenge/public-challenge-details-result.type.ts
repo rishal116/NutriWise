@@ -9,9 +9,12 @@ export interface PublicChallengeDetailsResult {
   title: string;
   description: string;
   instructions?: string;
-  coverImageUrl?: string;
+  thumbnailUrl?: string;
   category: ChallengeCategory;
   difficulty: ChallengeDifficulty;
   accessType: ChallengeAccessType;
   durationDays: number;
+  goals: string[];
+  benefits: string[];
+  tags: string[];
 }

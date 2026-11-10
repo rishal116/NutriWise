@@ -74,7 +74,7 @@ export function ChallengeHero() {
   return (
     <section
       aria-label="Featured wellness themes"
-      className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-2xl bg-slate-100"
+      className="relative mx-auto w-full max-w-7xl overflow-hidden rounded-2xl bg-[#ECFDF5]"
     >
       <div className="relative h-[360px] sm:h-[420px] lg:h-[480px]">
         {HERO_SLIDES.map((slide, i) => (
@@ -94,7 +94,7 @@ export function ChallengeHero() {
               className="object-cover"
             />
             <div
-              className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/25 to-transparent"
+              className="absolute inset-0 bg-gradient-to-t from-[#065F46]/85 via-[#065F46]/30 to-transparent"
               aria-hidden="true"
             />
           </div>
@@ -102,7 +102,7 @@ export function ChallengeHero() {
 
         <div className="absolute inset-x-0 bottom-0 px-5 pb-14 sm:px-8 sm:pb-16 lg:px-10 lg:pb-16">
           <div className="max-w-lg">
-            <span className="inline-block rounded-full bg-emerald-600/90 px-3 py-1 text-xs font-semibold text-white">
+            <span className="inline-block rounded-full bg-[#047857] px-3 py-1 text-xs font-semibold text-white">
               {HERO_SLIDES[index].label}
             </span>
             <h1 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
@@ -127,7 +127,7 @@ export function ChallengeHero() {
               aria-selected={i === index}
               aria-label={`Show ${slide.label} slide`}
               onClick={() => setIndex(i)}
-              className={`h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+              className={`h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#065F46] ${
                 i === index
                   ? "w-7 bg-white"
                   : "w-2 bg-white/40 hover:bg-white/70"

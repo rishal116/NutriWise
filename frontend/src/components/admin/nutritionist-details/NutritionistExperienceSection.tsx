@@ -16,17 +16,17 @@ export default function NutritionistExperienceSection({
           {experiences.map((exp) => (
             <li
               key={`${exp.organization}-${exp.role}-${exp.durationYears}`}
-              className="relative border-l border-slate-200 pl-6"
+              className="relative border-l border-admin-border pl-6"
             >
-              <span className="absolute -left-[5px] top-1.5 size-2.5 rounded-full bg-emerald-500" />
+              <span className="absolute -left-[5px] top-1.5 size-2.5 rounded-full bg-admin-accent ring-4 ring-admin-surface" />
 
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-bold text-slate-900">{exp.role}</p>
-                <span className="w-fit rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">
+                <p className="text-sm font-bold text-admin-text">{exp.role}</p>
+                <span className="w-fit rounded-lg bg-admin-surface-hover px-2.5 py-1 text-xs font-bold text-admin-muted">
                   {exp.durationYears} yrs
                 </span>
               </div>
-              <p className="text-sm font-semibold text-emerald-600">
+              <p className="text-sm font-semibold text-admin-accent">
                 {exp.organization}
               </p>
             </li>

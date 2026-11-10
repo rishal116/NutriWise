@@ -1,11 +1,7 @@
 import { inject, injectable } from "inversify";
-import { Types } from "mongoose";
 import { TYPES } from "../../../types/types";
-import { IAdminChallengeDayService } from "../../interfaces/admin/IAdminChallengeDayService";
-import { IAdminChallengeDayRepository } from "../../../repositories/interfaces/admin/IAdminChallengeDayRepository";
-import { IAdminChallengeRepository } from "../../../repositories/interfaces/admin/IAdminChallengeRepository";
-import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { CustomError } from "../../../utils/customError";
 import logger from "../../../utils/logger";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
@@ -14,25 +10,31 @@ import { AdminChallengeDayListItemDTO } from "../../../dtos/admin/challenge-day/
 import { AdminChallengeDayDetailsDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-details.dto";
 import { CreateChallengeDayDTO } from "../../../dtos/admin/challenge-day/create-challenge-day.dto";
 import { UpdateChallengeDayDTO } from "../../../dtos/admin/challenge-day/update-challenge-day.dto";
-import { IChallengeDay } from "../../../models/challengeDay.model";
-import { ChallengeDayUploadedFiles } from "../../../types/admin/challenge-day/challenge-day-files.types";
+import type { IChallengeDay } from "../../../models/challengeDay.model";
+import type { ChallengeDayUploadedFiles } from "../../../types/admin/challenge-day/challenge-day-files.types";
+import type { IAdminChallengeDayService } from "../../interfaces/admin/IAdminChallengeDayService";
+import type { IAdminChallengeDayRepository } from "../../../repositories/interfaces/admin/IAdminChallengeDayRepository";
+import type { IAdminChallengeRepository } from "../../../repositories/interfaces/admin/IAdminChallengeRepository";
+import type { ICloudinaryService } from "../../interfaces/common/ICloudinaryService";
 import {
-  buildActivities,
-  parseActivities,
-  parseMediaIndexes,
-  deleteChallengeDayMedia,
-  cleanupUploadedMedia,
   getActivityMediaIds,
+  deleteChallengeDayMedia,
 } from "../../../helpers/admin/challenge-day/challenge-day-media.helper";
 import {
   validateChallengeDayId,
   validateChallengeDayNumber,
-  validateChallengeDayOwnership,
 } from "../../../helpers/admin/challenge-day/challenge-day-validation.helper";
 import {
   toAdminChallengeDayDetailsDTO,
   toAdminChallengeDayListItemDTO,
 } from "../../../mappers/admin/challenge/admin-challenge-day.mapper";
+import { getChallengeOrThrow } from "../../../helpers/admin/challenge-day/challenge-day-service.helper";
+import {
+  parseActivities,
+  parseMediaIndexes,
+} from "../../../helpers/admin/challenge-day/challenge-day-media-parser.helper";
+import { buildActivities } from "../../../helpers/admin/challenge-day/challenge-day-activity-builder.helper";
+import { cleanupUploadedMedia } from "../../../helpers/admin/challenge-day/challenge-day-media-cleanup.helper";
 
 @injectable()
 export class AdminChallengeDayService implements IAdminChallengeDayService {
@@ -42,17 +44,10 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
 
     @inject(TYPES.IAdminChallengeRepository)
     private readonly _challengeRepository: IAdminChallengeRepository,
+
+    @inject(TYPES.ICloudinaryService)
+    private readonly _cloudinaryService: ICloudinaryService,
   ) {}
-
-  private validateId(id: string, fieldName: string): void {
-    if (!id?.trim()) {
-      throw new CustomError(`${fieldName} is required`, StatusCode.BAD_REQUEST);
-    }
-
-    if (!Types.ObjectId.isValid(id)) {
-      throw new CustomError(`Invalid ${fieldName}`, StatusCode.BAD_REQUEST);
-    }
-  }
 
   async createDay(
     challengeId: string,
@@ -64,26 +59,17 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
       dayNumber: data.dayNumber,
     });
 
-    validateChallengeDayId(challengeId, "Challenge ID");
+    const challenge = await getChallengeOrThrow(
+      challengeId,
+      this._challengeRepository,
+    );
 
-    const challenge = await this._challengeRepository.findById(challengeId);
-
-    if (!challenge) {
-      throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
-    }
-
-    const validatedData = await validateDto(CreateChallengeDayDTO, {
-      dayNumber: data.dayNumber,
-      title: data.title,
-      description: data.description,
-    });
+    const validatedData = await validateDto(CreateChallengeDayDTO, data);
 
     validateChallengeDayNumber(validatedData.dayNumber, challenge.durationDays);
 
-    const challengeObjectId = new Types.ObjectId(challengeId);
-
     const existingDay = await this._challengeDayRepository.findOne({
-      challengeId: challengeObjectId,
+      challengeId: challenge._id,
       dayNumber: validatedData.dayNumber,
     });
 
@@ -94,55 +80,44 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
       );
     }
 
-    const rawActivities = parseActivities(data.activities);
-    const mediaIndexes = parseMediaIndexes(data.activityMediaIndexes);
+    const rawActivities = parseActivities(validatedData.activities);
+    const mediaIndexes = parseMediaIndexes(validatedData.activityMediaIndexes);
 
     const { activities, newlyUploadedMedia } = await buildActivities(
       rawActivities,
       mediaIndexes,
       files,
+      this._cloudinaryService,
     );
 
-    let createdDay: IChallengeDay;
-
     try {
-      createdDay = await this._challengeDayRepository.create({
-        challengeId: challengeObjectId,
+      const createdDay = await this._challengeDayRepository.create({
+        challengeId: challenge._id,
         dayNumber: validatedData.dayNumber,
         title: validatedData.title,
         description: validatedData.description,
         activities,
       });
+
+      logger.info("Challenge day created successfully", {
+        challengeId,
+        dayId: createdDay._id.toString(),
+        dayNumber: createdDay.dayNumber,
+      });
     } catch (error) {
-      if (newlyUploadedMedia.length > 0) {
-        await cleanupUploadedMedia(newlyUploadedMedia);
-      }
+      await cleanupUploadedMedia(newlyUploadedMedia, this._cloudinaryService);
+
       throw error;
     }
-
-    logger.info("Challenge day created successfully", {
-      challengeId,
-      dayId: createdDay._id.toString(),
-      dayNumber: createdDay.dayNumber,
-    });
   }
 
   async browseDays(
     challengeId: string,
     query: AdminChallengeDayListQueryDTO,
   ): Promise<InfiniteScrollResponseDTO<AdminChallengeDayListItemDTO>> {
-    logger.info("Browsing challenge days", {
-      challengeId,
-      query,
-    });
+    logger.info("Browsing challenge days", { challengeId, query });
 
-    this.validateId(challengeId, "Challenge ID");
-
-    const challenge = await this._challengeRepository.findById(challengeId);
-
-    if (!challenge) {
-      throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
-    }
+    await getChallengeOrThrow(challengeId, this._challengeRepository);
 
     const validatedQuery = await validateDto(
       AdminChallengeDayListQueryDTO,
@@ -165,22 +140,16 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
     challengeId: string,
     dayId: string,
   ): Promise<AdminChallengeDayDetailsDTO> {
-    logger.info("Fetching challenge day", {
+    logger.info("Fetching challenge day", { challengeId, dayId });
+
+    const challenge = await getChallengeOrThrow(
       challengeId,
-      dayId,
-    });
-
-    this.validateId(challengeId, "Challenge ID");
-    this.validateId(dayId, "Day ID");
-
-    const challenge = await this._challengeRepository.findById(challengeId);
-
-    if (!challenge) {
-      throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
-    }
+      this._challengeRepository,
+    );
+    validateChallengeDayId(dayId, "Day ID");
 
     const day = await this._challengeDayRepository.findDayById(
-      challengeId,
+      challenge._id.toString(),
       dayId,
     );
 
@@ -197,85 +166,62 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
     data: UpdateChallengeDayDTO,
     files?: ChallengeDayUploadedFiles,
   ): Promise<void> {
-    logger.info("Updating challenge day", {
-      challengeId,
-      dayId,
-    });
+    logger.info("Updating challenge day", { challengeId, dayId });
 
-    validateChallengeDayId(challengeId, "Challenge ID");
+    const challenge = await getChallengeOrThrow(
+      challengeId,
+      this._challengeRepository,
+    );
+
     validateChallengeDayId(dayId, "Day ID");
 
-    const challenge = await this._challengeRepository.findById(challengeId);
-
-    if (!challenge) {
-      throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
-    }
-
-    const existingDay = await this._challengeDayRepository.findById(dayId);
+    const existingDay = await this._challengeDayRepository.findDayById(
+      challenge._id.toString(),
+      dayId,
+    );
 
     if (!existingDay) {
       throw new CustomError("Challenge day not found", StatusCode.NOT_FOUND);
     }
 
-    validateChallengeDayOwnership(existingDay.challengeId, challengeId);
+    const validatedData = await validateDto(UpdateChallengeDayDTO, data);
 
-    const validatedData = await validateDto(UpdateChallengeDayDTO, {
-      title: data.title,
-      description: data.description,
-      activities: data.activities,
-      activityMediaIndexes: data.activityMediaIndexes,
-    });
+    const updateData: Partial<IChallengeDay> = {
+      ...(validatedData.title !== undefined && {
+        title: validatedData.title,
+      }),
+      ...(validatedData.description !== undefined && {
+        description: validatedData.description,
+      }),
+    };
 
-    const updateData: Partial<IChallengeDay> = {};
+    let newlyUploadedMedia: Awaited<
+      ReturnType<typeof buildActivities>
+    >["newlyUploadedMedia"] = [];
 
-    if (validatedData.title !== undefined) {
-      updateData.title = validatedData.title;
-    }
+    let mediaToDelete: ReturnType<typeof getActivityMediaIds> = [];
 
-    if (validatedData.description !== undefined) {
-      updateData.description = validatedData.description;
-    }
-
-    const replacingActivities = validatedData.activities !== undefined;
-    let newlyUploadedMedia: {
-      publicId: string;
-      resourceType: "image" | "video";
-    }[] = [];
-    let mediaToDelete: {
-      publicId: string;
-      resourceType: "image" | "video";
-    }[] = [];
-
-    if (replacingActivities) {
-      const rawActivities = parseActivities(validatedData.activities);
-      const mediaIndexes = parseMediaIndexes(
-        validatedData.activityMediaIndexes,
-      );
-
+    if (validatedData.activities !== undefined) {
       const buildResult = await buildActivities(
-        rawActivities,
-        mediaIndexes,
+        parseActivities(validatedData.activities),
+        parseMediaIndexes(validatedData.activityMediaIndexes),
         files,
+        this._cloudinaryService,
         existingDay.activities,
         true,
       );
 
-      updateData.activities = buildResult.activities;
       newlyUploadedMedia = buildResult.newlyUploadedMedia;
+      updateData.activities = buildResult.activities;
 
-      const referencedPublicIds = new Set<string>();
-      for (const activity of buildResult.activities) {
-        if (activity.imagePublicId) {
-          referencedPublicIds.add(activity.imagePublicId);
-        }
-        if (activity.videoPublicId) {
-          referencedPublicIds.add(activity.videoPublicId);
-        }
-      }
+      const retainedPublicIds = new Set(
+        getActivityMediaIds(buildResult.activities).map(
+          (media) => media.publicId,
+        ),
+      );
 
-      const oldMedia = getActivityMediaIds(existingDay.activities);
-      mediaToDelete = oldMedia.filter(
-        (media) => !referencedPublicIds.has(media.publicId),
+      mediaToDelete = getActivityMediaIds(existingDay.activities).filter(
+        (media) => !retainedPublicIds.has(media.publicId),
       );
     }
 
@@ -283,20 +229,16 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
 
     try {
       updatedDay = await this._challengeDayRepository.updateById(
-        dayId,
+        existingDay._id.toString(),
         updateData,
       );
     } catch (error) {
-      if (newlyUploadedMedia.length > 0) {
-        await cleanupUploadedMedia(newlyUploadedMedia);
-      }
+      await cleanupUploadedMedia(newlyUploadedMedia, this._cloudinaryService);
       throw error;
     }
 
     if (!updatedDay) {
-      if (newlyUploadedMedia.length > 0) {
-        await cleanupUploadedMedia(newlyUploadedMedia);
-      }
+      await cleanupUploadedMedia(newlyUploadedMedia, this._cloudinaryService);
 
       throw new CustomError(
         "Failed to update challenge day",
@@ -304,9 +246,7 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
       );
     }
 
-    if (mediaToDelete.length > 0) {
-      await cleanupUploadedMedia(mediaToDelete);
-    }
+    await cleanupUploadedMedia(mediaToDelete, this._cloudinaryService);
 
     logger.info("Challenge day updated successfully", {
       challengeId,
@@ -315,37 +255,27 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
   }
 
   async deleteDay(challengeId: string, dayId: string): Promise<void> {
-    logger.info("Deleting challenge day", {
+    logger.info("Deleting challenge day", { challengeId, dayId });
+
+    const challenge = await getChallengeOrThrow(
       challengeId,
+      this._challengeRepository,
+    );
+
+    validateChallengeDayId(dayId, "Day ID");
+
+    const existingDay = await this._challengeDayRepository.findDayById(
+      challenge._id.toString(),
       dayId,
-    });
-
-    this.validateId(challengeId, "Challenge ID");
-
-    this.validateId(dayId, "Day ID");
-
-    const challenge = await this._challengeRepository.findById(challengeId);
-
-    if (!challenge) {
-      throw new CustomError("Challenge not found", StatusCode.NOT_FOUND);
-    }
-
-    const existingDay = await this._challengeDayRepository.findById(dayId);
+    );
 
     if (!existingDay) {
       throw new CustomError("Challenge day not found", StatusCode.NOT_FOUND);
     }
 
-    if (existingDay.challengeId.toString() !== challengeId) {
-      throw new CustomError(
-        "Challenge day does not belong to this challenge",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
     const deleted = await this._challengeDayRepository.deleteOne({
-      _id: new Types.ObjectId(dayId),
-      challengeId: new Types.ObjectId(challengeId),
+      _id: existingDay._id,
+      challengeId: challenge._id,
     });
 
     if (!deleted) {
@@ -355,7 +285,10 @@ export class AdminChallengeDayService implements IAdminChallengeDayService {
       );
     }
 
-    await deleteChallengeDayMedia(existingDay.activities);
+    await deleteChallengeDayMedia(
+      existingDay.activities,
+      this._cloudinaryService,
+    );
 
     logger.info("Challenge day deleted successfully", {
       challengeId,

@@ -312,4 +312,6 @@ export const TYPES = {
   IUserPasswordController: Symbol.for("IUserPasswordController"),
   IUserContextController: Symbol.for("IUserContextController"),
   IUserRoleController: Symbol.for("IUserRoleController"),
+
+  ICloudinaryService: Symbol.for("ICloudinaryService"),
 } as const;

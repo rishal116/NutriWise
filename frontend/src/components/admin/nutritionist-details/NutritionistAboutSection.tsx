@@ -7,7 +7,7 @@ import { formatLabel } from "./nutritionist-details.utils";
 
 function SubHeading({ children }: { children: string }) {
   return (
-    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+    <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-admin-muted">
       {children}
     </h3>
   );
@@ -22,11 +22,11 @@ export default function NutritionistAboutSection({
 
   return (
     <DetailsCard icon={Award} title="About">
-      <p className="whitespace-pre-line break-words text-sm leading-relaxed text-slate-600">
+      <p className="whitespace-pre-line break-words text-sm leading-relaxed text-admin-text/80">
         {bio || "No biography provided."}
       </p>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 border-t border-slate-100 pt-6 md:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 border-t border-admin-border pt-6 md:grid-cols-2">
         <div>
           <SubHeading>Specializations</SubHeading>
           {specializations.length ? (
@@ -34,7 +34,7 @@ export default function NutritionistAboutSection({
               {specializations.map((item) => (
                 <li
                   key={item}
-                  className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
+                  className="rounded-lg bg-admin-accent-soft px-3 py-1.5 text-xs font-bold text-admin-accent"
                 >
                   {formatLabel(item)}
                 </li>
@@ -51,10 +51,10 @@ export default function NutritionistAboutSection({
             <ul className="space-y-3">
               {qualifications.map((q) => (
                 <li key={`${q.degree}-${q.institution}-${q.year}`}>
-                  <p className="text-sm font-semibold text-slate-800">
+                  <p className="text-sm font-semibold text-admin-text">
                     {q.degree}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-admin-muted">
                     {q.institution} · {q.year}
                   </p>
                 </li>

@@ -13,5 +13,10 @@ export const toAdminChallengeDetailsDTO = (
   difficulty: challenge.difficulty,
   accessType: challenge.accessType,
   durationDays: challenge.durationDays,
+  goals: challenge.goals,
+  benefits: challenge.benefits,
+  tags: challenge.tags,
   status: challenge.status,
+  createdAt: challenge.createdAt,
+  updatedAt: challenge.updatedAt,
 });

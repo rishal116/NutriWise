@@ -1,4 +1,11 @@
-import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from "class-validator";
 
 export const ADMIN_CHALLENGE_DAY_SORT_OPTIONS = [
   "day_asc",

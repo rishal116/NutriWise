@@ -6,12 +6,6 @@ import type { CreateChallengeDTO } from "../../../dtos/admin/challenge/create-ch
 import type { UpdateChallengeDTO } from "../../../dtos/admin/challenge/update-challenge.dto";
 
 export interface IAdminChallengeService {
-  updateChallenge(
-    challengeId: string,
-    data: UpdateChallengeDTO,
-    thumbnailFile?: Express.Multer.File,
-  ): Promise<void>;
-
   createChallenge(
     data: CreateChallengeDTO,
     adminId: string,
@@ -23,6 +17,12 @@ export interface IAdminChallengeService {
   ): Promise<InfiniteScrollResponseDTO<AdminChallengeCardDTO>>;
 
   getChallenge(challengeId: string): Promise<AdminChallengeDetailsDTO>;
+
+  updateChallenge(
+    challengeId: string,
+    data: UpdateChallengeDTO,
+    thumbnailFile?: Express.Multer.File,
+  ): Promise<void>;
 
   deleteChallenge(challengeId: string): Promise<void>;
 

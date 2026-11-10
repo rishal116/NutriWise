@@ -22,8 +22,6 @@ export function ChallengeListing() {
         setError(null);
 
         const response = await publicChallengeService.getChallengeSections();
-        console.log(response);
-        
 
         setSections(response.data ?? []);
       } catch {
@@ -48,9 +46,12 @@ export function ChallengeListing() {
 
   if (error) {
     return (
-      <div className="mx-4 flex flex-col items-center gap-2 rounded-2xl border border-border bg-card px-6 py-14 text-center sm:mx-6 lg:mx-8">
-        <p className="text-sm font-medium text-foreground">{error}</p>
-        <p className="text-xs text-muted-foreground">
+      <div
+        role="alert"
+        className="mx-4 flex flex-col items-center gap-2 rounded-2xl border border-[#D1FAE5] bg-white px-6 py-14 text-center shadow-sm sm:mx-6 lg:mx-8"
+      >
+        <p className="text-sm font-medium text-[#065F46]">{error}</p>
+        <p className="text-xs text-slate-600">
           Please refresh the page or check back in a moment.
         </p>
       </div>
@@ -59,11 +60,11 @@ export function ChallengeListing() {
 
   if (sections.length === 0) {
     return (
-      <div className="mx-4 rounded-2xl border border-dashed border-border px-6 py-16 text-center sm:mx-6 lg:mx-8">
-        <h2 className="text-lg font-semibold text-foreground">
+      <div className="mx-4 rounded-2xl border border-dashed border-[#047857]/30 bg-[#ECFDF5] px-6 py-16 text-center sm:mx-6 lg:mx-8">
+        <h2 className="text-lg font-semibold text-[#065F46]">
           No challenges available
         </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-slate-600">
           Check back soon for new challenges.
         </p>
       </div>

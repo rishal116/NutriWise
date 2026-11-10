@@ -13,7 +13,9 @@ export class UpdateChallengeDayDTO {
   @MaxLength(2000)
   description?: string;
 
+  @IsOptional()
   activities?: unknown;
 
+  @IsOptional()
   activityMediaIndexes?: unknown;
 }

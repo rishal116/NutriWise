@@ -17,6 +17,12 @@ interface ChallengeDetailsHeaderProps {
   onDelete: () => void;
 }
 
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60";
+
+const chipClass =
+  "rounded-full bg-admin-bg px-3 py-1 text-xs font-medium capitalize text-admin-muted";
+
 export function ChallengeDetailsHeader({
   challenge,
   actionLoading,
@@ -27,7 +33,7 @@ export function ChallengeDetailsHeader({
     <header className="mb-6">
       <Link
         href="/admin/challenges"
-        className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition hover:text-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+        className={`inline-flex items-center gap-2 rounded-lg text-sm font-medium text-admin-muted transition-colors hover:text-admin-accent ${focusRing}`}
       >
         <ArrowLeft className="h-4 w-4" />
         Back to Challenges
@@ -38,33 +44,27 @@ export function ChallengeDetailsHeader({
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge status={challenge.status} />
 
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-600">
-              {challenge.category.replaceAll(
-                "_",
-                " ",
-              )}
+            <span className={chipClass}>
+              {challenge.category.replaceAll("_", " ")}
             </span>
 
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium capitalize text-slate-600">
-              {challenge.difficulty}
-            </span>
+            <span className={chipClass}>{challenge.difficulty}</span>
 
-            {challenge.accessType ===
-              "premium" && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+            {challenge.accessType === "premium" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-admin-warning/15 px-3 py-1 text-xs font-medium text-admin-warning">
                 <Crown className="h-3 w-3" />
                 Premium
               </span>
             )}
 
             {challenge.accessType === "free" && (
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              <span className="rounded-full bg-admin-pastel-green px-3 py-1 text-xs font-medium text-admin-success">
                 Free
               </span>
             )}
           </div>
 
-          <h1 className="mt-4 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
+          <h1 className="mt-4 text-2xl font-bold tracking-tight text-admin-text sm:text-3xl lg:text-4xl">
             {challenge.title}
           </h1>
         </div>
@@ -72,7 +72,7 @@ export function ChallengeDetailsHeader({
         <div className="flex flex-wrap gap-2">
           <Link
             href={`/admin/challenges/${challenge.id}/edit`}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2"
+            className={`inline-flex items-center gap-2 rounded-xl border border-admin-border bg-admin-surface px-4 py-2.5 text-sm font-semibold text-admin-text shadow-sm shadow-admin-text/5 transition-colors hover:bg-admin-surface-hover ${focusRing}`}
           >
             <Edit3 className="h-4 w-4" />
             Edit
@@ -83,13 +83,10 @@ export function ChallengeDetailsHeader({
               type="button"
               onClick={onPublish}
               disabled={actionLoading}
-              className="inline-flex items-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`inline-flex items-center gap-2 rounded-xl bg-admin-accent px-4 py-2.5 text-sm font-semibold text-admin-accent-fg shadow-sm transition-colors hover:bg-admin-accent-hover disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`}
             >
               <Sparkles className="h-4 w-4" />
-
-              {actionLoading
-                ? "Publishing..."
-                : "Publish"}
+              {actionLoading ? "Publishing..." : "Publish"}
             </button>
           )}
 
@@ -98,7 +95,7 @@ export function ChallengeDetailsHeader({
               type="button"
               onClick={onDelete}
               disabled={actionLoading}
-              className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-admin-danger/30 bg-admin-surface px-4 py-2.5 text-sm font-semibold text-admin-danger shadow-sm shadow-admin-text/5 transition-colors hover:bg-admin-danger-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-danger/50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Trash2 className="h-4 w-4" />
               Delete
@@ -110,23 +107,17 @@ export function ChallengeDetailsHeader({
   );
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: string;
-}) {
-  const styles = {
-    published:
-      "border-emerald-200 bg-emerald-50 text-emerald-700",
-    draft:
-      "border-amber-200 bg-amber-50 text-amber-700",
-    archived:
-      "border-slate-200 bg-slate-100 text-slate-600",
-  };
+const STATUS_STYLES: Record<string, string> = {
+  published:
+    "border-admin-success/30 bg-admin-pastel-green text-admin-success",
+  draft: "border-admin-warning/30 bg-admin-warning/15 text-admin-warning",
+  archived: "border-admin-border bg-admin-bg text-admin-muted",
+};
 
-  const style =
-    styles[status as keyof typeof styles] ??
-    "border-slate-200 bg-slate-50 text-slate-600";
+const DEFAULT_STATUS_STYLE = "border-admin-border bg-admin-bg text-admin-muted";
+
+function StatusBadge({ status }: { status: string }) {
+  const style = STATUS_STYLES[status] ?? DEFAULT_STATUS_STYLE;
 
   return (
     <span

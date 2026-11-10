@@ -33,11 +33,19 @@ export const adminChallengeService = {
   async getChallengeDetails(
     challengeId: string,
   ): Promise<ApiResponseDTO<AdminChallengeDetailsDTO>> {
-    const response = await clientApi.get<
-      ApiResponseDTO<AdminChallengeDetailsDTO>
-    >(ADMIN_CHALLENGE_ROUTES.CHALLENGE_DETAILS(challengeId));
+    const startTime = performance.now();
 
-    return response.data;
+    try {
+      const response = await clientApi.get<
+        ApiResponseDTO<AdminChallengeDetailsDTO>
+      >(ADMIN_CHALLENGE_ROUTES.CHALLENGE_DETAILS(challengeId));
+
+      return response.data;
+    } finally {
+      console.log(
+        `getChallengeDetails: ${(performance.now() - startTime).toFixed(2)}ms`,
+      );
+    }
   },
 
   async updateChallenge(

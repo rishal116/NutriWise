@@ -11,7 +11,9 @@ export const toUserChallengeDetailsDTO = (
   result: UserChallengeDetailsResult,
 ): UserChallengeDetailsDTO => {
   const completedActivities = new Set(
-    result.progress.map((item) => `${item.challengeDayId}:${item.activityId}`),
+    result.progress.map(
+      (item) => `${item.challengeDayId}:${item.activityId}`,
+    ),
   );
 
   const days = result.days.map(
@@ -21,7 +23,6 @@ export const toUserChallengeDetailsDTO = (
         dayNumber: day.dayNumber,
         title: day.title,
         description: day.description,
-
         activities: day.activities.map(
           (activity): UserChallengeActivityDTO =>
             new UserChallengeActivityDTO({
@@ -32,13 +33,16 @@ export const toUserChallengeDetailsDTO = (
               instructions: activity.instructions,
               valueType: activity.valueType,
               targetValue: activity.targetValue,
+              maxValue: activity.maxValue,
               unit: activity.unit,
               estimatedDurationMinutes: activity.estimatedDurationMinutes,
               imageUrl: activity.imageUrl,
               videoUrl: activity.videoUrl,
               isRequired: activity.isRequired,
               order: activity.order,
-              completed: completedActivities.has(`${day.id}:${activity.id}`),
+              completed: completedActivities.has(
+                `${day.id}:${activity.id}`,
+              ),
             }),
         ),
       }),
@@ -64,19 +68,17 @@ export const toUserChallengeDetailsDTO = (
     currentStreak: result.currentStreak,
     longestStreak: result.longestStreak,
     completedAt: result.completedAt,
-
     challenge: {
       id: result.challenge.id,
       title: result.challenge.title,
       description: result.challenge.description,
       instructions: result.challenge.instructions,
-      coverImageUrl: result.challenge.coverImageUrl,
+      thumbnailUrl: result.challenge.thumbnailUrl,
       category: result.challenge.category,
       difficulty: result.challenge.difficulty,
       accessType: result.challenge.accessType,
       durationDays: result.challenge.durationDays,
     },
-
     days,
     progress,
   });

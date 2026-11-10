@@ -1,9 +1,6 @@
 import { PublicChallengeDetailsDTO } from "../../../dtos/public/challenge/public-challenge-details.dto";
-
 import { PublicChallengeDetailsResult } from "../../../types/public/challenge/public-challenge-details-result.type";
-
 import { PublicChallengeDayListItem } from "../../../types/public/challenge-day/public-challenge-day-result.type";
-
 import { PublicChallengeParticipationResult } from "../../../types/public/challenge/public-challenge-participation-result.type";
 
 export const toPublicChallengeDetailsDTO = (
@@ -16,12 +13,16 @@ export const toPublicChallengeDetailsDTO = (
     title: challenge.title,
     description: challenge.description,
     instructions: challenge.instructions,
-    coverImageUrl: challenge.coverImageUrl,
+    coverImageUrl: challenge.thumbnailUrl,
     category: challenge.category,
     difficulty: challenge.difficulty,
     accessType: challenge.accessType,
     durationDays: challenge.durationDays,
+    goals: challenge.goals,
+    benefits: challenge.benefits,
+    tags: challenge.tags,
     days,
+
     participation: participation
       ? {
           userChallengeId: participation.userChallengeId,

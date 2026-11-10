@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 
 import { publicChallengeService } from "@/services/public/publicChallenge.service";
-
 import type { PublicChallengeDetailsDTO } from "@/dtos/public/challenge/public-challenge-details.dto";
 
 import { ChallengeDetailsHero } from "./ChallengeDetailsHero";
@@ -15,33 +14,47 @@ interface ChallengeDetailsProps {
 }
 
 export function ChallengeDetails({ challengeId }: ChallengeDetailsProps) {
-  const [challenge, setChallenge] = useState<PublicChallengeDetailsDTO | null>(
-    null,
-  );
+  const [challenge, setChallenge] =
+    useState<PublicChallengeDetailsDTO | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchChallenge = async () => {
+    let isMounted = true;
+
+    const fetchChallenge = async (): Promise<void> => {
       try {
         setLoading(true);
         setError(null);
+        setChallenge(null);
 
         const response =
           await publicChallengeService.getChallengeDetails(challengeId);
-          console.log(response);
-          
+
+        if (!isMounted) return;
+
+        if (!response.success || !response.data) {
+          setError(response.message || "This challenge could not be found.");
+          return;
+        }
 
         setChallenge(response.data);
       } catch {
+        if (!isMounted) return;
         setError("Unable to load this challenge right now.");
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     void fetchChallenge();
+
+    return () => {
+      isMounted = false;
+    };
   }, [challengeId]);
 
   if (loading) {
@@ -50,27 +63,33 @@ export function ChallengeDetails({ challengeId }: ChallengeDetailsProps) {
 
   if (error || !challenge) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-background px-4">
-        <div className="max-w-md text-center">
-          <h1 className="text-xl font-semibold text-foreground">
+      <div className="flex min-h-[60vh] items-center justify-center bg-[#F8FAF9] px-4">
+        <div
+          role="alert"
+          className="max-w-md rounded-2xl border border-[#D1FAE5] bg-white px-6 py-10 text-center shadow-sm"
+        >
+          <h1 className="text-xl font-semibold text-[#065F46]">
             Challenge unavailable
           </h1>
 
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          <p className="mt-2 text-sm leading-6 text-slate-600">
             {error ?? "This challenge could not be found."}
           </p>
         </div>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-background">
+    <div className="bg-[#F8FAF9]">
       <ChallengeDetailsHero challenge={challenge} />
 
       <div className="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-        <ChallengeDayBrowser challengeId={challenge.id} days={challenge.days} />
+        <ChallengeDayBrowser
+          challengeId={challenge.id}
+          days={challenge.days}
+        />
       </div>
-    </main>
+    </div>
   );
 }

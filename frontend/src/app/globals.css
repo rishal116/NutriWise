@@ -159,3 +159,25 @@
 =========================== */
 
 @source inline("bg-yellow-400 hover:bg-yellow-300 border-yellow-500");
+
+
+
+.challenge-theme {
+  --ch-primary: #047857;
+  --ch-primary-deep: #065F46;
+  --ch-mint: #D1FAE5;
+  --ch-sage: #ECFDF5;
+  --ch-bg: #F8FAF9;
+  --ch-card: #FFFFFF;
+  --ch-border: #D1FAE5;
+
+  /* Override shadcn tokens ONLY inside this scope.
+     If your tokens use hsl(var(--x)), convert to HSL triplets:
+     primary 162 94% 24%, accent 152 81% 90%. */
+  --primary: #047857;
+  --primary-foreground: #FFFFFF;
+  --accent: #ECFDF5;
+  --accent-foreground: #065F46;
+  --ring: #047857;
+  background-color: var(--ch-bg);
+}

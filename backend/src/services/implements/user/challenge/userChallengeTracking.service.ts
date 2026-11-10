@@ -1,20 +1,13 @@
 import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
-
 import { TYPES } from "../../../../types/types";
-
 import { IUserChallengeTrackingService } from "../../../interfaces/user/challenge/IUserChallengeTrackingService";
-
 import { IUserChallengeRepository } from "../../../../repositories/interfaces/user/challenge/IUserChallengeRepository";
-
 import { IUserChallengeProgressRepository } from "../../../../repositories/interfaces/user/challenge/IUserChallengeProgressRepository";
-
 import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 import logger from "../../../../utils/logger";
-
 import { UserChallengeDetailsDTO } from "../../../../dtos/user/challenge/user-challenge-details.dto";
-
 import { toUserChallengeDetailsDTO } from "../../../../mappers/user/challenge/user-challenge-details.mapper";
 
 @injectable()
@@ -53,39 +46,6 @@ export class UserChallengeTrackingService implements IUserChallengeTrackingServi
     if (userChallenge.status !== "active") {
       throw new CustomError(
         "This challenge is not active",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-  }
-
-  private async validateActivity(
-    userChallengeId: string,
-    challengeDayId: string,
-    activityId: string,
-  ): Promise<void> {
-    const userChallenge = await this._userChallengeRepository.findByIdAndUser(
-      userChallengeId,
-      "",
-    );
-
-    if (!userChallenge) {
-      throw new CustomError("User challenge not found", StatusCode.NOT_FOUND);
-    }
-
-    const day = userChallenge.days.find((item) => item.id === challengeDayId);
-
-    if (!day) {
-      throw new CustomError(
-        "Challenge day does not belong to this challenge",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    const activity = day.activities.find((item) => item.id === activityId);
-
-    if (!activity) {
-      throw new CustomError(
-        "Activity does not belong to this challenge day",
         StatusCode.BAD_REQUEST,
       );
     }

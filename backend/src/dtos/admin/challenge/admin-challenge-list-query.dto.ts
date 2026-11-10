@@ -7,6 +7,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  Matches,
 } from "class-validator";
 
 import {
@@ -55,6 +56,7 @@ export class AdminChallengeListQueryDTO {
   @IsString()
   @MinLength(1)
   @MaxLength(200)
+  @Matches(/\S/, { message: "Cursor cannot contain only whitespace" })
   cursor?: string;
 
   @IsOptional()

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import ChallengeDayForm from "@/components/admin/challenge-day/ChallengeDayForm";
+import ChallengeDayForm from "@/components/admin/challenge-day/form/ChallengeDayForm";
 import { adminChallengeDayService } from "@/services/admin/admin-challenge-day.service";
 import type { AdminChallengeDayDetailsDTO } from "@/dtos/admin/challenge-day/admin-challenge-day-details.dto";
 

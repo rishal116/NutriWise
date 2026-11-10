@@ -1,14 +1,21 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { inject, injectable } from "inversify";
-import { IAdminChallengeDayController } from "../../interfaces/admin/IAdminChallengeDayController";
-import { IAdminChallengeDayService } from "../../../services/interfaces/admin/IAdminChallengeDayService";
+
 import { TYPES } from "../../../types/types";
-import { asyncHandler } from "../../../utils/asyncHandler";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { AdminChallengeDayListQueryDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-list-query.dto";
-import { CreateChallengeDayDTO } from "../../../dtos/admin/challenge-day/create-challenge-day.dto";
-import { UpdateChallengeDayDTO } from "../../../dtos/admin/challenge-day/update-challenge-day.dto";
-import { ChallengeDayUploadedFiles } from "../../../types/admin/challenge-day/challenge-day-files.types";
+
+import { asyncHandler } from "../../../utils/asyncHandler";
+import { sendResponse } from "../../../utils/responseHandler";
+
+import type { IAdminChallengeDayController } from "../../interfaces/admin/IAdminChallengeDayController";
+import type { IAdminChallengeDayService } from "../../../services/interfaces/admin/IAdminChallengeDayService";
+
+import type { AdminChallengeDayListQueryDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-list-query.dto";
+import type { CreateChallengeDayDTO } from "../../../dtos/admin/challenge-day/create-challenge-day.dto";
+import type { UpdateChallengeDayDTO } from "../../../dtos/admin/challenge-day/update-challenge-day.dto";
+import type { ChallengeDayUploadedFiles } from "../../../types/admin/challenge-day/challenge-day-files.types";
+
+import { ADMIN_CHALLENGE_DAY_MESSAGES } from "../../../constants/admin/challenge-day.constants";
 
 @injectable()
 export class AdminChallengeDayController implements IAdminChallengeDayController {
@@ -32,10 +39,11 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
 
     await this._challengeDayService.createDay(challengeId, data, files);
 
-    return res.status(StatusCode.CREATED).json({
-      success: true,
-      message: "Challenge day created successfully",
-    });
+    return sendResponse(
+      res,
+      StatusCode.CREATED,
+      ADMIN_CHALLENGE_DAY_MESSAGES.CREATED,
+    );
   });
 
   listDays = asyncHandler(async (req: Request, res: Response) => {
@@ -54,11 +62,12 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
       query,
     );
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Challenge days fetched successfully",
-      data: result,
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      ADMIN_CHALLENGE_DAY_MESSAGES.FETCHED,
+      result,
+    );
   });
 
   getDay = asyncHandler(async (req: Request, res: Response) => {
@@ -66,11 +75,12 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
 
     const result = await this._challengeDayService.getDay(challengeId, dayId);
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Challenge day details fetched successfully",
-      data: result,
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      ADMIN_CHALLENGE_DAY_MESSAGES.DETAILS_FETCHED,
+      result,
+    );
   });
 
   updateDay = asyncHandler(async (req: Request, res: Response) => {
@@ -87,10 +97,11 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
 
     await this._challengeDayService.updateDay(challengeId, dayId, data, files);
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Challenge day updated successfully",
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      ADMIN_CHALLENGE_DAY_MESSAGES.UPDATED,
+    );
   });
 
   deleteDay = asyncHandler(async (req: Request, res: Response) => {
@@ -98,9 +109,10 @@ export class AdminChallengeDayController implements IAdminChallengeDayController
 
     await this._challengeDayService.deleteDay(challengeId, dayId);
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Challenge day deleted successfully",
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      ADMIN_CHALLENGE_DAY_MESSAGES.DELETED,
+    );
   });
 }

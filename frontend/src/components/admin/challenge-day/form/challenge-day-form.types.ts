@@ -1,3 +1,4 @@
+
 import type {
   ChallengeActivityType,
   ChallengeActivityValueType,
@@ -10,16 +11,16 @@ export type ExistingMedia = {
 
 export type ActivityFormValue = {
   id?: string;
-  type: ChallengeActivityType;
+  type: ChallengeActivityType | "";
   title: string;
   description: string;
   instructions: string;
-  valueType: ChallengeActivityValueType;
+  valueType: ChallengeActivityValueType | "";
   targetValue?: number;
+  maxValue?: number;
   unit: string;
   estimatedDurationMinutes?: number;
   isRequired: boolean;
-  configuration: Record<string, unknown>;
   imageFile: File | null;
   videoFile: File | null;
   existingImageUrl?: string;
@@ -36,6 +37,8 @@ export interface ChallengeDayFormProps {
     dayNumber?: number;
     title?: string;
     description?: string;
-    activities?: Array<Partial<ActivityFormValue> & ExistingMedia>;
+    activities?: Array<
+      Partial<ActivityFormValue> & ExistingMedia
+    >;
   };
 }

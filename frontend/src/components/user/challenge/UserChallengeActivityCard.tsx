@@ -17,11 +17,11 @@ import {
 
 import { userChallengeTrackingService } from "@/services/user/userChallengeTracking.service";
 
-import { UserChallengeDetailsDTO } from "@/dtos/user/challenge/user-challenge-details.dto";
-
-import { UserChallengeDayDTO } from "@/dtos/user/challenge/user-challenge-details.dto";
-
-import { UserChallengeActivityDTO } from "@/dtos/user/challenge/user-challenge-details.dto";
+import {
+  UserChallengeActivityDTO,
+  UserChallengeDayDTO,
+  UserChallengeDetailsDTO,
+} from "@/dtos/user/challenge/user-challenge-details.dto";
 
 interface UserChallengeActivityCardProps {
   userChallengeId: string;
@@ -38,17 +38,15 @@ const ACTIVITY_ICONS = {
   meditation: Sparkles,
   breathing: Sparkles,
   sleep: Moon,
-  habit: Check,
+  healthy_habit: Check,
   education: BookOpen,
   stretching: Dumbbell,
   recovery: HeartPulse,
   measurement: Sparkles,
-  custom: Sparkles,
 } as const;
 
 export default function UserChallengeActivityCard({
   userChallengeId,
-  challenge,
   day,
   activity,
   onChallengeUpdate,
@@ -58,9 +56,7 @@ export default function UserChallengeActivityCard({
   const Icon = ACTIVITY_ICONS[activity.type] ?? Sparkles;
 
   const handleToggle = async () => {
-    if (updating) {
-      return;
-    }
+    if (updating) return;
 
     try {
       setUpdating(true);
@@ -76,6 +72,10 @@ export default function UserChallengeActivityCard({
             day.id,
             activity.id,
           );
+
+      if (!response.data) {
+        return;
+      }
 
       onChallengeUpdate(response.data);
     } catch (error) {
@@ -121,7 +121,7 @@ export default function UserChallengeActivityCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold capitalize text-emerald-600">
                   {activity.type.replace("_", " ")}
                 </span>
@@ -174,7 +174,7 @@ export default function UserChallengeActivityCard({
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-3">
-            {activity.estimatedDurationMinutes && (
+            {activity.estimatedDurationMinutes !== undefined && (
               <div className="inline-flex items-center gap-1.5 text-xs text-slate-500">
                 <Clock3 className="h-3.5 w-3.5" />
                 {activity.estimatedDurationMinutes} min
@@ -186,6 +186,9 @@ export default function UserChallengeActivityCard({
                 Target:{" "}
                 <span className="font-semibold text-slate-700">
                   {activity.targetValue}
+                  {activity.maxValue !== undefined
+                    ? ` - ${activity.maxValue}`
+                    : ""}
                   {activity.unit ? ` ${activity.unit}` : ""}
                 </span>
               </div>

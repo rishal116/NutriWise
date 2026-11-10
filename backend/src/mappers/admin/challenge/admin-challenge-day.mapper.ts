@@ -1,7 +1,7 @@
 import type { AdminChallengeDayListItemDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-list-item.dto";
-import type { AdminChallengeDayListProjection } from "../../../types/admin/challenge-day/admin-challenge-day.projection";
 import type { AdminChallengeDayDetailsDTO } from "../../../dtos/admin/challenge-day/admin-challenge-day-details.dto";
-import type { AdminChallengeDayDetailsProjection } from "../../../types/admin/challenge-day/admin-challenge-day-details.projection";
+import type { AdminChallengeDayListProjection } from "../../../types/admin/challenge-day/admin-challenge-day.projection";
+import type { IChallengeDay } from "../../../models/challengeDay.model";
 
 export function toAdminChallengeDayListItemDTO(
   day: AdminChallengeDayListProjection,
@@ -16,18 +16,18 @@ export function toAdminChallengeDayListItemDTO(
 }
 
 export function toAdminChallengeDayDetailsDTO(
-  day: AdminChallengeDayDetailsProjection,
+  day: IChallengeDay,
 ): AdminChallengeDayDetailsDTO {
   return {
-    id: day.id,
-    challengeId: day.challengeId,
+    id: day._id.toString(),
+    challengeId: day.challengeId.toString(),
     dayNumber: day.dayNumber,
     ...(day.title !== undefined && { title: day.title }),
     ...(day.description !== undefined && {
       description: day.description,
     }),
     activities: day.activities.map((activity) => ({
-      id: activity.id,
+      id: activity._id.toString(),
       type: activity.type,
       title: activity.title,
       ...(activity.description !== undefined && {

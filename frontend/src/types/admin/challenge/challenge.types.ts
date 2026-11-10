@@ -5,7 +5,6 @@ export const CHALLENGE_CATEGORIES = [
   "sleep",
   "mindfulness",
   "healthy_habits",
-  "wellness",
   "weight_management",
 ] as const;
 
