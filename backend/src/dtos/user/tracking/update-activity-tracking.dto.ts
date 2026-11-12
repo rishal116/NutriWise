@@ -1,7 +1,8 @@
-import type { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
+import { ActivityTrackingStatus } from "../../../constants/user/program/activity-tracking-status.constants";
+
 
 export interface UpdateActivityTrackingDTO {
-  status?: UserActivityTrackingStatus;
+  status?: ActivityTrackingStatus;
   recordedValue?: number;
   recordedText?: string;
   unit?: string;

@@ -3,7 +3,7 @@ import type {
   SessionStatus,
   SessionType,
 } from "../../../models/session.model";
-import type { Currency } from "../../../constants/currency.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
 
 export interface PublicSessionDetailsResponseDTO {
   sessionId: string;

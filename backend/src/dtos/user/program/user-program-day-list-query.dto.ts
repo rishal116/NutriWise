@@ -10,7 +10,10 @@ import {
   Min,
 } from "class-validator";
 
-import { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
+import {
+  DAY_TRACKING_STATUSES,
+  type DayTrackingStatus,
+} from "../../../constants/user/program/day-tracking-status.constants";
 
 export enum UserProgramDaySort {
   DAY_ASC = "day_asc",
@@ -38,8 +41,8 @@ export class UserProgramDayListQueryDTO {
   search?: string;
 
   @IsOptional()
-  @IsEnum(UserDayTrackingStatus)
-  status?: UserDayTrackingStatus;
+  @IsEnum(DAY_TRACKING_STATUSES)
+  status?: DayTrackingStatus;
 
   @IsOptional()
   @Transform(({ value }) => {

@@ -1,14 +1,17 @@
+
 import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
+
 import { TYPES } from "../../../../types/types";
-import {
-  IUserDayTracking,
-  UserDayTrackingStatus,
-} from "../../../../models/userDayTracking.model";
-import { IUserDayTrackingService } from "../../../interfaces/user/tracking/IUserDayTrackingService";
-import { IUserDayTrackingRepository } from "../../../../repositories/interfaces/user/tracking/IUserDayTrackingRepository";
-import { IUserProgramRepository } from "../../../../repositories/interfaces/user/program/IUserProgramRepository";
-import { UserDayTrackingDetailsDTO } from "../../../../dtos/user/tracking/user-day-tracking-details.dto";
+import type { DayTrackingStatus } from "../../../../constants/user/program/day-tracking-status.constants";
+
+import type { IUserDayTrackingService } from "../../../interfaces/user/tracking/IUserDayTrackingService";
+import type { IUserDayTrackingRepository } from "../../../../repositories/interfaces/user/tracking/IUserDayTrackingRepository";
+import type { IUserProgramRepository } from "../../../../repositories/interfaces/user/program/IUserProgramRepository";
+
+import type { UserDayTrackingDetailsDTO } from "../../../../dtos/user/tracking/user-day-tracking-details.dto";
+import type { IUserDayTracking } from "../../../../models/userDayTracking.model";
+
 import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 
@@ -29,11 +32,17 @@ export class UserDayTrackingService implements IUserDayTrackingService {
     totalActivities: number,
   ): Promise<UserDayTrackingDetailsDTO> {
     if (!Types.ObjectId.isValid(programId)) {
-      throw new CustomError("Invalid user program ID", StatusCode.BAD_REQUEST);
+      throw new CustomError(
+        "Invalid user program ID",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
     if (!Types.ObjectId.isValid(programDayId)) {
-      throw new CustomError("Invalid program day ID", StatusCode.BAD_REQUEST);
+      throw new CustomError(
+        "Invalid program day ID",
+        StatusCode.BAD_REQUEST,
+      );
     }
 
     if (!Number.isInteger(dayNumber) || dayNumber < 1) {
@@ -51,7 +60,9 @@ export class UserDayTrackingService implements IUserDayTrackingService {
     }
 
     const programObjectId =
-      typeof programId === "string" ? new Types.ObjectId(programId) : programId;
+      typeof programId === "string"
+        ? new Types.ObjectId(programId)
+        : programId;
 
     const programDayObjectId =
       typeof programDayId === "string"
@@ -80,7 +91,10 @@ export class UserDayTrackingService implements IUserDayTrackingService {
       await this._userProgramRepository.findById(programObjectId);
 
     if (!userProgram) {
-      throw new CustomError("User program not found", StatusCode.NOT_FOUND);
+      throw new CustomError(
+        "User program not found",
+        StatusCode.NOT_FOUND,
+      );
     }
 
     const startDate = new Date(userProgram.startDate);
@@ -112,7 +126,7 @@ export class UserDayTrackingService implements IUserDayTrackingService {
       userProgramDayId: programDayObjectId,
       dayNumber,
       date: trackingDate,
-      status: UserDayTrackingStatus.NOT_STARTED,
+      status: "not_started",
       startedAt: null,
       completedAt: null,
       lastActivityAt: null,
@@ -140,7 +154,9 @@ export class UserDayTrackingService implements IUserDayTrackingService {
     return this.toDTO(tracking);
   }
 
-  private toDTO(tracking: IUserDayTracking): UserDayTrackingDetailsDTO {
+  private toDTO(
+    tracking: IUserDayTracking,
+  ): UserDayTrackingDetailsDTO {
     return {
       _id: tracking._id.toString(),
       userId: tracking.userId.toString(),

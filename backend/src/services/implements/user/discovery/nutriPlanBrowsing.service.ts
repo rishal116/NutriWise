@@ -4,7 +4,7 @@ import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 import logger from "../../../../utils/logger";
 import { NutritionistPlanDTO } from "../../../../dtos/user/nutri-browsing/nutri-plan.dto";
-import { toNutritionistPlanDTO } from "../../../../mappers/user/nutri-browsing/nutri-plan.mapper.dto";
+import { toNutritionistPlanDTO } from "../../../../mappers/user/nutri-browsing/nutri-plan.mapper";
 import { INutritionistPlanBrowsingRepository } from "../../../../repositories/interfaces/user/discovery/INutriPlanBrowsingRepository";
 import { IUserRepository } from "../../../../repositories/interfaces/user/account/IUserRepository";
 import { INutritionistPlanBrowsingService } from "../../../interfaces/user/discovery/INutritionistPlanBrowsingService";
@@ -17,7 +17,7 @@ export class NutritionistPlanBrowsingService implements INutritionistPlanBrowsin
 
     @inject(TYPES.IUserRepository)
     private readonly _userRepository: IUserRepository,
-  ) {}
+  ) { }
 
   async getPlans(username: string): Promise<NutritionistPlanDTO[]> {
     const nutritionist = await this._userRepository.findByUsername(username);

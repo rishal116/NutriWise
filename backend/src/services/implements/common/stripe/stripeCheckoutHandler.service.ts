@@ -6,7 +6,7 @@ import logger from "../../../../utils/logger";
 import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 import { TYPES } from "../../../../types/types";
-import { CURRENCY } from "../../../../constants/currency.constants";
+import { CURRENCY } from "../../../../constants/common/currency.constants";
 
 import { IStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/IStripeCheckoutHandlerService";
 import { IUserPlanRepository } from "../../../../repositories/interfaces/user/program/IUserPlanRepository";
@@ -189,6 +189,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
             durationDays: plan.durationDays,
             price: plan.price,
             currency: CURRENCY,
+            features:plan.features,
           },
         },
         dbSession,

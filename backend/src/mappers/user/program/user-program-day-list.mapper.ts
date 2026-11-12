@@ -1,4 +1,3 @@
-import { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
 import type { IUserProgramDayListProjection } from "../../../types/user/program/user-program-day.projection";
 import type { UserProgramDayListResponseDTO } from "../../../dtos/user/program/user-program-day-list-response.dto";
 
@@ -12,8 +11,7 @@ export class UserProgramDayListMapper {
       dayNumber: projection.dayNumber,
       totalActivities: projection.totalActivities,
       requiredActivities: projection.requiredActivities,
-      status:
-        projection.tracking?.status ?? UserDayTrackingStatus.NOT_STARTED,
+      status: projection.tracking?.status ?? "not_started",
       completedActivities:
         projection.tracking?.completedActivities ?? 0,
       skippedActivities: projection.tracking?.skippedActivities ?? 0,
@@ -26,6 +24,8 @@ export class UserProgramDayListMapper {
   static toResponseDTOList(
     projections: IUserProgramDayListProjection[],
   ): UserProgramDayListResponseDTO[] {
-    return projections.map((projection) => this.toResponseDTO(projection));
+    return projections.map((projection) =>
+      this.toResponseDTO(projection),
+    );
   }
 }

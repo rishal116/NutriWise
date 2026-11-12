@@ -104,11 +104,4 @@ export class MessageRepository
       hasMore,
     };
   }
-
-  async deleteById(id: string): Promise<void> {
-    await this._model.findByIdAndUpdate(id, {
-      status: "deleted",
-      deletedAt: new Date(),
-    });
-  }
 }

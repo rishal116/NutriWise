@@ -1,8 +1,7 @@
 import { NutritionistPricingDTO } from "./nutritionist-pricing.dto";
-import { Specialization } from "../../../types/nutritionist.types";
+import { Specialization } from "../../../constants/nutritionist/profile/specialization.constants";
 
 export class PlanMetadataDTO {
   pricing!: NutritionistPricingDTO;
-
   specializations!: Specialization[];
 }

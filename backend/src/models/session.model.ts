@@ -1,5 +1,5 @@
 import { model, Schema, Types } from "mongoose";
-import { CURRENCY, Currency } from "../constants/currency.constants";
+import { CURRENCY, Currency } from "../constants/common/currency.constants";
 
 export const SESSION_TYPES = [
   "webinar",

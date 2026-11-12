@@ -1,6 +1,6 @@
 import { injectable } from "inversify";
 import { PipelineStage, Types } from "mongoose";
-import { APPLICATION_STATUSES } from "../../../../types/nutritionist.types";
+import { APPLICATION_STATUSES } from "../../../../constants/nutritionist/profile/application.constants";
 import {
   INutritionistProfile,
   NutritionistProfileModel,
@@ -15,13 +15,12 @@ import {
 import { BaseRepository } from "../../common/base.repository";
 import { CursorPaginationResult } from "../../../../types/common/cursor-pagination.types";
 import { NutritionistCardDTO } from "../../../../dtos/user/nutri-browsing/nutri-card.dto";
-import {
-  AvailabilityStatus,
-  CoachLevel,
-  Language,
-  Specialization,
-} from "../../../../types/nutritionist.types";
+
 import { Gender, UserRole } from "../../../../enums/user.enum";
+import { Specialization } from "../../../../constants/nutritionist/profile/specialization.constants";
+import { Language } from "../../../../constants/nutritionist/profile/language.constants";
+import { CoachLevel } from "../../../../constants/nutritionist/profile/coach-level.constants";
+import { AvailabilityStatus } from "../../../../constants/nutritionist/profile/availability.constants";
 
 const NUTRITIONIST_SORT_FIELD_MAP = {
   highest_rating: "rating",

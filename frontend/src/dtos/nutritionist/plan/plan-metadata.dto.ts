@@ -1,9 +1,10 @@
-import { Specialization } from "@/types/nutritionist.types";
+
+import type { CoachLevel, Specialization } from "@/types/nutritionist.types";
 
 export interface NutritionistPricingDto {
-  coachLevel: string;
+  coachLevel: CoachLevel;
   minPrice: number;
-  maxPrice: number;
+  maxPricePerDay: number;
 }
 
 export interface PlanMetadataDto {

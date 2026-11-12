@@ -1,12 +1,16 @@
 import { Schema, Types, model } from "mongoose";
 
-export enum UserDayTrackingStatus {
-  NOT_STARTED = "not_started",
-  IN_PROGRESS = "in_progress",
-  COMPLETED = "completed",
-  MISSED = "missed",
-  SKIPPED = "skipped",
-}
+import {
+  DAY_TRACKING_STATUSES,
+  type DayTrackingStatus,
+  UserDayTrackingStatus,
+} from "../constants/user/program/day-tracking-status.constants";
+
+export {
+  DAY_TRACKING_STATUSES,
+  type DayTrackingStatus,
+  UserDayTrackingStatus,
+};
 
 export interface IUserDayTracking {
   _id: Types.ObjectId;
@@ -15,7 +19,7 @@ export interface IUserDayTracking {
   userProgramDayId: Types.ObjectId;
   dayNumber: number;
   date: Date;
-  status: UserDayTrackingStatus;
+  status: DayTrackingStatus;
   startedAt?: Date | null;
   completedAt?: Date | null;
   lastActivityAt?: Date | null;
@@ -53,6 +57,10 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
       type: Number,
       required: true,
       min: 1,
+      validate: {
+        validator: Number.isInteger,
+        message: "Day number must be an integer",
+      },
     },
 
     date: {
@@ -62,9 +70,9 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
 
     status: {
       type: String,
-      enum: Object.values(UserDayTrackingStatus),
+      enum: DAY_TRACKING_STATUSES,
       required: true,
-      default: UserDayTrackingStatus.NOT_STARTED,
+      default: "not_started",
     },
 
     startedAt: {
@@ -86,18 +94,30 @@ const UserDayTrackingSchema = new Schema<IUserDayTracking>(
       type: Number,
       default: 0,
       min: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: "Total activities must be an integer",
+      },
     },
 
     completedActivities: {
       type: Number,
       default: 0,
       min: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: "Completed activities must be an integer",
+      },
     },
 
     skippedActivities: {
       type: Number,
       default: 0,
       min: 0,
+      validate: {
+        validator: Number.isInteger,
+        message: "Skipped activities must be an integer",
+      },
     },
 
     isLocked: {

@@ -10,7 +10,7 @@ import type {
   WalletTransactionType,
   WalletTxnStatus,
 } from "../../../models/walletTransaction.model";
-import type { Currency } from "../../../constants/currency.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
 
 export interface IUserPaymentProjection {
   _id: Types.ObjectId;

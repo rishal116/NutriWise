@@ -5,10 +5,10 @@ import {
   CreateUserActivityTrackingData,
   IUserActivityTracking,
   UserActivityTrackingModel,
-  UserActivityTrackingStatus,
 } from "../../../../models/userActivityTracking.model";
-import { ProgramActivityCategory } from "../../../../models/userProgramDay.model";
 import { IUserActivityTrackingRepository } from "../../../interfaces/user/tracking/IUserActivityTrackingRepository";
+import { ActivityTrackingStatus } from "../../../../constants/user/program/activity-tracking-status.constants";
+import { ProgramActivityCategory } from "../../../../constants/user/program/program-activity-category.constants";
 
 @injectable()
 export class UserActivityTrackingRepository
@@ -48,7 +48,7 @@ export class UserActivityTrackingRepository
 
   async findByStatus(
     userProgramId: string | Types.ObjectId,
-    status: UserActivityTrackingStatus,
+    status: ActivityTrackingStatus,
   ): Promise<IUserActivityTracking[]> {
     return this._model
       .find({ userProgramId, status })

@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
 import { Types } from "mongoose";
 
-import { CURRENCY } from "../../../../constants/currency.constants";
+import { CURRENCY } from "../../../../constants/common/currency.constants";
 import { UserProgramModel } from "../../../../models/userProgram.model";
 import { UserProgramProgressModel } from "../../../../models/userProgramProgress.model";
 import { UserDayTrackingModel } from "../../../../models/userDayTracking.model";

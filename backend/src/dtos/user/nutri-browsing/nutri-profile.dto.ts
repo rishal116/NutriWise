@@ -1,15 +1,13 @@
-import {
-  AvailabilityStatus,
-  CoachLevel,
-  Language,
-  Specialization,
-} from "../../../types/nutritionist.types";
 
+
+import { Language } from "../../../constants/nutritionist/profile/language.constants";
+import { Specialization } from "../../../constants/nutritionist/profile/specialization.constants";
 import {
   ICertification,
   IExperience,
   IQualification,
 } from "../../../models/nutritionistProfile.model";
+import { AvailabilityStatus, CoachLevel } from "../../../types/nutritionist.types";
 
 export interface NutritionistUserDTO {
   id:string;

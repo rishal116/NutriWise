@@ -1,13 +1,8 @@
 import { Types } from "mongoose";
 
-import { CreatePlanDTO } from "../../../dtos/nutritionist/plan/create-plan.dto";
-import { PlanDTO } from "../../../dtos/nutritionist/plan/plan.dto";
-
-import { INutritionistPlan } from "../../../models/nutritionistPlan.model";
-import { UpdatePlanDTO } from "../../../dtos/nutritionist/plan/update-plan.dto";
-
-import { CoachLevel } from "../../../types/nutritionist.types";
-import { NutritionistPricingDTO } from "../../../dtos/nutritionist/plan/nutritionist-pricing.dto";
+import type { CreatePlanDTO } from "../../../dtos/nutritionist/plan/create-plan.dto";
+import type { UpdatePlanDTO } from "../../../dtos/nutritionist/plan/update-plan.dto";
+import type { INutritionistPlan } from "../../../models/nutritionistPlan.model";
 
 export const toNutritionistPlanModel = (
   nutritionistId: string,
@@ -22,20 +17,7 @@ export const toNutritionistPlanModel = (
   durationDays: dto.durationDays,
   price: dto.price,
   features: dto.features,
-  status: dto.status ?? "draft",
-});
-
-export const toPlanDTO = (plan: INutritionistPlan): PlanDTO => ({
-  id: plan._id.toString(),
-  title: plan.title,
-  specialization: plan.specialization,
-  description: plan.description,
-  durationDays: plan.durationDays,
-  price: plan.price,
-  features: plan.features,
-  status: plan.status,
-  createdAt: plan.createdAt,
-  updatedAt: plan.updatedAt,
+  status: "draft",
 });
 
 export const toNutritionistPlanUpdateModel = (
@@ -54,21 +36,7 @@ export const toNutritionistPlanUpdateModel = (
   ...(dto.price !== undefined && {
     price: dto.price,
   }),
-
   ...(dto.features !== undefined && {
     features: dto.features,
   }),
-  ...(dto.status !== undefined && {
-    status: dto.status,
-  }),
-});
-
-export const toNutritionistPricingDTO = (
-  coachLevel: CoachLevel,
-  minPrice: number,
-  maxPrice: number,
-): NutritionistPricingDTO => ({
-  coachLevel,
-  minPrice,
-  maxPrice,
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Loader2, Plus } from "lucide-react";
 import { nutriSessionService } from "@/services/nutritionist/nutriSession.service";
 import type { NutriSessionListResponseDTO } from "@/dtos/nutritionist/session/session-list-response.dto";
@@ -20,8 +20,6 @@ import SessionListState from "@/components/nutritionist/sessions/SessionListStat
 import { PAGE_LIMIT } from "@/components/nutritionist/sessions/session-list.constants";
 
 export default function SessionsListing() {
-  const router = useRouter();
-
   const [sessions, setSessions] = useState<NutriSessionListResponseDTO[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -37,13 +35,7 @@ export default function SessionsListing() {
   const cursorRef = useRef<string | null>(null);
   const hasMoreRef = useRef(false);
   const fetchingMoreRef = useRef(false);
-  const skipRef = useRef(false);
   const requestIdRef = useRef(0);
-
-  const searchRef = useRef("");
-  const statusRef = useRef<SessionStatus | "">("");
-  const typeRef = useRef<SessionType | "">("");
-  const sortRef = useRef<NutriSessionSortOption>("latest");
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -55,91 +47,84 @@ export default function SessionsListing() {
     return () => clearTimeout(timeoutId);
   }, [search]);
 
-  const fetchSessions = useCallback(async (reset: boolean) => {
-    if (!reset && (fetchingMoreRef.current || !hasMoreRef.current)) {
-      return;
-    }
-
-    const requestId = reset ? ++requestIdRef.current : requestIdRef.current;
-
-    if (reset) {
-      skipRef.current = true;
-      cursorRef.current = null;
-      hasMoreRef.current = false;
-      fetchingMoreRef.current = false;
-
-      setInitialLoading(true);
-      setLoadingMore(false);
-      setHasMore(false);
-      setError(null);
-    } else {
-      fetchingMoreRef.current = true;
-      setLoadingMore(true);
-      setError(null);
-    }
-
-    try {
-      const query: GetNutriSessionsQueryDTO = {
-        limit: PAGE_LIMIT,
-        cursor: reset ? undefined : (cursorRef.current ?? undefined),
-        search: searchRef.current || undefined,
-        status: statusRef.current || undefined,
-        type: typeRef.current || undefined,
-        sortBy: sortRef.current,
-      };
-
-      const response = await nutriSessionService.getSessions(query);
-
-      // Ignore responses belonging to an outdated filter or request.
-      if (requestId !== requestIdRef.current) {
+  // Identity changes whenever a filter changes, which triggers the reset below.
+  const fetchSessions = useCallback(
+    async (reset: boolean) => {
+      if (!reset && (fetchingMoreRef.current || !hasMoreRef.current)) {
         return;
       }
 
-      setSessions((previous) =>
-        reset ? response.items : [...previous, ...response.items],
-      );
+      const requestId = reset ? ++requestIdRef.current : requestIdRef.current;
 
-      cursorRef.current = response.nextCursor;
-      hasMoreRef.current = response.hasMore;
-      setHasMore(response.hasMore);
       setError(null);
-    } catch {
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
-
-      setError("We couldn't load your sessions. Please try again.");
 
       if (reset) {
-        setSessions([]);
         cursorRef.current = null;
         hasMoreRef.current = false;
+        fetchingMoreRef.current = false;
+
+        setInitialLoading(true);
+        setLoadingMore(false);
         setHasMore(false);
+      } else {
+        fetchingMoreRef.current = true;
+        setLoadingMore(true);
       }
-    } finally {
-      if (requestId === requestIdRef.current) {
+
+      try {
+        const query: GetNutriSessionsQueryDTO = {
+          limit: PAGE_LIMIT,
+          cursor: reset ? undefined : (cursorRef.current ?? undefined),
+          search: debouncedSearch || undefined,
+          status: status || undefined,
+          type: type || undefined,
+          sortBy,
+        };
+
+        const response = await nutriSessionService.getSessions(query);
+
+        // Ignore responses belonging to an outdated filter or request.
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        setSessions((previous) =>
+          reset ? response.items : [...previous, ...response.items],
+        );
+
+        cursorRef.current = response.nextCursor;
+        hasMoreRef.current = response.hasMore;
+        setHasMore(response.hasMore);
+      } catch {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        setError("We couldn't load your sessions. Please try again.");
+
         if (reset) {
-          setInitialLoading(false);
-          skipRef.current = false;
-        } else {
-          fetchingMoreRef.current = false;
-          setLoadingMore(false);
+          setSessions([]);
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          if (reset) {
+            setInitialLoading(false);
+          } else {
+            fetchingMoreRef.current = false;
+            setLoadingMore(false);
+          }
         }
       }
-    }
-  }, []);
+    },
+    [debouncedSearch, status, type, sortBy],
+  );
 
-  // Update query refs before requesting the new result set.
   useEffect(() => {
-    searchRef.current = debouncedSearch;
-    statusRef.current = status;
-    typeRef.current = type;
-    sortRef.current = sortBy;
-
     void fetchSessions(true);
-  }, [debouncedSearch, status, type, sortBy, fetchSessions]);
+  }, [fetchSessions]);
 
   // Fetch the next cursor page when the sentinel approaches the viewport.
+  // initialLoading is a dependency so the observer re-attaches when the sentinel mounts.
   useEffect(() => {
     const node = sentinelRef.current;
 
@@ -149,13 +134,7 @@ export default function SessionsListing() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          !skipRef.current &&
-          !initialLoading &&
-          !fetchingMoreRef.current &&
-          hasMoreRef.current
-        ) {
+        if (entry.isIntersecting) {
           void fetchSessions(false);
         }
       },
@@ -174,26 +153,15 @@ export default function SessionsListing() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Sessions
-          </h1>
-
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Create and manage your live and scheduled sessions.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => router.push("/nutritionist/sessions/create")}
+      <div className="flex justify-end">
+        <Link
+          href="/nutritionist/sessions/create"
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-emerald-800"
         >
           <Plus className="h-4 w-4" />
           Create Session
-        </button>
-      </header>
+        </Link>
+      </div>
 
       <SessionFilters
         search={search}

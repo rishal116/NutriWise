@@ -314,4 +314,8 @@ export const TYPES = {
   IUserRoleController: Symbol.for("IUserRoleController"),
 
   ICloudinaryService: Symbol.for("ICloudinaryService"),
+  INutriPlanDayRepository: Symbol.for("INutriPlanDayRepository"),
+  INutriPlanDayService: Symbol.for("INutriPlanDayService"),
+
+  INutriPlanDayController: Symbol.for("INutriPlanDayController"),
 } as const;

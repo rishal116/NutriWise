@@ -391,7 +391,6 @@ import { IAdminChallengeRepository } from "../repositories/interfaces/admin/IAdm
 import { IAdminChallengeDayController } from "../controllers/interfaces/admin/IAdminChallengeDayController";
 import { AdminChallengeDayController } from "../controllers/implementations/admin/adminChallengeDay.controller";
 import { IAdminChallengeDayService } from "../services/interfaces/admin/IAdminChallengeDayService";
-import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDay.service";
 import { IAdminChallengeDayRepository } from "../repositories/interfaces/admin/IAdminChallengeDayRepository";
 import { AdminChallengeDayRepository } from "../repositories/implements/admin/adminChallengeDay.repository";
 import { IPublicChallengeController } from "../controllers/interfaces/public/IPublicChallengeController";
@@ -576,6 +575,13 @@ import { IUserContextService } from "../services/interfaces/user/IUserContextSer
 import { UserContextService } from "../services/implements/user/user-context.service";
 import { ICloudinaryService } from "../services/interfaces/common/ICloudinaryService";
 import { CloudinaryService } from "../services/implements/common/cloudinary.service";
+import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDAy.service";
+import { INutritionistPlanDayRepository } from "../repositories/interfaces/nutritionist/INutritionistPlanDayRepository";
+import { NutritionistPlanDayRepository } from "../repositories/implements/nutritionist/nutriPlanDay.repository";
+import { INutritionistPlanDayService } from "../services/interfaces/nutritionist/INutriPlanDayService";
+import { NutritionistPlanDayService } from "../services/implements/nutritionist/nutriPlanDay.service";
+import { INutritionistPlanDayController } from "../controllers/interfaces/nutritionist/INutriPlanDayController";
+import { NutritionistPlanDayController } from "../controllers/implementations/nutritionist/nutriPlanDay.controller";
 
 const container = new Container();
 
@@ -1418,15 +1424,10 @@ container
   .bind<IUserRoleController>(TYPES.IUserRoleController)
   .to(UserRoleController);
 
+// User Auth Services
+container.bind<ISignupService>(TYPES.ISignupService).to(SignupService);
 
-  // User Auth Services
-container
-  .bind<ISignupService>(TYPES.ISignupService)
-  .to(SignupService);
-
-container
-  .bind<ILoginService>(TYPES.ILoginService)
-  .to(LoginService);
+container.bind<ILoginService>(TYPES.ILoginService).to(LoginService);
 
 container
   .bind<IPasswordResetService>(TYPES.IPasswordResetService)
@@ -1440,9 +1441,20 @@ container
   .bind<IUserContextService>(TYPES.IUserContextService)
   .to(UserContextService);
 
-  container
+container
   .bind<ICloudinaryService>(TYPES.ICloudinaryService)
-  .to(CloudinaryService)
+  .to(CloudinaryService);
 
+container
+  .bind<INutritionistPlanDayRepository>(TYPES.INutriPlanDayRepository)
+  .to(NutritionistPlanDayRepository);
+
+container
+  .bind<INutritionistPlanDayService>(TYPES.INutriPlanDayService)
+  .to(NutritionistPlanDayService);
+
+container
+  .bind<INutritionistPlanDayController>(TYPES.INutriPlanDayController)
+  .to(NutritionistPlanDayController);
 
 export { container };

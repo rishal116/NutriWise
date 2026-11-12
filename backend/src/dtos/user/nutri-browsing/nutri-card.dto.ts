@@ -1,4 +1,6 @@
-import { CoachLevel, Specialization } from "../../../types/nutritionist.types";
+import { CoachLevel } from "../../../constants/nutritionist/profile/coach-level.constants";
+import { Specialization } from "../../../constants/nutritionist/profile/specialization.constants";
+
 
 export interface NutritionistCardDTO {
   id: string;

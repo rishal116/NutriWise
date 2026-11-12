@@ -1,25 +1,22 @@
+import { Type } from "class-transformer";
 import {
+  ArrayMaxSize,
   IsArray,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
   Length,
   Max,
+  MaxLength,
   Min,
 } from "class-validator";
 
-import { Type } from "class-transformer";
-
-import {
-  PLAN_STATUS,
-  PlanStatus,
-} from "../../../models/nutritionistPlan.model";
-
 import {
   SPECIALIZATIONS,
-  Specialization,
-} from "../../../types/nutritionist.types";
+  type Specialization,
+} from "../../../constants/nutritionist/profile/specialization.constants";
 
 export class UpdatePlanDTO {
   @IsOptional()
@@ -38,7 +35,7 @@ export class UpdatePlanDTO {
 
   @IsOptional()
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   @Max(365)
   durationDays?: number;
@@ -51,10 +48,8 @@ export class UpdatePlanDTO {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(20)
   @IsString({ each: true })
+  @MaxLength(150, { each: true })
   features?: string[];
-
-  @IsOptional()
-  @IsEnum(PLAN_STATUS)
-  status?: PlanStatus;
 }

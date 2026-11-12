@@ -1,21 +1,16 @@
-import { FilterQuery } from "mongoose";
-
-import { IBaseRepository } from "../common/IBaseRepository";
-
-import { INutritionistPlan } from "../../../models/nutritionistPlan.model";
-import { GetPlansDTO } from "../../../dtos/nutritionist/plan/get-plans.dto";
+import type { IBaseRepository } from "../common/IBaseRepository";
+import type { INutritionistPlan } from "../../../models/nutritionistPlan.model";
+import type { GetPlansDTO } from "../../../dtos/nutritionist/plan/get-plans.dto";
+import type { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
 
 export interface INutritionistPlanRepository extends IBaseRepository<INutritionistPlan> {
   findByNutritionistId(
     nutritionistId: string,
     query: GetPlansDTO,
-  ): Promise<{
-    items: INutritionistPlan[];
-    nextCursor: string | null;
-    hasMore: boolean;
-  }>;
+  ): Promise<CursorPaginationResult<INutritionistPlan>>;
 
-  findMany(
-    filter: FilterQuery<INutritionistPlan>,
-  ): Promise<INutritionistPlan[]>;
+  findDetailsById(
+    planId: string,
+    nutritionistId: string,
+  ): Promise<INutritionistPlan | null>;
 }

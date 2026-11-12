@@ -1,33 +1,36 @@
-import { Schema, model, Types } from "mongoose";
+import { Schema, Types, model } from "mongoose";
+
 import {
   PROGRAM_ACTIVITY_CATEGORIES,
-  ProgramActivityCategory,
-} from "./userProgramDay.model";
+  type ProgramActivityCategory,
+} from "../constants/user/program/program-activity-category.constants";
 
-export enum UserActivityTrackingStatus {
-  NOT_STARTED = "not_started",
-  IN_PROGRESS = "in_progress",
-  COMPLETED = "completed",
-  SKIPPED = "skipped",
-}
+import {
+  ACTIVITY_VALUE_TYPES,
+  type ActivityValueType,
+} from "../constants/user/program/activity-value-type.constants";
 
-export enum ActivityCompletedBy {
-  USER = "user",
-  NUTRITIONIST = "nutritionist",
-  SYSTEM = "system",
-}
+import {
+  ACTIVITY_TRACKING_STATUSES,
+  type ActivityTrackingStatus,
+} from "../constants/user/program/activity-tracking-status.constants";
+
+import {
+  ACTIVITY_COMPLETED_BY,
+  type ActivityCompletedBy,
+} from "../constants/user/program/activity-completed-by.constants";
 
 export interface IUserActivityTracking {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   userProgramId: Types.ObjectId;
   userProgramDayId: Types.ObjectId;
-  userDayTrackingId: Types.ObjectId ;
+  userDayTrackingId: Types.ObjectId | null;
   activityId: Types.ObjectId;
   title: string;
   category: ProgramActivityCategory;
-  valueType: "boolean" | "number" | "duration" | "photo" | "text";
-  status: UserActivityTrackingStatus;
+  valueType: ActivityValueType;
+  status: ActivityTrackingStatus;
   recordedValue?: number;
   recordedText?: string;
   unit?: string;
@@ -54,61 +57,73 @@ const UserActivityTrackingSchema = new Schema<IUserActivityTracking>(
       ref: "User",
       required: true,
     },
+
     userProgramId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgram",
       required: true,
     },
+
     userProgramDayId: {
       type: Schema.Types.ObjectId,
       ref: "UserProgramDay",
       required: true,
     },
+
     userDayTrackingId: {
       type: Schema.Types.ObjectId,
       ref: "UserDayTracking",
       default: null,
     },
+
     activityId: {
       type: Schema.Types.ObjectId,
       required: true,
     },
+
     title: {
       type: String,
       required: true,
       trim: true,
       maxlength: 150,
     },
+
     category: {
       type: String,
       enum: PROGRAM_ACTIVITY_CATEGORIES,
       required: true,
     },
+
     valueType: {
       type: String,
-      enum: ["boolean", "number", "duration", "photo", "text"],
+      enum: ACTIVITY_VALUE_TYPES,
       required: true,
     },
+
     status: {
       type: String,
-      enum: Object.values(UserActivityTrackingStatus),
+      enum: ACTIVITY_TRACKING_STATUSES,
       required: true,
-      default: UserActivityTrackingStatus.NOT_STARTED,
+      default: "not_started",
     },
+
     recordedValue: {
       type: Number,
       min: 0,
     },
+
     recordedText: {
       type: String,
       trim: true,
       maxlength: 3000,
     },
+
     unit: {
       type: String,
       trim: true,
       maxlength: 30,
     },
+
     evidence: {
       type: [String],
       default: [],
@@ -117,31 +132,37 @@ const UserActivityTrackingSchema = new Schema<IUserActivityTracking>(
         message: "Maximum 10 evidence attachments are allowed.",
       },
     },
+
     skippedReason: {
       type: String,
       trim: true,
       maxlength: 500,
     },
+
     notes: {
       type: String,
       trim: true,
       maxlength: 2000,
     },
+
     nutritionistFeedback: {
       type: String,
       trim: true,
       maxlength: 2000,
     },
+
     lastUpdatedBy: {
       type: String,
-      enum: Object.values(ActivityCompletedBy),
+      enum: ACTIVITY_COMPLETED_BY,
       required: true,
-      default: ActivityCompletedBy.USER,
+      default: "user",
     },
+
     startedAt: {
       type: Date,
       default: null,
     },
+
     completedAt: {
       type: Date,
       default: null,

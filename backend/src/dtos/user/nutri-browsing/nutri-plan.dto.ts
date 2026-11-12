@@ -1,7 +1,9 @@
-import { PlanStatus } from "../../../models/nutritionistPlan.model";
-import { Currency } from "../../../constants/currency.constants";
 
-import { Specialization } from "../../../types/nutritionist.types";
+import { Currency } from "../../../constants/common/currency.constants";
+import { PlanStatus } from "../../../constants/nutritionist/plan/plan-status.constants";
+import { Specialization } from "../../../constants/nutritionist/profile/specialization.constants";
+
+
 
 export interface NutritionistPlanDTO {
   id: string;

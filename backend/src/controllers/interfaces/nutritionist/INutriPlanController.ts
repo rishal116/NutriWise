@@ -1,9 +1,11 @@
-import { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 
 export interface INutritionistPlanController {
   createPlan: (req: Request, res: Response, next: NextFunction) => void;
 
   updatePlan: (req: Request, res: Response, next: NextFunction) => void;
+
+  updatePlanStatus: (req: Request, res: Response, next: NextFunction) => void;
 
   getMyPlans: (req: Request, res: Response, next: NextFunction) => void;
 

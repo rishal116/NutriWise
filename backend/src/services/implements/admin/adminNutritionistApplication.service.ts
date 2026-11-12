@@ -6,7 +6,7 @@ import { IAdminNutritionistApplicationService } from "../../interfaces/admin/IAd
 import { IAdminNutritionistApplicationRepository } from "../../../repositories/interfaces/admin/IAdminNutritionistApplicationRepository";
 import { AdminNutritionistApplicationListQueryDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-query.dto";
 import { AdminNutritionistApplicationListItemDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-item.dto";
-import { ApplicationStatus } from "../../../types/nutritionist.types";
+import { ApplicationStatus } from "../../../constants/nutritionist/profile/application.constants";
 import { IAdminUserRepository } from "../../../repositories/interfaces/admin/IAdminUserRepository";
 import { UserRole } from "../../../enums/user.enum";
 import { INotificationRepository } from "../../../repositories/interfaces/common/INotificationRepository";
@@ -116,9 +116,6 @@ export class AdminNutritionistApplicationService implements IAdminNutritionistAp
       type: NotificationType.WARNING,
       title: "Application Rejected",
       message: rejectionReason!.trim(),
-      data: {
-        rejectionReason: rejectionReason!.trim(),
-      },
     });
   }
 }

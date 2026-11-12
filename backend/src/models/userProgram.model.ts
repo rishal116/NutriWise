@@ -1,14 +1,9 @@
 import { Schema, model, Types } from "mongoose";
 
-export const PROGRAM_STATUS = [
-  "upcoming",
-  "active",
-  "paused",
-  "completed",
-  "cancelled",
-] as const;
-
-export type ProgramStatus = (typeof PROGRAM_STATUS)[number];
+import {
+  PROGRAM_STATUSES,
+  type ProgramStatus,
+} from "../constants/user/program/program-status.constants";
 
 export interface IUserProgram {
   _id: Types.ObjectId;
@@ -79,6 +74,7 @@ const UserProgramSchema = new Schema<IUserProgram>(
       type: Number,
       required: true,
       min: 1,
+      max: 365,
       validate: {
         validator: Number.isInteger,
         message: "Duration must be a whole number of days.",
@@ -87,7 +83,7 @@ const UserProgramSchema = new Schema<IUserProgram>(
 
     status: {
       type: String,
-      enum: PROGRAM_STATUS,
+      enum: PROGRAM_STATUSES,
       required: true,
       default: "upcoming",
     },

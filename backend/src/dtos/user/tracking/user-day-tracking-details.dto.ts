@@ -1,5 +1,5 @@
+import { DayTrackingStatus } from "../../../constants/user/program/day-tracking-status.constants";
 
-import { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
 
 export interface UserDayTrackingDetailsDTO {
   _id: string;
@@ -8,7 +8,7 @@ export interface UserDayTrackingDetailsDTO {
   userProgramDayId: string;
   dayNumber: number;
   date: Date;
-  status: UserDayTrackingStatus;
+  status: DayTrackingStatus;
   startedAt: Date | null;
   completedAt: Date | null;
   lastActivityAt: Date | null;

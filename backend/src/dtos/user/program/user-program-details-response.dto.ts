@@ -1,4 +1,5 @@
-import type { ProgramStatus } from "../../../models/userProgram.model";
+import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
+
 
 export interface IUserProgramDetailsResponseDTO {
   _id: string;

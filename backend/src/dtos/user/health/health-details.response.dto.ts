@@ -16,5 +16,5 @@ export interface HealthDetailsResponseDto {
   goal: GoalType;
   targetWeightKg?: number;
 
-  preferredTimeline: TimelineType;
+  preferredTimeline?: TimelineType;
 }

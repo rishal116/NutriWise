@@ -1,21 +1,25 @@
 import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
-import {
-  IUserActivityTracking,
-  UserActivityTrackingStatus,
-  ActivityCompletedBy,
-} from "../../../../models/userActivityTracking.model";
-import { IUserActivityTrackingService } from "../../../interfaces/user/tracking/IUserActivityTrackingService";
-import { IUserActivityTrackingRepository } from "../../../../repositories/interfaces/user/tracking/IUserActivityTrackingRepository";
-import { CreateUserActivityTrackingDTO } from "../../../../dtos/user/tracking/create-user-activity-tracking.dto";
-import { UpdateActivityTrackingDTO } from "../../../../dtos/user/tracking/update-activity-tracking.dto";
-import { UserActivityTrackingResponseDTO } from "../../../../dtos/user/tracking/user-activity-tracking-response.dto";
+
+import type { ActivityCompletedBy } from "../../../../constants/user/program/activity-completed-by.constants";
+import type { DayTrackingStatus } from "../../../../constants/user/program/day-tracking-status.constants";
+
+import type { IUserActivityTracking } from "../../../../models/userActivityTracking.model";
+import type { IUserDayTracking } from "../../../../models/userDayTracking.model";
+
+import type { IUserActivityTrackingService } from "../../../interfaces/user/tracking/IUserActivityTrackingService";
+import type { IUserActivityTrackingRepository } from "../../../../repositories/interfaces/user/tracking/IUserActivityTrackingRepository";
+import type { IUserDayTrackingRepository } from "../../../../repositories/interfaces/user/tracking/IUserDayTrackingRepository";
+
+import type { CreateUserActivityTrackingDTO } from "../../../../dtos/user/tracking/create-user-activity-tracking.dto";
+import type { UpdateActivityTrackingDTO } from "../../../../dtos/user/tracking/update-activity-tracking.dto";
+import type { UserActivityTrackingResponseDTO } from "../../../../dtos/user/tracking/user-activity-tracking-response.dto";
+
 import { CustomError } from "../../../../utils/customError";
 import { TYPES } from "../../../../types/types";
 import { StatusCode } from "../../../../enums/statusCode.enum";
+
 import { UserActivityTrackingMapper } from "../../../../mappers/user/tracking/user-activity-tracking.mapper";
-import { IUserDayTrackingRepository } from "../../../../repositories/interfaces/user/tracking/IUserDayTrackingRepository";
-import { IUserDayTracking, UserDayTrackingStatus } from "../../../../models/userDayTracking.model";
 
 @injectable()
 export class UserActivityTrackingService implements IUserActivityTrackingService {
@@ -25,7 +29,7 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
 
     @inject(TYPES.IUserDayTrackingRepository)
     private readonly _userDayTrackingRepository: IUserDayTrackingRepository,
-  ) { }
+  ) {}
 
   private async findOwnedActivityTracking(
     userId: string,
@@ -166,7 +170,7 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
 
     this.validateActivityCanStart(existingTracking);
 
-    if (existingTracking.status === UserActivityTrackingStatus.IN_PROGRESS) {
+    if (existingTracking.status === "in_progress") {
       return UserActivityTrackingMapper.toDTO(existingTracking);
     }
 
@@ -174,9 +178,9 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       await this._userActivityTrackingRepository.updateById(
         existingTracking._id,
         {
-          status: UserActivityTrackingStatus.IN_PROGRESS,
+          status: "in_progress",
           startedAt: existingTracking.startedAt ?? new Date(),
-          lastUpdatedBy: ActivityCompletedBy.USER,
+          lastUpdatedBy: "user",
         },
       );
 
@@ -186,11 +190,13 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
-    await this.syncDayTracking(updatedTracking.userDayTrackingId);
+
+    if (updatedTracking.userDayTrackingId) {
+      await this.syncDayTracking(updatedTracking.userDayTrackingId);
+    }
 
     return UserActivityTrackingMapper.toDTO(updatedTracking);
   }
-
 
   async updateActivity(
     userId: string,
@@ -211,10 +217,7 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       );
 
     if (!dayTracking) {
-      throw new CustomError(
-        "Day tracking not found",
-        StatusCode.NOT_FOUND,
-      );
+      throw new CustomError("Day tracking not found", StatusCode.NOT_FOUND);
     }
 
     if (dayTracking.userId.toString() !== userId) {
@@ -248,15 +251,15 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
 
     const update: Partial<IUserActivityTracking> = {
       ...data,
-      lastUpdatedBy: ActivityCompletedBy.USER,
+      lastUpdatedBy: "user",
     };
 
-    if (data.status === UserActivityTrackingStatus.IN_PROGRESS) {
+    if (data.status === "in_progress") {
       update.startedAt = existingTracking.startedAt ?? new Date();
       update.completedAt = null;
     }
 
-    if (data.status === UserActivityTrackingStatus.COMPLETED) {
+    if (data.status === "completed") {
       update.startedAt = existingTracking.startedAt ?? new Date();
       update.completedAt = new Date();
     }
@@ -274,11 +277,12 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       );
     }
 
-    await this.syncDayTracking(updatedTracking.userDayTrackingId);
+    if (updatedTracking.userDayTrackingId) {
+      await this.syncDayTracking(updatedTracking.userDayTrackingId);
+    }
 
     return UserActivityTrackingMapper.toDTO(updatedTracking);
   }
-
 
   async skipActivity(
     userId: string,
@@ -299,9 +303,26 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       );
     }
 
+    const dayTracking =
+      await this._userDayTrackingRepository.findByProgramAndProgramDay(
+        userProgramId,
+        userProgramDayId,
+      );
+
+    if (!dayTracking) {
+      throw new CustomError("Day tracking not found", StatusCode.NOT_FOUND);
+    }
+
+    if (dayTracking.userId.toString() !== userId) {
+      throw new CustomError(
+        "You are not authorized to access this activity",
+        StatusCode.FORBIDDEN,
+      );
+    }
+
     const existingTracking =
       await this._userActivityTrackingRepository.findByDayAndActivity(
-        userProgramDayId,
+        dayTracking._id,
         activityId,
       );
 
@@ -319,14 +340,14 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       userProgramDayId,
     );
 
-    if (existingTracking.status === UserActivityTrackingStatus.COMPLETED) {
+    if (existingTracking.status === "completed") {
       throw new CustomError(
         "Completed activity cannot be skipped",
         StatusCode.BAD_REQUEST,
       );
     }
 
-    if (existingTracking.status === UserActivityTrackingStatus.SKIPPED) {
+    if (existingTracking.status === "skipped") {
       return UserActivityTrackingMapper.toDTO(existingTracking);
     }
 
@@ -334,10 +355,10 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       await this._userActivityTrackingRepository.updateById(
         existingTracking._id,
         {
-          status: UserActivityTrackingStatus.SKIPPED,
+          status: "skipped",
           skippedReason: skippedReason.trim(),
-          completedBy: ActivityCompletedBy.USER,
-          lastUpdatedBy: ActivityCompletedBy.USER,
+          completedBy: "user",
+          lastUpdatedBy: "user",
         },
       );
 
@@ -347,7 +368,10 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
         StatusCode.INTERNAL_SERVER_ERROR,
       );
     }
-    await this.syncDayTracking(updatedTracking.userDayTrackingId);
+
+    if (updatedTracking.userDayTrackingId) {
+      await this.syncDayTracking(updatedTracking.userDayTrackingId);
+    }
 
     return UserActivityTrackingMapper.toDTO(updatedTracking);
   }
@@ -380,7 +404,7 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
         StatusCode.FORBIDDEN,
       );
     }
-    
+
     return UserActivityTrackingMapper.toDTO(tracking);
   }
 
@@ -428,10 +452,7 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
   }
 
   private validateActivityCanStart(tracking: IUserActivityTracking): void {
-    if (
-      tracking.status === UserActivityTrackingStatus.COMPLETED ||
-      tracking.status === UserActivityTrackingStatus.SKIPPED
-    ) {
+    if (tracking.status === "completed" || tracking.status === "skipped") {
       throw new CustomError(
         `Activity is already ${tracking.status}`,
         StatusCode.BAD_REQUEST,
@@ -440,22 +461,20 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
   }
 
   private validateActivityCanUpdate(tracking: IUserActivityTracking): void {
-    if (tracking.status === UserActivityTrackingStatus.SKIPPED) {
+    if (tracking.status === "skipped") {
       throw new CustomError(
         "Skipped activity cannot be updated",
         StatusCode.BAD_REQUEST,
       );
     }
 
-    if (tracking.status === UserActivityTrackingStatus.COMPLETED) {
+    if (tracking.status === "completed") {
       throw new CustomError(
         "Completed activity cannot be updated",
         StatusCode.BAD_REQUEST,
       );
     }
   }
-
-
 
   private async syncDayTracking(
     userDayTrackingId: string | Types.ObjectId,
@@ -464,10 +483,7 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       await this._userDayTrackingRepository.findById(userDayTrackingId);
 
     if (!dayTracking) {
-      throw new CustomError(
-        "Day tracking not found",
-        StatusCode.NOT_FOUND,
-      );
+      throw new CustomError("Day tracking not found", StatusCode.NOT_FOUND);
     }
 
     const activities =
@@ -476,33 +492,29 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       );
 
     const totalActivities = activities.length;
+
     const completedActivities = activities.filter(
-      (activity) =>
-        activity.status === UserActivityTrackingStatus.COMPLETED,
+      (activity) => activity.status === "completed",
     ).length;
+
     const skippedActivities = activities.filter(
-      (activity) =>
-        activity.status === UserActivityTrackingStatus.SKIPPED,
+      (activity) => activity.status === "skipped",
     ).length;
 
     const hasStarted = activities.some(
-      (activity) =>
-        activity.status !== UserActivityTrackingStatus.NOT_STARTED,
+      (activity) => activity.status !== "not_started",
     );
 
     const isFinished =
       totalActivities > 0 &&
       completedActivities + skippedActivities === totalActivities;
 
-    let status = UserDayTrackingStatus.NOT_STARTED;
+    let status: DayTrackingStatus = "not_started";
 
     if (isFinished) {
-      status =
-        completedActivities > 0
-          ? UserDayTrackingStatus.COMPLETED
-          : UserDayTrackingStatus.SKIPPED;
+      status = completedActivities > 0 ? "completed" : "skipped";
     } else if (hasStarted) {
-      status = UserDayTrackingStatus.IN_PROGRESS;
+      status = "in_progress";
     }
 
     const now = new Date();
@@ -514,17 +526,11 @@ export class UserActivityTrackingService implements IUserActivityTrackingService
       status,
       lastActivityAt: now,
       startedAt: hasStarted
-        ? dayTracking.startedAt ?? now
+        ? (dayTracking.startedAt ?? now)
         : dayTracking.startedAt,
-      completedAt: isFinished
-        ? dayTracking.completedAt ?? now
-        : null,
+      completedAt: isFinished ? (dayTracking.completedAt ?? now) : null,
     };
 
-    await this._userDayTrackingRepository.updateById(
-      dayTracking._id,
-      update,
-    );
+    await this._userDayTrackingRepository.updateById(dayTracking._id, update);
   }
-
 }

@@ -1,6 +1,5 @@
 import { Types } from "mongoose";
-
-import type { ProgramStatus } from "../../../models/userProgram.model";
+import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
 export interface IUserProgramDetailsProjection {
   _id: Types.ObjectId;

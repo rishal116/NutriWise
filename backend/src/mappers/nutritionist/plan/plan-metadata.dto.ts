@@ -1,10 +1,11 @@
-import { PlanMetadataDTO } from "../../../dtos/nutritionist/plan/plan-metadata.dto";
-import { toNutritionistPricingDTO } from "./nutritionist-plan.mapper";
+import type { PlanMetadataDTO } from "../../../dtos/nutritionist/plan/plan-metadata.dto";
+import type { INutritionistProfile } from "../../../models/nutritionistProfile.model";
+import { toNutritionistPricingDTO } from "./nutritionist-pricing.mapper";
+
 import {
   MIN_PLAN_PRICE,
-  MAX_PLAN_PRICE,
+  MAX_PLAN_PRICE_PER_DAY,
 } from "../../../constants/nutritionist/plan/nutritionist-plan.constant";
-import { INutritionistProfile } from "../../../models/nutritionistProfile.model";
 
 export const toPlanMetadataDTO = (
   profile: INutritionistProfile,
@@ -12,8 +13,7 @@ export const toPlanMetadataDTO = (
   pricing: toNutritionistPricingDTO(
     profile.coachLevel,
     MIN_PLAN_PRICE,
-    MAX_PLAN_PRICE[profile.coachLevel],
+    MAX_PLAN_PRICE_PER_DAY[profile.coachLevel],
   ),
-
   specializations: profile.specializations,
 });
