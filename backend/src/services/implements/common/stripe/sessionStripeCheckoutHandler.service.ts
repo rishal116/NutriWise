@@ -4,7 +4,7 @@ import { inject, injectable } from "inversify";
 
 import logger from "../../../../utils/logger";
 import { TYPES } from "../../../../types/types";
-import { Currency } from "../../../../constants/currency.constants";
+import { Currency } from "../../../../constants/common/currency.constants";
 
 import { ISessionStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
 

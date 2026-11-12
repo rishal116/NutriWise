@@ -9,9 +9,9 @@ import {
   MaxLength,
 } from "class-validator";
 
-import { PROGRAM_STATUS } from "../../../models/userProgram.model";
+import { PROGRAM_STATUSES } from "../../../constants/user/program/program-status.constants";
 
-export const PROGRAM_STATUS_FILTER = ["all", ...PROGRAM_STATUS] as const;
+export const PROGRAM_STATUS_FILTER = ["all", ...PROGRAM_STATUSES] as const;
 
 export type ProgramStatusFilter = (typeof PROGRAM_STATUS_FILTER)[number];
 

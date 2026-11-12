@@ -1,14 +1,12 @@
 import { ParsedQs } from "qs";
 
-import {
-  CoachLevel,
-  Language,
-  NutritionistSortBy,
-  Specialization,
-} from "../../../types/nutritionist.types";
+import { CoachLevel } from "../../../constants/nutritionist/profile/coach-level.constants";
 
 import { Gender } from "../../../enums/user.enum";
 import { NutritionistListQueryDTO } from "../../../dtos/user/nutri-browsing/nutri-list-query.dto";
+import { Specialization } from "../../../constants/nutritionist/profile/specialization.constants";
+import { Language } from "../../../constants/nutritionist/profile/language.constants";
+import { NutritionistSortBy } from "../../../constants/nutritionist/profile/nutritionist-sort.constants";
 
 const parseBoolean = (value: unknown): boolean | undefined => {
   if (typeof value !== "string") {

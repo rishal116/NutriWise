@@ -1,15 +1,25 @@
 import type { Metadata } from "next";
-import SessionsListing from "@/components/nutritionist/sessions/SessionsListing";
+import dynamic from "next/dynamic";
+import SessionCardSkeleton from "@/components/nutritionist/sessions/SessionCardSkeleton";
 
 export const metadata: Metadata = {
   title: "My Sessions | NutriWise",
-  description:
-    "Manage your nutrition coaching sessions, view upcoming events, and track completed sessions.",
-  robots: {
-    index: false,
-    follow: false,
-  },
+  description: "Manage your live and scheduled nutrition coaching sessions.",
+  robots: { index: false, follow: false },
 };
+
+const SessionsListing = dynamic(
+  () => import("@/components/nutritionist/sessions/SessionsListing"),
+  {
+    loading: () => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <SessionCardSkeleton key={i} />
+        ))}
+      </div>
+    ),
+  },
+);
 
 export default function SessionsPage() {
   return (

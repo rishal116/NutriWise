@@ -4,7 +4,7 @@ import {
   SessionStatus,
   SessionType,
 } from "../../../models/session.model";
-import { Currency } from "../../../constants/currency.constants";
+import { Currency } from "../../../constants/common/currency.constants";
 
 export interface INutriSessionDetailsProjection {
   sessionId: Types.ObjectId;

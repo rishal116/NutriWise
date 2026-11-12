@@ -15,7 +15,7 @@ export class NutriResourceDetailsResponseDTO {
 
   content?: string;
   fileUrl?: string;
-  thumbnailUrl?: string;
+
 
   status!: ResourceStatus;
   publishedAt?: Date;
@@ -23,7 +23,7 @@ export class NutriResourceDetailsResponseDTO {
 
   viewCount!: number;
   likeCount!: number;
-  bookmarkCount!: number;
+
   commentCount!: number;
 
   createdAt!: Date;

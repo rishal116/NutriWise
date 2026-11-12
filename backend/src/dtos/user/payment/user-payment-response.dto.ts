@@ -3,7 +3,7 @@ import type {
   PaymentResourceType,
   PaymentStatus,
 } from "../../../models/payment.model";
-import type { Currency } from "../../../constants/currency.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
 
 export class UserPaymentResponseDTO {
   id!: string;

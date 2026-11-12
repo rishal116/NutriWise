@@ -12,8 +12,6 @@ export class SessionRegistrationMapper {
       userId: registration.userId.toString(),
       status: registration.status,
       registeredAt: registration.registeredAt,
-      cancelledAt: registration.cancelledAt,
-      attendedAt: registration.attendedAt,
     });
   }
 }

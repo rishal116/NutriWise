@@ -1,4 +1,5 @@
-import type { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
+import { DayTrackingStatus } from "../../../constants/user/program/day-tracking-status.constants";
+
 
 export class UserProgramDayListResponseDTO {
   _id!: string;
@@ -6,7 +7,7 @@ export class UserProgramDayListResponseDTO {
   dayNumber!: number;
   totalActivities!: number;
   requiredActivities!: number;
-  status!: UserDayTrackingStatus;
+  status!: DayTrackingStatus;
   completedActivities!: number;
   skippedActivities!: number;
   completionPercentage!: number;

@@ -1,9 +1,8 @@
-import type {
-  ActivityValueType,
-  ProgramActivityCategory,
-} from "../../../models/userProgramDay.model";
-import type { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
-import type { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
+import { ActivityTrackingStatus } from "../../../constants/user/program/activity-tracking-status.constants";
+import { ActivityValueType } from "../../../constants/user/program/activity-value-type.constants";
+import { DayTrackingStatus } from "../../../constants/user/program/day-tracking-status.constants";
+import { ProgramActivityCategory } from "../../../constants/user/program/program-activity-category.constants";
+
 
 export interface UserProgramDayActivityResponseDTO {
   _id: string;
@@ -19,7 +18,7 @@ export interface UserProgramDayActivityResponseDTO {
   isRequired: boolean;
   order: number;
   tracking: {
-    status: UserActivityTrackingStatus;
+    status: ActivityTrackingStatus;
     recordedValue?: number;
     evidence: string[];
     skippedReason?: string;
@@ -36,7 +35,7 @@ export interface UserProgramDayDetailsResponseDTO {
   tracking: {
     _id: string;
     date: Date;
-    status: UserDayTrackingStatus;
+    status: DayTrackingStatus;
     isLocked: boolean;
     totalActivities: number;
     completedActivities: number;

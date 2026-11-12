@@ -1,9 +1,7 @@
-import { CoachLevel } from "../../../types/nutritionist.types";
+import type { CoachLevel } from "../../../constants/nutritionist/profile/coach-level.constants";
 
-export class NutritionistPricingDTO {
-  coachLevel!: CoachLevel;
-
-  minPrice!: number;
-
-  maxPrice!: number;
+export interface NutritionistPricingDTO {
+  coachLevel: CoachLevel;
+  minPrice: number;
+  maxPricePerDay: number;
 }

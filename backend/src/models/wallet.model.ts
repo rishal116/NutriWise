@@ -1,6 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 
-import { CURRENCY, Currency } from "../constants/currency.constants";
+import { CURRENCY, Currency } from "../constants/common/currency.constants";
 
 export const WALLET_OWNER_TYPES = ["admin", "nutritionist", "user"] as const;
 

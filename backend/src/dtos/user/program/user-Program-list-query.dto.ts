@@ -8,8 +8,9 @@ import {
   MinLength,
   MaxLength,
 } from "class-validator";
+import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
-import type { ProgramStatus } from "../../../models/userProgram.model";
+
 
 export enum UserProgramSort {
   NEWEST = "newest",

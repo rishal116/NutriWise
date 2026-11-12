@@ -1,17 +1,29 @@
 import { Schema, model, Types } from "mongoose";
 
 import {
-  APPLICATION_STATUSES,
-  AVAILABILITY_STATUSES,
-  COACH_LEVELS,
   SPECIALIZATIONS,
-  LANGUAGES,
-  type ApplicationStatus,
-  type AvailabilityStatus,
-  type CoachLevel,
   type Specialization,
+} from "../constants/nutritionist/profile/specialization.constants";
+
+import {
+  LANGUAGES,
   type Language,
-} from "../types/nutritionist.types";
+} from "../constants/nutritionist/profile/language.constants";
+
+import {
+  APPLICATION_STATUSES,
+  type ApplicationStatus,
+} from "../constants/nutritionist/profile/application.constants";
+
+import {
+  AVAILABILITY_STATUSES,
+  type AvailabilityStatus,
+} from "../constants/nutritionist/profile/availability.constants";
+
+import {
+  COACH_LEVELS,
+  type CoachLevel,
+} from "../constants/nutritionist/profile/coach-level.constants";
 
 export interface IQualification {
   degree: string;
@@ -54,27 +66,68 @@ export interface INutritionistProfile {
 
 const QualificationSchema = new Schema<IQualification>(
   {
-    degree: { type: String, required: true, trim: true },
-    institution: { type: String, required: true, trim: true },
-    year: { type: Number, required: true },
+    degree: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    institution: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    year: {
+      type: Number,
+      required: true,
+      min: 1900,
+      max: new Date().getFullYear(),
+      validate: {
+        validator: Number.isInteger,
+        message: "Qualification year must be a whole number.",
+      },
+    },
   },
   { _id: false },
 );
 
 const ExperienceSchema = new Schema<IExperience>(
   {
-    role: { type: String, required: true, trim: true },
-    organization: { type: String, required: true, trim: true },
-    durationYears: { type: Number, required: true, min: 0 },
+    role: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    organization: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    durationYears: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
   },
   { _id: false },
 );
 
 const CertificationSchema = new Schema<ICertification>(
   {
-    name: { type: String, required: true, trim: true },
-    issuedBy: { type: String, required: true, trim: true },
-    certificateUrl: { type: String, required: true, trim: true },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    issuedBy: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    certificateUrl: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
   { _id: false },
 );
@@ -99,7 +152,8 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
     },
 
     specializations: {
-      type: [{ type: String, enum: SPECIALIZATIONS }],
+      type: [String],
+      enum: SPECIALIZATIONS,
       required: true,
       validate: {
         validator: (value: Specialization[]) => value.length > 0,
@@ -123,7 +177,8 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
     },
 
     languages: {
-      type: [{ type: String, enum: LANGUAGES }],
+      type: [String],
+      enum: LANGUAGES,
       required: true,
       validate: {
         validator: (value: Language[]) => value.length > 0,
@@ -190,9 +245,20 @@ const NutritionistProfileSchema = new Schema<INutritionistProfile>(
   { timestamps: true },
 );
 
-NutritionistProfileSchema.index({ applicationStatus: 1, createdAt: -1 });
-NutritionistProfileSchema.index({ applicationStatus: 1, rating: -1 });
-NutritionistProfileSchema.index({ applicationStatus: 1, coachLevel: 1 });
+NutritionistProfileSchema.index({
+  applicationStatus: 1,
+  createdAt: -1,
+});
+
+NutritionistProfileSchema.index({
+  applicationStatus: 1,
+  rating: -1,
+});
+
+NutritionistProfileSchema.index({
+  applicationStatus: 1,
+  coachLevel: 1,
+});
 
 export const NutritionistProfileModel = model<INutritionistProfile>(
   "NutritionistProfile",

@@ -1,12 +1,14 @@
 import { injectable } from "inversify";
 import { Types } from "mongoose";
+
 import { BaseRepository } from "../../common/base.repository";
-import {
-  IUserDayTracking,
-  UserDayTrackingModel,
-  UserDayTrackingStatus,
-} from "../../../../models/userDayTracking.model";
-import { IUserDayTrackingRepository } from "../../../interfaces/user/tracking/IUserDayTrackingRepository";
+
+import { UserDayTrackingModel } from "../../../../models/userDayTracking.model";
+import type { IUserDayTracking } from "../../../../models/userDayTracking.model";
+
+import type { DayTrackingStatus } from "../../../../constants/user/program/day-tracking-status.constants";
+
+import type { IUserDayTrackingRepository } from "../../../interfaces/user/tracking/IUserDayTrackingRepository";
 
 @injectable()
 export class UserDayTrackingRepository
@@ -41,7 +43,7 @@ export class UserDayTrackingRepository
     return this._model
       .findOne({
         userProgramId,
-        status: UserDayTrackingStatus.IN_PROGRESS,
+        status: "in_progress",
       })
       .sort({ dayNumber: 1 })
       .lean<IUserDayTracking | null>();
@@ -79,7 +81,7 @@ export class UserDayTrackingRepository
 
   async updateStatus(
     id: string | Types.ObjectId,
-    status: UserDayTrackingStatus,
+    status: DayTrackingStatus,
   ): Promise<IUserDayTracking | null> {
     return this._model
       .findByIdAndUpdate(

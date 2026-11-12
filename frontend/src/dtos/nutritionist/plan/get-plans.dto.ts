@@ -1,5 +1,5 @@
-import { PlanSort } from "@/types/plan.types";
-import { Specialization } from "@/types/nutritionist.types";
+import type { PlanSort } from "@/types/plan.types";
+import type { Specialization } from "@/types/nutritionist.types";
 
 export interface GetPlansDto {
   cursor?: string;

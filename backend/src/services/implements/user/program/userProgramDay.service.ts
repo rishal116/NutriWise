@@ -16,10 +16,6 @@ import { validateDto } from "../../../../middlewares/validateDto.middleware";
 import { IUserDayTrackingService } from "../../../interfaces/user/tracking/IUserDayTrackingService";
 import { IUserActivityTrackingService } from "../../../interfaces/user/tracking/IUserActivityTrackingService";
 import { CreateUserActivityTrackingDTO } from "../../../../dtos/user/tracking/create-user-activity-tracking.dto";
-import {
-  ActivityCompletedBy,
-  UserActivityTrackingStatus,
-} from "../../../../models/userActivityTracking.model";
 
 @injectable()
 export class UserProgramDayService implements IUserProgramDayService {
@@ -107,11 +103,11 @@ export class UserProgramDayService implements IUserProgramDayService {
         title: activity.title,
         category: activity.category,
         valueType: activity.valueType,
-        status: UserActivityTrackingStatus.NOT_STARTED,
+        status: "not_started",
         ...(activity.unit !== undefined && {
           unit: activity.unit,
         }),
-        lastUpdatedBy: ActivityCompletedBy.USER,
+        lastUpdatedBy: "user",
       }));
 
     await this._userActivityTrackingService.initializeForDay(

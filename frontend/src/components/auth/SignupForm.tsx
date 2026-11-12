@@ -147,11 +147,11 @@ export default function SignupForm() {
 
         switch (activeRole) {
           case "admin":
-            router.push("/admin");
+            router.push("/admin/dashboard");
             break;
 
           case "nutritionist":
-            router.push("/nutritionist");
+            router.push("/nutritionist/dashboard");
             break;
 
           default:

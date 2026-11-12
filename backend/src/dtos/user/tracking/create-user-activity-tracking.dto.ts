@@ -1,11 +1,8 @@
-import type {
-  ActivityCompletedBy,
-  UserActivityTrackingStatus,
-} from "../../../models/userActivityTracking.model";
-import type {
-  ProgramActivityCategory,
-  ActivityValueType,
-} from "../../../models/userProgramDay.model";
+import { ActivityCompletedBy } from "../../../constants/user/program/activity-completed-by.constants";
+import { ActivityTrackingStatus } from "../../../constants/user/program/activity-tracking-status.constants";
+import { ActivityValueType } from "../../../constants/user/program/activity-value-type.constants";
+import { ProgramActivityCategory } from "../../../constants/user/program/program-activity-category.constants";
+
 
 export interface CreateUserActivityTrackingDTO {
   userId: string;
@@ -15,7 +12,7 @@ export interface CreateUserActivityTrackingDTO {
   activityId: string;
   title: string;
   category: ProgramActivityCategory;
-  status: UserActivityTrackingStatus;
+  status: ActivityTrackingStatus;
   valueType: ActivityValueType;
   targetValue?: number;
   unit?: string;

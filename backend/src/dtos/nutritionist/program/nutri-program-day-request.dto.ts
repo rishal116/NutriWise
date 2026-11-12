@@ -12,15 +12,14 @@ import {
   Min,
   ValidateNested,
 } from "class-validator";
-
 import {
   PROGRAM_ACTIVITY_CATEGORIES,
-  ACTIVITY_VALUE_TYPES,
-} from "../../../models/userProgramDay.model";
-import type {
   ProgramActivityCategory,
+} from "../../../constants/user/program/program-activity-category.constants";
+import {
+  ACTIVITY_VALUE_TYPES,
   ActivityValueType,
-} from "../../../models/userProgramDay.model";
+} from "../../../constants/user/program/activity-value-type.constants";
 
 export class NutriProgramActivityDTO {
   @IsEnum(PROGRAM_ACTIVITY_CATEGORIES)

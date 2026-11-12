@@ -1,29 +1,14 @@
 import { Schema, Types, model } from "mongoose";
 
-export const PROGRAM_ACTIVITY_CATEGORIES = [
-  "meal",
-  "exercise",
-  "habit",
-  "water",
-  "supplement",
-  "meditation",
-  "sleep",
-  "reading",
-  "appointment",
-  "measurement",
-  "task",
-] as const;
-export type ProgramActivityCategory =
-  (typeof PROGRAM_ACTIVITY_CATEGORIES)[number];
+import {
+  PROGRAM_ACTIVITY_CATEGORIES,
+  type ProgramActivityCategory,
+} from "../constants/user/program/program-activity-category.constants";
 
-export const ACTIVITY_VALUE_TYPES = [
-  "boolean",
-  "number",
-  "duration",
-  "photo",
-  "text",
-] as const;
-export type ActivityValueType = (typeof ACTIVITY_VALUE_TYPES)[number];
+import {
+  ACTIVITY_VALUE_TYPES,
+  type ActivityValueType,
+} from "../constants/user/program/activity-value-type.constants";
 
 export interface IUserProgramActivity {
   _id: Types.ObjectId;
@@ -95,6 +80,10 @@ const ActivitySchema = new Schema<IUserProgramActivity>({
   estimatedDurationMinutes: {
     type: Number,
     min: 0,
+    validate: {
+      validator: Number.isInteger,
+      message: "Estimated duration must be a whole number of minutes.",
+    },
   },
 
   scheduledTime: {
@@ -114,6 +103,10 @@ const ActivitySchema = new Schema<IUserProgramActivity>({
     required: true,
     default: 0,
     min: 0,
+    validate: {
+      validator: Number.isInteger,
+      message: "Activity order must be a whole number.",
+    },
   },
 });
 
@@ -129,6 +122,10 @@ const UserProgramDaySchema = new Schema<IUserProgramDay>(
       type: Number,
       required: true,
       min: 1,
+      validate: {
+        validator: Number.isInteger,
+        message: "Day number must be a whole number.",
+      },
     },
 
     activities: {

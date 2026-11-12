@@ -24,16 +24,42 @@ export class BaseRepository<T> implements IBaseRepository<T> {
     return document.toObject() as T;
   }
 
-  async findOne(filter: FilterQuery<T>): Promise<T | null> {
-    return this._model.findOne(filter).lean<T | null>().exec();
+  async createMany(data: Partial<T>[], session?: ClientSession): Promise<T[]> {
+    const documents = await this._model.insertMany(data, {
+      ...(session ? { session } : {}),
+    });
+
+    return documents.map((document) => document.toObject() as T);
   }
 
-  async findById(id: string | Types.ObjectId): Promise<T | null> {
-    return this._model.findById(id).lean<T | null>().exec();
+  async findOne(
+    filter: FilterQuery<T>,
+    session?: ClientSession,
+  ): Promise<T | null> {
+    return this._model
+      .findOne(filter)
+      .session(session ?? null)
+      .lean<T | null>()
+      .exec();
   }
 
-  async find(filter: FilterQuery<T>): Promise<T[]> {
-    return this._model.find(filter).lean<T[]>().exec();
+  async findById(
+    id: string | Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<T | null> {
+    return this._model
+      .findById(id)
+      .session(session ?? null)
+      .lean<T | null>()
+      .exec();
+  }
+
+  async find(filter: FilterQuery<T>, session?: ClientSession): Promise<T[]> {
+    return this._model
+      .find(filter)
+      .session(session ?? null)
+      .lean<T[]>()
+      .exec();
   }
 
   async updateById(
@@ -71,17 +97,46 @@ export class BaseRepository<T> implements IBaseRepository<T> {
     session?: ClientSession,
   ): Promise<number> {
     const result = await this._model
-      .deleteOne(filter, session ? { session } : {})
+      .deleteOne(filter, {
+        ...(session ? { session } : {}),
+      })
       .exec();
 
     return result.deletedCount;
   }
 
-  async countDocuments(filter: FilterQuery<T>): Promise<number> {
-    return this._model.countDocuments(filter).exec();
+  async deleteById(
+    id: string | Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<number> {
+    const result = await this._model
+      .deleteOne({ _id: id } as FilterQuery<T>, {
+        ...(session ? { session } : {}),
+      })
+      .exec();
+
+    return result.deletedCount;
   }
 
-  async exists(filter: FilterQuery<T>): Promise<boolean> {
-    return (await this._model.exists(filter).exec()) !== null;
+  async countDocuments(
+    filter: FilterQuery<T>,
+    session?: ClientSession,
+  ): Promise<number> {
+    return this._model
+      .countDocuments(filter)
+      .session(session ?? null)
+      .exec();
+  }
+
+  async exists(
+    filter: FilterQuery<T>,
+    session?: ClientSession,
+  ): Promise<boolean> {
+    return (
+      (await this._model
+        .exists(filter)
+        .session(session ?? null)
+        .exec()) !== null
+    );
   }
 }

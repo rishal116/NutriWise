@@ -1,6 +1,13 @@
 import { Schema, model, Types } from "mongoose";
 
-import { CURRENCY, Currency } from "../constants/currency.constants";
+import {
+  CURRENCY,
+  type Currency,
+} from "../constants/common/currency.constants";
+import {
+  SPECIALIZATIONS,
+  type Specialization,
+} from "../constants/nutritionist/profile/specialization.constants";
 
 export interface IUserPlan {
   _id: Types.ObjectId;
@@ -12,10 +19,11 @@ export interface IUserPlan {
   planSnapshot: {
     title: string;
     description?: string;
-    specialization: string;
+    specialization: Specialization;
     durationDays: number;
     price: number;
     currency: Currency;
+    features: string[];
   };
   createdAt: Date;
   updatedAt: Date;
@@ -68,14 +76,15 @@ const UserPlanSchema = new Schema<IUserPlan>(
 
       specialization: {
         type: String,
+        enum: SPECIALIZATIONS,
         required: true,
-        trim: true,
       },
 
       durationDays: {
         type: Number,
         required: true,
         min: 1,
+        max: 365,
       },
 
       price: {
@@ -90,6 +99,11 @@ const UserPlanSchema = new Schema<IUserPlan>(
         required: true,
         default: CURRENCY,
       },
+
+      features: {
+        type: [String],
+        default: [],
+      },
     },
   },
   {
@@ -98,9 +112,7 @@ const UserPlanSchema = new Schema<IUserPlan>(
 );
 
 UserPlanSchema.index({ userId: 1, createdAt: -1 });
-
 UserPlanSchema.index({ nutritionistId: 1, createdAt: -1 });
-
 UserPlanSchema.index({ userId: 1, planId: 1 });
 
 export const UserPlanModel = model<IUserPlan>("UserPlan", UserPlanSchema);

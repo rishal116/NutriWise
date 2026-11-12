@@ -37,6 +37,9 @@ export default function NutritionistHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [switching, setSwitching] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [profileImageSrc, setProfileImageSrc] = useState(
+    user?.profileImage?.trim() || "/profile.jpg",
+  );
 
   const activeRole = user?.activeRole ?? "user";
   const isApprovedNutritionist =
@@ -61,6 +64,10 @@ export default function NutritionistHeader() {
       document.removeEventListener("keydown", onKey);
     };
   }, [menuOpen, closeMenu]);
+
+  useEffect(() => {
+    setProfileImageSrc(user?.profileImage?.trim() || "/profile.jpg");
+  }, [user?.profileImage]);
 
   useEffect(() => {
     if (!initialized) return;
@@ -159,12 +166,17 @@ export default function NutritionistHeader() {
 
               <div className="relative h-9 w-9 shrink-0">
                 <Image
-                  src={user.profileImage || "/images/images.jpg"}
+                  src={profileImageSrc}
                   fill
                   sizes="36px"
                   className="rounded-full border-2 border-white object-cover"
                   alt="Profile"
                   unoptimized
+                  onError={() => {
+                    if (profileImageSrc !== "/profile.jpg") {
+                      setProfileImageSrc("/profile.jpg");
+                    }
+                  }}
                 />
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500" />
               </div>

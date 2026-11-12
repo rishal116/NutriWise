@@ -25,7 +25,7 @@ import {
   SessionPricingType,
   SessionType,
 } from "../../../models/session.model";
-import { CURRENCY, Currency } from "../../../constants/currency.constants";
+import { CURRENCY, Currency } from "../../../constants/common/currency.constants";
 import { CREATE_SESSION_LIMITS } from "../../../constants/nutritionist/session/session.constant";
 
 @ValidatorConstraint({ name: "isFutureDate", async: false })

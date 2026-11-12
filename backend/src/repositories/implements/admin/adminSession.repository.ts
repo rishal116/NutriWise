@@ -1,24 +1,12 @@
 import { injectable } from "inversify";
 import { Types, type FilterQuery } from "mongoose";
 
-import { BaseRepository } from "../../../base.repository";
-import { SessionModel } from "../../../../models/session.model";
-import type { ISession } from "../../../../models/session.model";
-import {
-  SessionRegistrationModel,
-} from "../../../../models/session-registration.model";
-import type {
-  ISessionRegistration,
-} from "../../../../models/session-registration.model";
-
-import type {
-  IAdminSessionFilters,
-  IAdminSessionListResult,
-  IAdminSessionRegistrationFilters,
-  IAdminSessionRegistrationListResult,
-  IAdminSessionRegistrationSummary,
-  IAdminSessionRepository,
-} from "../../../interfaces/admin/session/IAdminSessionRepository";
+import { BaseRepository } from "../common/base.repository";
+import { SessionModel } from "../../../models/session.model";
+import type { ISession } from "../../../models/session.model";
+import { SessionRegistrationModel } from "../../../models/sessionRegistration.model";
+import type { ISessionRegistration } from "../../../models/sessionRegistration.model";
+import { IAdminSessionFilters, IAdminSessionListResult, IAdminSessionRegistrationFilters, IAdminSessionRegistrationListResult, IAdminSessionRegistrationSummary, IAdminSessionRepository } from "../../interfaces/admin/IAdminSessionRepository";
 
 @injectable()
 export class AdminSessionRepository
@@ -38,10 +26,9 @@ export class AdminSessionRepository
     const query: FilterQuery<ISession> = {};
 
     if (search?.trim()) {
-      const escapedSearch = search.trim().replace(
-        /[.*+?^${}()|[\]\\]/g,
-        "\\$&",
-      );
+      const escapedSearch = search
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
       query.$or = [
         { title: { $regex: escapedSearch, $options: "i" } },

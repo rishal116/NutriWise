@@ -2,21 +2,23 @@ import { Type } from "class-transformer";
 import {
   IsEnum,
   IsInt,
-  IsMongoId,
   IsOptional,
   IsString,
   Max,
   Min,
+  MaxLength,
 } from "class-validator";
-
 import {
   SPECIALIZATIONS,
-  Specialization,
-} from "../../../types/nutritionist.types";
-
-import { PLAN_SORT, PlanSort } from "../../../types/plan.types";
+  type Specialization,
+} from "../../../constants/nutritionist/profile/specialization.constants";
+import {
+  PLAN_SORT,
+  type PlanSort,
+} from "../../../constants/nutritionist/plan/plan-sort.constants";
 
 export class GetPlansDTO {
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
@@ -24,11 +26,12 @@ export class GetPlansDTO {
   limit = 10;
 
   @IsOptional()
-  @IsMongoId()
+  @IsString()
   cursor?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(120)
   search?: string;
 
   @IsOptional()
@@ -37,11 +40,13 @@ export class GetPlansDTO {
 
   @IsOptional()
   @Type(() => Number)
+  @IsInt()
   @Min(0)
   minPrice?: number;
 
   @IsOptional()
   @Type(() => Number)
+  @IsInt()
   @Min(0)
   maxPrice?: number;
 

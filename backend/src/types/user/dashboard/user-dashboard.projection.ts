@@ -3,7 +3,7 @@ import type { ProgramStatus } from "../../../models/userProgram.model";
 import type { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
 import type { MeetingStatus } from "../../../models/meeting.model";
 import type { UserChallengeStatus } from "../../../models/userChallenge.model";
-import type { Currency } from "../../../constants/currency.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
 
 export interface IUserDashboardStats {
   totalPrograms: number;

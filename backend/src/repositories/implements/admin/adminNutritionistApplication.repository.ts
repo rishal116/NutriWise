@@ -5,7 +5,7 @@ import {
   INutritionistProfile,
   NutritionistProfileModel,
 } from "../../../models/nutritionistProfile.model";
-import type { ApplicationStatus } from "../../../types/nutritionist.types";
+import type { ApplicationStatus } from "../../../constants/nutritionist/profile/application.constants"; 
 import type { AdminNutritionistApplicationListQueryDto } from "../../../dtos/admin/nutritionistApplication/admin-nutritionist-application-list-query.dto";
 import type { IAdminNutritionistApplicationListProjection } from "../../../types/admin/nutri-application/admin-nutritionist-application-list.projection";
 import type { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";

@@ -1,10 +1,8 @@
 import { Types } from "mongoose";
-import type { UserActivityTrackingStatus } from "../../../models/userActivityTracking.model";
-import type {
-  ActivityValueType,
-  ProgramActivityCategory,
-} from "../../../models/userProgramDay.model";
-import type { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
+import { DayTrackingStatus } from "../../../models/userDayTracking.model";
+import { ProgramActivityCategory } from "../../../constants/user/program/program-activity-category.constants";
+import { ActivityValueType } from "../../../constants/user/program/activity-value-type.constants";
+import { ActivityTrackingStatus } from "../../../constants/user/program/activity-tracking-status.constants";
 
 export interface IUserProgramDayListProjection {
   _id: Types.ObjectId;
@@ -13,7 +11,7 @@ export interface IUserProgramDayListProjection {
   totalActivities: number;
   requiredActivities: number;
   tracking: {
-    status: UserDayTrackingStatus;
+    status: DayTrackingStatus;
     completedActivities: number;
     skippedActivities: number;
     overallCompletionPercentage: number;
@@ -36,7 +34,7 @@ export interface IUserProgramDayActivityProjection {
   isRequired: boolean;
   order: number;
   tracking: {
-    status: UserActivityTrackingStatus;
+    status: ActivityTrackingStatus;
     recordedValue?: number;
     actualDurationMinutes?: number;
     score?: number;
@@ -55,7 +53,7 @@ export interface IUserProgramDayDetailsProjection {
   tracking: {
     _id: Types.ObjectId;
     date: Date;
-    status: UserDayTrackingStatus;
+    status: DayTrackingStatus;
     isLocked: boolean;
     totalActivities: number;
     completedActivities: number;

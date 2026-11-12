@@ -5,6 +5,12 @@ export const NUTRITIONIST_PLAN_ROUTES = {
 
   METADATA: `${NUTRITIONIST_BASE}/plans/metadata`,
 
-  BY_ID: (planId: string) =>
-    `${NUTRITIONIST_BASE}/plans/${planId}`,
+  BY_ID: (planId: string) => `${NUTRITIONIST_BASE}/plans/${planId}`,
+
+  STATUS: (planId: string) => `${NUTRITIONIST_BASE}/plans/${planId}/status`,
+
+  DAYS: (planId: string) => `${NUTRITIONIST_BASE}/plans/${planId}/days`,
+
+  DAY_BY_NUMBER: (planId: string, dayNumber: number) =>
+    `${NUTRITIONIST_BASE}/plans/${planId}/days/${dayNumber}`,
 } as const;

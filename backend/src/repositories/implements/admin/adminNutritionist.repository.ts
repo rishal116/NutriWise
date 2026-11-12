@@ -5,7 +5,7 @@ import {
   INutritionistProfile,
   NutritionistProfileModel,
 } from "../../../models/nutritionistProfile.model";
-import type { CoachLevel } from "../../../types/nutritionist.types";
+import type { CoachLevel } from "../../../constants/nutritionist/profile/coach-level.constants"; 
 import type { IAdminNutritionistListProjection } from "../../../types/admin/nutritionist/admin-nutri-list.projection";
 import type { IAdminNutritionistDetailsProjection } from "../../../types/admin/nutritionist/admin-nutritionist-details.projection";
 import type { AdminNutritionistListQueryDto } from "../../../dtos/admin/nutritionist/admin-nutritionist-list-query.dto";

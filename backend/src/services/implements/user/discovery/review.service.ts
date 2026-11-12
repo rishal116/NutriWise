@@ -37,7 +37,7 @@ export class ReviewService implements IReviewService {
 
     @inject(TYPES.INutritionistProfileRepository)
     private readonly _nutritionistProfileRepository: INutritionistProfileRepository,
-  ) { }
+  ) {}
 
   async createReview(
     userId: string,
@@ -60,13 +60,6 @@ export class ReviewService implements IReviewService {
     if (userPlan.nutritionistId.toString() !== nutritionistId) {
       throw new CustomError(
         "This plan does not belong to this nutritionist.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (userPlan.paymentStatus !== "paid") {
-      throw new CustomError(
-        "You can review only a paid plan.",
         StatusCode.BAD_REQUEST,
       );
     }
@@ -183,18 +176,11 @@ export class ReviewService implements IReviewService {
     return ReviewMapper.toResponseDTO(updatedReview);
   }
 
-  async deleteReview(
-    userId: string,
-    reviewId: string,
-  ): Promise<void> {
-    const existingReview =
-      await this._reviewRepository.findById(reviewId);
+  async deleteReview(userId: string, reviewId: string): Promise<void> {
+    const existingReview = await this._reviewRepository.findById(reviewId);
 
     if (!existingReview) {
-      throw new CustomError(
-        "Review not found.",
-        StatusCode.NOT_FOUND,
-      );
+      throw new CustomError("Review not found.", StatusCode.NOT_FOUND);
     }
 
     if (existingReview.user.toString() !== userId) {
@@ -215,14 +201,10 @@ export class ReviewService implements IReviewService {
       );
     }
 
-    await this._syncNutritionistRating(
-      existingReview.nutritionist.toString(),
-    );
+    await this._syncNutritionistRating(existingReview.nutritionist.toString());
   }
-  
-  private async _syncNutritionistRating(
-    nutritionistId: string,
-  ): Promise<void> {
+
+  private async _syncNutritionistRating(nutritionistId: string): Promise<void> {
     const summary =
       await this._reviewRepository.getRatingSummary(nutritionistId);
 

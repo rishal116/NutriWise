@@ -9,6 +9,4 @@ export interface IMessageRepository extends IBaseRepository<IMessage> {
     limit: number,
     cursor?: string,
   ): Promise<CursorPaginationResult<IMessageListItem>>;
-
-  deleteById(id: string): Promise<void>;
 }

@@ -1,27 +1,21 @@
+import { Type } from "class-transformer";
 import {
   IsArray,
   IsEnum,
+  IsInt,
   IsNumber,
-  IsOptional,
   IsString,
   Length,
   Max,
   Min,
+  ArrayMaxSize,
+  MaxLength,
 } from "class-validator";
-
-import { Type } from "class-transformer";
-
-
-
-import {
-  PLAN_STATUS,
-  PlanStatus,
-} from "../../../models/nutritionistPlan.model";
 
 import {
   SPECIALIZATIONS,
-  Specialization,
-} from "../../../types/nutritionist.types";
+  type Specialization,
+} from "../../../constants/nutritionist/profile/specialization.constants";
 
 export class CreatePlanDTO {
   @IsString()
@@ -36,7 +30,7 @@ export class CreatePlanDTO {
   description!: string;
 
   @Type(() => Number)
-  @IsNumber()
+  @IsInt()
   @Min(1)
   @Max(365)
   durationDays!: number;
@@ -47,10 +41,8 @@ export class CreatePlanDTO {
   price!: number;
 
   @IsArray()
+  @ArrayMaxSize(20)
   @IsString({ each: true })
+  @MaxLength(150, { each: true })
   features!: string[];
-
-  @IsOptional()
-  @IsEnum(PLAN_STATUS)
-  status?: PlanStatus = "draft";
 }

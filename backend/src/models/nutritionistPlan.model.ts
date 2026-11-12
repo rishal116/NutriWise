@@ -1,11 +1,19 @@
 import { Schema, model, Types } from "mongoose";
 
-import { CURRENCY, Currency } from "../constants/currency.constants";
-import { SPECIALIZATIONS, Specialization } from "../types/nutritionist.types";
+import {
+  CURRENCY,
+  type Currency,
+} from "../constants/common/currency.constants";
 
-export const PLAN_STATUS = ["draft", "published", "archived"] as const;
+import {
+  SPECIALIZATIONS,
+  type Specialization,
+} from "../constants/nutritionist/profile/specialization.constants";
 
-export type PlanStatus = (typeof PLAN_STATUS)[number];
+import {
+  PLAN_STATUSES,
+  PlanStatus,
+} from "../constants/nutritionist/plan/plan-status.constants";
 
 export interface INutritionistPlan {
   _id: Types.ObjectId;
@@ -19,8 +27,6 @@ export interface INutritionistPlan {
   currency: Currency;
   features: string[];
   status: PlanStatus;
-  isDeleted: boolean;
-  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,7 +37,6 @@ const NutritionistPlanSchema = new Schema<INutritionistPlan>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      index: true,
     },
 
     slug: {
@@ -53,7 +58,6 @@ const NutritionistPlanSchema = new Schema<INutritionistPlan>(
       type: String,
       enum: SPECIALIZATIONS,
       required: true,
-      index: true,
     },
 
     description: {
@@ -89,20 +93,9 @@ const NutritionistPlanSchema = new Schema<INutritionistPlan>(
 
     status: {
       type: String,
-      enum: PLAN_STATUS,
+      enum: PLAN_STATUSES,
       default: "draft",
       index: true,
-    },
-
-    isDeleted: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-
-    deletedAt: {
-      type: Date,
-      default: null,
     },
   },
   {
@@ -113,7 +106,6 @@ const NutritionistPlanSchema = new Schema<INutritionistPlan>(
 NutritionistPlanSchema.index({
   nutritionistId: 1,
   status: 1,
-  isDeleted: 1,
 });
 
 NutritionistPlanSchema.index({

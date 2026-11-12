@@ -14,9 +14,9 @@ import type { AdminNutritionistDetailsDto } from "../../../dtos/admin/nutritioni
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 import { NutritionistMapper } from "../../../mappers/admin/nutritionist/nutritionist.mapper";
 import {
+  CoachLevel,
   COACH_LEVELS,
-  type CoachLevel,
-} from "../../../types/nutritionist.types";
+} from "../../../constants/nutritionist/profile/coach-level.constants";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
 
 @injectable()
@@ -103,7 +103,6 @@ export class AdminNutritionistService implements IAdminNutritionistService {
       type: NotificationType.SUCCESS,
       title: "Coach Level Updated",
       message: `Your coach level has been updated to ${coachLevel.replace(/_/g, " ")}.`,
-      data: { coachLevel },
     });
   }
 }

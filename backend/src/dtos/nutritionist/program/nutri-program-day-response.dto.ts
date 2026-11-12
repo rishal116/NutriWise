@@ -1,9 +1,6 @@
 import type { Types } from "mongoose";
-
-import type {
-  ActivityValueType,
-  ProgramActivityCategory,
-} from "../../../models/userProgramDay.model";
+import { ProgramActivityCategory } from "../../../constants/user/program/program-activity-category.constants";
+import { ActivityValueType } from "../../../constants/user/program/activity-value-type.constants";
 
 export interface INutriProgramActivityResponseDTO {
   _id: Types.ObjectId;

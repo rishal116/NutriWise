@@ -1,6 +1,5 @@
-import { PlanCurrency, PlanStatus } from "@/types/plan.types";
-
-import { Specialization } from "@/types/nutritionist.types";
+import type { PlanStatus } from "@/types/plan.types";
+import type { Specialization } from "@/types/nutritionist.types";
 
 export interface PlanDto {
   id: string;
@@ -9,7 +8,6 @@ export interface PlanDto {
   description: string;
   durationDays: number;
   price: number;
-  currency: PlanCurrency;
   features: string[];
   status: PlanStatus;
   createdAt: string;

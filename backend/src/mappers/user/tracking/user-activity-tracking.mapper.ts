@@ -7,7 +7,7 @@ export class UserActivityTrackingMapper {
   ): UserActivityTrackingResponseDTO {
     return {
       _id: tracking._id.toString(),
-      userDayTrackingId: tracking.userDayTrackingId.toString(),
+      userDayTrackingId: tracking.userDayTrackingId?.toString() ?? null,
       activityId: tracking.activityId.toString(),
 
       title: tracking.title,

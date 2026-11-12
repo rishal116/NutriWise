@@ -1,4 +1,4 @@
-import type { Currency } from "../../../constants/currency.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
 import type {
   SessionPricingType,
   SessionStatus,
