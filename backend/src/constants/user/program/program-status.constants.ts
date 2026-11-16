@@ -9,3 +9,14 @@ export const PROGRAM_STATUSES = [
 ] as const;
 
 export type ProgramStatus = (typeof PROGRAM_STATUSES)[number];
+
+export const BLOCKING_PURCHASE_STATUSES = [
+  "preparing",
+  "ready",
+  "upcoming",
+  "active",
+  "paused",
+] as const;
+
+export type BlockingPurchaseStatuses =
+  (typeof BLOCKING_PURCHASE_STATUSES)[number];

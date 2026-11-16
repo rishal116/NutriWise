@@ -19,25 +19,16 @@ import PlanDayInformationFields from "./PlanDayInformationFields";
 import ActivityList from "../activities/ActivityList";
 
 interface PlanDayFormProps {
-  control: Control<
-    CreatePlanDayFormInput,
-    unknown,
-    CreatePlanDayFormValues
-  >;
+  control: Control<CreatePlanDayFormInput, unknown, CreatePlanDayFormValues>;
   register: UseFormRegister<CreatePlanDayFormInput>;
   watch: UseFormWatch<CreatePlanDayFormInput>;
   errors: FieldErrors<CreatePlanDayFormInput>;
   fieldArray: UseFieldArrayReturn<CreatePlanDayFormInput, "activities">;
   submitting: boolean;
   showDayNumber?: boolean;
-  onCategoryChange: (
-    index: number,
-    category: ProgramActivityCategory,
-  ) => void;
-  onValueTypeChange: (
-    index: number,
-    valueType: ActivityValueType,
-  ) => void;
+  durationDays?: number | null;
+  onCategoryChange: (index: number, category: ProgramActivityCategory) => void;
+  onValueTypeChange: (index: number, valueType: ActivityValueType) => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
   actions: ReactNode;
 }
@@ -50,6 +41,7 @@ export default function PlanDayForm({
   fieldArray,
   submitting,
   showDayNumber = false,
+  durationDays,
   onCategoryChange,
   onValueTypeChange,
   onSubmit,
@@ -62,6 +54,7 @@ export default function PlanDayForm({
         errors={errors}
         disabled={submitting}
         showDayNumber={showDayNumber}
+        durationDays={durationDays}
       />
 
       <ActivityList

@@ -1,5 +1,5 @@
 import { Camera, X } from "lucide-react";
-import type { UserProgramDayActivityResponseDTO } from "@/dtos/user/program/user-program-day-details.dto";
+import type { UserProgramDayActivityResponseDTO } from "@/dtos/user/program-day/user-program-day-details.dto";
 
 export interface ActivityValueInputProps {
   activity: UserProgramDayActivityResponseDTO;

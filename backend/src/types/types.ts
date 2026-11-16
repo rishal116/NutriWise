@@ -1,4 +1,7 @@
 export const TYPES = {
+  IProgramHealthController:Symbol.for("IProgramHealthController"),
+  IProgramHealthService:Symbol.for("IProgramHealthService"),
+  IProgramHealthRepository:Symbol.for("IProgramHealthRepository"),
   IUserSessionService: Symbol.for("IUserSessionService"),
   IUserSessionController: Symbol.for("IUserSessionController"),
   IUserSessionRepository: Symbol.for("IUserSessionRepository"),
@@ -318,4 +321,8 @@ export const TYPES = {
   INutriPlanDayService: Symbol.for("INutriPlanDayService"),
 
   INutriPlanDayController: Symbol.for("INutriPlanDayController"),
+  IStripeCheckoutValidationService:Symbol.for("IStripeCheckoutValidationService"),
+  IStripePaymentCalculationService:Symbol.for("IStripePaymentCalculationService"),
+  IStripeProgramProvisioningService:Symbol.for("IStripeProgramProvisioningService"),
+  IStripeProgramDayCreationService:Symbol.for("IStripeProgramDayCreationService"),
 } as const;

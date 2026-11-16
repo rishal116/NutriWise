@@ -17,7 +17,7 @@ import type { NutritionistPlanDayListItemDTO } from "../../../dtos/nutritionist/
 
 import type { NutritionistPlanDayDetailsDTO } from "../../../dtos/nutritionist/plan-day/nutritionist-plan-day-details.dto";
 
-import type { INutritionistPlanDayRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanDayRepository";
+import type { INutritionistPlanDayRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanDayRepository";
 
 import type { INutritionistPlanRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanRepository";
 

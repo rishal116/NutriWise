@@ -7,7 +7,7 @@ import { nutritionistBrowsingService } from "@/services/user/nutriBrowsing.servi
 import { nutritionistPlanBrowsingService } from "@/services/user/nutriPanBrowsing.service";
 import type { NutritionistDetailDTO } from "@/dtos/user/nutri-browsing/nutri-detail.dto";
 import type { NutritionistPlanDTO } from "@/dtos/user/nutri-plan-browsing/nutri-plan.dto";
-import { PLATFORM_FEATURES } from "@/constants/platform-features";
+import { PLATFORM_FEATURES } from "@/constants/common/platform-features";
 import BreadcrumbHeader from "@/components/ui/nutritionists/BreadcrumbHeader";
 import { useAppSelector } from "@/redux/hooks";
 import {

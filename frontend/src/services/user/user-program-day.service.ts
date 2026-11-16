@@ -3,9 +3,9 @@ import { USER_PROGRAM_ROUTES } from "@/routes/user";
 
 import type { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 import type { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
-import type { UserProgramDayListDTO } from "@/dtos/user/program/user-program-day-list.dto";
-import type { UserProgramDayListQueryDTO } from "@/dtos/user/program/user-program-day-list-query.dto";
-import type { UserProgramDayDetailsResponseDTO } from "@/dtos/user/program/user-program-day-details.dto";
+import type { UserProgramDayListDTO } from "@/dtos/user/program-day/user-program-day-list.dto";
+import type { UserProgramDayListQueryDTO } from "@/dtos/user/program-day/user-program-day-list-query.dto";
+import type { UserProgramDayDetailsResponseDTO } from "@/dtos/user/program-day/user-program-day-details.dto";
 
 export const userProgramDayService = {
   async browseProgramDays(

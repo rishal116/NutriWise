@@ -4,7 +4,7 @@ import type { PipelineStage } from "mongoose";
 import { NutritionistPlanDayModel } from "../../../models/nutritionistPlanDay.model";
 import type { INutritionistPlanDay } from "../../../models/nutritionistPlanDay.model";
 import { BaseRepository } from "../common/base.repository";
-import type { INutritionistPlanDayRepository } from "../../interfaces/nutritionist/INutritionistPlanDayRepository";
+import type { INutritionistPlanDayRepository } from "../../interfaces/nutritionist/INutriPlanDayRepository";
 import type {
   NutritionistPlanDayDetailsProjection,
   NutritionistPlanDayListProjection,

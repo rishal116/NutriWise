@@ -27,11 +27,15 @@ export default function ViewPlanClient({ planId }: ViewPlanClientProps) {
   const [plan, setPlan] = useState<PlanDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const getPlanStorageKey = (planId: string) => `nutritionist_plan_${planId}`;
 
   const fetchPlan = useCallback(async () => {
     try {
       const response = await nutritionistPlanService.getPlanById(planId);
+
       setPlan(response);
+
+      localStorage.setItem(getPlanStorageKey(planId), JSON.stringify(response));
     } catch {
       toast.error("Failed to load plan details.");
       setPlan(null);
@@ -54,9 +58,18 @@ export default function ViewPlanClient({ planId }: ViewPlanClientProps) {
         status,
       });
 
-      setPlan((currentPlan) =>
-        currentPlan ? { ...currentPlan, status } : currentPlan,
-      );
+      setPlan((currentPlan) => {
+        if (!currentPlan) return currentPlan;
+
+        const updatedPlan = { ...currentPlan, status };
+
+        localStorage.setItem(
+          getPlanStorageKey(plan.id),
+          JSON.stringify(updatedPlan),
+        );
+
+        return updatedPlan;
+      });
 
       toast.success(response.message);
 

@@ -151,19 +151,18 @@ export class SessionStripeCheckoutHandlerService implements ISessionStripeChecko
             dbSession,
           );
       } else {
-        registration =
-          await this._sessionRegistrationRepository.create(
-            {
-              sessionId,
-              userId,
-              status: "registered",
-              paymentStatus: "paid",
-              registeredAt: new Date(),
-              checkoutSessionId: session.id,
-              paymentIntentId: session.payment_intent.toString(),
-            },
-            dbSession,
-          );
+        registration = await this._sessionRegistrationRepository.create(
+          {
+            sessionId,
+            userId,
+            status: "registered",
+            paymentStatus: "paid",
+            registeredAt: new Date(),
+            checkoutSessionId: session.id,
+            paymentIntentId: session.payment_intent.toString(),
+          },
+          dbSession,
+        );
       }
 
       if (!registration) {

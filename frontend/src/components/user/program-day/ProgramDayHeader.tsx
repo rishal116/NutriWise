@@ -1,5 +1,5 @@
 import { Lock, MessageSquare } from "lucide-react";
-import type { UserProgramDayDetailsResponseDTO } from "@/dtos/user/program/user-program-day-details.dto";
+import type { UserProgramDayDetailsResponseDTO } from "@/dtos/user/program-day/user-program-day-details.dto";
 import {
   DAY_STATUS_LABELS,
   DAY_STATUS_STYLES,

@@ -13,6 +13,7 @@ interface PlanDayInformationFieldsProps {
   errors: FieldErrors<CreatePlanDayFormInput>;
   disabled: boolean;
   showDayNumber?: boolean;
+  durationDays?: number | null;
 }
 
 export default function PlanDayInformationFields({
@@ -20,13 +21,14 @@ export default function PlanDayInformationFields({
   errors,
   disabled,
   showDayNumber = false,
+  durationDays,
 }: PlanDayInformationFieldsProps) {
+  const hasDuration = durationDays != null && durationDays > 0;
+
   return (
     <section className="space-y-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
       <div>
-        <h2 className="text-base font-bold text-slate-900">
-          Day Information
-        </h2>
+        <h2 className="text-base font-bold text-slate-900">Day Information</h2>
         <p className="mt-1 text-xs text-slate-500">
           Provide a title and description for this day.
         </p>
@@ -37,20 +39,54 @@ export default function PlanDayInformationFields({
           <label htmlFor="dayNumber" className={PLAN_DAY_LABEL_CLASS}>
             Day number
           </label>
+
           <input
             id="dayNumber"
             type="number"
             min={1}
+            max={hasDuration ? durationDays : undefined}
             step={1}
-            disabled={disabled}
+            disabled={disabled || !hasDuration}
             {...register("dayNumber", { valueAsNumber: true })}
+            onKeyDown={(event) => {
+              if (["e", "E", "+", "-", "."].includes(event.key)) {
+                event.preventDefault();
+              }
+            }}
+            onChange={(event) => {
+              const value = event.target.value;
+
+              if (value === "") {
+                event.target.value = "";
+                return;
+              }
+
+              const number = Number(value);
+
+              if (
+                !Number.isInteger(number) ||
+                number < 1 ||
+                (hasDuration && number > durationDays)
+              ) {
+                event.target.value = "";
+              }
+            }}
             className={PLAN_DAY_INPUT_CLASS}
-            placeholder="1"
+            placeholder={
+              hasDuration
+                ? `Enter 1 to ${durationDays}`
+                : "Loading plan duration..."
+            }
           />
+
+          <p className="mt-1 text-xs text-slate-500">
+            {hasDuration
+              ? `Enter a day number between 1 and ${durationDays}.`
+              : "Plan duration is unavailable. Please revisit the plan details."}
+          </p>
+
           {errors.dayNumber && (
-            <p className={PLAN_DAY_ERROR_CLASS}>
-              {errors.dayNumber.message}
-            </p>
+            <p className={PLAN_DAY_ERROR_CLASS}>{errors.dayNumber.message}</p>
           )}
         </div>
       )}
@@ -59,6 +95,7 @@ export default function PlanDayInformationFields({
         <label htmlFor="dayTitle" className={PLAN_DAY_LABEL_CLASS}>
           Day title (optional)
         </label>
+
         <input
           id="dayTitle"
           type="text"
@@ -68,6 +105,7 @@ export default function PlanDayInformationFields({
           className={PLAN_DAY_INPUT_CLASS}
           placeholder="Healthy morning routine"
         />
+
         {errors.title && (
           <p className={PLAN_DAY_ERROR_CLASS}>{errors.title.message}</p>
         )}
@@ -77,6 +115,7 @@ export default function PlanDayInformationFields({
         <label htmlFor="dayDescription" className={PLAN_DAY_LABEL_CLASS}>
           Day description (optional)
         </label>
+
         <textarea
           id="dayDescription"
           rows={3}
@@ -86,10 +125,9 @@ export default function PlanDayInformationFields({
           className={PLAN_DAY_INPUT_CLASS}
           placeholder="Describe the focus and goals for this day."
         />
+
         {errors.description && (
-          <p className={PLAN_DAY_ERROR_CLASS}>
-            {errors.description.message}
-          </p>
+          <p className={PLAN_DAY_ERROR_CLASS}>{errors.description.message}</p>
         )}
       </div>
     </section>

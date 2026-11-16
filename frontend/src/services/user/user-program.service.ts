@@ -2,17 +2,19 @@ import { clientApi } from "@/lib/axios/clientApi";
 import { USER_PROGRAM_ROUTES } from "@/routes/user";
 
 import type { UserProgramListQuery } from "@/dtos/user/program/user-program-request.dto";
-import type { UserProgramCardDTO } from "@/dtos/user/program/user-program-card.dto";
-import type { UserProgramDetailsDTO } from "@/dtos/user/program/user-program-details.dto";
+import type { UserProgramCardResponseDTO } from "@/dtos/user/program/user-program-card-response.dto";
+import type { UserProgramDetailsResponseDTO } from "@/dtos/user/program/user-program-details.dto";
 import type { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
 import type { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 
 export const userProgramService = {
   async browsePrograms(
     query?: UserProgramListQuery,
-  ): Promise<ApiResponseDTO<InfiniteScrollResponseDTO<UserProgramCardDTO>>> {
+  ): Promise<
+    ApiResponseDTO<InfiniteScrollResponseDTO<UserProgramCardResponseDTO>>
+  > {
     const res = await clientApi.get<
-      ApiResponseDTO<InfiniteScrollResponseDTO<UserProgramCardDTO>>
+      ApiResponseDTO<InfiniteScrollResponseDTO<UserProgramCardResponseDTO>>
     >(USER_PROGRAM_ROUTES.BROWSE, {
       params: query,
     });
@@ -22,10 +24,10 @@ export const userProgramService = {
 
   async getProgramDetails(
     programId: string,
-  ): Promise<ApiResponseDTO<UserProgramDetailsDTO>> {
-    const res = await clientApi.get<ApiResponseDTO<UserProgramDetailsDTO>>(
-      USER_PROGRAM_ROUTES.DETAILS(programId),
-    );
+  ): Promise<ApiResponseDTO<UserProgramDetailsResponseDTO>> {
+    const res = await clientApi.get<
+      ApiResponseDTO<UserProgramDetailsResponseDTO>
+    >(USER_PROGRAM_ROUTES.DETAILS(programId));
 
     return res.data;
   },

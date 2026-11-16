@@ -1,16 +1,17 @@
+import { Type } from "class-transformer";
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
   MinLength,
-  MaxLength,
 } from "class-validator";
-import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
-
+import { PROGRAM_STATUSES } from "../../../constants/user/program/program-status.constants";
 
 export enum UserProgramSort {
   NEWEST = "newest",
@@ -20,6 +21,8 @@ export enum UserProgramSort {
 }
 
 export class UserProgramListQueryDTO {
+  @IsOptional()
+  @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(50)
@@ -37,10 +40,10 @@ export class UserProgramListQueryDTO {
   search?: string;
 
   @IsOptional()
-  @IsEnum(["upcoming", "active", "paused", "completed", "cancelled"])
-  programStatus?: ProgramStatus;
+  @IsIn(PROGRAM_STATUSES)
+  programStatus?: (typeof PROGRAM_STATUSES)[number];
 
   @IsOptional()
   @IsEnum(UserProgramSort)
-  sort?: UserProgramSort = UserProgramSort.NEWEST;
+  sort: UserProgramSort = UserProgramSort.NEWEST;
 }

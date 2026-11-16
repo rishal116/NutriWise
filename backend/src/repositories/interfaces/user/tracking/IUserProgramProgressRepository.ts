@@ -3,8 +3,6 @@ import { IBaseRepository } from "../../common/IBaseRepository";
 import { IUserProgramProgress } from "../../../../models/userProgramProgress.model";
 
 export interface IUserProgramProgressRepository extends IBaseRepository<IUserProgramProgress> {
-
-
   findByProgram(
     userProgramId: string | Types.ObjectId,
   ): Promise<IUserProgramProgress | null>;

@@ -15,11 +15,11 @@ import {
 } from "lucide-react";
 
 import { userProgramDayService } from "@/services/user/user-program-day.service";
-import type { UserProgramDayListDTO } from "@/dtos/user/program/user-program-day-list.dto";
+import type { UserProgramDayListDTO } from "@/dtos/user/program-day/user-program-day-list.dto";
 import {
   UserDayTrackingStatus,
   UserProgramDaySort,
-} from "@/dtos/user/program/user-program-day-list-query.dto";
+} from "@/dtos/user/program-day/user-program-day-list-query.dto";
 import { useDebounce } from "@/hooks/common/debounce.hooks";
 
 const PAGE_LIMIT = 12;

@@ -11,6 +11,8 @@ import type { CreateNutritionistPlanDayDTO } from "@/dtos/nutritionist/plan-day/
 
 import type { ProgramActivityCategory } from "@/constants/user/program/program-activity-category.constants";
 import type { ActivityValueType } from "@/constants/user/program/activity-value-type.constants";
+import { useEffect, useState } from "react";
+import type { PlanDto } from "@/dtos/nutritionist/plan/plan.dto";
 
 import {
   createPlanDaySchema,
@@ -37,6 +39,28 @@ export default function CreatePlanDayClient({
   planId,
 }: CreatePlanDayClientProps) {
   const router = useRouter();
+  const [durationDays, setDurationDays] = useState<number | null>(null);
+
+  useEffect(() => {
+    try {
+      const storedPlan = localStorage.getItem(`nutritionist_plan_${planId}`);
+
+      if (!storedPlan) {
+        setDurationDays(null);
+        return;
+      }
+
+      const plan = JSON.parse(storedPlan) as PlanDto;
+
+      setDurationDays(
+        Number.isInteger(plan.durationDays) && plan.durationDays > 0
+          ? plan.durationDays
+          : null,
+      );
+    } catch {
+      setDurationDays(null);
+    }
+  }, [planId]);
 
   const {
     register,
@@ -48,7 +72,7 @@ export default function CreatePlanDayClient({
   } = useForm<CreatePlanDayFormInput, unknown, CreatePlanDayFormValues>({
     resolver: zodResolver(createPlanDaySchema),
     defaultValues: {
-      dayNumber: 1,
+      dayNumber: undefined,
       title: "",
       description: "",
       activities: [],
@@ -158,7 +182,6 @@ export default function CreatePlanDayClient({
     <div className="min-h-screen bg-slate-50 pb-24">
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <CreatePlanDayHeader planId={planId} />
-
         <PlanDayForm
           control={control}
           register={register}
@@ -167,6 +190,7 @@ export default function CreatePlanDayClient({
           fieldArray={fieldArray}
           submitting={isSubmitting}
           showDayNumber
+          durationDays={durationDays}
           onCategoryChange={applyCategoryChange}
           onValueTypeChange={applyValueTypeChange}
           onSubmit={handleSubmit(onSubmit, onInvalid)}

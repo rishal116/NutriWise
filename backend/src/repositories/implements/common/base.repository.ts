@@ -24,7 +24,10 @@ export class BaseRepository<T> implements IBaseRepository<T> {
     return document.toObject() as T;
   }
 
-  async createMany(data: Partial<T>[], session?: ClientSession): Promise<T[]> {
+  async createMany<TCreate = Partial<T>>(
+    data: TCreate[],
+    session?: ClientSession,
+  ): Promise<T[]> {
     const documents = await this._model.insertMany(data, {
       ...(session ? { session } : {}),
     });

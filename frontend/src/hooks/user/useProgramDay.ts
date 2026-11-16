@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type {
   UserProgramDayActivityResponseDTO,
   UserProgramDayDetailsResponseDTO,
-} from "@/dtos/user/program/user-program-day-details.dto";
+} from "@/dtos/user/program-day/user-program-day-details.dto";
 import type { UpdateActivityTrackingDTO } from "@/dtos/user/tracking/update-activity-tracking.dto";
 import { userProgramDayService } from "@/services/user/user-program-day.service";
 import { userActivityTrackingService } from "@/services/user/userActivityTracking.service";

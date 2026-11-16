@@ -25,10 +25,20 @@ export interface IUserProgramActivity {
   order: number;
 }
 
+export type CreateUserProgramActivityDTO = Omit<IUserProgramActivity, "_id">;
+export type CreateUserProgramDayDTO = Omit<
+  IUserProgramDay,
+  "_id" | "createdAt" | "updatedAt" | "activities"
+> & {
+  activities: CreateUserProgramActivityDTO[];
+};
+
 export interface IUserProgramDay {
   _id: Types.ObjectId;
   userProgramId: Types.ObjectId;
   dayNumber: number;
+  title?: string;
+  description?: string;
   activities: IUserProgramActivity[];
   createdAt: Date;
   updatedAt: Date;
@@ -126,6 +136,18 @@ const UserProgramDaySchema = new Schema<IUserProgramDay>(
         validator: Number.isInteger,
         message: "Day number must be a whole number.",
       },
+    },
+
+    title: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
+
+    description: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
     },
 
     activities: {

@@ -1,4 +1,4 @@
-import type { UserProgramDayActivityResponseDTO } from "@/dtos/user/program/user-program-day-details.dto";
+import type { UserProgramDayActivityResponseDTO } from "@/dtos/user/program-day/user-program-day-details.dto";
 
 interface ReadOnlySummaryProps {
   activity: UserProgramDayActivityResponseDTO;

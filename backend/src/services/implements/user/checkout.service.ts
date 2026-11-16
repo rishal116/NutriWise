@@ -10,6 +10,7 @@ import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { IUserRepository } from "../../../repositories/interfaces/user/account/IUserRepository";
 import { IPaymentRepository } from "../../../repositories/interfaces/common/IPaymentRepository";
+import { IUserProgramRepository } from "../../../repositories/interfaces/user/program/IUserProgramRepository";
 
 @injectable()
 export class CheckoutService implements ICheckoutService {
@@ -25,6 +26,9 @@ export class CheckoutService implements ICheckoutService {
 
     @inject(TYPES.IPaymentRepository)
     private readonly _paymentRepository: IPaymentRepository,
+
+    @inject(TYPES.IUserProgramRepository)
+    private readonly _userProgramRepository: IUserProgramRepository,
   ) {}
 
   async createCheckoutSession(dto: CreateCheckoutSessionDTO): Promise<string> {
@@ -34,6 +38,19 @@ export class CheckoutService implements ICheckoutService {
       throw new CustomError("Plan not found.", StatusCode.NOT_FOUND);
     }
 
+    const existingProgram =
+      await this._userProgramRepository.findExistingPurchase(
+        dto.userId,
+        dto.planId,
+      );
+
+    if (existingProgram) {
+      throw new CustomError(
+        "You already have an ongoing program for this plan.",
+        StatusCode.CONFLICT,
+      );
+    }
+
     const nutritionistUser = await this._userRepository.findById(
       plan.nutritionistId.toString(),
     );
@@ -41,10 +58,12 @@ export class CheckoutService implements ICheckoutService {
     if (!nutritionistUser) {
       throw new CustomError("Nutritionist not found.", StatusCode.NOT_FOUND);
     }
+
     const stripeCheckoutInput = CheckoutStripeMapper.toStripeInput(
       plan,
       dto.userId,
     );
+
     return this._stripeService.createCheckoutSession(stripeCheckoutInput);
   }
 
@@ -124,4 +143,3 @@ export class CheckoutService implements ICheckoutService {
     }
   }
 }
-

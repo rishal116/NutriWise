@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { PLATFORM_FEATURES } from "@/constants/platform-features";
+import { PLATFORM_FEATURES } from "@/constants/common/platform-features";
 import {
   MAX_PLAN_DURATION_DAYS,
   MIN_PLAN_DURATION_DAYS,

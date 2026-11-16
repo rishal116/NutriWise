@@ -14,7 +14,7 @@ import { ReviewController } from "../controllers/implementations/user/review.con
 import { UserAccountController } from "../controllers/implementations/user/userAccount.controller";
 import { UserMeetingController } from "../controllers/implementations/user/userMeeting.controller";
 import { UserProfileController } from "../controllers/implementations/user/userProfile.controller";
-import { UserProgramController } from "../controllers/implementations/user/userProgram.controller";
+import { UserProgramController } from "../controllers/implementations/user/program/userProgram.controller";
 import { UserProgramDayController } from "../controllers/implementations/user/userProgramDay.controller";
 import { UserActivityTrackingController } from "../controllers/implementations/user/userActivityTracking.controller";
 
@@ -68,7 +68,7 @@ import { IReviewController } from "../controllers/interfaces/user/IReviewControl
 import { IUserAccountController } from "../controllers/interfaces/user/IUserAccountController";
 import { IUserMeetingController } from "../controllers/interfaces/user/IUserMeetingController";
 import { IUserProfileController } from "../controllers/interfaces/user/IUserProfileController";
-import { IUserProgramController } from "../controllers/interfaces/user/IUserProgramController";
+import { IUserProgramController } from "../controllers/interfaces/user/program/IUserProgramController";
 import { IUserProgramDayController } from "../controllers/interfaces/user/IUserProgramDayController";
 import { IUserActivityTrackingController } from "../controllers/interfaces/user/IUserActivityTrackingController";
 
@@ -443,7 +443,6 @@ import { INutriDashboardService } from "../services/interfaces/nutritionist/INut
 import { NutriDashboardService } from "../services/implements/nutritionist/nutriDashboard.service";
 import { NutriDashboardRepository } from "../repositories/implements/nutritionist/nutriDashboard.repository";
 import { ISessionStripeCheckoutHandlerService } from "../services/interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
-import { SessionStripeCheckoutHandlerService } from "../services/implements/common/stripe/sessionStripeCheckoutHandler.service";
 import { IPublicPostController } from "../controllers/interfaces/public/IPublicPostController";
 import { PublicPostController } from "../controllers/implementations/public/publicPost.controller";
 import { IPublicPostService } from "../services/interfaces/public/IPublicPostService";
@@ -576,12 +575,27 @@ import { UserContextService } from "../services/implements/user/user-context.ser
 import { ICloudinaryService } from "../services/interfaces/common/ICloudinaryService";
 import { CloudinaryService } from "../services/implements/common/cloudinary.service";
 import { AdminChallengeDayService } from "../services/implements/admin/adminChallengeDAy.service";
-import { INutritionistPlanDayRepository } from "../repositories/interfaces/nutritionist/INutritionistPlanDayRepository";
+import { INutritionistPlanDayRepository } from "../repositories/interfaces/nutritionist/INutriPlanDayRepository";
 import { NutritionistPlanDayRepository } from "../repositories/implements/nutritionist/nutriPlanDay.repository";
 import { INutritionistPlanDayService } from "../services/interfaces/nutritionist/INutriPlanDayService";
 import { NutritionistPlanDayService } from "../services/implements/nutritionist/nutriPlanDay.service";
 import { INutritionistPlanDayController } from "../controllers/interfaces/nutritionist/INutriPlanDayController";
 import { NutritionistPlanDayController } from "../controllers/implementations/nutritionist/nutriPlanDay.controller";
+import { IStripeCheckoutValidationService } from "../services/interfaces/common/stripe/IStripeCheckoutValidationService";
+import { StripeCheckoutValidationService } from "../services/implements/common/stripe/stripe-checkout-validation.service";
+import { IStripePaymentCalculationService } from "../services/interfaces/common/stripe/IStripePaymentCalculationService";
+import { StripePaymentCalculationService } from "../services/implements/common/stripe/stripe-payment-calculation.service";
+import { IStripeProgramProvisioningService } from "../services/interfaces/common/stripe/IStripeProgramProvisioningService";
+import { StripeProgramProvisioningService } from "../services/implements/common/stripe/stripe-program-provisioning.service";
+import { IStripeProgramDayCreationService } from "../services/interfaces/common/stripe/IStripeProgramDayCreationService";
+import { StripeProgramDayCreationService } from "../services/implements/common/stripe/stripe-program-day-creation.service";
+import { SessionStripeCheckoutHandlerService } from "../services/implements/common/stripe/sessionStripeCheckoutHandler.service";
+import { IProgramHealthController } from "../controllers/interfaces/user/program/IProgramHealthController";
+import { ProgramHealthController } from "../controllers/implementations/user/program/programHealth.controller";
+import { IProgramHealthRepository } from "../repositories/interfaces/user/program/IProgramHealthRepository";
+import { ProgramHealthRepository } from "../repositories/implements/user/program/programHealth.repository";
+import { IProgramHealthService } from "../services/interfaces/user/program/IProgramHealthService";
+import { ProgramHealthService } from "../services/implements/user/program/programHealth.service";
 
 const container = new Container();
 
@@ -1456,5 +1470,41 @@ container
 container
   .bind<INutritionistPlanDayController>(TYPES.INutriPlanDayController)
   .to(NutritionistPlanDayController);
+
+container
+  .bind<IStripeCheckoutValidationService>(
+    TYPES.IStripeCheckoutValidationService,
+  )
+  .to(StripeCheckoutValidationService);
+
+container
+  .bind<IStripePaymentCalculationService>(
+    TYPES.IStripePaymentCalculationService,
+  )
+  .to(StripePaymentCalculationService);
+
+container
+  .bind<IStripeProgramProvisioningService>(
+    TYPES.IStripeProgramProvisioningService,
+  )
+  .to(StripeProgramProvisioningService);
+
+container
+  .bind<IStripeProgramDayCreationService>(
+    TYPES.IStripeProgramDayCreationService,
+  )
+  .to(StripeProgramDayCreationService);
+
+container
+  .bind<IProgramHealthController>(TYPES.IProgramHealthController)
+  .to(ProgramHealthController);
+
+container
+  .bind<IProgramHealthRepository>(TYPES.IProgramHealthRepository)
+  .to(ProgramHealthRepository);
+
+container
+  .bind<IProgramHealthService>(TYPES.IProgramHealthService)
+  .to(ProgramHealthService);
 
 export { container };

@@ -58,23 +58,23 @@ export class ConversationService implements IConversationService {
       await this._conversationRepository.findByDirectKey(directKey);
 
     if (!conversation) {
-      const activePlan1 =
-        await this._userProgramRepository.findActiveByUserAndNutritionist(
+      const eligibleProgram1 =
+        await this._userProgramRepository.findCoachingEligibleProgram(
           dto.currentUserId,
           dto.otherUserId,
           session,
         );
 
-      const activePlan2 =
-        await this._userProgramRepository.findActiveByUserAndNutritionist(
+      const eligibleProgram2 =
+        await this._userProgramRepository.findCoachingEligibleProgram(
           dto.otherUserId,
           dto.currentUserId,
           session,
         );
 
-      if (!activePlan1 && !activePlan2) {
+      if (!eligibleProgram1 && !eligibleProgram2) {
         throw new CustomError(
-          "Cannot create coaching conversation without an active plan.",
+          "Cannot create coaching conversation without a purchased program.",
           StatusCode.FORBIDDEN,
         );
       }
