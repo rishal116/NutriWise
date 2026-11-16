@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import EvidenceImageUploader from "@/components/user/tracking/EvidenceImageUploader";
-import type { UserProgramDayActivityResponseDTO } from "@/dtos/user/program/user-program-day-details.dto";
+import type { UserProgramDayActivityResponseDTO } from "@/dtos/user/program-day/user-program-day-details.dto";
 import { UserActivityTrackingStatus } from "@/types/user/program/user-program-day.types";
 
 import {

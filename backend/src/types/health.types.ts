@@ -8,7 +8,17 @@ export const ACTIVITY_LEVELS = [
 
 export type ActivityLevel = (typeof ACTIVITY_LEVELS)[number];
 
-export const DIET_TYPES = ["veg", "non_veg", "vegan", "eggetarian"] as const;
+export const DIET_TYPES = [
+  "veg",
+  "non_veg",
+  "vegan",
+  "eggetarian",
+  "pescatarian",
+  "keto",
+  "paleo",
+  "mediterranean",
+  "jain",
+] as const;
 
 export type DietType = (typeof DIET_TYPES)[number];
 

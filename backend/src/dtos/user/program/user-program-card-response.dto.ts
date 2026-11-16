@@ -1,11 +1,10 @@
-import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
-
+import type { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
 export interface IUserProgramCardResponseDTO {
-  _id: string;
+  id: string;
   title: string;
   nutritionist: {
-    _id: string;
+    id: string;
     fullName: string;
     profileImage?: string;
   };
@@ -13,6 +12,6 @@ export interface IUserProgramCardResponseDTO {
   currentDay: number;
   durationDays: number;
   completionPercentage: number;
-  startDate: Date;
-  endDate: Date;
+  startDate: Date | null;
+  endDate: Date | null;
 }

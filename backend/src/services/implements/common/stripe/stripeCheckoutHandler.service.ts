@@ -1,94 +1,40 @@
-import mongoose, { Types } from "mongoose";
+import mongoose from "mongoose";
 import Stripe from "stripe";
 import { inject, injectable } from "inversify";
-
 import logger from "../../../../utils/logger";
-import { CustomError } from "../../../../utils/customError";
-import { StatusCode } from "../../../../enums/statusCode.enum";
 import { TYPES } from "../../../../types/types";
 import { CURRENCY } from "../../../../constants/common/currency.constants";
-
-import { IStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/IStripeCheckoutHandlerService";
-import { IUserPlanRepository } from "../../../../repositories/interfaces/user/program/IUserPlanRepository";
-import { IUserProgramRepository } from "../../../../repositories/interfaces/user/program/IUserProgramRepository";
-import { IPaymentRepository } from "../../../../repositories/interfaces/common/IPaymentRepository";
-import { IWalletRepository } from "../../../../repositories/interfaces/common/IWalletRepository";
-import { INutritionistPlanRepository } from "../../../../repositories/interfaces/nutritionist/INutriPlanRepository";
-import { IUserProgramProgressRepository } from "../../../../repositories/interfaces/user/tracking/IUserProgramProgressRepository";
-import { IConversationService } from "../../../interfaces/chat/IConversationService";
-
-const COMMISSION_RATE = 10;
+import type { IStripeCheckoutHandlerService } from "../../../interfaces/common/stripe/IStripeCheckoutHandlerService";
+import type { IPaymentRepository } from "../../../../repositories/interfaces/common/IPaymentRepository";
+import type { IWalletRepository } from "../../../../repositories/interfaces/common/IWalletRepository";
+import { IStripeCheckoutValidationService } from "../../../interfaces/common/stripe/IStripeCheckoutValidationService";
+import { IStripePaymentCalculationService } from "../../../interfaces/common/stripe/IStripePaymentCalculationService";
+import { IStripeProgramProvisioningService } from "../../../interfaces/common/stripe/IStripeProgramProvisioningService";
 
 @injectable()
 export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerService {
   constructor(
-    @inject(TYPES.IUserPlanRepository)
-    private readonly _userPlanRepository: IUserPlanRepository,
+    @inject(TYPES.IStripeCheckoutValidationService)
+    private readonly validationService: IStripeCheckoutValidationService,
 
-    @inject(TYPES.IUserProgramRepository)
-    private readonly _userProgramRepository: IUserProgramRepository,
+    @inject(TYPES.IStripePaymentCalculationService)
+    private readonly paymentCalculationService: IStripePaymentCalculationService,
+
+    @inject(TYPES.IStripeProgramProvisioningService)
+    private readonly programProvisioningService: IStripeProgramProvisioningService,
 
     @inject(TYPES.IPaymentRepository)
-    private readonly _paymentRepository: IPaymentRepository,
+    private readonly paymentRepository: IPaymentRepository,
 
     @inject(TYPES.IWalletRepository)
-    private readonly _walletRepository: IWalletRepository,
-
-    @inject(TYPES.INutritionistPlanRepository)
-    private readonly _planRepository: INutritionistPlanRepository,
-
-    @inject(TYPES.IUserProgramProgressRepository)
-    private readonly _userProgramProgressRepository: IUserProgramProgressRepository,
-
-    @inject(TYPES.IConversationService)
-    private readonly _conversationService: IConversationService,
+    private readonly walletRepository: IWalletRepository,
   ) {}
 
   async handle(session: Stripe.Checkout.Session): Promise<void> {
-    const userIdValue = session.metadata?.userId;
-    const nutritionistIdValue = session.metadata?.nutritionistId;
-    const planIdValue = session.metadata?.planId;
-
-    if (!userIdValue || !nutritionistIdValue || !planIdValue) {
-      throw new CustomError(
-        "Stripe checkout session metadata is incomplete.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (
-      !Types.ObjectId.isValid(userIdValue) ||
-      !Types.ObjectId.isValid(nutritionistIdValue) ||
-      !Types.ObjectId.isValid(planIdValue)
-    ) {
-      throw new CustomError(
-        "Stripe checkout session contains invalid IDs.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (session.payment_status !== "paid") {
-      throw new CustomError(
-        "Stripe checkout session has not been paid.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (
-      !session.payment_intent ||
-      session.amount_total === null ||
-      session.amount_total === undefined ||
-      session.currency?.toLowerCase() !== CURRENCY ||
-      session.amount_total <= 0
-    ) {
-      throw new CustomError(
-        "Stripe payment details are invalid.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
+    const checkoutData = await this.validationService.validate(session);
 
     const alreadyProcessed =
-      await this._paymentRepository.existsByCheckoutSessionId(session.id);
+      await this.paymentRepository.existsByCheckoutSessionId(session.id);
 
     if (alreadyProcessed) {
       logger.warn("Duplicate Stripe checkout webhook ignored.", {
@@ -97,63 +43,9 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       return;
     }
 
-    const plan = await this._planRepository.findById(planIdValue);
-
-    if (!plan) {
-      throw new CustomError(
-        "Nutritionist plan not found.",
-        StatusCode.NOT_FOUND,
-      );
-    }
-
-    if (plan.nutritionistId.toString() !== nutritionistIdValue) {
-      throw new CustomError(
-        "Nutritionist does not own this plan.",
-        StatusCode.FORBIDDEN,
-      );
-    }
-
-    const expectedAmountInPaise = Math.round(plan.price * 100);
-
-    if (expectedAmountInPaise !== session.amount_total) {
-      throw new CustomError(
-        "Stripe payment amount does not match the plan price.",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    const adminId = process.env.ADMIN_ID;
-
-    if (!adminId || !Types.ObjectId.isValid(adminId)) {
-      throw new CustomError(
-        "Admin wallet configuration is invalid.",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    const userId = new Types.ObjectId(userIdValue);
-    const nutritionistId = new Types.ObjectId(nutritionistIdValue);
-    const planId = new Types.ObjectId(planIdValue);
-
-    const paymentIntentId =
-      typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : session.payment_intent.id;
-
-    // Calculate monetary amounts in paise to avoid floating-point errors.
-    const amountInPaise = session.amount_total;
-    const commissionInPaise = Math.round(
-      (amountInPaise * COMMISSION_RATE) / 100,
+    const calculation = this.paymentCalculationService.calculate(
+      checkoutData.amountInPaise,
     );
-    const nutritionistAmountInPaise = amountInPaise - commissionInPaise;
-
-    const amount = amountInPaise / 100;
-    const commissionAmount = commissionInPaise / 100;
-    const nutritionistAmount = nutritionistAmountInPaise / 100;
-
-    const startDate = new Date();
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + plan.durationDays);
 
     const dbSession = await mongoose.startSession();
 
@@ -161,7 +53,7 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
       dbSession.startTransaction();
 
       const duplicatePayment =
-        await this._paymentRepository.existsByCheckoutSessionId(
+        await this.paymentRepository.existsByCheckoutSessionId(
           session.id,
           dbSession,
         );
@@ -175,89 +67,46 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
         return;
       }
 
-      const userPlan = await this._userPlanRepository.create(
-        {
-          userId,
-          nutritionistId,
-          planId,
-          amount,
-          currency: CURRENCY,
-          planSnapshot: {
-            title: plan.title,
-            description: plan.description,
-            specialization: plan.specialization,
-            durationDays: plan.durationDays,
-            price: plan.price,
-            currency: CURRENCY,
-            features:plan.features,
-          },
-        },
-        dbSession,
-      );
+      const provisioned = await this.programProvisioningService.provision({
+        userId: checkoutData.userId,
+        nutritionistId: checkoutData.nutritionistId,
+        planId: checkoutData.planId,
+        plan: checkoutData.plan,
+        amount: calculation.amount,
+        session: dbSession,
+      });
 
-      const userProgram = await this._userProgramRepository.create(
+      await this.paymentRepository.create(
         {
-          userId,
-          nutritionistId,
-          userPlanId: userPlan._id,
-          planId,
-          startDate,
-          endDate,
-          durationDays: plan.durationDays,
-          status: "active",
-        },
-        dbSession,
-      );
-
-      await this._userProgramProgressRepository.create(
-        {
-          userId,
-          userProgramId: userProgram._id,
-          totalDays: plan.durationDays,
-        },
-        dbSession,
-      );
-
-      await this._conversationService.createDirectConversation(
-        {
-          currentUserId: userId.toString(),
-          otherUserId: nutritionistId.toString(),
-        },
-        dbSession,
-      );
-
-      await this._paymentRepository.create(
-        {
-          userId,
-          sellerId: nutritionistId,
+          userId: checkoutData.userId,
+          sellerId: checkoutData.nutritionistId,
           resourceType: "nutritionist_plan",
-          resourceId: planId,
+          resourceId: checkoutData.planId,
           provider: "stripe",
           status: "paid",
-          amount,
+          amount: calculation.amount,
           currency: CURRENCY,
-          commissionAmount,
+          commissionAmount: calculation.commissionAmount,
           checkoutSessionId: session.id,
-          paymentIntentId,
+          paymentIntentId: checkoutData.paymentIntentId,
           itemSnapshot: {
-            title: plan.title,
-            price: amount,
+            title: checkoutData.plan.title,
+            price: calculation.amount,
             currency: CURRENCY,
           },
         },
         dbSession,
       );
 
-      const adminWallet = await this._walletRepository.findOrCreate(
-        adminId,
+      const adminWallet = await this.walletRepository.findOrCreate(
+        checkoutData.adminId,
         "admin",
         dbSession,
       );
 
-     
-      await this._walletRepository.creditEscrow(
+      await this.walletRepository.creditEscrow(
         adminWallet._id.toString(),
-        amount,
+        calculation.amount,
         dbSession,
       );
 
@@ -265,12 +114,12 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
 
       logger.info("Stripe checkout processed successfully.", {
         checkoutSessionId: session.id,
-        userPlanId: userPlan._id.toString(),
-        userProgramId: userProgram._id.toString(),
-        grossAmount: amount,
-        commissionRate: COMMISSION_RATE,
-        commissionAmount,
-        nutritionistAmount,
+        userPlanId: provisioned.userPlanId.toString(),
+        userProgramId: provisioned.userProgramId.toString(),
+        grossAmount: calculation.amount,
+        commissionRate: this.paymentCalculationService.getCommissionRate(),
+        commissionAmount: calculation.commissionAmount,
+        nutritionistAmount: calculation.nutritionistAmount,
         currency: CURRENCY,
       });
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import { injectable } from "inversify";
 import { Types } from "mongoose";
 import { BaseRepository } from "../../common/base.repository";
@@ -11,12 +10,11 @@ import { IUserProgramProgressRepository } from "../../../interfaces/user/trackin
 @injectable()
 export class UserProgramProgressRepository
   extends BaseRepository<IUserProgramProgress>
-  implements IUserProgramProgressRepository {
+  implements IUserProgramProgressRepository
+{
   constructor() {
     super(UserProgramProgressModel);
   }
-
-
 
   async findByProgram(
     userProgramId: string | Types.ObjectId,

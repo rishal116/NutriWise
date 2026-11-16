@@ -11,8 +11,8 @@ export interface IUserProgram {
   nutritionistId: Types.ObjectId;
   userPlanId: Types.ObjectId;
   planId: Types.ObjectId;
-  startDate: Date;
-  endDate: Date;
+  startDate?: Date | null;
+  endDate?: Date | null;
   durationDays: number;
   status: ProgramStatus;
   lifecycle: {
@@ -56,17 +56,21 @@ const UserProgramSchema = new Schema<IUserProgram>(
 
     startDate: {
       type: Date,
-      required: true,
+      default: null,
     },
 
     endDate: {
       type: Date,
-      required: true,
+      default: null,
       validate: {
-        validator(this: IUserProgram, value: Date) {
-          return value >= this.startDate;
+        validator(this: IUserProgram, value: Date | null) {
+          if (!value || !this.startDate) {
+            return value === null || !this.startDate;
+          }
+
+          return value > this.startDate;
         },
-        message: "End date must be on or after the start date.",
+        message: "End date must be after the start date.",
       },
     },
 
@@ -85,7 +89,7 @@ const UserProgramSchema = new Schema<IUserProgram>(
       type: String,
       enum: PROGRAM_STATUSES,
       required: true,
-      default: "upcoming",
+      default: "preparing",
     },
 
     lifecycle: {

@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+
 import {
   INutritionistPlan,
   NutritionistPlanModel,
@@ -9,8 +10,8 @@ import { INutritionistPlanBrowsingRepository } from "../../../interfaces/user/di
 
 export class NutritionistPlanBrowsingRepository
   extends BaseRepository<INutritionistPlan>
-  implements INutritionistPlanBrowsingRepository {
-
+  implements INutritionistPlanBrowsingRepository
+{
   constructor() {
     super(NutritionistPlanModel);
   }
@@ -18,20 +19,20 @@ export class NutritionistPlanBrowsingRepository
   async findByNutritionistId(
     nutritionistId: Types.ObjectId,
   ): Promise<INutritionistPlan[]> {
-    return this._model.find({
-      nutritionistId,
-      status: "published",
-      isDeleted: false,
-    });
+    return this._model
+      .find({
+        nutritionistId,
+        status: "published",
+      })
+      .exec();
   }
 
-  async findBySlug(
-    slug: string,
-  ): Promise<INutritionistPlan | null> {
-    return this._model.findOne({
-      slug,
-      status: "published",
-      isDeleted: false,
-    });
+  async findBySlug(slug: string): Promise<INutritionistPlan | null> {
+    return this._model
+      .findOne({
+        slug,
+        status: "published",
+      })
+      .exec();
   }
 }

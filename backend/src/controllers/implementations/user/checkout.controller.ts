@@ -52,4 +52,3 @@ export class CheckoutController implements ICheckoutController {
     });
   });
 }
-

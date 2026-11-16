@@ -1,14 +1,15 @@
 import type { IUserProgramCardResponseDTO } from "../../../dtos/user/program/user-program-card-response.dto";
+import type { IUserProgramCardProjection } from "../../../types/user/program/user-program-card.projection";
 
 export class UserProgramCardMapper {
   static toResponseDTO(
-    program: IUserProgramCardResponseDTO,
+    program: IUserProgramCardProjection,
   ): IUserProgramCardResponseDTO {
     return {
-      _id: program._id,
+      id: program._id,
       title: program.title,
       nutritionist: {
-        _id: program.nutritionist._id,
+        id: program.nutritionist._id,
         fullName: program.nutritionist.fullName,
         profileImage: program.nutritionist.profileImage,
       },

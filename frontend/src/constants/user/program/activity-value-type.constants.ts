@@ -1,4 +1,3 @@
-
 export const ACTIVITY_VALUE_TYPES = [
   "boolean",
   "number",
@@ -7,5 +6,4 @@ export const ACTIVITY_VALUE_TYPES = [
   "text",
 ] as const;
 
-export type ActivityValueType =
-  (typeof ACTIVITY_VALUE_TYPES)[number];
+export type ActivityValueType = (typeof ACTIVITY_VALUE_TYPES)[number];

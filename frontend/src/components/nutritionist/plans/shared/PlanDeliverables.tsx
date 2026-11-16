@@ -1,7 +1,7 @@
 import { CheckCircle2, Info, Plus, Sparkles, Trash2 } from "lucide-react";
 
 import { SectionCard } from "./FormFields"; 
-import { PLATFORM_FEATURES } from "@/constants/platform-features";
+import { PLATFORM_FEATURES } from "@/constants/common/platform-features";
 
 interface PlanDeliverablesProps {
   features: string[];

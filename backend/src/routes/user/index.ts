@@ -19,7 +19,7 @@ import reviewRoutes from "./review.route";
 import healthProgressRoutes from "./health-progress.route";
 import userLikedPostRoutes from "./user-liked-post.route";
 import userPaymentRoutes from "./user-payment.routes";
-
+import programHealthRoutes from "./program-health.route";
 import userSessionRoutes from "./user-session.routes";
 
 const router = express.Router();
@@ -62,5 +62,6 @@ router.use("/health/progress", healthProgressRoutes);
 router.use("/payments", userPaymentRoutes);
 
 router.use("/sessions", userSessionRoutes);
+router.use("/program-health", programHealthRoutes);
 
 export default router;

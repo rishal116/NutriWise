@@ -1,11 +1,17 @@
-import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
+import type { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 
-import { IBaseRepository } from "../../common/IBaseRepository";
-import { IUserProgram } from "../../../../models/userProgram.model";
-import { IUserProgramPopulated } from "../../../../types/userProgram.populated";
+import type { IBaseRepository } from "../../common/IBaseRepository";
+import type { IUserProgram } from "../../../../models/userProgram.model";
+import type { IUserProgramPopulated } from "../../../../types/userProgram.populated";
 
 export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   findActiveByUserAndNutritionist(
+    userId: string | Types.ObjectId,
+    nutritionistId: string | Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<IUserProgram | null>;
+
+  findCoachingEligibleProgram(
     userId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
     session?: ClientSession,
@@ -36,6 +42,12 @@ export interface IUserProgramRepository extends IBaseRepository<IUserProgram> {
   findByIdAndUser(
     userId: string | Types.ObjectId,
     programId: string | Types.ObjectId,
+  ): Promise<IUserProgram | null>;
+
+  findExistingPurchase(
+    userId: string | Types.ObjectId,
+    planId: string | Types.ObjectId,
+    session?: ClientSession,
   ): Promise<IUserProgram | null>;
 
   activateUpcomingPrograms(): Promise<UpdateResult>;

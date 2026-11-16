@@ -21,7 +21,7 @@ import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-
 import { GetPlansDTO } from "../../../dtos/nutritionist/plan/get-plans.dto";
 import { generateUniquePlanSlug } from "../../../utils/plan-slug.util";
 import { NutritionistPlanListItemDTO } from "../../../dtos/nutritionist/plan/nutritionist-plan-list-item.dto";
-import { INutritionistPlanDayRepository } from "../../../repositories/interfaces/nutritionist/INutritionistPlanDayRepository";
+import { INutritionistPlanDayRepository } from "../../../repositories/interfaces/nutritionist/INutriPlanDayRepository";
 import { toPlanDTO } from "../../../mappers/nutritionist/plan/nutritionist-plan-details.mapper";
 import { Types } from "mongoose";
 import { UpdatePlanStatusDTO } from "../../../dtos/nutritionist/plan/update-plan-status.dto";

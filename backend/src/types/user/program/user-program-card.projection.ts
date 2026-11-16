@@ -1,4 +1,4 @@
-import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
+import type { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
 export interface IUserProgramCardProjection {
   _id: string;
@@ -12,6 +12,6 @@ export interface IUserProgramCardProjection {
   currentDay: number;
   durationDays: number;
   completionPercentage: number;
-  startDate: Date;
-  endDate: Date;
+  startDate: Date | null;
+  endDate: Date | null;
 }

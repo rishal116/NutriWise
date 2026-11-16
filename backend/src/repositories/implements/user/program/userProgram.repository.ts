@@ -1,13 +1,14 @@
 import { injectable } from "inversify";
-import { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
+import type { ClientSession, FilterQuery, Types, UpdateResult } from "mongoose";
 
 import { BaseRepository } from "../../common/base.repository";
 import {
   IUserProgram,
   UserProgramModel,
 } from "../../../../models/userProgram.model";
-import { IUserProgramRepository } from "../../../interfaces/user/program/IUserProgramRepository";
-import { IUserProgramPopulated } from "../../../../types/userProgram.populated";
+import type { IUserProgramRepository } from "../../../interfaces/user/program/IUserProgramRepository";
+import type { IUserProgramPopulated } from "../../../../types/userProgram.populated";
+import { BLOCKING_PURCHASE_STATUSES } from "../../../../constants/user/program/program-status.constants";
 
 @injectable()
 export class UserProgramRepository
@@ -32,18 +33,15 @@ export class UserProgramRepository
     nutritionistId: string | Types.ObjectId,
     session?: ClientSession,
   ): Promise<IUserProgram | null> {
-    const query = this._model.findOne({
-      userId,
-      nutritionistId,
-      status: "active",
-      endDate: { $gt: new Date() },
-    });
-
-    if (session) {
-      query.session(session);
-    }
-
-    return query.lean<IUserProgram | null>().exec();
+    return this.findOne(
+      {
+        userId,
+        nutritionistId,
+        status: "active",
+        endDate: { $gt: new Date() },
+      },
+      session,
+    );
   }
 
   async findLatestProgram(
@@ -103,10 +101,25 @@ export class UserProgramRepository
     userId: string | Types.ObjectId,
     programId: string | Types.ObjectId,
   ): Promise<IUserProgram | null> {
-    return this._model
-      .findOne({ _id: programId, userId })
-      .lean<IUserProgram | null>()
-      .exec();
+    return this.findOne({
+      _id: programId,
+      userId,
+    });
+  }
+
+  async findExistingPurchase(
+    userId: string | Types.ObjectId,
+    planId: string | Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<IUserProgram | null> {
+    return this.findOne(
+      {
+        userId,
+        planId,
+        status: { $in: BLOCKING_PURCHASE_STATUSES },
+      },
+      session,
+    );
   }
 
   async activateUpcomingPrograms(): Promise<UpdateResult> {
@@ -119,9 +132,13 @@ export class UserProgramRepository
         endDate: { $gt: now },
       },
       {
-        $set: { status: "active" },
+        $set: {
+          status: "active",
+        },
       },
-      { runValidators: true },
+      {
+        runValidators: true,
+      },
     );
   }
 
@@ -139,7 +156,24 @@ export class UserProgramRepository
           "lifecycle.completedAt": now,
         },
       },
-      { runValidators: true },
+      {
+        runValidators: true,
+      },
+    );
+  }
+
+  async findCoachingEligibleProgram(
+    userId: string | Types.ObjectId,
+    nutritionistId: string | Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<IUserProgram | null> {
+    return this.findOne(
+      {
+        userId,
+        nutritionistId,
+        status: { $in: BLOCKING_PURCHASE_STATUSES },
+      },
+      session,
     );
   }
 }

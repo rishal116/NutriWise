@@ -1,17 +1,17 @@
-import { ProgramStatus } from "./user-program-request.dto";
+import type { ProgramStatus } from "@/constants/user/program/program-status.constants";
 
 export interface UserProgramCardResponseDTO {
-  _id: string;
+  id: string;
   title: string;
   nutritionist: {
-    _id: string;
+    id: string;
     fullName: string;
     profileImage?: string;
   };
-  status: ProgramStatus;
+  programStatus: ProgramStatus;
   currentDay: number;
   durationDays: number;
   completionPercentage: number;
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
 }

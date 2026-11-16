@@ -1,4 +1,3 @@
-
 export const PROGRAM_ACTIVITY_CATEGORIES = [
   "meal",
   "exercise",

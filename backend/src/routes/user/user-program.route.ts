@@ -2,7 +2,7 @@ import express from "express";
 import { container } from "../../configs/inversify";
 import { TYPES } from "../../types/types";
 import { authMiddleware } from "../../middlewares/auth.middleware";
-import { IUserProgramController } from "../../controllers/interfaces/user/IUserProgramController";
+import { IUserProgramController } from "../../controllers/interfaces/user/program/IUserProgramController";
 
 const router = express.Router();
 

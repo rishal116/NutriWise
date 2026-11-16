@@ -1,19 +1,5 @@
-export const PROGRAM_STATUS = [
-  "upcoming",
-  "active",
-  "paused",
-  "completed",
-  "cancelled",
-] as const;
-
-export type ProgramStatus = (typeof PROGRAM_STATUS)[number];
-
-export enum UserProgramSort {
-  NEWEST = "newest",
-  OLDEST = "oldest",
-  START_DATE = "start_date",
-  END_DATE = "end_date",
-}
+import type { ProgramStatus } from "../../../constants/user/program/program-status.constants";
+import type { UserProgramSort } from "../../../constants/user/program/user-program-sort.constants";
 
 export interface UserProgramListQuery {
   limit?: number;

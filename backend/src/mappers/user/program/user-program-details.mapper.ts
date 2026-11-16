@@ -6,19 +6,30 @@ export class UserProgramDetailsMapper {
     program: IUserProgramDetailsProjection,
   ): IUserProgramDetailsResponseDTO {
     return {
-      _id: program._id.toString(),
-      title: program.title,
+      id: program._id.toString(),
       userPlanId: program.userPlanId.toString(),
+
+      title: program.title,
+      description: program.description,
+      specialization: program.specialization,
+      features: program.features,
+
+      purchaseDate: program.purchaseDate,
+      purchaseAmount: program.purchaseAmount,
+      currency: program.currency,
+
       nutritionist: {
-        _id: program.nutritionist._id.toString(),
+        id: program.nutritionist._id.toString(),
         fullName: program.nutritionist.fullName,
         username: program.nutritionist.username,
         profileImage: program.nutritionist.profileImage,
       },
+
       programStatus: program.status,
       currentDay: program.currentDay,
       durationDays: program.durationDays,
       completionPercentage: program.completionPercentage,
+
       startDate: program.startDate,
       endDate: program.endDate,
     };

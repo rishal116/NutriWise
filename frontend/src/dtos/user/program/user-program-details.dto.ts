@@ -1,12 +1,22 @@
-import type { ProgramStatus } from "@/dtos/user/program/user-program-request.dto";
+import { Currency } from "@/constants/common/currency.constants";
+import type { Specialization } from "@/constants/nutritionist/profile/specialization.constants";
+import type { ProgramStatus } from "@/constants/user/program/program-status.constants";
 
-export interface UserProgramDetailsDTO {
-  _id: string;
-  title: string;
+export interface UserProgramDetailsResponseDTO {
+  id: string;
   userPlanId: string;
 
+  title: string;
+  description?: string;
+  specialization: Specialization;
+  features: string[];
+
+  purchaseDate: string;
+  purchaseAmount: number;
+  currency: Currency;
+
   nutritionist: {
-    _id: string;
+    id: string;
     fullName: string;
     username: string;
     profileImage?: string;
@@ -16,6 +26,7 @@ export interface UserProgramDetailsDTO {
   currentDay: number;
   durationDays: number;
   completionPercentage: number;
-  startDate: string;
-  endDate: string;
+
+  startDate: string | null;
+  endDate: string | null;
 }

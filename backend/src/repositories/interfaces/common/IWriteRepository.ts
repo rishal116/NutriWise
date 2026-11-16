@@ -3,7 +3,10 @@ import type { ClientSession, FilterQuery, Types, UpdateQuery } from "mongoose";
 export interface IWriteRepository<T> {
   create(data: Partial<T>, session?: ClientSession): Promise<T>;
 
-  createMany(data: Partial<T>[], session?: ClientSession): Promise<T[]>;
+  createMany<TCreate = Partial<T>>(
+    data: TCreate[],
+    session?: ClientSession,
+  ): Promise<T[]>;
 
   updateById(
     id: string | Types.ObjectId,
