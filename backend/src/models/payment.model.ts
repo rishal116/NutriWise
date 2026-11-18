@@ -1,54 +1,65 @@
 import { Schema, Types, model } from "mongoose";
+
 import { CURRENCY, Currency } from "../constants/common/currency.constants";
 
 export const PAYMENT_STATUSES = [
   "pending",
   "paid",
   "failed",
+  "partially_refunded",
   "refunded",
 ] as const;
 
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 export const PAYMENT_PROVIDERS = ["stripe"] as const;
+
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
-export const PAYMENT_RESOURCE_TYPES = [
+export const PAYMENT_ITEM_TYPES = [
   "nutritionist_plan",
   "consultation_session",
   "session_registration",
 ] as const;
 
-export type PaymentResourceType = (typeof PAYMENT_RESOURCE_TYPES)[number];
+export type PaymentItemType = (typeof PAYMENT_ITEM_TYPES)[number];
+
+export const PAYMENT_METHODS = [
+  "card",
+  "upi",
+  "netbanking",
+  "wallet",
+  "other",
+] as const;
+
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export interface IPayment {
   _id: Types.ObjectId;
-  userId: Types.ObjectId;
+  buyerId: Types.ObjectId;
   sellerId?: Types.ObjectId | null;
-  resourceType: PaymentResourceType;
-  resourceId: Types.ObjectId;
-  provider: PaymentProvider;
-  status: PaymentStatus;
-  amount: number;
-  commissionAmount: number;
-  currency: Currency;
-  checkoutSessionId: string;
-  paymentIntentId?: string | null;
-  chargeId?: string | null;
+  itemType: PaymentItemType;
+  itemId: Types.ObjectId;
   itemSnapshot: {
     title: string;
-    price: number;
-    currency: Currency;
   };
+  provider: PaymentProvider;
+  paymentMethod?: PaymentMethod | null;
+  status: PaymentStatus;
+  amount: number;
   refundedAmount: number;
-  refundReason?: string | null;
+  currency: Currency;
+  providerReferences: {
+    checkoutId?: string | null;
+    transactionId?: string | null;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
 
 const PaymentSchema = new Schema<IPayment>(
   {
-    userId: {
+    buyerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
@@ -60,21 +71,35 @@ const PaymentSchema = new Schema<IPayment>(
       default: null,
     },
 
-    resourceType: {
+    itemType: {
       type: String,
-      enum: PAYMENT_RESOURCE_TYPES,
+      enum: PAYMENT_ITEM_TYPES,
       required: true,
     },
 
-    resourceId: {
+    itemId: {
       type: Schema.Types.ObjectId,
       required: true,
+    },
+
+    itemSnapshot: {
+      title: {
+        type: String,
+        required: true,
+        trim: true,
+      },
     },
 
     provider: {
       type: String,
       enum: PAYMENT_PROVIDERS,
       required: true,
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: PAYMENT_METHODS,
+      default: null,
     },
 
     status: {
@@ -90,11 +115,11 @@ const PaymentSchema = new Schema<IPayment>(
       min: 0,
     },
 
-    commissionAmount: {
+    refundedAmount: {
       type: Number,
       required: true,
-      min: 0,
       default: 0,
+      min: 0,
     },
 
     currency: {
@@ -104,58 +129,17 @@ const PaymentSchema = new Schema<IPayment>(
       default: CURRENCY,
     },
 
-    checkoutSessionId: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
-
-    paymentIntentId: {
-      type: String,
-      default: null,
-      unique: true,
-      sparse: true,
-    },
-
-    chargeId: {
-      type: String,
-      default: null,
-      unique: true,
-      sparse: true,
-    },
-
-    itemSnapshot: {
-      title: {
+    providerReferences: {
+      checkoutId: {
         type: String,
-        required: true,
         trim: true,
+        default: null,
       },
-      price: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-      currency: {
+      transactionId: {
         type: String,
-        enum: [CURRENCY],
-        required: true,
-        default: CURRENCY,
+        trim: true,
+        default: null,
       },
-    },
-
-    refundedAmount: {
-      type: Number,
-      required: true,
-      default: 0,
-      min: 0,
-    },
-
-    refundReason: {
-      type: String,
-      trim: true,
-      maxlength: 500,
-      default: null,
     },
   },
   {
@@ -163,8 +147,26 @@ const PaymentSchema = new Schema<IPayment>(
   },
 );
 
-PaymentSchema.index({ userId: 1, createdAt: -1 });
+PaymentSchema.index({ buyerId: 1, createdAt: -1 });
 PaymentSchema.index({ sellerId: 1, createdAt: -1 });
-PaymentSchema.index({ resourceType: 1, resourceId: 1 });
+PaymentSchema.index({ itemType: 1, itemId: 1 });
+PaymentSchema.index(
+  { provider: 1, "providerReferences.checkoutId": 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      "providerReferences.checkoutId": { $type: "string" },
+    },
+  },
+);
+PaymentSchema.index(
+  { provider: 1, "providerReferences.transactionId": 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      "providerReferences.transactionId": { $type: "string" },
+    },
+  },
+);
 
 export const PaymentModel = model<IPayment>("Payment", PaymentSchema);

@@ -1,5 +1,6 @@
 import type { Types } from "mongoose";
-import type { NotificationType } from "../../models/notification.model";
+import { NotificationType } from "../../constants/notification/notification-type.constants";
+
 
 export interface CreateNotificationDTO {
   recipientId: string | Types.ObjectId;
@@ -9,3 +10,4 @@ export interface CreateNotificationDTO {
   message: string;
   data?: Record<string, unknown> | Map<string, unknown>;
 }
+

@@ -197,11 +197,11 @@ import { IAdminUserRepository } from "../repositories/interfaces/admin/IAdminUse
 
 import { NutriGroupController } from "../controllers/implementations/nutritionist/nutriGroup.controller";
 import { NutriMeetingController } from "../controllers/implementations/nutritionist/nutriMeeting.controller";
-import { NutriProgramController } from "../controllers/implementations/nutritionist/nutriProgram.controller";
+import { NutriProgramController } from "../controllers/implementations/nutritionist/program/nutriProgram.controller";
 import { NutritionistApplicationController } from "../controllers/implementations/nutritionist/nutriApplication.controller";
 import { NutritionistPlanController } from "../controllers/implementations/nutritionist/nutriPlan.controller";
 import { NutriClientController } from "../controllers/implementations/nutritionist/nutriClient.controller";
-import { NutriProgramDayController } from "../controllers/implementations/nutritionist/nutriProgramDay.controller";
+import { NutriProgramDayController } from "../controllers/implementations/nutritionist/program/nutriProgramDay.controller";
 import { NutriResourceController } from "../controllers/implementations/nutritionist/nutriResource.controller";
 import { NutriSessionController } from "../controllers/implementations/nutritionist/nuriSession.controller";
 
@@ -209,8 +209,8 @@ import { NutriSessionController } from "../controllers/implementations/nutrition
 
 import { NutriGroupService } from "../services/implements/nutritionist/nutriGroup.service";
 import { NutriMeetingService } from "../services/implements/nutritionist/nutriMeeting.service";
-import { NutriProgramService } from "../services/implements/nutritionist/nutriProgram.service";
-import { NutriProgramDayService } from "../services/implements/nutritionist/nutriProgramDay.service";
+import { NutriProgramService } from "../services/implements/nutritionist/program/nutriProgram.service";
+import { NutriProgramDayService } from "../services/implements/nutritionist/program/nutriProgramDay.service";
 import { NutriClientService } from "../services/implements/nutritionist/nutriClient.service";
 import { NutritionistApplicationService } from "../services/implements/nutritionist/nutriApplication.service";
 import { NutritionistPlanService } from "../services/implements/nutritionist/nutriPlan.service";
@@ -223,8 +223,8 @@ import { NutriClientRepository } from "../repositories/implements/nutritionist/c
 import { NutriMeetingRepository } from "../repositories/implements/nutritionist/nutriMeeting.repository";
 import { NutritionistPlanRepository } from "../repositories/implements/nutritionist/nutriPlan.repository";
 import { NutritionistProfileRepository } from "../repositories/implements/nutritionist/nutriProfile.repository";
-import { NutriProgramRepository } from "../repositories/implements/nutritionist/nutriProgram.repository";
-import { NutriProgramDayRepository } from "../repositories/implements/nutritionist/nutriProgramDay.repository";
+import { NutriProgramRepository } from "../repositories/implements/nutritionist/program/nutriProgram.repository";
+import { NutriProgramDayRepository } from "../repositories/implements/nutritionist/program/nutriProgramDay.repository";
 import { NutriResourceRepository } from "../repositories/implements/nutritionist/nutriResource.repository";
 import { NutriSessionRepository } from "../repositories/implements/nutritionist/nutriSession.repository";
 
@@ -490,7 +490,7 @@ import { NutriClientDetailsQuery } from "../repositories/implements/nutritionist
 import { IMeetingEligibleClientsQuery } from "../repositories/interfaces/nutritionist/client/IMeetingEligibleClientsQuery";
 import { MeetingEligibleClientsQuery } from "../repositories/implements/nutritionist/client/meeting-eligible-clients.query";
 import { INutriProgramProgressController } from "../controllers/interfaces/nutritionist/INutriProgramProgressController";
-import { NutriProgramProgressController } from "../controllers/implementations/nutritionist/nutriProgramProgress.controller";
+import { NutriProgramProgressController } from "../controllers/implementations/nutritionist/program/nutriProgramProgress.controller";
 import { INutriProgramProgressService } from "../services/interfaces/nutritionist/INutriProgramProgressService";
 import { NutriProgramProgressService } from "../services/implements/nutritionist/nutriProgramProgress.service";
 import { INutriProgramProgressRepository } from "../repositories/interfaces/nutritionist/INutriProgramProgressRepository";

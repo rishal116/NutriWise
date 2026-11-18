@@ -9,7 +9,5 @@ export interface INutriProgramDayController {
     next: NextFunction,
   ) => void;
 
-  createProgramDay: (req: Request, res: Response, next: NextFunction) => void;
-
   updateProgramDay: (req: Request, res: Response, next: NextFunction) => void;
 }

@@ -1,6 +1,6 @@
 import type { Types } from "mongoose";
 
-import type { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program/nutri-program-day-list-query.dto";
+import type { ProgramDayListQueryDTO } from "../../../dtos/nutritionist/program-day/nutri-program-day-list-query.dto";
 import type { INutriProgramDayProjection } from "../../../types/nutritionist/program/nutri-program-day.projection";
 import type { INutriProgramDayCardProjection } from "../../../types/nutritionist/program/nutri-program-day-card.projection";
 import type { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
@@ -16,9 +16,4 @@ export interface INutriProgramDayRepository extends IBaseRepository<IUserProgram
   findProgramDayById(
     dayId: string | Types.ObjectId,
   ): Promise<INutriProgramDayProjection | null>;
-
-  existsByDayNumber(
-    userProgramId: string | Types.ObjectId,
-    dayNumber: number,
-  ): Promise<boolean>;
 }

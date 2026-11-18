@@ -8,7 +8,6 @@ import logger from "../../../utils/logger";
 
 @injectable()
 export class SocketService implements ISocketService {
-
   emitNewMessage(conversationId: string, message: MessageResponseDTO): void {
     const io = getIO();
     io.to(`chat:${conversationId}`).emit("receiveMessage", message);
@@ -17,7 +16,7 @@ export class SocketService implements ISocketService {
   emitMessageEdited(
     conversationId: string,
     messageId: string,
-    content: string
+    content: string,
   ): void {
     const io = getIO();
     io.to(`chat:${conversationId}`).emit("messageEdited", {
@@ -27,10 +26,7 @@ export class SocketService implements ISocketService {
     });
   }
 
-  emitMessageDeleted(
-    conversationId: string,
-    messageId: string
-  ): void {
+  emitMessageDeleted(conversationId: string, messageId: string): void {
     const io = getIO();
     io.to(`chat:${conversationId}`).emit("messageDeleted", {
       conversationId,
@@ -38,10 +34,7 @@ export class SocketService implements ISocketService {
     });
   }
 
-  emitMessagesRead(
-    conversationId: string,
-    userId: string
-  ): void {
+  emitMessagesRead(conversationId: string, userId: string): void {
     const io = getIO();
     const rooms = [`chat:${conversationId}`, `user:${userId}`];
     io.to(rooms).emit("messagesRead", {
@@ -52,10 +45,12 @@ export class SocketService implements ISocketService {
 
   emitConversationUpdated(
     memberUserIds: string[],
-    data: ConversationUpdatePayload
+    data: ConversationUpdatePayload,
   ): void {
     const io = getIO();
-    const rooms = Array.from(new Set(memberUserIds.map((userId) => `user:${userId}`)));
+    const rooms = Array.from(
+      new Set(memberUserIds.map((userId) => `user:${userId}`)),
+    );
     rooms.push(`chat:${data.conversationId}`);
     io.to(rooms).emit("conversationUpdated", data);
     io.to(rooms).emit("conversation:updated", data);
@@ -64,7 +59,7 @@ export class SocketService implements ISocketService {
   emitNewNotification(
     recipientId: string,
     notification: NotificationResponseDTO,
-    unreadCount: number
+    unreadCount: number,
   ): void {
     try {
       const io = getIO();
@@ -85,10 +80,7 @@ export class SocketService implements ISocketService {
     }
   }
 
-  emitNotificationCount(
-    recipientId: string,
-    unreadCount: number
-  ): void {
+  emitNotificationCount(recipientId: string, unreadCount: number): void {
     try {
       const io = getIO();
       io.to(`user:${recipientId}`).emit("notification:count", { unreadCount });
@@ -103,5 +95,4 @@ export class SocketService implements ISocketService {
       });
     }
   }
-
-}
+}

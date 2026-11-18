@@ -1,31 +1,61 @@
 import { Types } from "mongoose";
-import { ProgramStatus } from "../../../models/userProgram.model";
+
+import type { ProgramStatus } from "../../../constants/user/program/program-status.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
+import type { Specialization } from "../../../constants/nutritionist/profile/specialization.constants";
 
 export interface INutriProgramDetailsProjection {
   userProgramId: Types.ObjectId;
 
-  userId: Types.ObjectId;
-  userFullName: string;
-  userProfileImage?: string;
+  client: {
+    userId: Types.ObjectId;
+    fullName: string;
+    profileImage?: string;
+  };
 
-  planTitle: string;
-  planDescription?: string;
-  specialization: string;
+  purchase: {
+    amount: number;
+    currency: Currency;
+    purchasedAt: Date;
 
-  programStatus: ProgramStatus;
-  startDate: Date;
-  endDate: Date;
-  durationDays: number;
+    planTitle: string;
+    planDescription?: string;
+    specialization: Specialization;
+    features: string[];
+  };
 
-  completionPercentage: number;
-  completedDays: number;
-  totalDays: number;
+  program: {
+    status: ProgramStatus;
+    startDate: Date | null;
+    endDate: Date | null;
+    durationDays: number;
+    createdAt: Date;
 
-  completedActivities: number;
-  totalActivities: number;
-  skippedActivities: number;
+    lifecycle: {
+      pausedAt: Date | null;
+      resumedAt: Date | null;
+      completedAt: Date | null;
+      cancelledAt: Date | null;
+    };
 
-  currentStreak: number;
-  longestStreak: number;
-  lastActivityAt?: Date;
+    cancellationReason: string | null;
+    cancelledBy: Types.ObjectId | null;
+  };
+
+  progress: {
+    totalDays: number;
+    completedDays: number;
+    currentDay: number;
+
+    totalActivities: number;
+    completedActivities: number;
+    skippedActivities: number;
+
+    completionPercentage: number;
+
+    currentStreak: number;
+    longestStreak: number;
+    lastCompletedDay: number;
+    lastActivityAt: Date | null;
+  };
 }

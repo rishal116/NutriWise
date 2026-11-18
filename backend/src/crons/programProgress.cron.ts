@@ -60,6 +60,13 @@ const syncProgramProgress = async (): Promise<void> => {
   let missingProgressRecords = 0;
 
   for (const program of activePrograms) {
+    if (!program.startDate) {
+      logger.warn("Skipping program without a start date", {
+        userProgramId: program._id.toString(),
+      });
+      return;
+    }
+
     const startDate = new Date(program.startDate);
 
     if (

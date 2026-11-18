@@ -99,14 +99,22 @@ export const userAuthService = {
     return data;
   },
 
-  getMe(): Promise<GetMeResponse> {
+  getMe(forceRefresh = false): Promise<GetMeResponse> {
+    if (forceRefresh) {
+      getMeRequest = null;
+    }
+
     if (!getMeRequest) {
-      getMeRequest = clientApi
+      const request = clientApi
         .get<GetMeResponse>(AUTH_ROUTES.ME)
         .then(({ data }) => data)
         .finally(() => {
-          getMeRequest = null;
+          if (getMeRequest === request) {
+            getMeRequest = null;
+          }
         });
+
+      getMeRequest = request;
     }
 
     return getMeRequest;

@@ -110,9 +110,8 @@ export class NotificationService implements INotificationService {
       ...(dataMap !== undefined && { data: dataMap }),
     });
 
-    const unreadCount = await this._notificationRepo.getUnreadCount(
-      recipientIdStr,
-    );
+    const unreadCount =
+      await this._notificationRepo.getUnreadCount(recipientIdStr);
 
     const serializedData = dto.data
       ? dto.data instanceof Map
@@ -147,4 +146,3 @@ export class NotificationService implements INotificationService {
     return responseDTO;
   }
 }
-

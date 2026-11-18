@@ -1,5 +1,4 @@
 import { Types } from "mongoose";
-
 import { IUserProgram } from "../../../models/userProgram.model";
 import { IBaseRepository } from "../common/IBaseRepository";
 import { GetProgramsQueryDTO } from "../../../dtos/nutritionist/program/nutri-program-request.dto";
@@ -17,6 +16,4 @@ export interface INutriProgramRepository extends IBaseRepository<IUserProgram> {
     programId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
   ): Promise<INutriProgramDetailsProjection | null>;
-
-  existsById(programId: string, nutritionistId: string): Promise<boolean>;
 }

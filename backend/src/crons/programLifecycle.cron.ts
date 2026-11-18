@@ -8,13 +8,9 @@ const activatePrograms = async (): Promise<void> => {
 
   const result = await UserProgramModel.updateMany(
     {
-      status: "upcoming",
-      isDeleted: false,
+      status: "ready",
       startDate: {
         $lte: now,
-      },
-      endDate: {
-        $gt: now,
       },
     },
     {
@@ -25,7 +21,7 @@ const activatePrograms = async (): Promise<void> => {
   );
 
   if (result.modifiedCount > 0) {
-    logger.info("Programs activated", {
+    logger.info("Programs activated successfully", {
       count: result.modifiedCount,
     });
   }
@@ -37,7 +33,6 @@ const completePrograms = async (): Promise<void> => {
   const result = await UserProgramModel.updateMany(
     {
       status: "active",
-      isDeleted: false,
       endDate: {
         $lte: now,
       },
@@ -51,7 +46,7 @@ const completePrograms = async (): Promise<void> => {
   );
 
   if (result.modifiedCount > 0) {
-    logger.info("Programs completed", {
+    logger.info("Programs completed successfully", {
       count: result.modifiedCount,
     });
   }
@@ -60,18 +55,23 @@ const completePrograms = async (): Promise<void> => {
 export const runProgramLifecycle = async (): Promise<void> => {
   try {
     await activatePrograms();
+  } catch (error) {
+    logger.error("Failed to activate upcoming programs", { error });
+  }
+
+  try {
     await completePrograms();
   } catch (error) {
-    logger.error("Program lifecycle processing failed", {
-      error,
-    });
+    logger.error("Failed to complete active programs", { error });
   }
 };
 
 export const startProgramLifecycleCron = (): void => {
-  cron.schedule("0 0,10 * * *", async () => {
+  cron.schedule("*/10 * * * *", async () => {
     await runProgramLifecycle();
   });
 
-  logger.info("Program lifecycle cron started");
+  logger.info("Program lifecycle cron scheduled successfully", {
+    interval: "Every 10 minutes",
+  });
 };

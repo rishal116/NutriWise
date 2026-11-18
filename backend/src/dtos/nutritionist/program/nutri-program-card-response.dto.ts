@@ -1,4 +1,4 @@
-import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
+import type { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
 export interface NutriProgramCardResponseDTO {
   userProgramId: string;
@@ -12,9 +12,10 @@ export interface NutriProgramCardResponseDTO {
 
   programStatus: ProgramStatus;
 
-  startDate: Date;
-  endDate: Date;
+  currentDay: number;
   durationDays: number;
-
   completionPercentage: number;
+
+  startDate: Date | null;
+  endDate: Date | null;
 }

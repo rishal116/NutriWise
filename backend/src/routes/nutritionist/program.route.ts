@@ -20,9 +20,9 @@ router.get("/", programController.getPrograms);
 
 router.get("/:programId", programController.getProgramDetails);
 
+router.patch("/:programId/ready", programController.markProgramAsReady);
+
 // Program Days
 router.get("/:programId/days", programDayController.getProgramDays);
-
-router.post("/:programId/days", programDayController.createProgramDay);
 
 export default router;

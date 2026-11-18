@@ -1,5 +1,5 @@
-import { NutriProgramDetailsResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-details-response.dto";
-import { INutriProgramDetailsProjection } from "../../../types/nutritionist/program/nutri-program-details.projection";
+import type { NutriProgramDetailsResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-details-response.dto";
+import type { INutriProgramDetailsProjection } from "../../../types/nutritionist/program/nutri-program-details.projection";
 
 export class NutriProgramDetailsMapper {
   static toDTO(
@@ -8,33 +8,56 @@ export class NutriProgramDetailsMapper {
     return {
       userProgramId: program.userProgramId.toString(),
 
-      userId: program.userId.toString(),
-      userFullName: program.userFullName,
-      userProfileImage: program.userProfileImage,
+      client: {
+        userId: program.client.userId.toString(),
+        fullName: program.client.fullName,
+        profileImage: program.client.profileImage,
+      },
 
-      planTitle: program.planTitle,
-      planDescription: program.planDescription,
-      specialization: program.specialization,
+      purchase: {
+        amount: program.purchase.amount,
+        currency: program.purchase.currency,
+        purchasedAt: program.purchase.purchasedAt,
+        planTitle: program.purchase.planTitle,
+        planDescription: program.purchase.planDescription,
+        specialization: program.purchase.specialization,
+        features: program.purchase.features,
+      },
 
-      programStatus: program.programStatus,
+      program: {
+        status: program.program.status,
+        startDate: program.program.startDate,
+        endDate: program.program.endDate,
+        durationDays: program.program.durationDays,
+        createdAt: program.program.createdAt,
 
-      startDate: program.startDate,
-      endDate: program.endDate,
-      durationDays: program.durationDays,
+        lifecycle: {
+          pausedAt: program.program.lifecycle.pausedAt,
+          resumedAt: program.program.lifecycle.resumedAt,
+          completedAt: program.program.lifecycle.completedAt,
+          cancelledAt: program.program.lifecycle.cancelledAt,
+        },
 
-      completionPercentage: program.completionPercentage,
+        cancellationReason: program.program.cancellationReason,
+        cancelledBy: program.program.cancelledBy?.toString() ?? null,
+      },
 
-      completedDays: program.completedDays,
-      totalDays: program.totalDays,
+      progress: {
+        totalDays: program.progress.totalDays,
+        completedDays: program.progress.completedDays,
+        currentDay: program.progress.currentDay,
 
-      completedActivities: program.completedActivities,
-      totalActivities: program.totalActivities,
-      skippedActivities: program.skippedActivities,
+        totalActivities: program.progress.totalActivities,
+        completedActivities: program.progress.completedActivities,
+        skippedActivities: program.progress.skippedActivities,
 
-      currentStreak: program.currentStreak,
-      longestStreak: program.longestStreak,
+        completionPercentage: program.progress.completionPercentage,
 
-      lastActivityAt: program.lastActivityAt,
+        currentStreak: program.progress.currentStreak,
+        longestStreak: program.progress.longestStreak,
+        lastCompletedDay: program.progress.lastCompletedDay,
+        lastActivityAt: program.progress.lastActivityAt,
+      },
     };
   }
 }
