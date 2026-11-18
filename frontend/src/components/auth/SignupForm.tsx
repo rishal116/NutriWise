@@ -1,7 +1,8 @@
+
 "use client";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { toast } from "sonner";
 import {
@@ -14,38 +15,46 @@ import {
   UserPlus,
   Loader2,
 } from "lucide-react";
+
 import { signupSchema } from "@/validations/auth.validation";
 import { userAuthService } from "@/services/user/userAuth.service";
 import { setSignupEmail } from "@/redux/slices/signupSlice";
+import { useAppDispatch } from "@/redux/hooks";
 import { getErrorMessage } from "@/utils/getErrorMessage";
-import { SignupRequest } from "@/dtos/auth/auth-request.dto";
+import type { SignupRequest } from "@/dtos/auth/auth-request.dto";
+import { completeAuthSession } from "@/lib/auth/completeAuthSession";
+
 import Logo from "../common/Logo";
 
 const GOOGLE_BUTTON_MIN_WIDTH = 200;
 const GOOGLE_BUTTON_MAX_WIDTH = 400;
 
 export default function SignupForm() {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const [formData, setFormData] = useState<SignupRequest>({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isNavigating, setIsNavigating] = useState(false);
 
   const googleContainerRef = useRef<HTMLDivElement>(null);
   const googleInFlightRef = useRef(false);
+
   const [googleWidth, setGoogleWidth] = useState<number | null>(null);
 
   useEffect(() => {
     const el = googleContainerRef.current;
+
     if (!el) return;
 
     const updateWidth = () => {
@@ -53,12 +62,15 @@ export default function SignupForm() {
         GOOGLE_BUTTON_MAX_WIDTH,
         Math.max(GOOGLE_BUTTON_MIN_WIDTH, Math.floor(el.clientWidth)),
       );
+
       setGoogleWidth((prev) => (prev === next ? prev : next));
     };
 
     updateWidth();
+
     const observer = new ResizeObserver(updateWidth);
     observer.observe(el);
+
     return () => observer.disconnect();
   }, []);
 
@@ -67,32 +79,50 @@ export default function SignupForm() {
     router.push("/login");
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const validateForm = () => {
     const result = signupSchema.safeParse(formData);
+
     if (!result.success) {
       const newErrors: Record<string, string> = {};
+
       result.error.issues.forEach((err) => {
-        if (err.path[0]) newErrors[err.path[0].toString()] = err.message;
+        if (err.path[0]) {
+          newErrors[err.path[0].toString()] = err.message;
+        }
       });
+
       setErrors(newErrors);
       return false;
     }
+
     return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
+
     if (loading || !validateForm()) return;
+
     try {
       setLoading(true);
+
       const { email } = formData;
       const data = await userAuthService.register(formData);
+
       if (data.success) {
         dispatch(setSignupEmail(email));
         localStorage.setItem("signupEmail", email);
@@ -119,6 +149,7 @@ export default function SignupForm() {
   const handleGoogleSuccess = useCallback(
     async (credentialResponse: CredentialResponse) => {
       if (googleInFlightRef.current) return;
+
       googleInFlightRef.current = true;
 
       try {
@@ -130,7 +161,6 @@ export default function SignupForm() {
         }
 
         const payload = { credential };
-
         const response = await userAuthService.googleAuth(payload);
 
         if (!response.success) {
@@ -138,14 +168,21 @@ export default function SignupForm() {
           return;
         }
 
-        const { activeRole, isProfileCompleted } = response.data ?? {};
+        const { accessToken, activeRole, isProfileCompleted } =
+          response.data ?? {};
+
+        if (!accessToken || !activeRole) {
+          throw new Error("Authentication response is incomplete.");
+        }
+
+        const user = await completeAuthSession(accessToken, dispatch);
 
         if (!isProfileCompleted) {
           router.push("/complete-profile");
           return;
         }
 
-        switch (activeRole) {
+        switch (user.activeRole ?? activeRole) {
           case "admin":
             router.push("/admin/dashboard");
             break;
@@ -156,6 +193,7 @@ export default function SignupForm() {
 
           default:
             router.push("/");
+            break;
         }
       } catch (error: unknown) {
         toast.error(getErrorMessage(error));
@@ -163,7 +201,7 @@ export default function SignupForm() {
         googleInFlightRef.current = false;
       }
     },
-    [router],
+    [dispatch, router],
   );
 
   return (
@@ -172,9 +210,11 @@ export default function SignupForm() {
         <div className="bg-white rounded-2xl shadow-xl shadow-emerald-900/10 border border-emerald-100 p-6 sm:p-8 lg:p-10">
           <div className="flex flex-col items-center text-center mb-8">
             <Logo size="large" linkable={false} />
+
             <h1 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight mt-5">
               Create your account
             </h1>
+
             <p className="text-gray-500 text-sm mt-1.5">
               Join NutriWise and start your wellness journey
             </p>
@@ -186,11 +226,13 @@ export default function SignupForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Full Name
                 </label>
+
                 <div className="relative">
                   <User
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
                     size={18}
                   />
+
                   <input
                     type="text"
                     name="fullName"
@@ -205,6 +247,7 @@ export default function SignupForm() {
                     } focus:bg-white focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm`}
                   />
                 </div>
+
                 {errors.fullName && (
                   <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
                     <XCircle size={12} /> {errors.fullName}
@@ -216,11 +259,13 @@ export default function SignupForm() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Email
                 </label>
+
                 <div className="relative">
                   <Mail
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
                     size={18}
                   />
+
                   <input
                     type="email"
                     name="email"
@@ -235,6 +280,7 @@ export default function SignupForm() {
                     } focus:bg-white focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm`}
                   />
                 </div>
+
                 {errors.email && (
                   <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
                     <XCircle size={12} /> {errors.email}
@@ -264,11 +310,13 @@ export default function SignupForm() {
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">
                     {item.label}
                   </label>
+
                   <div className="relative">
                     <Lock
                       className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
                       size={18}
                     />
+
                     <input
                       type={item.show ? "text" : "password"}
                       name={item.name}
@@ -282,15 +330,21 @@ export default function SignupForm() {
                           : "border-gray-200 focus:border-emerald-500"
                       } focus:bg-white focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm`}
                     />
+
                     <button
                       type="button"
                       onClick={() => item.setShow(!item.show)}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                       tabIndex={-1}
                     >
-                      {item.show ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {item.show ? (
+                        <EyeOff size={18} />
+                      ) : (
+                        <Eye size={18} />
+                      )}
                     </button>
                   </div>
+
                   {errors[item.name] && (
                     <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
                       <XCircle size={12} /> {errors[item.name]}
@@ -307,8 +361,8 @@ export default function SignupForm() {
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Creating
-                  account...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating account...
                 </>
               ) : (
                 <>
@@ -320,8 +374,9 @@ export default function SignupForm() {
 
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-gray-200" />
             </div>
+
             <div className="relative flex justify-center text-xs">
               <span className="px-3 bg-white text-gray-400">
                 Or continue with
@@ -329,7 +384,10 @@ export default function SignupForm() {
             </div>
           </div>
 
-          <div ref={googleContainerRef} className="flex justify-center w-full">
+          <div
+            ref={googleContainerRef}
+            className="flex justify-center w-full"
+          >
             {googleWidth !== null && (
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}

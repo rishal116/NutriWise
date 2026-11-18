@@ -32,75 +32,88 @@ function getDayDifference(startDate: Date, today: Date): number {
   return Math.floor((todayTimestamp - startTimestamp) / MILLISECONDS_PER_DAY);
 }
 
-export const startProgramDayUnlockCron = (): void => {
-  cron.schedule(
-    "0 0,10 * * *",
-    async () => {
-      try {
-        logger.info("Starting program day unlock cron");
+export const runProgramDayUnlock = async (): Promise<void> => {
+  try {
+    const today = new Date();
 
-        const today = new Date();
+    const programs = await UserProgramModel.find({
+      status: "active",
+      startDate: { $type: "date" },
+    })
+      .select({
+        _id: 1,
+        startDate: 1,
+      })
+      .lean();
 
-        const programs = await UserProgramModel.find({
-          status: "active",
-        })
-          .select({
-            _id: 1,
-            startDate: 1,
-          })
-          .lean();
+    let unlockedPrograms = 0;
 
-        let unlockedPrograms = 0;
+    await Promise.all(
+      programs.map(async (program) => {
+        if (!program.startDate) {
+          logger.warn("Skipping program without a start date", {
+            userProgramId: program._id.toString(),
+          });
+          return;
+        }
 
-        await Promise.all(
-          programs.map(async (program) => {
-            const startDate = new Date(program.startDate);
+        const startDate = new Date(program.startDate);
 
-            if (Number.isNaN(startDate.getTime())) {
-              logger.warn("Skipping program with invalid start date", {
-                userProgramId: program._id.toString(),
-              });
-              return;
-            }
+        if (Number.isNaN(startDate.getTime())) {
+          logger.warn("Skipping program with invalid start date", {
+            userProgramId: program._id.toString(),
+          });
+          return;
+        }
 
-            const differenceInDays = getDayDifference(startDate, today);
-            const currentDay = differenceInDays + 1;
+        const differenceInDays = getDayDifference(startDate, today);
+        const currentDay = differenceInDays + 1;
 
-            if (currentDay < 1) {
-              return;
-            }
+        if (currentDay < 1) {
+          return;
+        }
 
-            const result = await UserDayTrackingModel.updateMany(
-              {
-                userProgramId: program._id,
-                dayNumber: { $lte: currentDay },
-                isLocked: true,
-              },
-              {
-                $set: { isLocked: false },
-              },
-            );
-
-            if (result.modifiedCount > 0) {
-              unlockedPrograms += 1;
-            }
-          }),
+        const result = await UserDayTrackingModel.updateMany(
+          {
+            userProgramId: program._id,
+            dayNumber: { $lte: currentDay },
+            isLocked: true,
+          },
+          {
+            $set: { isLocked: false },
+          },
         );
 
-        logger.info("Program day unlock cron completed successfully", {
-          activePrograms: programs.length,
-          unlockedPrograms,
-        });
-      } catch (error) {
-        logger.error("Program day unlock cron failed", { error });
-      }
+        if (result.modifiedCount > 0) {
+          unlockedPrograms++;
+        }
+      }),
+    );
+
+    if (unlockedPrograms > 0) {
+      logger.info("Program days unlocked successfully", {
+        activePrograms: programs.length,
+        unlockedPrograms,
+      });
+    }
+  } catch (error) {
+    logger.error("Program day unlock processing failed", { error });
+  }
+};
+
+export const startProgramDayUnlockCron = (): void => {
+  cron.schedule(
+    "*/10 * * * *",
+    async () => {
+      await runProgramDayUnlock();
     },
     {
       timezone: TIME_ZONE,
     },
   );
 
-  logger.info("Program day unlock cron scheduled", {
+  logger.info("Program day unlock cron scheduled successfully", {
+    interval: "Every 10 minutes",
     timezone: TIME_ZONE,
   });
 };

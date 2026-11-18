@@ -28,4 +28,10 @@ export const nutriProgramService = {
 
     return response.data.data!;
   },
+
+  async markProgramAsReady(programId: string): Promise<void> {
+    await clientApi.patch<ApiResponseDTO<null>>(
+      NUTRITIONIST_PROGRAM_ROUTES.MARK_AS_READY(programId),
+    );
+  },
 };

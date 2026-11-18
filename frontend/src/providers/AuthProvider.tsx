@@ -21,20 +21,17 @@ const SKIP_AUTH_ROUTES = [
 
 const ACTIVE_ROLE_COOKIE = "nutriwise_active_role";
 
-function syncActiveRoleCookie(activeRole: string | undefined) {
+function syncActiveRoleCookie(activeRole?: string) {
   if (typeof document === "undefined") return;
 
-  if (
-    activeRole === "nutritionist" ||
-    activeRole === "admin" ||
-    activeRole === "user"
-  ) {
+  if (["nutritionist", "admin", "user"].includes(activeRole ?? "")) {
     document.cookie = `${ACTIVE_ROLE_COOKIE}=${encodeURIComponent(
-      activeRole,
+      activeRole!,
     )}; Path=/; SameSite=Lax`;
-  } else {
-    document.cookie = `${ACTIVE_ROLE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
+    return;
   }
+
+  document.cookie = `${ACTIVE_ROLE_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
@@ -62,7 +59,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             const response = await userAuthService.getMe();
 
             if (!isMounted) return;
-
             if (!response.data) {
               throw new Error("User data was not returned.");
             }
@@ -72,8 +68,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             return;
           } catch {
             if (!isMounted) return;
-
-            // The stored token may be expired. Try refreshing below.
           }
         }
 
@@ -86,7 +80,6 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         const response = await userAuthService.getMe();
 
         if (!isMounted) return;
-
         if (!response.data) {
           throw new Error("User data was not returned.");
         }
@@ -97,7 +90,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
         if (!isMounted) return;
 
         tokenStorage.remove();
-        syncActiveRoleCookie(undefined);
+        syncActiveRoleCookie();
         dispatch(logout());
       }
     };

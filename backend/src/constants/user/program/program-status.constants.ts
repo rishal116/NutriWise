@@ -7,7 +7,6 @@ export const PROGRAM_STATUSES = [
   "completed",
   "cancelled",
 ] as const;
-
 export type ProgramStatus = (typeof PROGRAM_STATUSES)[number];
 
 export const BLOCKING_PURCHASE_STATUSES = [
@@ -17,6 +16,5 @@ export const BLOCKING_PURCHASE_STATUSES = [
   "active",
   "paused",
 ] as const;
-
 export type BlockingPurchaseStatuses =
   (typeof BLOCKING_PURCHASE_STATUSES)[number];

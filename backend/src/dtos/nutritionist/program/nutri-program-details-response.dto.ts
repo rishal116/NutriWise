@@ -1,34 +1,58 @@
-import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
-
+import type { ProgramStatus } from "../../../constants/user/program/program-status.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
+import type { Specialization } from "../../../constants/nutritionist/profile/specialization.constants";
 
 export interface NutriProgramDetailsResponseDTO {
   userProgramId: string;
 
-  userId: string;
-  userFullName: string;
-  userProfileImage?: string;
+  client: {
+    userId: string;
+    fullName: string;
+    profileImage?: string;
+  };
 
-  planTitle: string;
-  planDescription?: string;
-  specialization: string;
+  purchase: {
+    amount: number;
+    currency: Currency;
+    purchasedAt: Date;
+    planTitle: string;
+    planDescription?: string;
+    specialization: Specialization;
+    features: string[];
+  };
 
-  programStatus: ProgramStatus;
+  program: {
+    status: ProgramStatus;
+    startDate: Date | null;
+    endDate: Date | null;
+    durationDays: number;
+    createdAt: Date;
 
-  startDate: Date;
-  endDate: Date;
-  durationDays: number;
+    lifecycle: {
+      pausedAt: Date | null;
+      resumedAt: Date | null;
+      completedAt: Date | null;
+      cancelledAt: Date | null;
+    };
 
-  completionPercentage: number;
+    cancellationReason: string | null;
+    cancelledBy: string | null;
+  };
 
-  completedDays: number;
-  totalDays: number;
+  progress: {
+    totalDays: number;
+    completedDays: number;
+    currentDay: number;
 
-  completedActivities: number;
-  totalActivities: number;
-  skippedActivities: number;
+    totalActivities: number;
+    completedActivities: number;
+    skippedActivities: number;
 
-  currentStreak: number;
-  longestStreak: number;
+    completionPercentage: number;
 
-  lastActivityAt?: Date;
+    currentStreak: number;
+    longestStreak: number;
+    lastCompletedDay: number;
+    lastActivityAt: Date | null;
+  };
 }

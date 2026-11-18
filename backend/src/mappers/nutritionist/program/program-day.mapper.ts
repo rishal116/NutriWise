@@ -1,4 +1,4 @@
-import type { INutriProgramDayResponseDTO } from "../../../dtos/nutritionist/program/nutri-program-day-response.dto";
+import type { INutriProgramDayResponseDTO } from "../../../dtos/nutritionist/program-day/nutri-program-day-response.dto";
 import type { INutriProgramDayProjection } from "../../../types/nutritionist/program/nutri-program-day.projection";
 
 export class NutriProgramDayMapper {

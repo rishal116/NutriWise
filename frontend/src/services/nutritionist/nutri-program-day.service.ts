@@ -3,13 +3,10 @@ import { NUTRITIONIST_PROGRAM_DAY_ROUTES } from "@/routes/nutritionist";
 
 import type { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 import type { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
-import type { ProgramDayListQueryDTO } from "@/dtos/nutritionist/program/nutri-program-day-list-query.dto";
-import type { NutriProgramDayCardResponseDTO } from "@/dtos/nutritionist/program/nutri-program-day-card-response.dto";
-import type { NutriProgramDayResponseDTO } from "@/dtos/nutritionist/program/nutri-program-day-response.dto";
-import type {
-  CreateNutriProgramDayDTO,
-  UpdateNutriProgramDayDTO,
-} from "@/dtos/nutritionist/program/nutri-program-day-request.dto";
+import type { ProgramDayListQueryDTO } from "@/dtos/nutritionist/program-day/nutri-program-day-list-query.dto";
+import type { NutriProgramDayCardResponseDTO } from "@/dtos/nutritionist/program-day/nutri-program-day-card-response.dto";
+import type { NutriProgramDayResponseDTO } from "@/dtos/nutritionist/program-day/nutri-program-day-response.dto";
+import type { UpdateNutriProgramDayDTO } from "@/dtos/nutritionist/program-day/nutri-program-day-request.dto";
 
 export const nutriProgramDayService = {
   async getProgramDays(
@@ -41,16 +38,6 @@ export const nutriProgramDayService = {
     }
 
     return response.data.data;
-  },
-
-  async createProgramDay(
-    programId: string,
-    payload: CreateNutriProgramDayDTO,
-  ): Promise<void> {
-    await clientApi.post<ApiResponseDTO<void>>(
-      NUTRITIONIST_PROGRAM_DAY_ROUTES.CREATE(programId),
-      payload,
-    );
   },
 
   async updateProgramDay(

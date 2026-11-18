@@ -11,8 +11,8 @@ import { loginSchema } from "@/validations/auth.validation";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { isAuthPage } from "@/lib/auth/authGuard";
 import { useAppDispatch } from "@/redux/hooks";
-import { setAccessToken, setUser } from "@/redux/slices/authSlice";
 import Logo from "../common/Logo";
+import { completeAuthSession } from "@/lib/auth/completeAuthSession";
 
 interface FormErrors {
   email?: string;
@@ -64,22 +64,14 @@ export default function LoginForm() {
     activeRole: ActiveRole,
     isProfileCompleted: boolean,
   ) => {
-    dispatch(setAccessToken(accessToken));
-
-    const response = await userAuthService.getMe();
-
-    if (!response.data) {
-      throw new Error("Unable to retrieve your account details.");
-    }
-
-    dispatch(setUser(response.data));
+    const user = await completeAuthSession(accessToken, dispatch);
 
     if (!isProfileCompleted) {
       router.replace("/complete-profile");
       return;
     }
 
-    redirectAfterAuth(activeRole);
+    redirectAfterAuth(user.activeRole ?? activeRole);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

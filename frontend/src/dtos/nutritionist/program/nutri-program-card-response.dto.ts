@@ -1,17 +1,21 @@
-import type { ProgramStatus } from "@/types/program.types";
+import type { ProgramStatus } from "@/constants/user/program/program-status.constants";
 
 export interface NutriProgramCardResponseDTO {
   userProgramId: string;
+
   userId: string;
   userFullName: string;
   userProfileImage?: string;
 
   planTitle: string;
   specialization: string;
+
   programStatus: ProgramStatus;
 
-  startDate: string;
-  endDate: string;
+  currentDay: number;
   durationDays: number;
   completionPercentage: number;
+
+  startDate: string | null;
+  endDate: string | null;
 }

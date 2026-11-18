@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
-import { ProgramStatus } from "../../../models/userProgram.model";
+
+import type { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
 export interface INutriProgramCardProjection {
   userProgramId: Types.ObjectId;
@@ -12,9 +13,16 @@ export interface INutriProgramCardProjection {
   specialization: string;
 
   programStatus: ProgramStatus;
-  startDate: Date;
-  endDate: Date;
+  currentDay: number;
   durationDays: number;
 
   completionPercentage: number;
+
+  startDate: Date | null;
+  endDate: Date | null;
+}
+
+export interface IProgramCardWithCursor extends INutriProgramCardProjection {
+  cursorId: Types.ObjectId;
+  cursorValue: string | number | Date;
 }

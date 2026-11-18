@@ -1,12 +1,6 @@
 import { model, Schema, Types } from "mongoose";
-
-export enum NotificationType {
-  SYSTEM = "system",
-  INFO = "info",
-  SUCCESS = "success",
-  WARNING = "warning",
-  ERROR = "error",
-}
+import { NOTIFICATION_TYPES } from "../constants/notification/notification-type.constants";
+import type { NotificationType } from "../constants/notification/notification-type.constants";
 
 export interface INotification {
   _id: Types.ObjectId;
@@ -36,8 +30,8 @@ const notificationSchema = new Schema<INotification>(
     },
     type: {
       type: String,
-      enum: Object.values(NotificationType),
-      default: NotificationType.INFO,
+      enum: NOTIFICATION_TYPES,
+      default: "info",
       required: true,
     },
     title: {
