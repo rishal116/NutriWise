@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAppSelector } from "@/redux/hooks";
 import {
   redirectToLogin,
@@ -12,12 +12,12 @@ import {
 export interface GuardActionOptions {
   redirectUrl?: string;
   actionKey?: string;
-  actionPayload?: any;
+  actionPayload?: unknown;
 }
 
 export function useAuthGuard() {
-  const router = useRouter();
   const pathname = usePathname();
+
   const { isAuthenticated, user, loading } = useAppSelector(
     (state) => state.auth,
   );
@@ -29,13 +29,15 @@ export function useAuthGuard() {
       }
 
       if (typeof window !== "undefined") {
+        const currentPath = window.location.pathname;
         const targetUrl =
-          customRedirectUrl || window.location.pathname + window.location.search;
+          customRedirectUrl || currentPath + window.location.search;
 
-        if (!isAuthPage(window.location.pathname)) {
+        if (!isAuthPage(currentPath)) {
           redirectToLogin(targetUrl);
         }
       }
+
       return false;
     },
     [isAuthenticated, user],
@@ -47,20 +49,23 @@ export function useAuthGuard() {
       options?: GuardActionOptions,
     ): Promise<T | undefined> => {
       if (isAuthenticated && user) {
-        return await actionFn();
+        return actionFn();
       }
+
+      const currentPath =
+        typeof window !== "undefined" ? window.location.pathname : pathname;
 
       const targetUrl =
         options?.redirectUrl ||
         (typeof window !== "undefined"
-          ? window.location.pathname + window.location.search
+          ? currentPath + window.location.search
           : pathname);
 
       if (options?.actionKey) {
         savePendingAction(options.actionKey, options.actionPayload, targetUrl);
       }
 
-      if (typeof window !== "undefined" && !isAuthPage(window.location.pathname)) {
+      if (typeof window !== "undefined" && !isAuthPage(currentPath)) {
         redirectToLogin(targetUrl);
       }
 
