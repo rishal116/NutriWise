@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   Archive,
@@ -27,14 +23,12 @@ const LIMIT = 12;
 export default function AdminPlanList() {
   const [plans, setPlans] = useState<AdminPlanListItemDTO[]>([]);
 
-  const [query, setQuery] =
-    useState<AdminPlanListQueryDTO>({
-      limit: LIMIT,
-      sortBy: "newest",
-    });
+  const [query, setQuery] = useState<AdminPlanListQueryDTO>({
+    limit: LIMIT,
+    sortBy: "newest",
+  });
 
-  const [nextCursor, setNextCursor] =
-    useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
 
   const [hasMore, setHasMore] = useState(true);
 
@@ -44,30 +38,28 @@ export default function AdminPlanList() {
 
   const [error, setError] = useState<string | null>(null);
 
-  const [archivingPlanId, setArchivingPlanId] =
-    useState<string | null>(null);
+  const [archivingPlanId, setArchivingPlanId] = useState<string | null>(null);
 
   const fetchPlans = useCallback(
     async (cursor?: string) => {
       try {
         setLoading(true);
         setError(null);
+        const response = await adminPlanService.listPlans({
+          ...query,
+          cursor,
+        });
 
-        const response =
-          await adminPlanService.listPlans({
-            ...query,
-            cursor,
-          });
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Unable to load plans.");
+        }
 
         const data = response.data;
 
         if (!cursor) {
           setPlans(data.items);
         } else {
-          setPlans((prev) => [
-            ...prev,
-            ...data.items,
-          ]);
+          setPlans((prev) => [...prev, ...data.items]);
         }
 
         setNextCursor(data.nextCursor);
@@ -168,11 +160,7 @@ export default function AdminPlanList() {
           disabled={loading}
           className="inline-flex items-center justify-center gap-2 rounded-lg border border-admin-border bg-admin-surface px-3.5 py-2 text-sm font-medium text-admin-text transition hover:bg-admin-accent-soft disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <RefreshCw
-            className={`h-4 w-4 ${
-              loading ? "animate-spin" : ""
-            }`}
-          />
+          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           Refresh
         </button>
       </header>
@@ -186,18 +174,14 @@ export default function AdminPlanList() {
               type="search"
               placeholder="Search plans or nutritionists..."
               value={query.search ?? ""}
-              onChange={(event) =>
-                handleSearchChange(event.target.value)
-              }
+              onChange={(event) => handleSearchChange(event.target.value)}
               className="h-10 w-full rounded-lg border border-admin-border bg-admin-surface pl-9 pr-3 text-sm text-admin-text outline-none transition focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10"
             />
           </label>
 
           <select
             value={query.status ?? "all"}
-            onChange={(event) =>
-              handleStatusChange(event.target.value)
-            }
+            onChange={(event) => handleStatusChange(event.target.value)}
             className="h-10 rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text outline-none focus:border-admin-accent"
           >
             <option value="all">All statuses</option>
@@ -208,9 +192,7 @@ export default function AdminPlanList() {
 
           <select
             value={query.sortBy ?? "newest"}
-            onChange={(event) =>
-              handleSortChange(event.target.value)
-            }
+            onChange={(event) => handleSortChange(event.target.value)}
             className="h-10 rounded-lg border border-admin-border bg-admin-surface px-3 text-sm text-admin-text outline-none focus:border-admin-accent"
           >
             <option value="newest">Newest</option>
@@ -272,10 +254,7 @@ export default function AdminPlanList() {
             <tbody className="divide-y divide-admin-border">
               {plans.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-5 py-14 text-center"
-                  >
+                  <td colSpan={7} className="px-5 py-14 text-center">
                     <WalletCards className="mx-auto h-8 w-8 text-admin-muted" />
 
                     <p className="mt-3 text-sm font-medium text-admin-text">
@@ -310,16 +289,12 @@ export default function AdminPlanList() {
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-admin-accent-soft text-xs font-semibold text-admin-accent">
                           {plan.nutritionist.profileImage ? (
                             <img
-                              src={
-                                plan.nutritionist.profileImage
-                              }
+                              src={plan.nutritionist.profileImage}
                               alt=""
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            plan.nutritionist.fullName
-                              .slice(0, 2)
-                              .toUpperCase()
+                            plan.nutritionist.fullName.slice(0, 2).toUpperCase()
                           )}
                         </div>
 
@@ -354,12 +329,8 @@ export default function AdminPlanList() {
                       {plan.status !== "archived" && (
                         <button
                           type="button"
-                          onClick={() =>
-                            handleArchive(plan.id)
-                          }
-                          disabled={
-                            archivingPlanId === plan.id
-                          }
+                          onClick={() => handleArchive(plan.id)}
+                          disabled={archivingPlanId === plan.id}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-medium text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {archivingPlanId === plan.id ? (
@@ -367,7 +338,6 @@ export default function AdminPlanList() {
                           ) : (
                             <Archive className="h-3.5 w-3.5" />
                           )}
-
                           Archive
                         </button>
                       )}
@@ -385,15 +355,10 @@ export default function AdminPlanList() {
           <button
             type="button"
             disabled={loading || !nextCursor}
-            onClick={() =>
-              nextCursor && fetchPlans(nextCursor)
-            }
+            onClick={() => nextCursor && fetchPlans(nextCursor)}
             className="inline-flex items-center gap-2 rounded-lg border border-admin-border bg-admin-surface px-4 py-2 text-sm font-medium text-admin-text transition hover:bg-admin-accent-soft disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading && (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            )}
-
+            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             Load more
           </button>
         </div>
@@ -402,22 +367,12 @@ export default function AdminPlanList() {
   );
 }
 
-function StatusBadge({
-  status,
-}: {
-  status: AdminPlanListItemDTO["status"];
-}) {
+function StatusBadge({ status }: { status: AdminPlanListItemDTO["status"] }) {
   const styles = {
-    published:
-      "border-emerald-200 bg-emerald-50 text-emerald-700",
-    draft:
-      "border-amber-200 bg-amber-50 text-amber-700",
-    archived:
-      "border-slate-200 bg-slate-100 text-slate-600",
-  } satisfies Record<
-    AdminPlanListItemDTO["status"],
-    string
-  >;
+    published: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    draft: "border-amber-200 bg-amber-50 text-amber-700",
+    archived: "border-slate-200 bg-slate-100 text-slate-600",
+  } satisfies Record<AdminPlanListItemDTO["status"], string>;
 
   return (
     <span
@@ -441,14 +396,12 @@ function PlansSkeleton() {
             key={index}
             className="grid grid-cols-7 gap-4 border-b border-admin-border p-5 last:border-b-0"
           >
-            {Array.from({ length: 7 }).map(
-              (_, cellIndex) => (
-                <div
-                  key={cellIndex}
-                  className="h-5 animate-pulse rounded bg-slate-100"
-                />
-              ),
-            )}
+            {Array.from({ length: 7 }).map((_, cellIndex) => (
+              <div
+                key={cellIndex}
+                className="h-5 animate-pulse rounded bg-slate-100"
+              />
+            ))}
           </div>
         ))}
       </div>
