@@ -1,9 +1,9 @@
 import { Types } from "mongoose";
-import { CreatePostDTO } from "../../../dtos/user/post/create-post.dto";
-import { UpdatePostDTO } from "../../../dtos/user/post/update-post.dto";
-import { PostListQueryDTO } from "../../../dtos/user/post/post-list-query.dto";
-import { PostCardResponseDTO } from "../../../dtos/user/post/post-response.dto";
-import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+import { CreatePostDTO } from "../../../../dtos/user/post/create-post.dto";
+import { UpdatePostDTO } from "../../../../dtos/user/post/update-post.dto";
+import { PostListQueryDTO } from "../../../../dtos/user/post/post-list-query.dto";
+import { PostCardResponseDTO } from "../../../../dtos/user/post/post-response.dto";
+import { InfiniteScrollResponseDTO } from "../../../../dtos/common/infinite-scroll-response.dto"; 
 
 export interface IUserPostService {
   createPost(

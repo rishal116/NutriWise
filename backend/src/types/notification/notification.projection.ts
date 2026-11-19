@@ -1,4 +1,4 @@
-import type { NotificationType } from "../../models/notification.model";
+import { NotificationType } from "../../constants/notification/notification-type.constants";
 
 export interface INotificationProjection {
   _id: string;

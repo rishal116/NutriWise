@@ -10,10 +10,7 @@ import {
   Min,
 } from "class-validator";
 
-import type {
-  PaymentStatus,
-  PaymentResourceType,
-} from "../../../models/payment.model";
+import type { PaymentStatus } from "../../../models/payment.model";
 import type { WalletOwnerType } from "../../../models/wallet.model";
 import type { IWalletTransaction } from "../../../models/walletTransaction.model";
 
@@ -23,13 +20,7 @@ export class AdminPaymentQueryDTO {
   status?: PaymentStatus;
 
   @IsOptional()
-  @IsEnum([
-    "nutritionist_plan",
-    "consultation_session",
-    "session_registration",
-  ])
-  resourceType?: PaymentResourceType;
-
+  @IsEnum(["nutritionist_plan", "consultation_session", "session_registration"])
   @IsOptional()
   @IsString()
   search?: string;
@@ -101,12 +92,4 @@ export class AdminPaymentCountQueryDTO {
   @IsOptional()
   @IsEnum(["pending", "paid", "failed", "refunded"])
   status?: PaymentStatus;
-
-  @IsOptional()
-  @IsEnum([
-    "nutritionist_plan",
-    "consultation_session",
-    "session_registration",
-  ])
-  resourceType?: PaymentResourceType;
 }

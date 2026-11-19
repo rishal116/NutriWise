@@ -6,8 +6,11 @@ import sessionRegistrationRoutes from "./session-registration.route";
 import challengeRoutes from "./challenge.route";
 import groupRoutes from "./group.route";
 import postRoutes from "./post.route";
+import publicHomepageRoutes from "./public-homepage.route";
 
 const router = Router();
+
+router.use("/home", publicHomepageRoutes);
 
 router.use("/resources", resourceRoutes);
 router.use("/sessions", sessionRoutes);

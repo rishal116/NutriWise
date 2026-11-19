@@ -22,29 +22,6 @@ export class ConversationMemberRepository
     return new Types.ObjectId(id);
   }
 
-  async createMany(
-    data: Partial<IConversationMember>[],
-  ): Promise<IConversationMember[]> {
-    const documents = await this._model.insertMany(data);
-
-    return documents.map(
-      (document) => document.toObject() as IConversationMember,
-    );
-  }
-
-  async createManyWithSession(
-    data: Partial<IConversationMember>[],
-    session: ClientSession,
-  ): Promise<IConversationMember[]> {
-    const documents = await this._model.insertMany(data, {
-      session,
-    });
-
-    return documents.map(
-      (document) => document.toObject() as IConversationMember,
-    );
-  }
-
   async findByConversationId(
     conversationId: string,
   ): Promise<IConversationMember[]> {

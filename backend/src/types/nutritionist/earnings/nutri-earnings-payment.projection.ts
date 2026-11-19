@@ -1,15 +1,9 @@
 import { Types } from "mongoose";
-import { IPayment } from "../../../models/payment.model";
+import type { IPayment } from "../../../models/payment.model";
 
 export type INutriEarningsPaymentProjection = Pick<
   IPayment,
-  | "resourceType"
-  | "resourceId"
-  | "status"
-  | "amount"
-  | "currency"
-  | "provider"
-  | "createdAt"
+  "status" | "amount" | "currency" | "provider" | "createdAt"
 > & {
   paymentId: Types.ObjectId;
 };
