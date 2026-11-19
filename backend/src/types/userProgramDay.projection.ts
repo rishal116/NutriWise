@@ -1,10 +1,6 @@
 import { Types } from "mongoose";
-
-import {
-  ProgramActivityCategory,
-  ActivityValueType,
-} from "../models/userProgramDay.model";
-
+import { ProgramActivityCategory } from "../constants/user/program/program-activity-category.constants";
+import { ActivityValueType } from "../constants/user/program/activity-value-type.constants";
 
 export interface IProgramActivityProjection {
   _id: Types.ObjectId;
@@ -31,7 +27,6 @@ export interface IProgramActivityProjection {
 
   order: number;
 }
-
 
 export interface IProgramDayProjection {
   _id: Types.ObjectId;

@@ -4,3 +4,4 @@ export * from "./session-registration.routes";
 export * from "./challenge.routes";
 export * from "./group.routes";
 export * from "./public-post.routes";
+export * from "./public-homepage.routes";

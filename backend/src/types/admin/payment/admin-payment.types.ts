@@ -1,7 +1,4 @@
-import type {
-  PaymentStatus,
-  PaymentResourceType,
-} from "../../../models/payment.model";
+import type { PaymentStatus } from "../../../models/payment.model";
 import type { WalletOwnerType } from "../../../models/wallet.model";
 import type { IWalletTransaction } from "../../../models/walletTransaction.model";
 import type { CursorData } from "../../cursor.types";
@@ -9,7 +6,6 @@ import type { CursorData } from "../../cursor.types";
 export interface IAdminPaymentFilters {
   search?: string;
   status?: PaymentStatus;
-  resourceType?: PaymentResourceType;
   cursor?: string;
   limit: number;
 }
@@ -33,7 +29,6 @@ export interface IAdminWalletTransactionFilters {
 
 export interface IAdminPaymentCountFilters {
   status?: PaymentStatus;
-  resourceType?: PaymentResourceType;
 }
 
 export interface IAdminPaymentStatistics {

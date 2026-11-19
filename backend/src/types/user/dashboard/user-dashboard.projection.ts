@@ -1,9 +1,9 @@
 import type { Types } from "mongoose";
-import type { ProgramStatus } from "../../../models/userProgram.model";
 import type { UserDayTrackingStatus } from "../../../models/userDayTracking.model";
 import type { MeetingStatus } from "../../../models/meeting.model";
 import type { UserChallengeStatus } from "../../../models/userChallenge.model";
 import type { Currency } from "../../../constants/common/currency.constants";
+import { ProgramStatus } from "../../../constants/user/program/program-status.constants";
 
 export interface IUserDashboardStats {
   totalPrograms: number;

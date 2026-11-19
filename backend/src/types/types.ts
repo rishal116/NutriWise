@@ -1,4 +1,7 @@
 export const TYPES = {
+  IPublicHomepageController:Symbol.for("IPublicHomepageController"),
+  IPublicHomepageService:Symbol.for("IPublicHomepageService"),
+  IPublicHomepageRepository:Symbol.for("IPublicHomepageRepository"),
   IProgramHealthController:Symbol.for("IProgramHealthController"),
   IProgramHealthService:Symbol.for("IProgramHealthService"),
   IProgramHealthRepository:Symbol.for("IProgramHealthRepository"),

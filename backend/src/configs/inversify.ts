@@ -596,6 +596,12 @@ import { IProgramHealthRepository } from "../repositories/interfaces/user/progra
 import { ProgramHealthRepository } from "../repositories/implements/user/program/programHealth.repository";
 import { IProgramHealthService } from "../services/interfaces/user/program/IProgramHealthService";
 import { ProgramHealthService } from "../services/implements/user/program/programHealth.service";
+import { IPublicHomepageRepository } from "../repositories/interfaces/public/IPublicHomepageRepository";
+import { PublicHomepageRepository } from "../repositories/implements/public/publicHomepage.repository";
+import { IPublicHomepageService } from "../services/interfaces/public/IPublicHomepageService";
+import { PublicHomepageService } from "../services/implements/public/publicHomepage.service";
+import { IPublicHomepageController } from "../controllers/interfaces/public/IPublicHomepageController";
+import { PublicHomepageController } from "../controllers/implementations/public/publicHomepage.controller";
 
 const container = new Container();
 
@@ -1506,5 +1512,17 @@ container
 container
   .bind<IProgramHealthService>(TYPES.IProgramHealthService)
   .to(ProgramHealthService);
+
+container
+  .bind<IPublicHomepageRepository>(TYPES.IPublicHomepageRepository)
+  .to(PublicHomepageRepository);
+
+container
+  .bind<IPublicHomepageService>(TYPES.IPublicHomepageService)
+  .to(PublicHomepageService);
+
+container
+  .bind<IPublicHomepageController>(TYPES.IPublicHomepageController)
+  .to(PublicHomepageController);
 
 export { container };

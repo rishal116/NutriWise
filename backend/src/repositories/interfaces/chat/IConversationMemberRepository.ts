@@ -5,15 +5,6 @@ import { IConversationMember } from "../../../models/conversationMember.model";
 import { IBaseRepository } from "../common/IBaseRepository";
 
 export interface IConversationMemberRepository extends IBaseRepository<IConversationMember> {
-  createMany(
-    data: Partial<IConversationMember>[],
-  ): Promise<IConversationMember[]>;
-
-  createManyWithSession(
-    data: Partial<IConversationMember>[],
-    session: ClientSession,
-  ): Promise<IConversationMember[]>;
-
   findByConversationId(conversationId: string): Promise<IConversationMember[]>;
 
   findByConversationIds(

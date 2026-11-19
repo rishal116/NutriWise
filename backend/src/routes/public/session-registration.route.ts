@@ -17,12 +17,6 @@ router.post(
   sessionRegistrationController.registerForSession,
 );
 
-router.get(
-  "/:sessionId/registration",
-  authMiddleware,
-  sessionRegistrationController.getMySessionRegistration,
-);
-
 router.patch(
   "/:sessionId/registration/cancel",
   authMiddleware,
