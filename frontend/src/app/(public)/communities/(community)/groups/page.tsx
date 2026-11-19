@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -51,6 +52,11 @@ export default function GroupsPage({ preview = false }: GroupsPageProps) {
       };
 
       const response = await publicGroupService.getGroups(query);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Unable to load groups.");
+      }
+
       const data = response.data;
 
       setGroups((previous) =>
