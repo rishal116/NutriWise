@@ -1,9 +1,9 @@
-import type { ISession, SessionStatus, SessionType, SessionPricingType } from "../../../../models/session.model";
+import type { ISession, SessionStatus, SessionType, SessionPricingType } from "../../../models/session.model";
 import type {
   ISessionRegistration,
   SessionRegistrationStatus,
   SessionRegistrationPaymentStatus,
-} from "../../../../models/session-registration.model";
+} from "../../../models/sessionRegistration.model";
 
 export interface IAdminSessionFilters {
   search?: string;

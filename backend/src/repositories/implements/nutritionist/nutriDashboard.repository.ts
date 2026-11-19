@@ -523,7 +523,7 @@ export class NutriDashboardRepository implements INutriDashboardRepository {
         title: "Plan Purchased",
         description: `${payment.itemSnapshot.title} was purchased`,
         createdAt: payment.createdAt,
-        actor: { id: payment.userId.toString(), name: "" },
+        actor: { id: payment.buyerId.toString(), name: "" },
       })),
 
       ...programs.map((program) => ({

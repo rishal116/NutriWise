@@ -34,15 +34,19 @@ export class UserPaymentRepository implements IUserPaymentRepository {
 
     const cursorId = decodedCursor && new Types.ObjectId(decodedCursor.id);
 
-    const filter = {
-      userId,
+    const filter: Record<string, unknown> = {
+      $or: [{ buyerId: userId }, { userId }],
       ...(cursorDate &&
         cursorId && {
-          $or: [
-            { createdAt: { $lt: cursorDate } },
+          $and: [
             {
-              createdAt: cursorDate,
-              _id: { $lt: cursorId },
+              $or: [
+                { createdAt: { $lt: cursorDate } },
+                {
+                  createdAt: cursorDate,
+                  _id: { $lt: cursorId },
+                },
+              ],
             },
           ],
         }),
@@ -50,7 +54,7 @@ export class UserPaymentRepository implements IUserPaymentRepository {
 
     const results = await PaymentModel.find(filter)
       .select(
-        "_id resourceType resourceId provider status amount commissionAmount currency itemSnapshot refundedAmount refundReason createdAt updatedAt",
+        "_id itemType resourceType itemId resourceId provider status amount commissionAmount currency itemSnapshot refundedAmount refundReason createdAt updatedAt",
       )
       .sort({ createdAt: -1, _id: -1 })
       .limit(limit + 1)
@@ -80,10 +84,10 @@ export class UserPaymentRepository implements IUserPaymentRepository {
   ): Promise<IUserPaymentProjection | null> {
     return PaymentModel.findOne({
       _id: paymentId,
-      userId,
+      $or: [{ buyerId: userId }, { userId }],
     })
       .select(
-        "_id resourceType resourceId provider status amount commissionAmount currency itemSnapshot refundedAmount refundReason createdAt updatedAt",
+        "_id itemType resourceType itemId resourceId provider status amount commissionAmount currency itemSnapshot refundedAmount refundReason createdAt updatedAt",
       )
       .lean<IUserPaymentProjection>()
       .exec();

@@ -97,6 +97,13 @@ export class UserDayTrackingService implements IUserDayTrackingService {
       );
     }
 
+    if (!userProgram.startDate) {
+      throw new CustomError(
+        "User program has an invalid start date",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
     const startDate = new Date(userProgram.startDate);
 
     if (Number.isNaN(startDate.getTime())) {

@@ -90,7 +90,7 @@ export class ConversationService implements IConversationService {
           session,
         );
 
-        await this._conversationMemberRepository.createManyWithSession(
+        await this._conversationMemberRepository.createMany(
           [
             {
               conversationId: conversation._id,

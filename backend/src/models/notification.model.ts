@@ -1,6 +1,13 @@
 import { model, Schema, Types } from "mongoose";
-import { NOTIFICATION_TYPES } from "../constants/notification/notification-type.constants";
-import type { NotificationType } from "../constants/notification/notification-type.constants";
+import {
+  NOTIFICATION_TYPES,
+  NotificationType,
+} from "../constants/notification/notification-type.constants";
+
+export {
+  NOTIFICATION_TYPES,
+  NotificationType,
+};
 
 export interface INotification {
   _id: Types.ObjectId;

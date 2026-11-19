@@ -25,16 +25,12 @@ export class AdminPaymentRepository
   async findAll(
     filters: IAdminPaymentFilters,
   ): Promise<CursorPaginationResult<IPayment>> {
-    const { search, status, resourceType, cursor, limit } = filters;
+    const { search, status, cursor, limit } = filters;
 
     const query: FilterQuery<IPayment> = {};
 
     if (status) {
       query.status = status;
-    }
-
-    if (resourceType) {
-      query.resourceType = resourceType;
     }
 
     if (search?.trim()) {
@@ -105,10 +101,6 @@ export class AdminPaymentRepository
 
     if (filters.status) {
       query.status = filters.status;
-    }
-
-    if (filters.resourceType) {
-      query.resourceType = filters.resourceType;
     }
 
     return PaymentModel.countDocuments(query).exec();

@@ -5,6 +5,11 @@ import {
   type ProgramActivityCategory,
 } from "../constants/user/program/program-activity-category.constants";
 
+export {
+  PROGRAM_ACTIVITY_CATEGORIES,
+  type ProgramActivityCategory,
+};
+
 import {
   ACTIVITY_VALUE_TYPES,
   type ActivityValueType,
