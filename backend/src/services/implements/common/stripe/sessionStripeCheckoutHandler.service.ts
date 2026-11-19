@@ -171,20 +171,20 @@ export class SessionStripeCheckoutHandlerService implements ISessionStripeChecko
 
       await this._paymentRepository.createWithSession(
         {
-          userId,
-          sellerId: sessionData.nutritionistId,
-          resourceType: "session_registration",
-          resourceId: sessionId,
+          buyerId: new Types.ObjectId(userId),
+          sellerId: new Types.ObjectId(sessionData.nutritionistId),
+          itemType: "session_registration",
+          itemId: new Types.ObjectId(sessionId),
           provider: "stripe",
           status: "paid",
           amount: sessionData.pricing.amount,
           currency: sessionData.pricing.currency.toLowerCase() as Currency,
-          checkoutSessionId: session.id,
-          paymentIntentId: session.payment_intent.toString(),
+          providerReferences: {
+            checkoutId: session.id,
+            transactionId: session.payment_intent ? session.payment_intent.toString() : null,
+          },
           itemSnapshot: {
             title: sessionData.title,
-            price: sessionData.pricing.amount,
-            currency: sessionData.pricing.currency.toLowerCase() as Currency,
           },
         },
         dbSession,

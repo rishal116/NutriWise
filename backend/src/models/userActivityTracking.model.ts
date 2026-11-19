@@ -15,6 +15,12 @@ import {
   type ActivityTrackingStatus,
 } from "../constants/user/program/activity-tracking-status.constants";
 
+export {
+  ACTIVITY_TRACKING_STATUSES,
+  type ActivityTrackingStatus,
+  type ActivityTrackingStatus as UserActivityTrackingStatus,
+};
+
 import {
   ACTIVITY_COMPLETED_BY,
   type ActivityCompletedBy,

@@ -79,7 +79,7 @@ export class CheckoutService implements ICheckoutService {
       await this._paymentRepository.findByCheckoutSessionId(sessionId);
 
     if (payment) {
-      if (payment.userId.toString() !== userId) {
+      if (payment.buyerId.toString() !== userId) {
         throw new CustomError(
           "Unauthorized access to checkout session.",
           StatusCode.FORBIDDEN,

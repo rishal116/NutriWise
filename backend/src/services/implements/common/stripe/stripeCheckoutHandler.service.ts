@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import Stripe from "stripe";
 import { inject, injectable } from "inversify";
 import logger from "../../../../utils/logger";
@@ -78,21 +78,20 @@ export class StripeCheckoutHandlerService implements IStripeCheckoutHandlerServi
 
       await this.paymentRepository.create(
         {
-          userId: checkoutData.userId,
-          sellerId: checkoutData.nutritionistId,
-          resourceType: "nutritionist_plan",
-          resourceId: checkoutData.planId,
+          buyerId: new Types.ObjectId(checkoutData.userId),
+          sellerId: new Types.ObjectId(checkoutData.nutritionistId),
+          itemType: "nutritionist_plan",
+          itemId: new Types.ObjectId(checkoutData.planId),
           provider: "stripe",
           status: "paid",
           amount: calculation.amount,
           currency: CURRENCY,
-          commissionAmount: calculation.commissionAmount,
-          checkoutSessionId: session.id,
-          paymentIntentId: checkoutData.paymentIntentId,
+          providerReferences: {
+            checkoutId: session.id,
+            transactionId: checkoutData.paymentIntentId,
+          },
           itemSnapshot: {
             title: checkoutData.plan.title,
-            price: calculation.amount,
-            currency: CURRENCY,
           },
         },
         dbSession,

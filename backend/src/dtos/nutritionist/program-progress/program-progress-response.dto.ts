@@ -5,8 +5,8 @@ export class ProgramProgressResponseDTO {
   userPlanId!: string;
   planId!: string;
   status!: string;
-  startDate!: Date;
-  endDate!: Date;
+  startDate!: Date | null;
+  endDate!: Date | null;
   durationDays!: number;
   currentDay!: number;
   completedDays!: number;

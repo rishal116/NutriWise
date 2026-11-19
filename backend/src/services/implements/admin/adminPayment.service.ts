@@ -61,9 +61,7 @@ export class AdminPaymentService implements IAdminPaymentService {
 
   async getPaymentCount(filters: AdminPaymentCountQueryDTO) {
     const repositoryFilters: IAdminPaymentCountFilters = {
-      status: filters.status as IAdminPaymentCountFilters["status"],
-      resourceType:
-        filters.resourceType as IAdminPaymentCountFilters["resourceType"],
+      status: filters.status,
     };
 
     return this._adminPaymentRepository.count(repositoryFilters);

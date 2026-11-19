@@ -1,5 +1,6 @@
 import type { Types } from "mongoose";
 import type {
+  PaymentItemType,
   PaymentProvider,
   PaymentStatus,
 } from "../../../models/payment.model";
@@ -13,7 +14,10 @@ import type { Currency } from "../../../constants/common/currency.constants";
 
 export interface IUserPaymentProjection {
   _id: Types.ObjectId;
-  resourceId: Types.ObjectId;
+  resourceType?: PaymentItemType;
+  itemType?: PaymentItemType;
+  resourceId?: Types.ObjectId;
+  itemId?: Types.ObjectId;
   provider: PaymentProvider;
   status: PaymentStatus;
   amount: number;

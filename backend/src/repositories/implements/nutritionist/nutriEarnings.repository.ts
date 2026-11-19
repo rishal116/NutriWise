@@ -148,7 +148,7 @@ export class NutriEarningsRepository
     nutritionistId: string | Types.ObjectId,
     query: GetNutriEarningsQueryDTO,
   ): Promise<CursorPaginationResult<INutriEarningsPaymentProjection>> {
-    const { cursor, limit = 10, resourceType, paymentStatus } = query;
+    const { cursor, limit = 10, resourceType, itemType, paymentStatus } = query;
 
     const nutritionistObjectId =
       typeof nutritionistId === "string"
@@ -156,12 +156,13 @@ export class NutriEarningsRepository
         : nutritionistId;
 
     const cursorData = cursor ? decodeCursor(cursor) : null;
+    const resolvedItemType = itemType ?? resourceType;
 
     const pipeline: PipelineStage[] = [
       {
         $match: {
           sellerId: nutritionistObjectId,
-          ...(resourceType ? { resourceType } : {}),
+          ...(resolvedItemType ? { itemType: resolvedItemType } : {}),
           ...(paymentStatus
             ? { status: paymentStatus }
             : { status: { $in: ["paid", "refunded", "partially_refunded"] } }),
@@ -192,8 +193,10 @@ export class NutriEarningsRepository
         $project: {
           _id: 0,
           paymentId: "$_id",
-          resourceType: 1,
-          resourceId: 1,
+          itemType: 1,
+          resourceType: "$itemType",
+          itemId: 1,
+          resourceId: "$itemId",
           status: 1,
           amount: 1,
           currency: 1,

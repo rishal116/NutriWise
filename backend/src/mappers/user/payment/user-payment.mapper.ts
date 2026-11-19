@@ -12,10 +12,18 @@ export class UserPaymentMapper {
   static toPaymentResponseDTO(
     payment: IUserPaymentProjection,
   ): UserPaymentResponseDTO {
+    const resourceType =
+      payment.resourceType ?? payment.itemType ?? "nutritionist_plan";
+    const resourceId = (
+      payment.resourceId ??
+      payment.itemId ??
+      payment._id
+    ).toString();
+
     return {
       id: payment._id.toString(),
-      resourceType: payment.resourceType,
-      resourceId: payment.resourceId.toString(),
+      resourceType,
+      resourceId,
       provider: payment.provider,
       status: payment.status,
       amount: payment.amount,

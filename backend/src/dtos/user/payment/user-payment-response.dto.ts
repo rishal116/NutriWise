@@ -1,4 +1,5 @@
 import type {
+  PaymentItemType,
   PaymentProvider,
   PaymentStatus,
 } from "../../../models/payment.model";
@@ -6,6 +7,7 @@ import type { Currency } from "../../../constants/common/currency.constants";
 
 export class UserPaymentResponseDTO {
   id!: string;
+  resourceType!: PaymentItemType;
   resourceId!: string;
   provider!: PaymentProvider;
   status!: PaymentStatus;

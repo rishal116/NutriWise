@@ -1,10 +1,10 @@
 import { Types } from "mongoose";
 import { IBaseRepository } from "../../common/IBaseRepository";
-import { ProgramActivityCategory } from "../../../../models/userProgramDay.model";
+import { type ProgramActivityCategory } from "../../../../constants/user/program/program-activity-category.constants";
+import { type ActivityTrackingStatus } from "../../../../constants/user/program/activity-tracking-status.constants";
 import {
   CreateUserActivityTrackingData,
   IUserActivityTracking,
-  UserActivityTrackingStatus,
 } from "../../../../models/userActivityTracking.model";
 
 export interface IUserActivityTrackingRepository extends IBaseRepository<IUserActivityTracking> {
@@ -23,7 +23,7 @@ export interface IUserActivityTrackingRepository extends IBaseRepository<IUserAc
 
   findByStatus(
     userProgramId: string | Types.ObjectId,
-    status: UserActivityTrackingStatus,
+    status: ActivityTrackingStatus,
   ): Promise<IUserActivityTracking[]>;
 
   findByCategory(

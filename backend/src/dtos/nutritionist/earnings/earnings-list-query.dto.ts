@@ -4,7 +4,11 @@ import {
   WALLET_TRANSACTION_TYPES,
   WALLET_TXN_STATUSES,
 } from "../../../models/walletTransaction.model";
-import { PAYMENT_STATUSES } from "../../../models/payment.model";
+import {
+  PAYMENT_ITEM_TYPES,
+  type PaymentItemType,
+  PAYMENT_STATUSES,
+} from "../../../models/payment.model";
 
 export class GetNutriEarningsQueryDTO {
   @IsOptional()
@@ -28,6 +32,14 @@ export class GetNutriEarningsQueryDTO {
   @IsOptional()
   @IsIn(WALLET_TXN_STATUSES)
   transactionStatus?: (typeof WALLET_TXN_STATUSES)[number];
+
+  @IsOptional()
+  @IsIn(PAYMENT_ITEM_TYPES)
+  resourceType?: PaymentItemType;
+
+  @IsOptional()
+  @IsIn(PAYMENT_ITEM_TYPES)
+  itemType?: PaymentItemType;
 
   @IsOptional()
   @IsIn(PAYMENT_STATUSES)

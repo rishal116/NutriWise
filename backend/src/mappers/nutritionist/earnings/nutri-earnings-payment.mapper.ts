@@ -6,8 +6,10 @@ export function toNutriEarningsPaymentDTO(
 ): NutriEarningsPaymentDTO {
   return {
     paymentId: payment.paymentId,
-    resourceType: payment.resourceType,
-    resourceId: payment.resourceId,
+    itemType: payment.itemType ?? payment.resourceType,
+    resourceType: payment.resourceType ?? payment.itemType,
+    itemId: payment.itemId ?? payment.resourceId,
+    resourceId: payment.resourceId ?? payment.itemId,
     status: payment.status,
     amount: payment.amount,
     currency: payment.currency,
