@@ -14,6 +14,7 @@ import { postViewService } from "@/services/post/post-view.service";
 import { Eye } from "lucide-react";
 import type { PostCardResponseDTO } from "@/dtos/user/post/post-response.dto";
 import type { PostCommentResponseDto } from "@/dtos/post/post-comment-response.dto";
+import { PublicPostResponseDTO } from "@/dtos/post/public-post-response.dto";
 
 const PAGE_SIZE = 10;
 
@@ -137,7 +138,7 @@ export default function PostDetailsPage() {
   const params = useParams<{ postId: string }>();
   const postId = params.postId;
 
-  const [post, setPost] = useState<PostCardResponseDTO | null>(null);
+  const [post, setPost] = useState<PublicPostResponseDTO| null>(null);
   const [comments, setComments] = useState<PostCommentResponseDto[]>([]);
   const [commentCount, setCommentCount] = useState(0);
   const [content, setContent] = useState("");

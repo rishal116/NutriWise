@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -45,8 +44,13 @@ export default function SessionPaymentSuccessPage() {
 
         if (cancelled) return;
 
-        const paymentStatus = response.data.status as PaymentStatus;
+        if (!response.success || !response.data) {
+          throw new Error(
+            response.message || "Unable to retrieve payment status.",
+          );
+        }
 
+        const paymentStatus = response.data.status;
         if (
           paymentStatus !== "pending" &&
           paymentStatus !== "completed" &&
@@ -139,8 +143,7 @@ export default function SessionPaymentSuccessPage() {
           Payment successful!
         </h1>
         <p className="mt-3 text-sm leading-6 text-gray-600">
-          Your payment has been confirmed. You can now continue to your
-          session.
+          Your payment has been confirmed. You can now continue to your session.
         </p>
         <Link
           href={`/session-room/${sessionId}`}
