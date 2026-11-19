@@ -1,3 +1,4 @@
+
 import { io, type Socket } from "socket.io-client";
 
 let socket: Socket | null = null;
@@ -28,17 +29,15 @@ export const connectSocket = (accessToken: string): Socket => {
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
-      auth: {
-        accessToken,
-      },
+      auth: { accessToken },
     });
 
     socket.on("connect", () => {
-      console.log("Socket connected cleanly:", socket?.id);
+      console.log("Socket connected:", socket?.id);
     });
 
-    socket.on("connect_error", (err) => {
-      console.error("Socket connect error:", err.message);
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error.message);
     });
 
     socket.connect();
@@ -54,10 +53,9 @@ export const connectSocket = (accessToken: string): Socket => {
 export const getSocket = (): Socket | null => socket;
 
 export const disconnectSocket = (): void => {
-  if (socket) {
-    socket.removeAllListeners();
-    socket.disconnect();
-    socket = null;
-    currentAccessToken = null;
-  }
+  if (!socket) return;
+
+  socket.disconnect();
+  socket = null;
+  currentAccessToken = null;
 };
