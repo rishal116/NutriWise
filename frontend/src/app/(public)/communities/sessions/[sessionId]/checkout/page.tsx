@@ -1,11 +1,17 @@
-
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, CalendarDays, Clock, CreditCard, LoaderCircle, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Clock,
+  CreditCard,
+  LoaderCircle,
+  ShieldCheck,
+} from "lucide-react";
 
 import { publicSessionService } from "@/services/public/publicSession.service";
 import { sessionCheckoutService } from "@/services/public/sessionCheckout.service";
@@ -32,6 +38,12 @@ export default function SessionCheckoutPage() {
           await publicSessionService.getSessionDetails(sessionId);
 
         if (cancelled) return;
+
+        if (!response.success || !response.data) {
+          throw new Error(
+            response.message || "Unable to fetch session details.",
+          );
+        }
 
         const fetchedSession = response.data;
 
@@ -78,6 +90,12 @@ export default function SessionCheckoutPage() {
           session.sessionId,
         );
 
+      if (!response.success || !response.data) {
+        throw new Error(
+          response.message || "Unable to create checkout session.",
+        );
+      }
+
       const checkoutUrl = response.data.checkoutUrl;
 
       if (!checkoutUrl) {
@@ -103,7 +121,9 @@ export default function SessionCheckoutPage() {
   if (error && !session) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-12">
-        <p role="alert" className="text-sm text-red-600">{error}</p>
+        <p role="alert" className="text-sm text-red-600">
+          {error}
+        </p>
         <Link
           href={`/communities/sessions/${sessionId}`}
           className="mt-5 inline-flex items-center gap-2 text-sm text-emerald-700"
@@ -242,8 +262,8 @@ export default function SessionCheckoutPage() {
               Terms and conditions
             </h2>
             <p className="mt-2 text-sm leading-6 text-gray-600">
-              Please review the session booking, attendance, cancellation,
-              and refund policies before continuing.
+              Please review the session booking, attendance, cancellation, and
+              refund policies before continuing.
             </p>
             <Link
               href="/terms"

@@ -46,6 +46,10 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
 
         const response = await publicGroupService.getGroupDetails(groupId);
 
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Unable to load group details.");
+        }
+
         setGroup(response.data);
       } catch (error) {
         setError(getErrorMessage(error));
@@ -65,8 +69,11 @@ export default function GroupDetailsPage({ params }: GroupDetailsPageProps) {
     try {
       setJoining(true);
       setJoinError(null);
-
       const response = await publicGroupService.joinGroup(group.id);
+
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Unable to join this group.");
+      }
 
       setGroup(response.data);
       setJoined(true);
