@@ -34,6 +34,13 @@ export default function JoinGroupPage() {
       setError(null);
 
       const response = await groupService.joinPrivateGroup(inviteToken);
+
+      if (!response.success || !response.data) {
+        throw new Error(
+          response.message || "Unable to join the private group.",
+        );
+      }
+
       const { groupId } = response.data;
 
       router.replace(`/user/messages/group/${groupId}`);
