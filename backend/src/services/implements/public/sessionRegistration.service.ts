@@ -1,16 +1,23 @@
 import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
+
 import { TYPES } from "../../../types/types";
-import { ISessionRegistrationService } from "../../interfaces/public/ISessionRegistrationService";
-import { IPublicSessionRepository } from "../../../repositories/interfaces/public/IPublicSessionRepository";
-import { ISessionRegistrationRepository } from "../../../repositories/interfaces/public/ISessionRegistrationRepository";
-import { SessionRegistrationResponseDTO } from "../../../dtos/public/session-registration/session-registration-response.dto";
-import { SessionRegistrationCheckoutResponseDTO } from "../../../dtos/public/session-registration/session-registration-checkout-response.dto";
-import { SessionRegistrationMapper } from "../../../mappers/public/session-registration/session-registration.mapper";
 import { CustomError } from "../../../utils/customError";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { toObjectId } from "../../../utils/object-id.util";
 import logger from "../../../utils/logger";
-import { ISessionCheckoutService } from "../../interfaces/public/ISessionCheckoutService";
+
+import type { ISessionRegistrationService } from "../../interfaces/public/ISessionRegistrationService";
+import type { IPublicSessionRepository } from "../../../repositories/interfaces/public/IPublicSessionRepository";
+import type { ISessionRegistrationRepository } from "../../../repositories/interfaces/public/ISessionRegistrationRepository";
+import type { ISessionCheckoutService } from "../../interfaces/public/ISessionCheckoutService";
+
+import type { SessionRegistrationResponseDTO } from "../../../dtos/public/session-registration/session-registration-response.dto";
+import type { SessionRegistrationCheckoutResponseDTO } from "../../../dtos/public/session-registration/session-registration-checkout-response.dto";
+
+import { SessionRegistrationMapper } from "../../../mappers/public/session-registration/session-registration.mapper";
+
+import type { ISessionRegistration } from "../../../models/sessionRegistration.model";
 
 @injectable()
 export class SessionRegistrationService implements ISessionRegistrationService {
@@ -31,36 +38,12 @@ export class SessionRegistrationService implements ISessionRegistrationService {
   ): Promise<
     SessionRegistrationResponseDTO | SessionRegistrationCheckoutResponseDTO
   > {
-    if (!Types.ObjectId.isValid(userId)) {
-      throw new CustomError("Invalid user ID", StatusCode.BAD_REQUEST);
-    }
-
-    if (!Types.ObjectId.isValid(sessionId)) {
-      throw new CustomError("Invalid session ID", StatusCode.BAD_REQUEST);
-    }
-
-    const userObjectId = new Types.ObjectId(userId);
-    const sessionObjectId = new Types.ObjectId(sessionId);
+    const userObjectId = toObjectId(userId, "user ID");
+    const sessionObjectId = toObjectId(sessionId, "session ID");
 
     const session = await this._sessionRepository.findById(sessionObjectId);
 
-    if (!session) {
-      throw new CustomError("Session not found", StatusCode.NOT_FOUND);
-    }
-
-    if (session.nutritionistId.toString() === userId) {
-      throw new CustomError(
-        "You are the host of this session and do not need to register",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (session.status !== "scheduled" && session.status !== "live") {
-      throw new CustomError(
-        "Session is not available for registration",
-        StatusCode.BAD_REQUEST,
-      );
-    }
+    this.validateSessionAvailability(session, userObjectId);
 
     const existingRegistration =
       await this._sessionRegistrationRepository.findBySessionAndUser(
@@ -68,47 +51,196 @@ export class SessionRegistrationService implements ISessionRegistrationService {
         userObjectId,
       );
 
-    if (existingRegistration?.status === "registered") {
+    this.validateExistingRegistration(existingRegistration);
+
+    await this.validateSessionCapacity(
+      sessionObjectId,
+      session.maxParticipants,
+    );
+
+    if (session.pricingType === "paid") {
+      return this.createPaidRegistrationCheckout(userId, sessionId);
+    }
+
+    return this.registerForFreeSession(
+      existingRegistration,
+      sessionObjectId,
+      userObjectId,
+    );
+  }
+
+  async cancelSessionRegistration(
+    userId: string,
+    sessionId: string,
+  ): Promise<SessionRegistrationResponseDTO> {
+    const userObjectId = toObjectId(userId, "user ID");
+    const sessionObjectId = toObjectId(sessionId, "session ID");
+
+    const registration =
+      await this._sessionRegistrationRepository.findBySessionAndUser(
+        sessionObjectId,
+        userObjectId,
+      );
+
+    this.validateRegistrationCancellation(registration);
+
+    const updatedRegistration =
+      await this._sessionRegistrationRepository.updateRegistration(
+        registration._id,
+        {
+          status: "cancelled",
+          cancelledAt: new Date(),
+        },
+      );
+
+    if (!updatedRegistration) {
       throw new CustomError(
-        "You are already registered for this session",
+        "Failed to cancel session registration.",
+        StatusCode.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    logger.info("Session registration cancelled.", {
+      userId,
+      sessionId,
+      registrationId: registration._id.toString(),
+    });
+
+    return SessionRegistrationMapper.toResponse(updatedRegistration);
+  }
+
+  private validateSessionAvailability(
+    session: Awaited<ReturnType<IPublicSessionRepository["findById"]>>,
+    userId: Types.ObjectId,
+  ): asserts session is NonNullable<typeof session> {
+    if (!session || session.deletedAt) {
+      throw new CustomError("Session not found.", StatusCode.NOT_FOUND);
+    }
+
+    if (session.nutritionistId.equals(userId)) {
+      throw new CustomError(
+        "You are the host of this session and do not need to register.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (session.status !== "scheduled" && session.status !== "live") {
+      throw new CustomError(
+        "Session is not available for registration.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+  }
+
+  private validateExistingRegistration(
+    registration: ISessionRegistration | null,
+  ): void {
+    if (registration?.status === "registered") {
+      throw new CustomError(
+        "You are already registered for this session.",
         StatusCode.CONFLICT,
       );
     }
 
     if (
-      existingRegistration?.status === "attended" ||
-      existingRegistration?.status === "absent"
+      registration?.status === "attended" ||
+      registration?.status === "absent"
     ) {
       throw new CustomError(
-        "You have already participated in this session",
-        StatusCode.BAD_REQUEST,
+        "You have already participated in this session.",
+        StatusCode.CONFLICT,
       );
     }
+  }
 
+  private async validateSessionCapacity(
+    sessionId: Types.ObjectId,
+    maxParticipants: number,
+  ): Promise<void> {
     const participantCount =
       await this._sessionRegistrationRepository.countActiveRegistrations(
-        sessionObjectId,
+        sessionId,
       );
 
-    if (participantCount >= session.maxParticipants) {
-      throw new CustomError("Session is full", StatusCode.BAD_REQUEST);
+    if (participantCount >= maxParticipants) {
+      throw new CustomError(
+        "Session has reached its maximum participant capacity.",
+        StatusCode.CONFLICT,
+      );
     }
+  }
 
-    if (session.pricing.type === "paid") {
-      const checkoutUrl =
-        await this._sessionCheckoutService.createCheckoutSession({
-          userId,
-          sessionId,
-        });
-
-      logger.info("Session checkout created", {
+  private async createPaidRegistrationCheckout(
+    userId: string,
+    sessionId: string,
+  ): Promise<SessionRegistrationCheckoutResponseDTO> {
+    const checkoutUrl =
+      await this._sessionCheckoutService.createCheckoutSession({
         userId,
         sessionId,
       });
 
-      return { checkoutUrl };
+    logger.info("Session checkout created.", {
+      userId,
+      sessionId,
+    });
+
+    return { checkoutUrl };
+  }
+
+  private async registerForFreeSession(
+    existingRegistration: ISessionRegistration | null,
+    sessionId: Types.ObjectId,
+    userId: Types.ObjectId,
+  ): Promise<SessionRegistrationResponseDTO> {
+    const registration = await this.createOrRestoreRegistration(
+      existingRegistration,
+      sessionId,
+      userId,
+    );
+
+    logger.info("User registered for free session.", {
+      userId: userId.toString(),
+      sessionId: sessionId.toString(),
+      registrationId: registration._id.toString(),
+    });
+
+    return SessionRegistrationMapper.toResponse(registration);
+  }
+
+  private validateRegistrationCancellation(
+    registration: ISessionRegistration | null,
+  ): asserts registration is ISessionRegistration {
+    if (!registration) {
+      throw new CustomError(
+        "Session registration not found.",
+        StatusCode.NOT_FOUND,
+      );
     }
 
+    if (registration.status === "cancelled") {
+      throw new CustomError(
+        "Session registration is already cancelled.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (
+      registration.status === "attended" ||
+      registration.status === "absent"
+    ) {
+      throw new CustomError(
+        "You cannot cancel this registration.",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+  }
+
+  private async createOrRestoreRegistration(
+    existingRegistration: ISessionRegistration | null,
+    sessionId: Types.ObjectId,
+    userId: Types.ObjectId,
+  ): Promise<ISessionRegistration> {
     if (existingRegistration?.status === "cancelled") {
       const registration =
         await this._sessionRegistrationRepository.updateRegistration(
@@ -125,100 +257,19 @@ export class SessionRegistrationService implements ISessionRegistrationService {
 
       if (!registration) {
         throw new CustomError(
-          "Failed to register for session",
+          "Failed to restore session registration.",
           StatusCode.INTERNAL_SERVER_ERROR,
         );
       }
 
-      logger.info("User re-registered for free session", {
-        userId,
-        sessionId,
-        registrationId: registration._id.toString(),
-      });
-
-      return SessionRegistrationMapper.toResponse(registration);
+      return registration;
     }
 
-    const registration = await this._sessionRegistrationRepository.create({
-      sessionId: sessionObjectId,
-      userId: userObjectId,
+    return this._sessionRegistrationRepository.create({
+      sessionId,
+      userId,
       status: "registered",
       registeredAt: new Date(),
     });
-
-    logger.info("User registered for free session", {
-      userId,
-      sessionId,
-      registrationId: registration._id.toString(),
-    });
-
-    return SessionRegistrationMapper.toResponse(registration);
-  }
-
-  async cancelSessionRegistration(
-    userId: string,
-    sessionId: string,
-  ): Promise<SessionRegistrationResponseDTO> {
-    if (!Types.ObjectId.isValid(userId)) {
-      throw new CustomError("Invalid user ID", StatusCode.BAD_REQUEST);
-    }
-
-    if (!Types.ObjectId.isValid(sessionId)) {
-      throw new CustomError("Invalid session ID", StatusCode.BAD_REQUEST);
-    }
-
-    const registration =
-      await this._sessionRegistrationRepository.findBySessionAndUser(
-        new Types.ObjectId(sessionId),
-        new Types.ObjectId(userId),
-      );
-
-    if (!registration) {
-      throw new CustomError(
-        "Session registration not found",
-        StatusCode.NOT_FOUND,
-      );
-    }
-
-    if (registration.status === "cancelled") {
-      throw new CustomError(
-        "Session registration is already cancelled",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (
-      registration.status === "attended" ||
-      registration.status === "absent"
-    ) {
-      throw new CustomError(
-        "You cannot cancel this registration",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    const updatedRegistration =
-      await this._sessionRegistrationRepository.updateRegistration(
-        registration._id,
-        {
-          status: "cancelled",
-          cancelledAt: new Date(),
-        },
-      );
-
-    if (!updatedRegistration) {
-      throw new CustomError(
-        "Failed to cancel session registration",
-        StatusCode.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    logger.info("Session registration cancelled", {
-      userId,
-      sessionId,
-      registrationId: registration._id.toString(),
-    });
-
-    return SessionRegistrationMapper.toResponse(updatedRegistration);
   }
 }

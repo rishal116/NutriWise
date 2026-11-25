@@ -57,12 +57,18 @@ export class BaseRepository<T> implements IBaseRepository<T> {
       .exec();
   }
 
-  async find(filter: FilterQuery<T>, session?: ClientSession): Promise<T[]> {
-    return this._model
-      .find(filter)
-      .session(session ?? null)
-      .lean<T[]>()
-      .exec();
+  async find(
+    filter: FilterQuery<T>,
+    session?: ClientSession,
+    sort?: Record<string, 1 | -1>,
+  ): Promise<T[]> {
+    const query = this._model.find(filter).session(session ?? null);
+
+    if (sort) {
+      query.sort(sort);
+    }
+
+    return query.lean<T[]>().exec();
   }
 
   async updateById(

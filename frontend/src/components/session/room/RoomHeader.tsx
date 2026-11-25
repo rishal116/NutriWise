@@ -3,7 +3,7 @@ import { Users, WifiOff } from "lucide-react";
 import type {
   SessionLifecycleAction,
   SessionStatus,
-} from "@/hooks/useSessionLifecycle";
+} from "@/hooks/session-room/useSessionLifecycle";
 
 interface RoomHeaderProps {
   title: string;

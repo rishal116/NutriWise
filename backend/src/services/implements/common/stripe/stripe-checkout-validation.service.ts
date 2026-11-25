@@ -10,6 +10,17 @@ import type { INutritionistPlan } from "../../../../models/nutritionistPlan.mode
 import type { IStripeCheckoutValidationService } from "../../../interfaces/common/stripe/IStripeCheckoutValidationService";
 import type { StripeCheckoutData } from "../../../../dtos/common/stripe/stripe-checkout.dto";
 
+interface ValidatedCheckoutMetadata {
+  userId: string;
+  nutritionistId: string;
+  planId: string;
+}
+
+interface ValidatedPaymentDetails {
+  paymentIntentId: string;
+  amountInPaise: number;
+}
+
 @injectable()
 export class StripeCheckoutValidationService implements IStripeCheckoutValidationService {
   constructor(
@@ -20,23 +31,18 @@ export class StripeCheckoutValidationService implements IStripeCheckoutValidatio
   async validate(
     session: Stripe.Checkout.Session,
   ): Promise<StripeCheckoutData> {
-    const { userId, nutritionistId, planId } = session.metadata ?? {};
-
-    this.validateMetadata(userId, nutritionistId, planId);
-    this.validatePaymentDetails(session);
-
-    const plan = await this.getAndValidatePlan(
-      planId!,
-      nutritionistId!,
-      session.amount_total!,
+    const { userId, nutritionistId, planId } = this.validateMetadata(
+      session.metadata,
     );
 
-    const adminId = this.getAdminId();
+    const { paymentIntentId, amountInPaise } =
+      this.validatePaymentDetails(session);
 
-    const paymentIntentId =
-      typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : session.payment_intent!.id;
+    const plan = await this.getAndValidatePlan(
+      planId,
+      nutritionistId,
+      amountInPaise,
+    );
 
     return {
       userId: new Types.ObjectId(userId),
@@ -44,16 +50,18 @@ export class StripeCheckoutValidationService implements IStripeCheckoutValidatio
       planId: new Types.ObjectId(planId),
       plan,
       paymentIntentId,
-      amountInPaise: session.amount_total!,
-      adminId,
+      amountInPaise,
+      adminId: this.getAdminId(),
     };
   }
 
   private validateMetadata(
-    userId?: string,
-    nutritionistId?: string,
-    planId?: string,
-  ): asserts userId is string {
+    metadata: Stripe.Metadata | null,
+  ): ValidatedCheckoutMetadata {
+    const userId = metadata?.userId;
+    const nutritionistId = metadata?.nutritionistId;
+    const planId = metadata?.planId;
+
     if (!userId || !nutritionistId || !planId) {
       throw new CustomError(
         "Stripe checkout session metadata is incomplete.",
@@ -71,9 +79,13 @@ export class StripeCheckoutValidationService implements IStripeCheckoutValidatio
         StatusCode.BAD_REQUEST,
       );
     }
+
+    return { userId, nutritionistId, planId };
   }
 
-  private validatePaymentDetails(session: Stripe.Checkout.Session): void {
+  private validatePaymentDetails(
+    session: Stripe.Checkout.Session,
+  ): ValidatedPaymentDetails {
     if (session.payment_status !== "paid") {
       throw new CustomError(
         "Stripe checkout session has not been paid.",
@@ -81,11 +93,14 @@ export class StripeCheckoutValidationService implements IStripeCheckoutValidatio
       );
     }
 
+    const paymentIntent = session.payment_intent;
+    const amountInPaise = session.amount_total;
+
     if (
-      !session.payment_intent ||
-      session.amount_total === null ||
-      session.amount_total === undefined ||
-      session.amount_total <= 0 ||
+      !paymentIntent ||
+      amountInPaise === null ||
+      amountInPaise === undefined ||
+      amountInPaise <= 0 ||
       session.currency?.toLowerCase() !== CURRENCY.toLowerCase()
     ) {
       throw new CustomError(
@@ -93,6 +108,11 @@ export class StripeCheckoutValidationService implements IStripeCheckoutValidatio
         StatusCode.BAD_REQUEST,
       );
     }
+
+    const paymentIntentId =
+      typeof paymentIntent === "string" ? paymentIntent : paymentIntent.id;
+
+    return { paymentIntentId, amountInPaise };
   }
 
   private async getAndValidatePlan(

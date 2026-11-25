@@ -1,18 +1,10 @@
 import { z } from "zod";
 
-export const CREATE_SESSION_LIMITS = {
-  titleMin: 5,
-  titleMax: 100,
-  descriptionMin: 20,
-  descriptionMax: 2000,
-  priceMin: 50,
-  priceMax: 10000,
-  durationMin: 15,
-  durationMax: 180,
-  participantsMin: 2,
-  participantsMax: 100,
-  thumbnailMaxBytes: 5 * 1024 * 1024,
-} as const;
+import {
+  SESSION_PRICING_TYPES,
+  SESSION_TYPES,
+} from "@/constants/common/session.constants";
+import { SESSION_LIMITS as CREATE_SESSION_LIMITS } from "@/constants/common/session-limits.constants";
 
 export const createSessionSchema = z
   .object({
@@ -40,16 +32,15 @@ export const createSessionSchema = z
         `Description cannot exceed ${CREATE_SESSION_LIMITS.descriptionMax} characters.`,
       ),
 
-    type: z.enum([
-      "webinar",
-      "workshop",
-      "group_consultation",
-      "qna",
-      "seminar",
-    ]),
+    type: z.enum(SESSION_TYPES, {
+      error: "Please select a valid session type.",
+    }),
+
+    pricingType: z.enum(SESSION_PRICING_TYPES, {
+      error: "Please select a pricing option (Free or Paid).",
+    }),
 
     pricing: z.object({
-      type: z.enum(["free", "paid"]),
       amount: z.number().finite("Enter a valid price."),
       currency: z.literal("inr"),
     }),
@@ -66,7 +57,7 @@ export const createSessionSchema = z
         "Choose a date and time in the future.",
       ),
 
-    durationInMinutes: z
+    duration: z
       .number()
       .int("Duration must be a whole number.")
       .min(
@@ -91,9 +82,10 @@ export const createSessionSchema = z
       ),
   })
   .superRefine((form, context) => {
-    const { type, amount } = form.pricing;
+    const { pricingType, pricing } = form;
+    const { amount } = pricing;
 
-    if (type === "free" && amount !== 0) {
+    if (pricingType === "free" && amount !== 0) {
       context.addIssue({
         code: "custom",
         path: ["pricing", "amount"],
@@ -101,7 +93,7 @@ export const createSessionSchema = z
       });
     }
 
-    if (type === "paid") {
+    if (pricingType === "paid") {
       if (amount < CREATE_SESSION_LIMITS.priceMin) {
         context.addIssue({
           code: "custom",
@@ -124,10 +116,11 @@ export type CreateSessionFieldName =
   | "title"
   | "description"
   | "type"
+  | "pricingType"
+  | "pricingAmount"
   | "scheduledAt"
-  | "durationInMinutes"
-  | "maxParticipants"
-  | "pricingAmount";
+  | "duration"
+  | "maxParticipants";
 
 export type CreateSessionFieldErrors = Partial<
   Record<CreateSessionFieldName, string>
@@ -137,8 +130,9 @@ const FIELD_PATHS: Record<string, CreateSessionFieldName> = {
   title: "title",
   description: "description",
   type: "type",
+  pricingType: "pricingType",
   scheduledAt: "scheduledAt",
-  durationInMinutes: "durationInMinutes",
+  duration: "duration",
   maxParticipants: "maxParticipants",
   "pricing.amount": "pricingAmount",
 };

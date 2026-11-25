@@ -1,7 +1,7 @@
-import type {
+import {
   SessionPricingType,
   SessionType,
-} from "@/types/public/session/session.types";
+} from "@/constants/common/session.constants";
 
 export const PUBLIC_SESSION_SORT_OPTIONS = [
   "all",

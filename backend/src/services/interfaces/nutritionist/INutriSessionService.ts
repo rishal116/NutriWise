@@ -1,15 +1,15 @@
-import type { GetNutriSessionsQueryDTO } from "../../../dtos/nutritionist/session/session-list-query.dto";
+import type { GetNutriSessionsQueryDTO } from "../../../dtos/nutritionist/session/nutri-session-list-query.dto";
 import type { CreateNutriSessionDTO } from "../../../dtos/nutritionist/session/create-session.dto";
 import type { UpdateNutriSessionDTO } from "../../../dtos/nutritionist/session/update-session.dto";
-import type { NutriSessionListResponseDTO } from "../../../dtos/nutritionist/session/session-list-response.dto";
-import type { NutriSessionDetailsResponseDTO } from "../../../dtos/nutritionist/session/session-details-response.dto";
+import type { NutriSessionListItemResponseDTO } from "../../../dtos/nutritionist/session/nutri-session-list.dto";
+import type { NutriSessionDetailsResponseDTO } from "../../../dtos/nutritionist/session/nutri-session-details.dto";
 import type { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 
 export interface INutriSessionService {
   getSessions(
     nutritionistId: string,
     query: GetNutriSessionsQueryDTO,
-  ): Promise<InfiniteScrollResponseDTO<NutriSessionListResponseDTO>>;
+  ): Promise<InfiniteScrollResponseDTO<NutriSessionListItemResponseDTO>>;
 
   getSessionDetails(
     sessionId: string,

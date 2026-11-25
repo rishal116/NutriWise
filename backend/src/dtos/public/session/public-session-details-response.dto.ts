@@ -1,30 +1,6 @@
-import type {
-  SessionPricingType,
-  SessionStatus,
-  SessionType,
-} from "../../../models/session.model";
-import type { Currency } from "../../../constants/common/currency.constants";
+import type { PublicSessionResponseDTO } from "./public-session-response.dto";
 
-export interface PublicSessionDetailsResponseDTO {
-  sessionId: string;
-  title: string;
-  description: string;
-  type: SessionType;
-  pricing: {
-    type: SessionPricingType;
-    amount: number;
-    currency: Currency;
-  };
-  scheduledAt: Date;
-  durationInMinutes: number;
-  maxParticipants: number;
-  thumbnailUrl?: string;
-  status: SessionStatus;
-  nutritionist: {
-    nutritionistId: string;
-    name: string;
-    profileImage?: string;
-    bio?: string;
-  };
+export interface PublicSessionDetailsResponseDTO
+  extends PublicSessionResponseDTO {
   isRegistered: boolean;
 }

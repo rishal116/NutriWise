@@ -39,7 +39,11 @@ export class StripeProgramProvisioningService implements IStripeProgramProvision
     const { userId, nutritionistId, planId, plan, amount, session } = params;
 
     const existingProgram =
-      await this.userProgramRepository.findExistingPurchase(userId, planId);
+      await this.userProgramRepository.findExistingPurchase(
+        userId,
+        planId,
+        session,
+      );
 
     if (existingProgram) {
       throw new CustomError(
@@ -90,7 +94,7 @@ export class StripeProgramProvisioningService implements IStripeProgramProvision
       {
         userId,
         userProgramId: userProgram._id,
-        totalDays: plan.durationDays,
+        totalDays: userPlan.planSnapshot.durationDays,
       },
       session,
     );

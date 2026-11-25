@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
-import SessionCardSkeleton from "@/components/nutritionist/sessions/SessionCardSkeleton";
+import SessionCardSkeleton from "@/components/nutritionist/sessions/list/SessionCardSkeleton";
 
 export const metadata: Metadata = {
   title: "My Sessions | NutriWise",
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 const SessionsListing = dynamic(
-  () => import("@/components/nutritionist/sessions/SessionsListing"),
+  () => import("@/components/nutritionist/sessions/list/SessionsListing"),
   {
     loading: () => (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

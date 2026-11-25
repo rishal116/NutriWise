@@ -5,7 +5,7 @@ import { USER_SESSION_ROUTES } from "@/routes/user";
 import type { ApiResponseDTO } from "@/dtos/common/api-response.dto";
 import type { InfiniteScrollResponseDTO } from "@/dtos/common/infinite-scroll-response.dto";
 import type { UserSessionListQueryDTO } from "@/dtos/user/session/user-session-list-query.dto";
-import type { UserSessionListItemDTO } from "@/dtos/user/session/user-session.dto";
+import type { UserSessionListItemDTO } from "@/dtos/user/session/user-session-list.dto";
 import type { UserSessionDetailsDTO } from "@/dtos/user/session/user-session-details.dto";
 
 export const userSessionService = {

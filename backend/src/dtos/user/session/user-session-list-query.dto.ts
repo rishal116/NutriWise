@@ -1,6 +1,6 @@
 import { Transform, Type } from "class-transformer";
 import {
-  IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -9,15 +9,8 @@ import {
   Min,
 } from "class-validator";
 
-import {
-  SESSION_STATUSES,
-  SESSION_TYPES,
-} from "../../../models/session.model";
-
-import {
-  SESSION_REGISTRATION_PAYMENT_STATUSES,
-  SESSION_REGISTRATION_STATUSES,
-} from "../../../models/sessionRegistration.model";
+import { SESSION_STATUSES } from "../../../constants/common/session.constants";
+import { SESSION_REGISTRATION_STATUSES } from "../../../constants/common/session-registration.constants";
 
 import { USER_SESSION_SORT_OPTIONS } from "../../../types/user/session/user-session.types";
 
@@ -31,42 +24,15 @@ export class UserSessionListQueryDTO {
   search?: string;
 
   @IsOptional()
-  @IsEnum(
-    Object.fromEntries(
-      SESSION_REGISTRATION_STATUSES.map((value) => [value, value]),
-    ),
-  )
+  @IsIn(SESSION_REGISTRATION_STATUSES)
   registrationStatus?: (typeof SESSION_REGISTRATION_STATUSES)[number];
 
   @IsOptional()
-  @IsEnum(
-    Object.fromEntries(
-      SESSION_REGISTRATION_PAYMENT_STATUSES.map((value) => [
-        value,
-        value,
-      ]),
-    ),
-  )
-  paymentStatus?: (typeof SESSION_REGISTRATION_PAYMENT_STATUSES)[number];
-
-  @IsOptional()
-  @IsEnum(
-    Object.fromEntries(SESSION_TYPES.map((value) => [value, value])),
-  )
-  sessionType?: (typeof SESSION_TYPES)[number];
-
-  @IsOptional()
-  @IsEnum(
-    Object.fromEntries(SESSION_STATUSES.map((value) => [value, value])),
-  )
+  @IsIn(SESSION_STATUSES)
   sessionStatus?: (typeof SESSION_STATUSES)[number];
 
   @IsOptional()
-  @IsEnum(
-    Object.fromEntries(
-      USER_SESSION_SORT_OPTIONS.map((value) => [value, value]),
-    ),
-  )
+  @IsIn(USER_SESSION_SORT_OPTIONS)
   sortBy?: (typeof USER_SESSION_SORT_OPTIONS)[number];
 
   @IsOptional()

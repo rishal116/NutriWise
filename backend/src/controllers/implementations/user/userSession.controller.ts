@@ -3,11 +3,16 @@ import type { RequestHandler } from "express";
 
 import { TYPES } from "../../../types/types";
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { asyncHandler } from "../../../utils/asyncHandler";
 
-import type { IUserSessionController } from "../../interfaces/user/IUserSessionController"; 
-import type { IUserSessionService } from "../../../services/interfaces/user/IUserSessionService"; 
-import { UserSessionListQueryDTO } from "../../../dtos/user/session/user-session-list-query.dto"; 
+import { asyncHandler } from "../../../utils/asyncHandler";
+import { sendResponse } from "../../../utils/responseHandler";
+
+import { UserSessionListQueryDTO } from "../../../dtos/user/session/user-session-list-query.dto";
+
+import { USER_SESSION_MESSAGES } from "../../../constants/user/session/user-session.messages"; 
+
+import type { IUserSessionController } from "../../interfaces/user/IUserSessionController";
+import type { IUserSessionService } from "../../../services/interfaces/user/IUserSessionService";
 
 @injectable()
 export class UserSessionController implements IUserSessionController {
@@ -23,11 +28,12 @@ export class UserSessionController implements IUserSessionController {
 
     const data = await this._userSessionService.getUserSessions(userId, query);
 
-    res.status(StatusCode.OK).json({
-      success: true,
-      message: "User sessions retrieved successfully.",
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      USER_SESSION_MESSAGES.SESSIONS_RETRIEVED,
       data,
-    });
+    );
   });
 
   getUserSessionDetails: RequestHandler = asyncHandler(async (req, res) => {
@@ -39,10 +45,11 @@ export class UserSessionController implements IUserSessionController {
       sessionId,
     );
 
-    res.status(StatusCode.OK).json({
-      success: true,
-      message: "User session details retrieved successfully.",
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      USER_SESSION_MESSAGES.SESSION_DETAILS_RETRIEVED,
       data,
-    });
+    );
   });
 }

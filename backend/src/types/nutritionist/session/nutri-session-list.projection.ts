@@ -1,29 +1,29 @@
 import { Types } from "mongoose";
-import {
+import type { Currency } from "../../../constants/common/currency.constants";
+import type {
   SessionPricingType,
   SessionStatus,
   SessionType,
-} from "../../../models/session.model";
-import { Currency } from "../../../constants/common/currency.constants";
+} from "../../../constants/common/session.constants";
 
-export interface INutriSessionListProjection {
+export interface INutriSessionListItemProjection {
   sessionId: Types.ObjectId;
   title: string;
   type: SessionType;
-  pricing: {
-    type: SessionPricingType;
+  pricingType: SessionPricingType;
+  pricing?: {
     amount: number;
     currency: Currency;
   };
   scheduledAt: Date;
-  durationInMinutes: number;
+  duration: number;
+  endTime?: Date;
   thumbnailUrl?: string;
   status: SessionStatus;
-  registeredCount: number;
-  createdAt: Date;
+  participantCount: number;
 }
 
-export interface INutriSessionListProjectionWithCursor extends INutriSessionListProjection {
+export interface INutriSessionListItemCursorProjection extends INutriSessionListItemProjection {
   cursorId: Types.ObjectId;
-  cursorValue: string | Date;
+  cursorValue: Date;
 }

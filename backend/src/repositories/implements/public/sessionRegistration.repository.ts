@@ -20,38 +20,32 @@ export class SessionRegistrationRepository
   async findBySessionAndUser(
     sessionId: Types.ObjectId,
     userId: Types.ObjectId,
+    session?: ClientSession,
   ): Promise<ISessionRegistration | null> {
-    return this._model
-      .findOne({ sessionId, userId })
-      .lean<ISessionRegistration | null>()
-      .exec();
+    return this.findOne({ sessionId, userId }, session);
   }
 
-  async countActiveRegistrations(sessionId: Types.ObjectId): Promise<number> {
+  async countActiveRegistrations(
+    sessionId: Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<number> {
     return this._model
       .countDocuments({
         sessionId,
         status: "registered",
       })
+      .session(session ?? null)
       .exec();
   }
 
   async findBySession(
     sessionId: Types.ObjectId,
   ): Promise<ISessionRegistration[]> {
-    return this._model
-      .find({ sessionId })
-      .sort({ registeredAt: 1 })
-      .lean<ISessionRegistration[]>()
-      .exec();
+    return this.find({ sessionId }, undefined, { registeredAt: 1 });
   }
 
   async findByUser(userId: Types.ObjectId): Promise<ISessionRegistration[]> {
-    return this._model
-      .find({ userId })
-      .sort({ registeredAt: -1 })
-      .lean<ISessionRegistration[]>()
-      .exec();
+    return this.find({ userId }, undefined, { registeredAt: -1 });
   }
 
   async updateRegistration(

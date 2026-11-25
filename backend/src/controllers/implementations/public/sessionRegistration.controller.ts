@@ -1,12 +1,13 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 
-import { TYPES } from "../../../types/types";
+import { SESSION_REGISTRATION_MESSAGES } from "../../../constants/public/session/session-registration.messages";
 import { StatusCode } from "../../../enums/statusCode.enum";
+import { TYPES } from "../../../types/types";
 import { asyncHandler } from "../../../utils/asyncHandler";
-
-import { ISessionRegistrationController } from "../../interfaces/public/ISessionRegistrationController";
-import { ISessionRegistrationService } from "../../../services/interfaces/public/ISessionRegistrationService";
+import { sendResponse } from "../../../utils/responseHandler";
+import type { ISessionRegistrationController } from "../../interfaces/public/ISessionRegistrationController";
+import type { ISessionRegistrationService } from "../../../services/interfaces/public/ISessionRegistrationService";
 
 @injectable()
 export class SessionRegistrationController implements ISessionRegistrationController {
@@ -24,11 +25,12 @@ export class SessionRegistrationController implements ISessionRegistrationContro
       sessionId,
     );
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Session registration request processed successfully",
-      data: result,
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      SESSION_REGISTRATION_MESSAGES.REGISTRATION_REQUEST_PROCESSED,
+      result,
+    );
   });
 
   cancelSessionRegistration = asyncHandler(
@@ -42,11 +44,12 @@ export class SessionRegistrationController implements ISessionRegistrationContro
           sessionId,
         );
 
-      return res.status(StatusCode.OK).json({
-        success: true,
-        message: "Session registration cancelled successfully",
-        data: registration,
-      });
+      return sendResponse(
+        res,
+        StatusCode.OK,
+        SESSION_REGISTRATION_MESSAGES.REGISTRATION_CANCELLED,
+        registration,
+      );
     },
   );
 }

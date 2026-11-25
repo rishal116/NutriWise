@@ -1,4 +1,5 @@
-import { SessionRegistrationStatus } from "../../../models/sessionRegistration.model";
+import { SessionRegistrationStatus } from "../../../constants/common/session-registration.constants";
+
 
 export class SessionRegistrationResponseDTO {
   registrationId: string;

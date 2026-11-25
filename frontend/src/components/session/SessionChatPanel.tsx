@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { MessageSquare, Send, X } from "lucide-react";
 
-import type { ChatMessage } from "@/hooks/useRoomSignals";
+import type { ChatMessage } from "@/hooks/session-room/useRoomSignals";
 
 interface SessionChatPanelProps {
   messages: ChatMessage[];

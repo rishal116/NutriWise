@@ -1,12 +1,15 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "../../../types/types";
 import { StatusCode } from "../../../enums/statusCode.enum";
 import { asyncHandler } from "../../../utils/asyncHandler";
+import { sendResponse } from "../../../utils/responseHandler";
 
-import { ISessionRoomService } from "../../../services/interfaces/public/ISessionRoomService";
-import { ISessionRoomController } from "../../interfaces/public/ISessionRoomController";
+import type { ISessionRoomService } from "../../../services/interfaces/public/ISessionRoomService";
+import type { ISessionRoomController } from "../../interfaces/public/ISessionRoomController";
+
+import { SESSION_ROOM_MESSAGES } from "../../../constants/public/session/session-room.messages";
 
 @injectable()
 export class SessionRoomController implements ISessionRoomController {
@@ -15,43 +18,52 @@ export class SessionRoomController implements ISessionRoomController {
     private readonly _sessionRoomService: ISessionRoomService,
   ) {}
 
-  joinSession = asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
+  getSessionRoomDetails = asyncHandler(async (req: Request, res: Response) => {
+    const { roomId } = req.params;
     const { userId } = req.user!;
 
-    const result = await this._sessionRoomService.joinSession(
+    const result = await this._sessionRoomService.getSessionRoomDetails(
       userId,
-      sessionId,
+      roomId,
     );
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Session room access granted successfully",
-      data: result,
-    });
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      SESSION_ROOM_MESSAGES.DETAILS_RETRIEVED,
+      result,
+    );
+  });
+
+  joinSession = asyncHandler(async (req: Request, res: Response) => {
+    const { roomId } = req.params;
+    const { userId } = req.user!;
+
+    const result = await this._sessionRoomService.joinSession(userId, roomId);
+
+    return sendResponse(
+      res,
+      StatusCode.OK,
+      SESSION_ROOM_MESSAGES.ACCESS_GRANTED,
+      result,
+    );
   });
 
   startSession = asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
+    const { roomId } = req.params;
     const { userId } = req.user!;
 
-    await this._sessionRoomService.startSession(userId, sessionId);
+    await this._sessionRoomService.startSession(userId, roomId);
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Session started successfully",
-    });
+    return sendResponse(res, StatusCode.OK, SESSION_ROOM_MESSAGES.STARTED);
   });
 
   endSession = asyncHandler(async (req: Request, res: Response) => {
-    const { sessionId } = req.params;
+    const { roomId } = req.params;
     const { userId } = req.user!;
 
-    await this._sessionRoomService.endSession(userId, sessionId);
+    await this._sessionRoomService.endSession(userId, roomId);
 
-    return res.status(StatusCode.OK).json({
-      success: true,
-      message: "Session ended successfully",
-    });
+    return sendResponse(res, StatusCode.OK, SESSION_ROOM_MESSAGES.ENDED);
   });
 }

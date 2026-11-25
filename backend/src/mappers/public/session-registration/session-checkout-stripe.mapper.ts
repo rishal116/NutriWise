@@ -1,5 +1,5 @@
 import { ISession } from "../../../models/session.model";
-import { StripeCheckoutInputDTO } from "../../../dtos/common/stripe.dto";
+import { StripeCheckoutInputDTO } from "../../../dtos/common/stripe/stripe.dto";
 
 export class SessionCheckoutStripeMapper {
   static toStripeInput(

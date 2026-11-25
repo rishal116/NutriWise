@@ -1,16 +1,22 @@
+import { Currency } from "../../../constants/common/currency.constants";
+import {
+  SessionPricingType,
+  SessionType,
+} from "../../../constants/common/session.constants";
+
 export interface PublicHomeSession {
   id: string;
   title: string;
   description?: string;
-  type: string;
+  type: SessionType;
   thumbnailUrl?: string;
   scheduledAt: Date;
   durationInMinutes: number;
   maxParticipants: number;
   pricing: {
-    type: string;
-    amount: number;
-    currency: string;
+    type: SessionPricingType;
+    amount?: number;
+    currency?: Currency;
   };
   nutritionist: {
     fullName: string;

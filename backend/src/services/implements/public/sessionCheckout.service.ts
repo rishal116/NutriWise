@@ -52,7 +52,7 @@ export class SessionCheckoutService implements ISessionCheckoutService {
       );
     }
 
-    if (session.pricing.type !== "paid") {
+    if (session.pricingType !== "paid") {
       throw new CustomError(
         "This session does not require payment",
         StatusCode.BAD_REQUEST,

@@ -1,14 +1,11 @@
 import type { PublicSessionSortOption } from "@/dtos/public/session/public-session-list-query.dto";
-import type { SessionType } from "@/types/public/session/session.types";
+import type { SessionType } from "../common/session.constants";
 
 export const PUBLIC_SESSION_LIMIT = 12;
 
 export const SESSION_TYPE_LABELS: Record<SessionType, string> = {
-  webinar: "Webinar",
-  workshop: "Workshop",
-  group_consultation: "Group Consultation",
-  qna: "Q&A",
-  seminar: "Seminar",
+  educational: "Educational",
+  interactive: "Interactive",
 };
 
 export const SESSION_SORT_OPTIONS: {

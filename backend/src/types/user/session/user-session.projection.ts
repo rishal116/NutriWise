@@ -1,29 +1,27 @@
 import type { Types } from "mongoose";
 
+import type { Currency } from "../../../constants/common/currency.constants";
+
 import type {
   SessionPricingType,
   SessionStatus,
   SessionType,
-} from "../../../models/session.model";
+} from "../../../constants/common/session.constants";
 
-import type {
-  SessionRegistrationPaymentStatus,
-  SessionRegistrationStatus,
-} from "../../../models/sessionRegistration.model";
+import type { SessionRegistrationStatus } from "../../../constants/common/session-registration.constants";
 
 export interface IUserSessionListProjection {
   registrationId: Types.ObjectId;
   sessionId: Types.ObjectId;
   registrationStatus: SessionRegistrationStatus;
-  paymentStatus: SessionRegistrationPaymentStatus;
   registeredAt: Date;
   session: {
     title: string;
     type: SessionType;
     pricing: {
       type: SessionPricingType;
-      amount: number;
-      currency: string;
+      amount?: number;
+      currency?: Currency;
     };
     scheduledAt: Date;
     durationInMinutes: number;
@@ -36,7 +34,6 @@ export interface IUserSessionDetailsProjection {
   registrationId: Types.ObjectId;
   sessionId: Types.ObjectId;
   registrationStatus: SessionRegistrationStatus;
-  paymentStatus: SessionRegistrationPaymentStatus;
   registeredAt: Date;
   cancelledAt: Date | null;
   attendedAt: Date | null;
@@ -47,8 +44,8 @@ export interface IUserSessionDetailsProjection {
     type: SessionType;
     pricing: {
       type: SessionPricingType;
-      amount: number;
-      currency: string;
+      amount?: number;
+      currency?: Currency;
     };
     scheduledAt: Date;
     durationInMinutes: number;

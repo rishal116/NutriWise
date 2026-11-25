@@ -1,14 +1,13 @@
 import { inject, injectable } from "inversify";
-import { Types } from "mongoose";
 
 import { TYPES } from "../../../types/types";
-import { IPublicSessionService } from "../../interfaces/public/IPublicSessionService";
-import { IPublicSessionRepository } from "../../../repositories/interfaces/public/IPublicSessionRepository";
-import { ISessionRegistrationRepository } from "../../../repositories/interfaces/public/ISessionRegistrationRepository";
+import type { IPublicSessionService } from "../../interfaces/public/IPublicSessionService";
+import type { IPublicSessionRepository } from "../../../repositories/interfaces/public/IPublicSessionRepository";
+import type { ISessionRegistrationRepository } from "../../../repositories/interfaces/public/ISessionRegistrationRepository";
 
-import { PublicSessionListQueryDTO } from "../../../dtos/public/session/public-session-list-query.dto";
-import { PublicSessionListItemResponseDTO } from "../../../dtos/public/session/public-session-list-response.dto";
-import { PublicSessionDetailsResponseDTO } from "../../../dtos/public/session/public-session-details-response.dto";
+import { GetPublicSessionsQueryDTO } from "../../../dtos/public/session/public-session-list-query.dto";
+import type { PublicSessionResponseDTO } from "../../../dtos/public/session/public-session-response.dto";
+import type { PublicSessionDetailsResponseDTO } from "../../../dtos/public/session/public-session-details-response.dto";
 import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
 
 import { CustomError } from "../../../utils/customError";
@@ -16,6 +15,9 @@ import { StatusCode } from "../../../enums/statusCode.enum";
 import { PublicSessionMapper } from "../../../mappers/public/session/public-session.mapper";
 import logger from "../../../utils/logger";
 import { validateDto } from "../../../middlewares/validateDto.middleware";
+import { toObjectId } from "../../../utils/object-id.util";
+import { decodeCursor } from "../../../utils/cursor.util";
+import { PUBLIC_SESSION_SORT_CONFIG } from "../../../constants/public/session/session-sort.constants";
 
 @injectable()
 export class PublicSessionService implements IPublicSessionService {
@@ -28,14 +30,32 @@ export class PublicSessionService implements IPublicSessionService {
   ) {}
 
   async getPublicSessions(
-    query: PublicSessionListQueryDTO,
-  ): Promise<InfiniteScrollResponseDTO<PublicSessionListItemResponseDTO>> {
-    const validatedQuery = await validateDto(PublicSessionListQueryDTO, query);
+    query: GetPublicSessionsQueryDTO,
+  ): Promise<InfiniteScrollResponseDTO<PublicSessionResponseDTO>> {
+    const validatedQuery = await validateDto(GetPublicSessionsQueryDTO, query);
 
-    const result =
-      await this._sessionRepository.findPublicSessions(validatedQuery);
+    const cursor = decodeCursor(validatedQuery.cursor);
 
-    const items = result.items.map(PublicSessionMapper.toListResponse);
+    const sortBy = validatedQuery.sortBy ?? "all";
+
+    const { field, direction } = PUBLIC_SESSION_SORT_CONFIG[sortBy];
+
+    const expectedSortKey = `${sortBy}:${field}:${direction}`;
+
+    if (cursor?.sortKey && cursor.sortKey !== expectedSortKey) {
+      throw new CustomError(
+        "Cursor does not match the selected sorting option",
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    const result = await this._sessionRepository.findPublicSessions(
+      validatedQuery,
+      cursor,
+    );
+
+    const items = result.items.map(PublicSessionMapper.toResponse);
+    console.log(items);
 
     logger.debug("Public sessions fetched and mapped", {
       count: items.length,
@@ -53,33 +73,33 @@ export class PublicSessionService implements IPublicSessionService {
     sessionId: string,
     userId?: string,
   ): Promise<PublicSessionDetailsResponseDTO> {
-    if (!Types.ObjectId.isValid(sessionId)) {
-      throw new CustomError("Invalid session ID", StatusCode.BAD_REQUEST);
-    }
+    console.log(sessionId,userId);
+    
+    const sessionObjectId = toObjectId(sessionId, "session ID");
 
-    if (userId && !Types.ObjectId.isValid(userId)) {
-      throw new CustomError("Invalid user ID", StatusCode.BAD_REQUEST);
-    }
+    const userObjectId = userId ? toObjectId(userId, "user ID") : undefined;
 
     const session =
-      await this._sessionRepository.findPublicSessionDetails(sessionId);
+      await this._sessionRepository.findPublicSessionDetails(sessionObjectId);
 
     if (!session) {
       throw new CustomError("Session not found", StatusCode.NOT_FOUND);
     }
 
-    const isHost = userId === session.nutritionist.nutritionistId.toString();
+    const isHost =
+      userObjectId?.toString() ===
+      session.nutritionist.nutritionistId.toString();
 
     const registration =
-      userId && !isHost
+      userObjectId && !isHost
         ? await this._sessionRegistrationRepository.findBySessionAndUser(
-            new Types.ObjectId(sessionId),
-            new Types.ObjectId(userId),
+            sessionObjectId,
+            userObjectId,
           )
         : null;
 
     return {
-      ...PublicSessionMapper.toDetailsResponse(session),
+      ...PublicSessionMapper.toResponse(session),
       isRegistered: registration?.status === "registered",
     };
   }

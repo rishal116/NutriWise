@@ -1,13 +1,9 @@
 import { ClientSession, Types } from "mongoose";
+
 import { IBaseRepository } from "../common/IBaseRepository";
 import { IPayment } from "../../../models/payment.model";
 
 export interface IPaymentRepository extends IBaseRepository<IPayment> {
-  createWithSession(
-    data: Partial<IPayment>,
-    session: ClientSession,
-  ): Promise<IPayment>;
-
   existsByCheckoutSessionId(
     checkoutSessionId: string,
     session?: ClientSession,

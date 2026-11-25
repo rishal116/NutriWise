@@ -1,9 +1,8 @@
-import { NextFunction, Request, Response } from "express";
+import { RequestHandler } from "express";
 
 export interface ISessionRoomController {
-  joinSession(req: Request, res: Response, next: NextFunction): void;
-
-  startSession(req: Request, res: Response, next: NextFunction): void;
-
-  endSession(req: Request, res: Response, next: NextFunction): void;
+  getSessionRoomDetails: RequestHandler;
+  joinSession: RequestHandler;
+  startSession: RequestHandler;
+  endSession: RequestHandler;
 }

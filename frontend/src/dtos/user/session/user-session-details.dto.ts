@@ -1,28 +1,30 @@
-
+import {
+  SessionStatus,
+  SessionType,
+} from "@/constants/common/session.constants";
 import type {
   UserSessionListItemDTO,
   UserSessionPricingDTO,
-  UserSessionRegistrationStatus,
-  UserSessionPaymentStatus,
-  UserSessionType,
-  UserSessionStatus,
-} from "./user-session.dto";
+} from "./user-session-list.dto";
 
-export interface UserSessionDetailsDTO
-  extends Omit<UserSessionListItemDTO, "session" | "cancelledAt"> {
+export interface UserSessionDetailsDTO extends Omit<
+  UserSessionListItemDTO,
+  "session"
+> {
   cancelledAt: string | null;
   attendedAt: string | null;
+
   session: {
     nutritionistId: string;
     title: string;
     description: string;
-    type: UserSessionType;
+    type: SessionType;
     pricing: UserSessionPricingDTO;
     scheduledAt: string;
     durationInMinutes: number;
     maxParticipants: number;
     roomId: string;
     thumbnailUrl?: string;
-    status: UserSessionStatus;
+    status: SessionStatus;
   };
 }

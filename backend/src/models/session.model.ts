@@ -1,29 +1,19 @@
 import { model, Schema, Types } from "mongoose";
-import { CURRENCY, Currency } from "../constants/common/currency.constants";
 
-export const SESSION_TYPES = [
-  "webinar",
-  "workshop",
-  "group_consultation",
-  "qna",
-  "seminar",
-] as const;
-export type SessionType = (typeof SESSION_TYPES)[number];
-
-export const SESSION_PRICING_TYPES = ["free", "paid"] as const;
-export type SessionPricingType = (typeof SESSION_PRICING_TYPES)[number];
-
-export const SESSION_STATUSES = [
-  "draft",
-  "scheduled",
-  "live",
-  "completed",
-  "cancelled",
-] as const;
-export type SessionStatus = (typeof SESSION_STATUSES)[number];
+import {
+  CURRENCY,
+  type Currency,
+} from "../constants/common/currency.constants";
+import {
+  SESSION_TYPES,
+  SESSION_PRICING_TYPES,
+  SESSION_STATUSES,
+  type SessionType,
+  type SessionPricingType,
+  type SessionStatus,
+} from "../constants/common/session.constants";
 
 export interface ISessionPricing {
-  type: SessionPricingType;
   amount: number;
   currency: Currency;
 }
@@ -34,29 +24,27 @@ export interface ISession {
   title: string;
   description: string;
   type: SessionType;
-  pricing: ISessionPricing;
+  pricingType: SessionPricingType;
+  pricing?: ISessionPricing;
   scheduledAt: Date;
-  durationInMinutes: number;
+  duration: number;
+  endTime?: Date;
   maxParticipants: number;
   roomId: string;
   thumbnailUrl?: string;
+  thumbnailPublicId?: string;
   status: SessionStatus;
+  deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const sessionPricingSchema = new Schema<ISessionPricing>(
   {
-    type: {
-      type: String,
-      enum: SESSION_PRICING_TYPES,
-      required: true,
-    },
     amount: {
       type: Number,
       required: true,
-      min: 0,
-      default: 0,
+      min: 1,
     },
     currency: {
       type: String,
@@ -81,43 +69,63 @@ const sessionSchema = new Schema<ISession>(
       type: String,
       required: true,
       trim: true,
-      maxlength: 200,
+      minlength: 5,
+      maxlength: 100,
     },
     description: {
       type: String,
       required: true,
       trim: true,
-      maxlength: 5000,
+      minlength: 20,
+      maxlength: 2000,
     },
     type: {
       type: String,
       enum: SESSION_TYPES,
       required: true,
     },
+    pricingType: {
+      type: String,
+      enum: SESSION_PRICING_TYPES,
+      required: true,
+    },
     pricing: {
       type: sessionPricingSchema,
-      required: true,
+      required: function (this: ISession) {
+        return this.pricingType === "paid";
+      },
     },
     scheduledAt: {
       type: Date,
       required: true,
     },
-    durationInMinutes: {
+    duration: {
       type: Number,
       required: true,
-      min: 1,
+      min: 15,
+      max: 180,
+    },
+    endTime: {
+      type: Date,
+      default: undefined,
     },
     maxParticipants: {
       type: Number,
       required: true,
-      min: 1,
+      min: 2,
+      max: 100,
     },
     roomId: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
     thumbnailUrl: {
+      type: String,
+      trim: true,
+    },
+    thumbnailPublicId: {
       type: String,
       trim: true,
     },
@@ -127,20 +135,25 @@ const sessionSchema = new Schema<ISession>(
       required: true,
       default: "draft",
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
-    collection: "hosted_sessions",
   },
 );
 
 sessionSchema.index({
   nutritionistId: 1,
+  deletedAt: 1,
   status: 1,
   scheduledAt: -1,
 });
 
 sessionSchema.index({
+  deletedAt: 1,
   status: 1,
   scheduledAt: 1,
 });
