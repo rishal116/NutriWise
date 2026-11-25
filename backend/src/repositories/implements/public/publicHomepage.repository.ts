@@ -202,6 +202,7 @@ export class PublicHomepageRepository implements IPublicHomepageRepository {
       {
         $match: {
           status: "scheduled",
+          deletedAt: null,
           scheduledAt: { $gt: currentDate },
         },
       },
@@ -268,9 +269,13 @@ export class PublicHomepageRepository implements IPublicHomepageRepository {
           type: 1,
           thumbnailUrl: 1,
           scheduledAt: 1,
-          durationInMinutes: 1,
+          durationInMinutes: "$duration",
           maxParticipants: 1,
-          pricing: 1,
+          pricing: {
+            type: "$pricingType",
+            amount: "$pricing.amount",
+            currency: "$pricing.currency",
+          },
           nutritionist: {
             fullName: "$nutritionist.fullName",
             username: "$nutritionist.username",

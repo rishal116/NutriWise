@@ -265,20 +265,12 @@ export default function ConversationList({
     [],
   );
 
-  const handleSelectConversation = (conversation: ConversationListItemDTO) => {
-    if (!conversation.conversationId) {
-      console.error("Missing conversation ID:", conversation);
-      return;
-    }
-    console.log(conversation);
-
-    const type = conversation.chatType === "direct" ? "personal" : "group";
-
-    router.push(`${messagesBasePath}/${type}/${conversation.conversationId}`);
-  };
-
   useEffect(() => {
     const socket = getSocket();
+
+    if (!socket) {
+      return;
+    }
 
     const cleanup = chatSocket.register(socket, {
       onReceive: handleIncomingMessage,
@@ -286,6 +278,17 @@ export default function ConversationList({
 
     return cleanup;
   }, [handleIncomingMessage]);
+
+  const handleSelectConversation = (conversation: ConversationListItemDTO) => {
+    if (!conversation.conversationId) {
+      console.error("Missing conversation ID:", conversation);
+      return;
+    }
+
+    const type = conversation.chatType === "direct" ? "personal" : "group";
+
+    router.push(`${messagesBasePath}/${type}/${conversation.conversationId}`);
+  };
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden border-r border-slate-200/80 bg-white select-none">

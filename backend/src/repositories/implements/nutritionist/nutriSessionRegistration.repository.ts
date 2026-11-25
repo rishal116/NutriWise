@@ -1,17 +1,22 @@
 import { injectable } from "inversify";
 import { PipelineStage, Types } from "mongoose";
+
 import {
   ISessionRegistration,
   SessionRegistrationModel,
 } from "../../../models/sessionRegistration.model";
-import { SessionModel } from "../../../models/session.model";
 import { UserModel } from "../../../models/user.model";
+import { PaymentModel } from "../../../models/payment.model";
+
 import { BaseRepository } from "../common/base.repository";
 import { INutriSessionRegistrationRepository } from "../../interfaces/nutritionist/INutriSessionRegistrationRepository";
-import { INutriSessionParticipantProjection } from "../../../types/nutritionist/session/nutri-session-participant.projection";
+
+import { INutriSessionParticipantProjection } from "../../../types/nutritionist/session-registration/nutri-session-participant.projection";
 import { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-import { decodeCursor, encodeCursor } from "../../../utils/cursor.util";
-import { NutriSessionParticipantsQueryDTO } from "../../../dtos/nutritionist/session/nutri-session-participants-query.dto";
+import { CursorData } from "../../../types/cursor.types";
+import { NutriSessionParticipantsQueryDTO } from "../../../dtos/nutritionist/session-registration/nutri-session-participants-query.dto";
+
+import { encodeCursor } from "../../../utils/cursor.util";
 
 interface ParticipantAggregationResult extends INutriSessionParticipantProjection {
   cursorId: Types.ObjectId;
@@ -28,45 +33,18 @@ export class NutriSessionRegistrationRepository
   }
 
   async findSessionParticipants(
-    sessionId: string | Types.ObjectId,
-    nutritionistId: string | Types.ObjectId,
+    sessionId: Types.ObjectId,
     query: NutriSessionParticipantsQueryDTO,
+    cursor?: CursorData | null,
   ): Promise<CursorPaginationResult<INutriSessionParticipantProjection>> {
-    const { search, status, paymentStatus, cursor, limit = 10 } = query;
-
-    const sessionObjectId =
-      typeof sessionId === "string" ? new Types.ObjectId(sessionId) : sessionId;
-
-    const nutritionistObjectId =
-      typeof nutritionistId === "string"
-        ? new Types.ObjectId(nutritionistId)
-        : nutritionistId;
-
-    const sessionExists = await SessionModel.exists({
-      _id: sessionObjectId,
-      nutritionistId: nutritionistObjectId,
-    });
-
-    if (!sessionExists) {
-      return {
-        items: [],
-        nextCursor: null,
-        hasMore: false,
-      };
-    }
-
-    const matchStage: Record<string, unknown> = {
-      sessionId: sessionObjectId,
-      status: status ?? { $ne: "cancelled" },
-    };
-
-    if (paymentStatus) {
-      matchStage.paymentStatus = paymentStatus;
-    }
+    const { search, status, paymentStatus, limit = 10 } = query;
 
     const pipeline: PipelineStage[] = [
       {
-        $match: matchStage,
+        $match: {
+          sessionId,
+          status: status ?? { $ne: "cancelled" },
+        },
       },
       {
         $lookup: {
@@ -83,6 +61,58 @@ export class NutriSessionRegistrationRepository
         $match: {
           "user.deletedAt": null,
           "user.isBlocked": false,
+        },
+      },
+      {
+        $lookup: {
+          from: PaymentModel.collection.name,
+          let: {
+            registrationId: "$_id",
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ["$itemId", "$$registrationId"],
+                    },
+                    {
+                      $eq: ["$itemType", "session_registration"],
+                    },
+                  ],
+                },
+              },
+            },
+            {
+              $sort: {
+                createdAt: -1,
+                _id: -1,
+              },
+            },
+            {
+              $limit: 1,
+            },
+            {
+              $project: {
+                _id: 0,
+                status: 1,
+              },
+            },
+          ],
+          as: "payment",
+        },
+      },
+      {
+        $addFields: {
+          paymentStatus: {
+            $ifNull: [
+              {
+                $arrayElemAt: ["$payment.status", 0],
+              },
+              null,
+            ],
+          },
         },
       },
     ];
@@ -102,15 +132,25 @@ export class NutriSessionRegistrationRepository
       });
     }
 
-    if (cursor) {
-      const decodedCursor = decodeCursor(cursor);
+    if (paymentStatus) {
+      pipeline.push({
+        $match: {
+          paymentStatus,
+        },
+      });
+    }
 
-      if (!decodedCursor) {
+    if (cursor) {
+      const cursorDate = new Date(cursor.value);
+
+      if (
+        !Types.ObjectId.isValid(cursor.id) ||
+        Number.isNaN(cursorDate.getTime())
+      ) {
         throw new Error("Invalid participant pagination cursor");
       }
 
-      const cursorDate = new Date(decodedCursor.value);
-      const cursorId = new Types.ObjectId(decodedCursor.id);
+      const cursorId = new Types.ObjectId(cursor.id);
 
       pipeline.push({
         $match: {
@@ -161,7 +201,7 @@ export class NutriSessionRegistrationRepository
     const results =
       await SessionRegistrationModel.aggregate<ParticipantAggregationResult>(
         pipeline,
-      );
+      ).exec();
 
     const hasMore = results.length > limit;
     const pageResults = results.slice(0, limit);

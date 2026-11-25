@@ -3,8 +3,8 @@
 import { useState, type ReactNode } from "react";
 import { Menu } from "lucide-react";
 
-import NutritionistHeader from "@/components/nutritionist/NutritionistHeader";
-import NutritionistSidebar from "@/components/nutritionist/NutritionistSidebar";
+import NutritionistHeader from "@/components/nutritionist/common/NutritionistHeader";
+import NutritionistSidebar from "@/components/nutritionist/common/NutritionistSidebar";
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);

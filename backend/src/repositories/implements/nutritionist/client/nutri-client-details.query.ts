@@ -4,8 +4,8 @@ import { PipelineStage, Types } from "mongoose";
 import { UserRole } from "../../../../enums/user.enum";
 import { UserProgramModel } from "../../../../models/userProgram.model";
 import type { IClientDetailsProjection } from "../../../../types/nutritionist/client/nutriClientDetails.projection";
-import { toObjectId } from "./client-query.utils";
 import { INutriClientDetailsQuery } from "../../../interfaces/nutritionist/client/INutriClientDetailsQuery";
+import { toObjectId } from "../../../../utils/object-id.util";
 
 @injectable()
 export class NutriClientDetailsQuery implements INutriClientDetailsQuery {
@@ -13,8 +13,9 @@ export class NutriClientDetailsQuery implements INutriClientDetailsQuery {
     clientId: string | Types.ObjectId,
     nutritionistId: string | Types.ObjectId,
   ): Promise<IClientDetailsProjection | null> {
-    const clientObjectId = toObjectId(clientId);
-    const nutritionistObjectId = toObjectId(nutritionistId);
+    const clientObjectId = toObjectId(clientId, "Client ID");
+
+    const nutritionistObjectId = toObjectId(nutritionistId, "Nutritionist ID");
 
     const pipeline: PipelineStage[] = [
       {

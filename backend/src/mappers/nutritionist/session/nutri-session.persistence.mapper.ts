@@ -1,103 +1,78 @@
-import { Types, UpdateQuery } from "mongoose";
+import { Types, type UpdateQuery } from "mongoose";
 
-import { ISession } from "../../../models/session.model";
+import type { ISession } from "../../../models/session.model";
+import type { CreateNutriSessionDTO } from "../../../dtos/nutritionist/session/create-session.dto";
+import type { UpdateNutriSessionDTO } from "../../../dtos/nutritionist/session/update-session.dto";
 
-import { CreateNutriSessionDTO } from "../../../dtos/nutritionist/session/create-session.dto";
-
-import { UpdateNutriSessionDTO } from "../../../dtos/nutritionist/session/update-session.dto";
+interface SessionThumbnail {
+  thumbnailUrl: string;
+  thumbnailPublicId: string;
+}
 
 export class NutriSessionPersistenceMapper {
   static toCreateModel(
     nutritionistId: string,
     dto: CreateNutriSessionDTO,
-    thumbnailUrl?: string,
+    thumbnail?: SessionThumbnail,
     roomId?: string,
   ): Partial<ISession> {
     return {
       nutritionistId: new Types.ObjectId(nutritionistId),
-
       title: dto.title,
-
       description: dto.description,
-
       type: dto.type,
-
-      pricing: {
-        type: dto.pricing.type,
-        amount: dto.pricing.amount,
-        currency: dto.pricing.currency,
-      },
-
-      scheduledAt: dto.scheduledAt,
-
-      durationInMinutes: dto.durationInMinutes,
-
-      maxParticipants: dto.maxParticipants,
-
-      roomId,
-
-      thumbnailUrl,
-
-      status: "draft",
-    };
-  }
-
-  static toUpdateModel(dto: UpdateNutriSessionDTO): UpdateQuery<ISession> {
-    const update: UpdateQuery<ISession> = {};
-
-    if (dto.title !== undefined) {
-      update.$set = {
-        ...update.$set,
-        title: dto.title,
-      };
-    }
-
-    if (dto.description !== undefined) {
-      update.$set = {
-        ...update.$set,
-        description: dto.description,
-      };
-    }
-
-    if (dto.type !== undefined) {
-      update.$set = {
-        ...update.$set,
-        type: dto.type,
-      };
-    }
-
-    if (dto.pricing !== undefined) {
-      update.$set = {
-        ...update.$set,
+      pricingType: dto.pricingType,
+      ...(dto.pricing && {
         pricing: {
-          type: dto.pricing.type,
           amount: dto.pricing.amount,
           currency: dto.pricing.currency,
         },
+      }),
+      scheduledAt: dto.scheduledAt,
+      duration: dto.duration,
+      ...(dto.endTime && { endTime: dto.endTime }),
+      maxParticipants: dto.maxParticipants,
+      ...(roomId && { roomId }),
+      ...(thumbnail && {
+        thumbnailUrl: thumbnail.thumbnailUrl,
+        thumbnailPublicId: thumbnail.thumbnailPublicId,
+      }),
+      status: "draft",
+      deletedAt: null,
+    };
+  }
+
+  static toUpdateModel(
+    dto: UpdateNutriSessionDTO,
+    thumbnail?: SessionThumbnail,
+  ): UpdateQuery<ISession> {
+    const set: UpdateQuery<ISession>["$set"] = {};
+
+    if (dto.title !== undefined) set.title = dto.title;
+    if (dto.description !== undefined) set.description = dto.description;
+    if (dto.type !== undefined) set.type = dto.type;
+    if (dto.pricingType !== undefined) set.pricingType = dto.pricingType;
+
+    if (dto.pricing !== undefined) {
+      set.pricing = {
+        amount: dto.pricing.amount,
+        currency: dto.pricing.currency,
       };
     }
 
-    if (dto.scheduledAt !== undefined) {
-      update.$set = {
-        ...update.$set,
-        scheduledAt: dto.scheduledAt,
-      };
-    }
-
-    if (dto.durationInMinutes !== undefined) {
-      update.$set = {
-        ...update.$set,
-        durationInMinutes: dto.durationInMinutes,
-      };
-    }
+    if (dto.scheduledAt !== undefined) set.scheduledAt = dto.scheduledAt;
+    if (dto.duration !== undefined) set.duration = dto.duration;
+    if (dto.endTime !== undefined) set.endTime = dto.endTime;
 
     if (dto.maxParticipants !== undefined) {
-      update.$set = {
-        ...update.$set,
-        maxParticipants: dto.maxParticipants,
-      };
+      set.maxParticipants = dto.maxParticipants;
     }
 
-    return update;
+    if (thumbnail) {
+      set.thumbnailUrl = thumbnail.thumbnailUrl;
+      set.thumbnailPublicId = thumbnail.thumbnailPublicId;
+    }
+
+    return { $set: set };
   }
 }

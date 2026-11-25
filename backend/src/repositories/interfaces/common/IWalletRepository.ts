@@ -1,7 +1,10 @@
-import { ClientSession } from "mongoose";
-import { IWallet, WalletOwnerType } from "../../../models/wallet.model";
+import type { ClientSession } from "mongoose";
 
-export interface IWalletRepository {
+import type { IBaseRepository } from "./IBaseRepository";
+import type { IWallet } from "../../../models/wallet.model";
+import type { WalletOwnerType } from "../../../constants/common/wallet.constants";
+
+export interface IWalletRepository extends IBaseRepository<IWallet> {
   findByOwner(
     ownerId: string,
     ownerType: WalletOwnerType,

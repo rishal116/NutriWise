@@ -1,12 +1,18 @@
 import { injectable } from "inversify";
-import { ClientSession, Types } from "mongoose";
 import {
-  IWallet,
-  WalletModel,
-  WalletOwnerType,
-} from "../../../models/wallet.model";
+  type ClientSession,
+  type FilterQuery,
+  type UpdateQuery,
+  Types,
+} from "mongoose";
+
+import { CURRENCY } from "../../../constants/common/currency.constants";
+import type { WalletOwnerType } from "../../../constants/common/wallet.constants";
 import { BaseRepository } from "../common/base.repository";
-import { IWalletRepository } from "../../interfaces/common/IWalletRepository";
+import { WalletModel, type IWallet } from "../../../models/wallet.model";
+import type { IWalletRepository } from "../../interfaces/common/IWalletRepository";
+
+type WalletBalanceField = "availableBalance" | "escrowBalance";
 
 @injectable()
 export class WalletRepository
@@ -21,7 +27,7 @@ export class WalletRepository
     ownerId: string,
     ownerType: WalletOwnerType,
   ): Promise<IWallet | null> {
-    return this._model.findOne({
+    return this.findOne({
       ownerId: new Types.ObjectId(ownerId),
       ownerType,
     });
@@ -43,7 +49,7 @@ export class WalletRepository
           ownerType,
           availableBalance: 0,
           escrowBalance: 0,
-          currency: "inr",
+          currency: CURRENCY,
           isActive: true,
         },
       },
@@ -54,6 +60,10 @@ export class WalletRepository
       },
     );
 
+    if (!wallet) {
+      throw new Error("Wallet upsert operation failed.");
+    }
+
     return wallet;
   }
 
@@ -62,18 +72,7 @@ export class WalletRepository
     amount: number,
     session?: ClientSession,
   ): Promise<void> {
-    await this._model.updateOne(
-      { _id: new Types.ObjectId(walletId) },
-      {
-        $inc: {
-          availableBalance: amount,
-        },
-        $set: {
-          lastTransactionAt: new Date(),
-        },
-      },
-      { session },
-    );
+    await this.updateBalance(walletId, { availableBalance: amount }, session);
   }
 
   async debit(
@@ -81,17 +80,12 @@ export class WalletRepository
     amount: number,
     session?: ClientSession,
   ): Promise<void> {
-    await this._model.updateOne(
-      { _id: new Types.ObjectId(walletId) },
-      {
-        $inc: {
-          availableBalance: -amount,
-        },
-        $set: {
-          lastTransactionAt: new Date(),
-        },
-      },
-      { session },
+    await this.updateBalance(
+      walletId,
+      { availableBalance: -amount },
+      session,
+      "availableBalance",
+      amount,
     );
   }
 
@@ -100,18 +94,7 @@ export class WalletRepository
     amount: number,
     session?: ClientSession,
   ): Promise<void> {
-    await this._model.updateOne(
-      { _id: new Types.ObjectId(walletId) },
-      {
-        $inc: {
-          escrowBalance: amount,
-        },
-        $set: {
-          lastTransactionAt: new Date(),
-        },
-      },
-      { session },
-    );
+    await this.updateBalance(walletId, { escrowBalance: amount }, session);
   }
 
   async debitEscrow(
@@ -119,17 +102,12 @@ export class WalletRepository
     amount: number,
     session?: ClientSession,
   ): Promise<void> {
-    await this._model.updateOne(
-      { _id: new Types.ObjectId(walletId) },
-      {
-        $inc: {
-          escrowBalance: -amount,
-        },
-        $set: {
-          lastTransactionAt: new Date(),
-        },
-      },
-      { session },
+    await this.updateBalance(
+      walletId,
+      { escrowBalance: -amount },
+      session,
+      "escrowBalance",
+      amount,
     );
   }
 
@@ -138,18 +116,15 @@ export class WalletRepository
     amount: number,
     session?: ClientSession,
   ): Promise<void> {
-    await this._model.updateOne(
-      { _id: new Types.ObjectId(walletId) },
+    await this.updateBalance(
+      walletId,
       {
-        $inc: {
-          escrowBalance: -amount,
-          availableBalance: amount,
-        },
-        $set: {
-          lastTransactionAt: new Date(),
-        },
+        escrowBalance: -amount,
+        availableBalance: amount,
       },
-      { session },
+      session,
+      "escrowBalance",
+      amount,
     );
   }
 
@@ -159,7 +134,40 @@ export class WalletRepository
     amount: number,
     session?: ClientSession,
   ): Promise<void> {
+    if (!session) {
+      throw new Error("A transaction session is required.");
+    }
+
     await this.debitEscrow(fromWalletId, amount, session);
     await this.credit(toWalletId, amount, session);
+  }
+
+  private async updateBalance(
+    walletId: string,
+    changes: Partial<Record<WalletBalanceField, number>>,
+    session?: ClientSession,
+    requiredBalanceField?: WalletBalanceField,
+    requiredAmount?: number,
+  ): Promise<void> {
+    const filter: FilterQuery<IWallet> = {
+      _id: new Types.ObjectId(walletId),
+    };
+
+    if (requiredBalanceField && requiredAmount !== undefined) {
+      filter[requiredBalanceField] = { $gte: requiredAmount };
+    }
+
+    const update: UpdateQuery<IWallet> = {
+      $inc: changes,
+      $set: {
+        lastTransactionAt: new Date(),
+      },
+    };
+
+    const result = await this._model.updateOne(filter, update, { session });
+
+    if (result.matchedCount === 0) {
+      throw new Error("Wallet balance update failed.");
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { injectable } from "inversify";
 import { ClientSession, Types } from "mongoose";
+
 import { BaseRepository } from "../common/base.repository";
 import { IPaymentRepository } from "../../interfaces/common/IPaymentRepository";
 import { IPayment, PaymentModel } from "../../../models/payment.model";
@@ -13,61 +14,42 @@ export class PaymentRepository
     super(PaymentModel);
   }
 
-  async createWithSession(
-    data: Partial<IPayment>,
-    session: ClientSession,
-  ): Promise<IPayment> {
-    const [payment] = await this._model.create([data], {
-      session,
-    });
-
-    return payment;
-  }
-
   async existsByCheckoutSessionId(
     checkoutSessionId: string,
     session?: ClientSession,
   ): Promise<boolean> {
-    const query = this._model.exists({ checkoutSessionId });
-
-    if (session) {
-      query.session(session);
-    }
-
-    return (await query.exec()) !== null;
+    return this.exists(
+      {
+        provider: "stripe",
+        "providerReferences.checkoutId": checkoutSessionId,
+      },
+      session,
+    );
   }
 
   async findByCheckoutSessionId(
     checkoutSessionId: string,
   ): Promise<IPayment | null> {
-    return this._model
-      .findOne({ checkoutSessionId })
-      .lean<IPayment | null>()
-      .exec();
+    return this.findOne({
+      provider: "stripe",
+      "providerReferences.checkoutId": checkoutSessionId,
+    });
   }
 
   async findByUserId(userId: string | Types.ObjectId): Promise<IPayment[]> {
-    return this._model
-      .find({ userId })
-      .sort({ createdAt: -1 })
-      .lean<IPayment[]>()
-      .exec();
+    return this.find({ buyerId: userId }, undefined, { createdAt: -1 });
   }
 
   async findBySellerId(sellerId: string | Types.ObjectId): Promise<IPayment[]> {
-    return this._model
-      .find({ sellerId })
-      .sort({ createdAt: -1 })
-      .lean<IPayment[]>()
-      .exec();
+    return this.find({ sellerId }, undefined, { createdAt: -1 });
   }
 
   async findByPaymentIntentId(
     paymentIntentId: string,
   ): Promise<IPayment | null> {
-    return this._model
-      .findOne({ paymentIntentId })
-      .lean<IPayment | null>()
-      .exec();
+    return this.findOne({
+      provider: "stripe",
+      "providerReferences.transactionId": paymentIntentId,
+    });
   }
 }

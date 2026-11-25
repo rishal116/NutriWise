@@ -1,9 +1,15 @@
 import type {
-  SessionCurrency,
   SessionPricingType,
   SessionStatus,
   SessionType,
-} from "@/types/public/session/session.types";
+} from "../../../constants/common/session.constants";
+import type { Currency } from "../../../constants/common/currency.constants";
+
+export interface IPublicSessionNutritionistResponseDTO {
+  nutritionistId: string;
+  name: string;
+  profileImage?: string;
+}
 
 export interface PublicSessionDetailsResponseDTO {
   sessionId: string;
@@ -12,19 +18,15 @@ export interface PublicSessionDetailsResponseDTO {
   type: SessionType;
   pricing: {
     type: SessionPricingType;
-    amount: number;
-    currency: SessionCurrency;
+    amount?: number;
+    currency?: Currency;
   };
   scheduledAt: string;
-  durationInMinutes: number;
+  duration: number;
   maxParticipants: number;
+  participantCount: number;
   thumbnailUrl?: string;
   status: SessionStatus;
-  nutritionist: {
-    nutritionistId: string;
-    name: string;
-    profileImage?: string;
-    bio?: string;
-  };
   isRegistered: boolean;
+  nutritionist: IPublicSessionNutritionistResponseDTO;
 }

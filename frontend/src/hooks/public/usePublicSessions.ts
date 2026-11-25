@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,27 +12,22 @@ import type { PublicSessionListItemResponseDTO } from "@/dtos/public/session/pub
 import {
   SESSION_PRICING_TYPES,
   SESSION_TYPES,
-} from "@/types/public/session/session.types";
+} from "@/constants/common/session.constants";
 import type {
   SessionPricingType,
   SessionType,
-} from "@/types/public/session/session.types";
-
-import { publicSessionService } from "@/services/public/publicSession.service";
+} from "@/constants/common/session.constants";
 import { PUBLIC_SESSION_LIMIT } from "@/constants/public/session.constants";
+import { publicSessionService } from "@/services/public/publicSession.service";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
 export function usePublicSessions() {
-  const [sessions, setSessions] = useState<PublicSessionListItemResponseDTO[]>(
-    [],
-  );
+  const [sessions, setSessions] = useState<PublicSessionListItemResponseDTO[]>([]);
 
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [type, setType] = useState<SessionType | undefined>();
-  const [pricingType, setPricingType] = useState<
-    SessionPricingType | undefined
-  >();
+  const [pricingType, setPricingType] = useState<SessionPricingType | undefined>();
   const [sortBy, setSortBy] = useState<PublicSessionSortOption>("all");
 
   const [hasMore, setHasMore] = useState(true);
@@ -75,12 +71,11 @@ export function usePublicSessions() {
         };
 
         const response = await publicSessionService.getSessions(query);
+        const data = response.data;
 
         if (cancelled || requestId !== requestIdRef.current) {
           return;
         }
-
-        const data = response.data;
 
         if (!data) {
           throw new Error("Session data was not returned by the server.");
@@ -140,12 +135,11 @@ export function usePublicSessions() {
       };
 
       const response = await publicSessionService.getSessions(query);
+      const data = response.data;
 
       if (requestId !== requestIdRef.current) {
         return;
       }
-
-      const data = response.data;
 
       if (!data) {
         throw new Error("Session data was not returned by the server.");
@@ -154,11 +148,9 @@ export function usePublicSessions() {
       const nextCursor = data.nextCursor ?? undefined;
 
       if (data.hasMore && (!nextCursor || nextCursor === cursor)) {
-        paginationErrorRef.current = true;
-        setPaginationError(
+        throw new Error(
           "Unable to continue loading sessions. Please try again later.",
         );
-        return;
       }
 
       setSessions((previous) => {
@@ -277,7 +269,9 @@ export function usePublicSessions() {
     clearFilters,
     retryInitialLoad,
     retryPagination,
-    hasActiveFilters: Boolean(search || type || pricingType),
+    hasActiveFilters: Boolean(
+      search || type || pricingType || sortBy !== "all",
+    ),
     sessionTypes: SESSION_TYPES,
     pricingTypes: SESSION_PRICING_TYPES,
   };

@@ -11,8 +11,8 @@ import { UserProgramModel } from "../../../../models/userProgram.model";
 import type { CursorPaginationResult } from "../../../../types/common/cursor-pagination.types";
 import type { IClientListProjection } from "../../../../types/nutritionist/client/nutriClientList.projection";
 import { decodeCursor, encodeCursor } from "../../../../utils/cursor.util";
-import { toObjectId } from "./client-query.utils";
 import { INutriClientListQuery } from "../../../interfaces/nutritionist/client/INutriClientListQuery";
+import { toObjectId } from "../../../../utils/object-id.util";
 
 interface ClientProjectionWithCursor extends IClientListProjection {
   cursorId: Types.ObjectId;
@@ -72,7 +72,7 @@ export class NutriClientListQuery implements INutriClientListQuery {
       limit = 10,
     } = query;
 
-    const nutritionistObjectId = toObjectId(nutritionistId);
+    const nutritionistObjectId = toObjectId(nutritionistId, "Nutritionist ID");
     const cursorData = decodeCursor(cursor);
     const { field: sortField, direction: sortDirection } =
       getClientSortStage(sortBy);
@@ -230,7 +230,7 @@ export class NutriClientListQuery implements INutriClientListQuery {
     );
 
     if (cursorData) {
-      const cursorId = toObjectId(cursorData.id);
+      const cursorId = toObjectId(cursorData.id, "Cursor ID");
       let cursorValue: string | Date = cursorData.value as string;
 
       if (!isNameSort) {

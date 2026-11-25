@@ -1,9 +1,10 @@
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
@@ -20,7 +21,6 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 
 export default function SessionCheckoutPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const router = useRouter();
 
   const [session, setSession] =
     useState<PublicSessionDetailsResponseDTO | null>(null);
@@ -61,7 +61,9 @@ export default function SessionCheckoutPage() {
           setError(getErrorMessage(fetchError));
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
@@ -84,7 +86,6 @@ export default function SessionCheckoutPage() {
     setError(null);
 
     try {
-      // Backend validates the session and creates the Stripe Checkout Session.
       const response =
         await sessionCheckoutService.createSessionRegistrationCheckout(
           session.sessionId,
@@ -96,13 +97,12 @@ export default function SessionCheckoutPage() {
         );
       }
 
-      const checkoutUrl = response.data.checkoutUrl;
+      const { checkoutUrl } = response.data;
 
       if (!checkoutUrl) {
         throw new Error("Unable to create the payment session.");
       }
 
-      // Navigate to Stripe's hosted Checkout page.
       window.location.assign(checkoutUrl);
     } catch (checkoutError: unknown) {
       setError(getErrorMessage(checkoutError));
@@ -124,6 +124,7 @@ export default function SessionCheckoutPage() {
         <p role="alert" className="text-sm text-red-600">
           {error}
         </p>
+
         <Link
           href={`/communities/sessions/${sessionId}`}
           className="mt-5 inline-flex items-center gap-2 text-sm text-emerald-700"
@@ -138,6 +139,15 @@ export default function SessionCheckoutPage() {
   if (!session) return null;
 
   const date = new Date(session.scheduledAt);
+
+  const formattedPrice =
+    session.pricing.amount !== undefined &&
+    session.pricing.currency
+      ? new Intl.NumberFormat("en-IN", {
+          style: "currency",
+          currency: session.pricing.currency,
+        }).format(session.pricing.amount)
+      : "Price unavailable";
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-12">
@@ -176,9 +186,11 @@ export default function SessionCheckoutPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700">
               {session.type.replaceAll("_", " ")}
             </p>
+
             <h2 className="mt-2 text-xl font-bold text-gray-900">
               {session.title}
             </h2>
+
             <p className="mt-2 text-sm leading-6 text-gray-600">
               {session.description}
             </p>
@@ -200,6 +212,7 @@ export default function SessionCheckoutPage() {
                 </div>
               )}
             </div>
+
             <div>
               <p className="text-xs text-gray-500">Hosted by</p>
               <p className="font-medium text-gray-900">
@@ -211,6 +224,7 @@ export default function SessionCheckoutPage() {
           <div className="grid gap-4 border-t border-gray-100 pt-5 sm:grid-cols-2">
             <div className="flex items-start gap-3">
               <CalendarDays className="mt-0.5 h-5 w-5 text-emerald-700" />
+
               <div>
                 <p className="text-xs text-gray-500">Date and time</p>
                 <p className="mt-1 text-sm font-medium text-gray-900">
@@ -231,10 +245,11 @@ export default function SessionCheckoutPage() {
 
             <div className="flex items-start gap-3">
               <Clock className="mt-0.5 h-5 w-5 text-emerald-700" />
+
               <div>
                 <p className="text-xs text-gray-500">Duration</p>
                 <p className="mt-1 text-sm font-medium text-gray-900">
-                  {session.durationInMinutes} minutes
+                  {session.duration} minutes
                 </p>
               </div>
             </div>
@@ -244,12 +259,9 @@ export default function SessionCheckoutPage() {
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm text-gray-600">Session fee</span>
               <span className="text-xl font-bold text-gray-900">
-                ₹{session.pricing.amount.toLocaleString("en-IN")}
+                {formattedPrice}
               </span>
             </div>
-            <p className="mt-1 text-right text-xs text-gray-500">
-              Amount charged in {session.pricing.currency.toUpperCase()}
-            </p>
           </div>
         </div>
       </section>
@@ -257,14 +269,17 @@ export default function SessionCheckoutPage() {
       <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
         <div className="flex items-start gap-3">
           <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+
           <div>
             <h2 className="font-semibold text-gray-900">
               Terms and conditions
             </h2>
+
             <p className="mt-2 text-sm leading-6 text-gray-600">
               Please review the session booking, attendance, cancellation, and
               refund policies before continuing.
             </p>
+
             <Link
               href="/terms"
               target="_blank"
@@ -283,6 +298,7 @@ export default function SessionCheckoutPage() {
             onChange={(event) => setAcceptedTerms(event.target.checked)}
             className="mt-1 h-4 w-4 accent-emerald-600"
           />
+
           <span className="text-sm leading-6 text-gray-700">
             I have read and agree to the terms and conditions for this session.
           </span>
@@ -297,7 +313,12 @@ export default function SessionCheckoutPage() {
         <button
           type="button"
           onClick={() => void handleProceedToPayment()}
-          disabled={!acceptedTerms || submitting}
+          disabled={
+            !acceptedTerms ||
+            submitting ||
+            session.pricing.amount === undefined ||
+            !session.pricing.currency
+          }
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting ? (

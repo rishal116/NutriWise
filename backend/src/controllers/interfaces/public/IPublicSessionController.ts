@@ -1,10 +1,6 @@
-import { Request, Response, NextFunction } from "express";
+import type { RequestHandler } from "express";
 
 export interface IPublicSessionController {
-  getPublicSessions: (req: Request, res: Response, next: NextFunction) => void;
-  getPublicSessionDetails: (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => void;
+  getPublicSessions: RequestHandler;
+  getPublicSessionDetails: RequestHandler;
 }

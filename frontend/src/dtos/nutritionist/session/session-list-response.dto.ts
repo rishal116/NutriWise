@@ -1,23 +1,23 @@
-import type {
-  SessionCurrency,
+import { Currency } from "@/constants/common/currency.constants";
+import {
   SessionPricingType,
   SessionStatus,
   SessionType,
-} from "@/types/nutritionist/session/session.types";
+} from "@/constants/common/session.constants";
 
 export interface NutriSessionListResponseDTO {
   sessionId: string;
   title: string;
   type: SessionType;
-  pricing: {
-    type: SessionPricingType;
+  pricingType: SessionPricingType;
+  pricing?: {
     amount: number;
-    currency: SessionCurrency;
+    currency: Currency;
   };
   scheduledAt: string;
-  durationInMinutes: number;
+  duration: number;
+  endTime?: string;
   thumbnailUrl?: string;
   status: SessionStatus;
-  registeredCount: number;
-  createdAt: string;
+  participantCount: number;
 }

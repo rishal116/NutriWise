@@ -4,15 +4,15 @@ import { PipelineStage, Types } from "mongoose";
 import { UserProgramModel } from "../../../../models/userProgram.model";
 import { UserRole } from "../../../../enums/user.enum";
 import { IMeetingClientOption } from "../../../../types/nutritionist/client/nutriClientDetails.projection";
-import { toObjectId } from "./client-query.utils";
 import { IMeetingEligibleClientsQuery } from "../../../interfaces/nutritionist/client/IMeetingEligibleClientsQuery";
+import { toObjectId } from "../../../../utils/object-id.util";
 
 @injectable()
 export class MeetingEligibleClientsQuery implements IMeetingEligibleClientsQuery {
   async execute(
     nutritionistId: string | Types.ObjectId,
   ): Promise<IMeetingClientOption[]> {
-    const nutritionistObjectId = toObjectId(nutritionistId);
+    const nutritionistObjectId = toObjectId(nutritionistId, "Nutritionist ID");
 
     const pipeline: PipelineStage[] = [
       {

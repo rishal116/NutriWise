@@ -1,15 +1,10 @@
 import { inject, injectable } from "inversify";
-
 import { TYPES } from "../../../../types/types";
-
 import type { INutritionistPlanDayRepository } from "../../../../repositories/interfaces/nutritionist/INutriPlanDayRepository";
 import type { IUserProgramDayRepository } from "../../../../repositories/interfaces/user/program/IUserProgramDayRepository";
-
 import type { IStripeProgramDayCreationService } from "../../../interfaces/common/stripe/IStripeProgramDayCreationService";
 import type { StripeProgramDayCreationDTO } from "../../../../dtos/common/stripe/stripe-program-day-creation.dto";
-
 import { StripeProgramDayMapper } from "../../../../mappers/common/stripe/stripe-program-day.mapper";
-
 import { CustomError } from "../../../../utils/customError";
 import { StatusCode } from "../../../../enums/statusCode.enum";
 
@@ -29,6 +24,7 @@ export class StripeProgramDayCreationService implements IStripeProgramDayCreatio
     const templateDays = await this.nutritionistPlanDayRepository.find(
       { planId },
       session,
+      { dayNumber: 1 },
     );
 
     if (templateDays.length === 0) {

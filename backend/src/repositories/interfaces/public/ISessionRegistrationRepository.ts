@@ -7,9 +7,13 @@ export interface ISessionRegistrationRepository extends IBaseRepository<ISession
   findBySessionAndUser(
     sessionId: Types.ObjectId,
     userId: Types.ObjectId,
+    session?: ClientSession,
   ): Promise<ISessionRegistration | null>;
 
-  countActiveRegistrations(sessionId: Types.ObjectId): Promise<number>;
+  countActiveRegistrations(
+    sessionId: Types.ObjectId,
+    session?: ClientSession,
+  ): Promise<number>;
 
   findBySession(sessionId: Types.ObjectId): Promise<ISessionRegistration[]>;
 

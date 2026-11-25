@@ -203,7 +203,7 @@ import { NutritionistPlanController } from "../controllers/implementations/nutri
 import { NutriClientController } from "../controllers/implementations/nutritionist/nutriClient.controller";
 import { NutriProgramDayController } from "../controllers/implementations/nutritionist/program/nutriProgramDay.controller";
 import { NutriResourceController } from "../controllers/implementations/nutritionist/nutriResource.controller";
-import { NutriSessionController } from "../controllers/implementations/nutritionist/nuriSession.controller";
+import { NutriSessionController } from "../controllers/implementations/nutritionist/nutriSession.controller";
 
 // ---------- Services ----------
 
@@ -319,7 +319,7 @@ import { NotificationService } from "../services/implements/common/notification.
 import { OtpService } from "../services/implements/common/otp.service";
 import { StripeService } from "../services/implements/common/stripe/stripe.service";
 import { StripeWebhookService } from "../services/implements/common/stripe/stripeWebhook.service";
-import { StripeCheckoutHandlerService } from "../services/implements/common/stripe/stripeCheckoutHandler.service";
+import { ProgramStripeCheckoutHandlerService } from "../services/implements/common/stripe/programStripeCheckoutHandler.service";
 
 // ---------- Repositories ----------
 
@@ -343,7 +343,6 @@ import { INotificationService } from "../services/interfaces/common/INotificatio
 import { IOTPService } from "../services/interfaces/common/IOtpService";
 import { IStripeService } from "../services/interfaces/common/stripe/IStripeService";
 import { IStripeWebhookService } from "../services/interfaces/common/stripe/IStripeWebhookService";
-import { IStripeCheckoutHandlerService } from "../services/interfaces/common/stripe/IStripeCheckoutHandlerService";
 
 // Repositories
 
@@ -367,7 +366,7 @@ import { ISessionRegistrationRepository } from "../repositories/interfaces/publi
 import { ISessionRoomController } from "../controllers/interfaces/public/ISessionRoomController";
 import { SessionRoomController } from "../controllers/implementations/public/sessionRoom.controller";
 import { ISessionRoomService } from "../services/interfaces/public/ISessionRoomService";
-import { SessionRoomService } from "../services/implements/public/sessionRoom.service";
+import { SessionRoomService } from "../services/implements/livekit/sessionRoom.service";
 import { ILiveKitService } from "../services/interfaces/livekit/ILiveKitService";
 import { LiveKitService } from "../services/implements/livekit/livekit.service";
 import { IResourceViewRepository } from "../repositories/interfaces/resource/IResourceViewRepository";
@@ -442,7 +441,6 @@ import { NutriDashboardController } from "../controllers/implementations/nutriti
 import { INutriDashboardService } from "../services/interfaces/nutritionist/INutriDashboardService";
 import { NutriDashboardService } from "../services/implements/nutritionist/nutriDashboard.service";
 import { NutriDashboardRepository } from "../repositories/implements/nutritionist/nutriDashboard.repository";
-import { ISessionStripeCheckoutHandlerService } from "../services/interfaces/common/stripe/ISessionStripeCheckoutHandlerService";
 import { IPublicPostController } from "../controllers/interfaces/public/IPublicPostController";
 import { PublicPostController } from "../controllers/implementations/public/publicPost.controller";
 import { IPublicPostService } from "../services/interfaces/public/IPublicPostService";
@@ -480,7 +478,7 @@ import { NutritionistCredentialsService } from "../services/implements/nutrition
 import { INutriSessionRegistrationController } from "../controllers/interfaces/nutritionist/INutriSessionRegistrationController";
 import { NutriSessionRegistrationController } from "../controllers/implementations/nutritionist/nutriSessionRegistration.controller";
 import { INutriSessionRegistrationService } from "../services/interfaces/nutritionist/INutriSessionRegistrationService";
-import { NutriSessionRegistrationService } from "../services/implements/nutritionist/nutriRegistration.service";
+import { NutriSessionRegistrationService } from "../services/implements/nutritionist/nutriSessionRegistration.service";
 import { INutriSessionRegistrationRepository } from "../repositories/interfaces/nutritionist/INutriSessionRegistrationRepository";
 import { NutriSessionRegistrationRepository } from "../repositories/implements/nutritionist/nutriSessionRegistration.repository";
 import { NutriClientListQuery } from "../repositories/implements/nutritionist/client/nutri-client-list.query";
@@ -602,6 +600,13 @@ import { IPublicHomepageService } from "../services/interfaces/public/IPublicHom
 import { PublicHomepageService } from "../services/implements/public/publicHomepage.service";
 import { IPublicHomepageController } from "../controllers/interfaces/public/IPublicHomepageController";
 import { PublicHomepageController } from "../controllers/implementations/public/publicHomepage.controller";
+import { IStripeCheckoutEventHandler } from "../services/interfaces/common/stripe/IStripeCheckoutEventHandler";
+import { IStripeWebhookVerifier } from "../services/interfaces/common/stripe/IStripeWebhookVerifier";
+import { StripeWebhookVerifier } from "../services/implements/common/stripe/stripe-webhook-verifier";
+import { IStripeEventDispatcher } from "../services/interfaces/common/stripe/IStripeEventDispatcher";
+import { StripeEventDispatcher } from "../services/implements/common/stripe/stripe-event-dispatcher";
+import { IStripeCheckoutHandlerRegistry } from "../services/interfaces/common/stripe/IStripeCheckoutHandlerRegistry";
+import { StripeCheckoutHandlerRegistry } from "../services/implements/common/stripe/stripe-checkout-handler-registry";
 
 const container = new Container();
 
@@ -1175,12 +1180,6 @@ container
 container.bind<ICheckoutService>(TYPES.ICheckoutService).to(CheckoutService);
 
 container
-  .bind<ISessionStripeCheckoutHandlerService>(
-    TYPES.ISessionStripeCheckoutHandlerService,
-  )
-  .to(SessionStripeCheckoutHandlerService);
-
-container
   .bind<INotificationService>(TYPES.INotificationService)
   .to(NotificationService);
 
@@ -1191,10 +1190,6 @@ container.bind<IStripeService>(TYPES.IStripeService).to(StripeService);
 container
   .bind<IStripeWebhookService>(TYPES.IStripeWebhookService)
   .to(StripeWebhookService);
-
-container
-  .bind<IStripeCheckoutHandlerService>(TYPES.IStripeCheckoutHandlerService)
-  .to(StripeCheckoutHandlerService);
 
 // ---------- Repositories ----------
 
@@ -1524,5 +1519,25 @@ container
 container
   .bind<IPublicHomepageController>(TYPES.IPublicHomepageController)
   .to(PublicHomepageController);
+
+container
+  .bind<IStripeCheckoutEventHandler>(TYPES.IStripeCheckoutEventHandler)
+  .to(ProgramStripeCheckoutHandlerService);
+
+container
+  .bind<IStripeCheckoutEventHandler>(TYPES.IStripeCheckoutEventHandler)
+  .to(SessionStripeCheckoutHandlerService);
+
+container
+  .bind<IStripeEventDispatcher>(TYPES.IStripeEventDispatcher)
+  .to(StripeEventDispatcher);
+
+container
+  .bind<IStripeWebhookVerifier>(TYPES.IStripeWebhookVerifier)
+  .to(StripeWebhookVerifier);
+
+container
+  .bind<IStripeCheckoutHandlerRegistry>(TYPES.IStripeCheckoutHandlerRegistry)
+  .to(StripeCheckoutHandlerRegistry);
 
 export { container };

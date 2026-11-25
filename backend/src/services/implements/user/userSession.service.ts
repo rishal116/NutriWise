@@ -2,17 +2,20 @@ import { inject, injectable } from "inversify";
 import { Types } from "mongoose";
 
 import { UserSessionListQueryDTO } from "../../../dtos/user/session/user-session-list-query.dto";
+import { UserSessionListResponseDTO } from "../../../dtos/user/session/user-session-list-response.dto";
+import { UserSessionDetailsResponseDTO } from "../../../dtos/user/session/user-session-details-response.dto";
+import { InfiniteScrollResponseDTO } from "../../../dtos/common/infinite-scroll-response.dto";
+
 import { StatusCode } from "../../../enums/statusCode.enum";
-import { CustomError } from "../../../utils/customError";
 import { TYPES } from "../../../types/types";
-import type { CursorPaginationResult } from "../../../types/common/cursor-pagination.types";
-import type {
-  IUserSessionDetailsProjection,
-  IUserSessionListProjection,
-} from "../../../types/user/session/user-session.projection";
+
 import type { IUserSessionRepository } from "../../../repositories/interfaces/user/session/IUserSessionRepository";
 import type { IUserSessionService } from "../../interfaces/user/IUserSessionService";
+
 import { validateDto } from "../../../middlewares/validateDto.middleware";
+import { toObjectId } from "../../../utils/object-id.util";
+import { CustomError } from "../../../utils/customError";
+import { UserSessionMapper } from "../../../mappers/user/session/user-session.mapper";
 
 @injectable()
 export class UserSessionService implements IUserSessionService {
@@ -24,24 +27,35 @@ export class UserSessionService implements IUserSessionService {
   async getUserSessions(
     userId: string | Types.ObjectId,
     query: UserSessionListQueryDTO,
-  ): Promise<CursorPaginationResult<IUserSessionListProjection>> {
+  ): Promise<InfiniteScrollResponseDTO<UserSessionListResponseDTO>> {
+    const userObjectId = toObjectId(userId, "User ID");
+
     const validatedQuery = await validateDto(UserSessionListQueryDTO, query);
 
-    this.validateObjectId(userId, "Invalid user ID");
+    const result = await this._userSessionRepository.findUserSessions(
+      userObjectId,
+      validatedQuery,
+    );
 
-    return this._userSessionRepository.findUserSessions(userId, validatedQuery);
+    const items = result.items.map(UserSessionMapper.toListResponse);
+
+    return new InfiniteScrollResponseDTO(
+      items,
+      result.nextCursor,
+      result.hasMore,
+    );
   }
 
   async getUserSessionDetails(
     userId: string | Types.ObjectId,
     sessionId: string | Types.ObjectId,
-  ): Promise<IUserSessionDetailsProjection> {
-    this.validateObjectId(userId, "Invalid user ID");
-    this.validateObjectId(sessionId, "Invalid session ID");
+  ): Promise<UserSessionDetailsResponseDTO> {
+    const userObjectId = toObjectId(userId, "User ID");
+    const sessionObjectId = toObjectId(sessionId, "Session ID");
 
     const session = await this._userSessionRepository.findUserSessionDetails(
-      userId,
-      sessionId,
+      userObjectId,
+      sessionObjectId,
     );
 
     if (!session) {
@@ -51,15 +65,6 @@ export class UserSessionService implements IUserSessionService {
       );
     }
 
-    return session;
-  }
-
-  private validateObjectId(
-    value: string | Types.ObjectId,
-    message: string,
-  ): void {
-    if (!Types.ObjectId.isValid(value)) {
-      throw new CustomError(message, StatusCode.BAD_REQUEST);
-    }
+    return UserSessionMapper.toDetailsResponse(session);
   }
 }

@@ -109,7 +109,7 @@ export class CheckoutService implements ICheckoutService {
         );
       }
 
-      if (session.payment_status === "paid" || session.status === "complete") {
+      if (session.paymentStatus === "paid" || session.status === "complete") {
         return {
           status: "pending",
           sessionId,

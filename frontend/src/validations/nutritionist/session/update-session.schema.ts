@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { CREATE_SESSION_LIMITS } from "./create-session.schema";
+
+import {
+  SESSION_PRICING_TYPES,
+  SESSION_TYPES,
+} from "@/constants/common/session.constants";
+import { SESSION_LIMITS } from "@/constants/common/session-limits.constants";
 
 export const updateSessionSchema = z
   .object({
@@ -7,42 +12,43 @@ export const updateSessionSchema = z
       .string()
       .trim()
       .min(
-        CREATE_SESSION_LIMITS.titleMin,
-        `Title must contain at least ${CREATE_SESSION_LIMITS.titleMin} characters.`,
+        SESSION_LIMITS.titleMin,
+        `Title must contain at least ${SESSION_LIMITS.titleMin} characters.`,
       )
       .max(
-        CREATE_SESSION_LIMITS.titleMax,
-        `Title cannot exceed ${CREATE_SESSION_LIMITS.titleMax} characters.`,
+        SESSION_LIMITS.titleMax,
+        `Title cannot exceed ${SESSION_LIMITS.titleMax} characters.`,
       ),
 
     description: z
       .string()
       .trim()
       .min(
-        CREATE_SESSION_LIMITS.descriptionMin,
-        `Description must contain at least ${CREATE_SESSION_LIMITS.descriptionMin} characters.`,
+        SESSION_LIMITS.descriptionMin,
+        `Description must contain at least ${SESSION_LIMITS.descriptionMin} characters.`,
       )
       .max(
-        CREATE_SESSION_LIMITS.descriptionMax,
-        `Description cannot exceed ${CREATE_SESSION_LIMITS.descriptionMax} characters.`,
+        SESSION_LIMITS.descriptionMax,
+        `Description cannot exceed ${SESSION_LIMITS.descriptionMax} characters.`,
       ),
 
-    type: z.enum([
-      "webinar",
-      "workshop",
-      "group_consultation",
-      "qna",
-      "seminar",
-    ]),
+    type: z.enum(SESSION_TYPES, {
+      error: "Please select a valid session type.",
+    }),
 
     pricing: z.object({
-      type: z.enum(["free", "paid"]),
+      type: z.enum(SESSION_PRICING_TYPES, {
+        error: "Please select a valid pricing option.",
+      }),
+
       amount: z.number().finite("Enter a valid price."),
+
       currency: z.literal("inr"),
     }),
 
     scheduledAt: z
       .string()
+      .trim()
       .min(1, "Choose a date and time.")
       .refine(
         (value) => Number.isFinite(new Date(value).getTime()),
@@ -51,26 +57,28 @@ export const updateSessionSchema = z
 
     durationInMinutes: z
       .number()
+      .finite("Enter a valid duration.")
       .int("Duration must be a whole number.")
       .min(
-        CREATE_SESSION_LIMITS.durationMin,
-        `Duration must be at least ${CREATE_SESSION_LIMITS.durationMin} minutes.`,
+        SESSION_LIMITS.durationMin,
+        `Duration must be at least ${SESSION_LIMITS.durationMin} minutes.`,
       )
       .max(
-        CREATE_SESSION_LIMITS.durationMax,
-        `Duration cannot exceed ${CREATE_SESSION_LIMITS.durationMax} minutes.`,
+        SESSION_LIMITS.durationMax,
+        `Duration cannot exceed ${SESSION_LIMITS.durationMax} minutes.`,
       ),
 
     maxParticipants: z
       .number()
+      .finite("Enter a valid participant capacity.")
       .int("Participant capacity must be a whole number.")
       .min(
-        CREATE_SESSION_LIMITS.participantsMin,
-        `Allow at least ${CREATE_SESSION_LIMITS.participantsMin} participants.`,
+        SESSION_LIMITS.participantsMin,
+        `Allow at least ${SESSION_LIMITS.participantsMin} participants.`,
       )
       .max(
-        CREATE_SESSION_LIMITS.participantsMax,
-        `Participant capacity cannot exceed ${CREATE_SESSION_LIMITS.participantsMax}.`,
+        SESSION_LIMITS.participantsMax,
+        `Participant capacity cannot exceed ${SESSION_LIMITS.participantsMax}.`,
       )
       .optional(),
   })
@@ -86,17 +94,17 @@ export const updateSessionSchema = z
     }
 
     if (type === "paid") {
-      if (amount < CREATE_SESSION_LIMITS.priceMin) {
+      if (amount < SESSION_LIMITS.priceMin) {
         context.addIssue({
           code: "custom",
           path: ["pricing", "amount"],
-          message: `Price must be at least ₹${CREATE_SESSION_LIMITS.priceMin}.`,
+          message: `Price must be at least ₹${SESSION_LIMITS.priceMin}.`,
         });
-      } else if (amount > CREATE_SESSION_LIMITS.priceMax) {
+      } else if (amount > SESSION_LIMITS.priceMax) {
         context.addIssue({
           code: "custom",
           path: ["pricing", "amount"],
-          message: `Price cannot exceed ₹${CREATE_SESSION_LIMITS.priceMax.toLocaleString("en-IN")}.`,
+          message: `Price cannot exceed ₹${SESSION_LIMITS.priceMax.toLocaleString("en-IN")}.`,
         });
       }
     }
@@ -108,10 +116,11 @@ export type UpdateSessionFieldName =
   | "title"
   | "description"
   | "type"
+  | "pricingType"
+  | "pricingAmount"
   | "scheduledAt"
   | "durationInMinutes"
-  | "maxParticipants"
-  | "pricingAmount";
+  | "maxParticipants";
 
 export type UpdateSessionFieldErrors = Partial<
   Record<UpdateSessionFieldName, string>
@@ -121,10 +130,11 @@ const FIELD_PATHS: Record<string, UpdateSessionFieldName> = {
   title: "title",
   description: "description",
   type: "type",
+  "pricing.type": "pricingType",
+  "pricing.amount": "pricingAmount",
   scheduledAt: "scheduledAt",
   durationInMinutes: "durationInMinutes",
   maxParticipants: "maxParticipants",
-  "pricing.amount": "pricingAmount",
 };
 
 export function getUpdateSessionFieldErrors(
@@ -132,6 +142,7 @@ export function getUpdateSessionFieldErrors(
   originalScheduledAt: string,
 ): UpdateSessionFieldErrors {
   const result = updateSessionSchema.safeParse(values);
+
   const errors: UpdateSessionFieldErrors = {};
 
   if (!result.success) {
@@ -144,17 +155,26 @@ export function getUpdateSessionFieldErrors(
     }
   }
 
-  const form = values as Partial<UpdateSessionFormValues>;
-  const scheduledAt = form.scheduledAt;
-
   if (
-    typeof scheduledAt === "string" &&
-    scheduledAt.length > 0 &&
-    scheduledAt !== originalScheduledAt &&
-    Number.isFinite(new Date(scheduledAt).getTime()) &&
-    new Date(scheduledAt).getTime() <= Date.now()
+    typeof values === "object" &&
+    values !== null &&
+    "scheduledAt" in values &&
+    typeof values.scheduledAt === "string"
   ) {
-    errors.scheduledAt = "Choose a date and time in the future.";
+    const scheduledAt = values.scheduledAt;
+    const scheduledDate = new Date(scheduledAt);
+
+    const isValidDate = Number.isFinite(scheduledDate.getTime());
+    const scheduleChanged = scheduledAt !== originalScheduledAt;
+
+    if (
+      scheduledAt.length > 0 &&
+      scheduleChanged &&
+      isValidDate &&
+      scheduledDate.getTime() <= Date.now()
+    ) {
+      errors.scheduledAt = "Choose a date and time in the future.";
+    }
   }
 
   return errors;

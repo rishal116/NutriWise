@@ -8,7 +8,11 @@ export interface IReadRepository<T> {
     session?: ClientSession,
   ): Promise<T | null>;
 
-  find(filter: FilterQuery<T>, session?: ClientSession): Promise<T[]>;
+  find(
+    filter: FilterQuery<T>,
+    session?: ClientSession,
+    sort?: Record<string, 1 | -1>,
+  ): Promise<T[]>;
 
   countDocuments(
     filter: FilterQuery<T>,

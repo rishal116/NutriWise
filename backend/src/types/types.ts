@@ -1,4 +1,8 @@
 export const TYPES = {
+  IStripeEventDispatcher:Symbol.for("IStripeEventDispatcher"),
+  IStripeWebhookVerifier:Symbol.for("IStripeWebhookVerifier"),
+  IStripeCheckoutHandlerRegistry:Symbol.for("IStripeCheckoutHandlerRegistry"),
+  IStripeCheckoutEventHandler:Symbol.for("IStripeCheckoutEventHandler"),
   IPublicHomepageController:Symbol.for("IPublicHomepageController"),
   IPublicHomepageService:Symbol.for("IPublicHomepageService"),
   IPublicHomepageRepository:Symbol.for("IPublicHomepageRepository"),
@@ -229,7 +233,7 @@ export const TYPES = {
   ISocketService: Symbol.for("ISocketService"),
   IConversationService: Symbol.for("IConversationService"),
   IMessageService: Symbol.for("IMessageService"),
-  IStripeCheckoutHandlerService: Symbol.for("IStripeCheckoutHandlerService"),
+  IProgramStripeCheckoutHandlerService: Symbol.for("IProgramStripeCheckoutHandlerService"),
   IPublicSessionService: Symbol.for("IPublicSessionService"),
   ISessionCheckoutService: Symbol.for("ISessionCheckoutService"),
   ISessionRegistrationService: Symbol.for("ISessionRegistrationService"),

@@ -1,9 +1,9 @@
-import type {
-  SessionCurrency,
+import { Currency } from "@/constants/common/currency.constants";
+import {
   SessionPricingType,
   SessionStatus,
   SessionType,
-} from "@/types/public/session/session.types";
+} from "@/constants/common/session.constants";
 
 export interface PublicSessionListItemResponseDTO {
   sessionId: string;
@@ -12,12 +12,13 @@ export interface PublicSessionListItemResponseDTO {
   type: SessionType;
   pricing: {
     type: SessionPricingType;
-    amount: number;
-    currency: SessionCurrency;
+    amount?: number;
+    currency?: Currency;
   };
   scheduledAt: string;
-  durationInMinutes: number;
+  duration: number;
   maxParticipants: number;
+  participantCount: number;
   thumbnailUrl?: string;
   status: SessionStatus;
   nutritionist: {

@@ -1,12 +1,11 @@
 import { Type } from "class-transformer";
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
-
 import {
   SESSION_PRICING_TYPES,
   SESSION_TYPES,
-  type SessionPricingType,
-  type SessionType,
-} from "../../../models/session.model";
+  SessionPricingType,
+  SessionType,
+} from "../../../constants/common/session.constants";
 
 export const PUBLIC_SESSION_SORT_OPTIONS = [
   "all",
@@ -20,7 +19,7 @@ export const PUBLIC_SESSION_SORT_OPTIONS = [
 export type PublicSessionSortOption =
   (typeof PUBLIC_SESSION_SORT_OPTIONS)[number];
 
-export class PublicSessionListQueryDTO {
+export class GetPublicSessionsQueryDTO {
   @IsOptional()
   @IsString()
   search?: string;
@@ -43,7 +42,7 @@ export class PublicSessionListQueryDTO {
   @Min(1)
   @Max(50)
   limit: number = 12;
-  
+
   @IsOptional()
   @IsEnum(PUBLIC_SESSION_SORT_OPTIONS)
   sortBy: PublicSessionSortOption = "all";

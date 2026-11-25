@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import {
   Hand,
@@ -14,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { PublicSessionDetailsResponseDTO } from "@/dtos/public/session/public-session-details-response.dto";
+import type { SessionRoomDetailsResponseDTO } from "@/dtos/public/session/session-room-details-response.dto";
 import type { SessionRoomJoinResponseDTO } from "@/dtos/public/session/session-room-join-response.dto";
 
 import LiveKitLocalVideo from "@/components/session/LiveKitLocalVideo";
@@ -26,21 +25,24 @@ import ControlButton from "@/components/session/room/ControlButton";
 import RoomHeader from "@/components/session/room/RoomHeader";
 import {
   RoomConnecting,
-  RoomDisconnected,
   RoomError,
   getSessionPagePath,
 } from "@/components/session/room/RoomStates";
-import { useLiveKitRoom } from "@/hooks/useLiveKitRoom";
-import { useRoomSignals } from "@/hooks/useRoomSignals";
-import { useSessionLifecycle } from "@/hooks/useSessionLifecycle";
+import type { LeaveReason } from "@/components/session/room/session-room.utils";
+import { useLiveKitRoom } from "@/hooks/session-room/useLiveKitRoom";
+import type { MediaSettings } from "@/hooks/session-room/useMediaPreview";
+import { useRoomSignals } from "@/hooks/session-room/useRoomSignals";
+import { useSessionLifecycle } from "@/hooks/session-room/useSessionLifecycle";
 
 interface ActiveSessionRoomProps {
-  session: PublicSessionDetailsResponseDTO;
-  sessionId: string;
+  session: SessionRoomDetailsResponseDTO;
+  roomId: string;
   token: string;
   livekitUrl: string;
   canPublish: boolean;
   role: SessionRoomJoinResponseDTO["role"];
+  initialMedia: MediaSettings;
+  onLeft: (reason: LeaveReason) => void;
 }
 
 interface BannerProps {
@@ -78,14 +80,14 @@ function Banner({ tone, children, onDismiss }: BannerProps) {
 
 export default function ActiveSessionRoom({
   session,
-  sessionId,
+  roomId,
   token,
   livekitUrl,
   canPublish,
   role,
+  initialMedia,
+  onLeft,
 }: ActiveSessionRoomProps) {
-  const router = useRouter();
-
   const {
     room,
     status,
@@ -97,10 +99,10 @@ export default function ActiveSessionRoom({
     remoteParticipants,
     toggleDevice,
     leave,
-  } = useLiveKitRoom({ token, livekitUrl, canPublish });
+  } = useLiveKitRoom({ token, livekitUrl, canPublish, initialMedia });
 
   const lifecycle = useSessionLifecycle({
-    sessionId,
+    roomId,
     initialStatus: session.status,
     isHost: role === "host",
   });
@@ -118,22 +120,30 @@ export default function ActiveSessionRoom({
     : messages.filter((message) => !message.own && message.sentAt > seenAt)
         .length;
 
-  const backHref = getSessionPagePath(sessionId);
+  // Public session details use the MongoDB session ID, not the room ID.
+  const backHref = getSessionPagePath(session.sessionId);
+
+  // Connection lost or the room was closed server-side: hand off to the
+  // post-call screen, which re-checks availability before offering Rejoin.
+  useEffect(() => {
+    if (status === "disconnected" && !connectError) onLeft("disconnected");
+  }, [status, connectError, onLeft]);
 
   const closeChat = () => {
     setSeenAt(Date.now());
     setChatOpen(false);
   };
 
-  // Leaving only disconnects this participant. It never changes the session.
+  // Leaving disconnects only this participant.
   const handleLeave = useCallback(async () => {
     try {
       await leave();
     } finally {
-      router.back();
+      onLeft("left");
     }
-  }, [leave, router]);
+  }, [leave, onLeft]);
 
+  // Only the host can end the actual session.
   const handleEndSession = async () => {
     const ended = await lifecycle.end();
 
@@ -142,7 +152,7 @@ export default function ActiveSessionRoom({
     try {
       await leave();
     } finally {
-      router.push(backHref);
+      onLeft("ended");
     }
   };
 
@@ -150,9 +160,8 @@ export default function ActiveSessionRoom({
     return <RoomError message={connectError} backHref={backHref} />;
   }
 
-  if (status === "disconnected") {
-    return <RoomDisconnected backHref={backHref} />;
-  }
+  // Replaced by the effect above.
+  if (status === "disconnected") return null;
 
   if (status === "connecting" || !room) {
     return <RoomConnecting />;

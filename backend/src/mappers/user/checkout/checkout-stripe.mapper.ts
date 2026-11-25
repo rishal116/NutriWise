@@ -1,4 +1,4 @@
-import { StripeCheckoutInputDTO } from "../../../dtos/common/stripe.dto";
+import { StripeCheckoutInputDTO } from "../../../dtos/common/stripe/stripe.dto";
 import { INutritionistPlan } from "../../../models/nutritionistPlan.model";
 
 export class CheckoutStripeMapper {

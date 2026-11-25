@@ -13,6 +13,7 @@ import chatRoutes from "./routes/chat";
 import publicRoutes from "./routes/public";
 import postRoutes from "./routes/post";
 import resourceRoutes from "./routes/resource";
+import sessionRoomRoutes from "./routes/session-room/session-room.routes";
 
 import { errorMiddleware } from "./middlewares/error.middleware";
 import { notificationRoutes, stripeRoutes } from "./routes/common";
@@ -49,7 +50,7 @@ app.use(
     saveUninitialized: false,
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI!,
-      collectionName: "sessions",
+      collectionName: "express_sessions",
       ttl: 60 * 60 * 24,
     }),
     cookie: {
@@ -61,6 +62,8 @@ app.use(
 );
 
 app.use("/api/public", publicRoutes);
+
+app.use("/api/session-room", sessionRoomRoutes);
 
 app.use("/api/users", userRoutes);
 
