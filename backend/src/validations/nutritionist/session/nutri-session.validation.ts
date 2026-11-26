@@ -22,7 +22,7 @@ export class NutriSessionValidation {
     const validatedDto = await validateDto(CreateNutriSessionDTO, dto);
 
     this.validatePricing(validatedDto.pricingType, validatedDto.pricing);
-    this.validateSchedule(validatedDto.scheduledAt, validatedDto.endTime, true);
+    this.validateSchedule(validatedDto.scheduledAt, true);
 
     return validatedDto;
   }
@@ -58,26 +58,15 @@ export class NutriSessionValidation {
     const finalScheduledAt =
       validatedDto.scheduledAt ?? existingSession.scheduledAt;
 
-    const finalEndTime = validatedDto.endTime ?? existingSession.endTime;
-
     if (validatedDto.scheduledAt !== undefined) {
-      this.validateSchedule(finalScheduledAt, finalEndTime, true);
-    } else if (
-      validatedDto.endTime !== undefined &&
-      finalEndTime !== undefined &&
-      finalEndTime <= finalScheduledAt
-    ) {
-      throw new CustomError(
-        "Session end time must be after its scheduled time",
-        StatusCode.BAD_REQUEST,
-      );
+      this.validateSchedule(finalScheduledAt, true);
     }
 
     return validatedDto;
   }
 
   static validatePublish(session: ISession): void {
-    this.validateSchedule(session.scheduledAt, session.endTime, true);
+    this.validateSchedule(session.scheduledAt, true);
   }
 
   private static validatePricing(
@@ -101,19 +90,11 @@ export class NutriSessionValidation {
 
   private static validateSchedule(
     scheduledAt: Date,
-    endTime?: Date,
     requireFuture = false,
   ): void {
     if (requireFuture && scheduledAt <= new Date()) {
       throw new CustomError(
         "Session scheduled time must be in the future",
-        StatusCode.BAD_REQUEST,
-      );
-    }
-
-    if (endTime && endTime <= scheduledAt) {
-      throw new CustomError(
-        "Session end time must be after its scheduled time",
         StatusCode.BAD_REQUEST,
       );
     }

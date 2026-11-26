@@ -1,9 +1,6 @@
-import type {
-  PaymentItemType,
-  PaymentProvider,
-  PaymentStatus,
-} from "../../../models/payment.model";
+
 import type { Currency } from "../../../constants/common/currency.constants";
+import { PaymentItemType, PaymentProvider, PaymentStatus } from "../../../constants/common/payment.constants";
 
 export class UserPaymentResponseDTO {
   id!: string;

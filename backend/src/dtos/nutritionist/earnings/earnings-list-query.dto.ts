@@ -4,11 +4,8 @@ import {
   WALLET_TRANSACTION_TYPES,
   WALLET_TXN_STATUSES,
 } from "../../../models/walletTransaction.model";
-import {
-  PAYMENT_ITEM_TYPES,
-  type PaymentItemType,
-  PAYMENT_STATUSES,
-} from "../../../models/payment.model";
+import { PAYMENT_ITEM_TYPES, PAYMENT_STATUSES, PaymentItemType } from "../../../constants/common/payment.constants";
+
 
 export class GetNutriEarningsQueryDTO {
   @IsOptional()

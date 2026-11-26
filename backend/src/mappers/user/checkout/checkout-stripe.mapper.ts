@@ -9,8 +9,6 @@ export class CheckoutStripeMapper {
     return {
       amount: plan.price,
 
-      currency: plan.currency.toLowerCase(),
-
       title: plan.title,
 
       description: `${plan.durationDays} days nutrition program`,

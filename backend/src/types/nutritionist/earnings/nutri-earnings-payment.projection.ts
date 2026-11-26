@@ -1,5 +1,6 @@
 import { Types } from "mongoose";
-import type { IPayment, PaymentItemType } from "../../../models/payment.model";
+import type { IPayment} from "../../../models/payment.model";
+import { PaymentItemType } from "../../../constants/common/payment.constants";
 
 export type INutriEarningsPaymentProjection = Pick<
   IPayment,
