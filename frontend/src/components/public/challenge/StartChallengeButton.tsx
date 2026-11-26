@@ -3,12 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-import {
-  ArrowRight,
-  CheckCircle2,
-  Loader2,
-  LockKeyhole,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, LockKeyhole } from "lucide-react";
 
 import type { PublicChallengeDetailsDTO } from "@/dtos/public/challenge/public-challenge-details.dto";
 
@@ -36,13 +31,8 @@ export function StartChallengeButton({
       return;
     }
 
-    if (
-      participation.status === "active" &&
-      participation.userChallengeId
-    ) {
-      router.push(
-        `/user/challenges/${participation.userChallengeId}`,
-      );
+    if (participation.status === "active" && participation.userChallengeId) {
+      router.push(`/user/challenges/${participation.userChallengeId}`);
 
       return;
     }
@@ -59,13 +49,18 @@ export function StartChallengeButton({
       const response =
         await publicChallengeService.getChallengeDetails(challengeId);
 
-      const userChallengeId =
-        response.data.participation.userChallengeId;
+      const challengeDetails = response.data;
+
+      if (!challengeDetails) {
+        throw new Error(
+          response.message || "Challenge details were not returned.",
+        );
+      }
+
+      const userChallengeId = challengeDetails.participation.userChallengeId;
 
       if (!userChallengeId) {
-        throw new Error(
-          "User challenge ID was not returned after joining.",
-        );
+        throw new Error("User challenge ID was not returned after joining.");
       }
 
       router.push(`/user/challenges/${userChallengeId}`);
@@ -123,9 +118,7 @@ export function StartChallengeButton({
           {isPremium && <LockKeyhole className="h-4 w-4" />}
 
           <span>
-            {isPremium
-              ? "Start Premium Challenge"
-              : "Start Challenge"}
+            {isPremium ? "Start Premium Challenge" : "Start Challenge"}
           </span>
 
           <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
