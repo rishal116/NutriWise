@@ -30,7 +30,6 @@ export class NutriSessionPersistenceMapper {
       }),
       scheduledAt: dto.scheduledAt,
       duration: dto.duration,
-      ...(dto.endTime && { endTime: dto.endTime }),
       maxParticipants: dto.maxParticipants,
       ...(roomId && { roomId }),
       ...(thumbnail && {
@@ -62,7 +61,6 @@ export class NutriSessionPersistenceMapper {
 
     if (dto.scheduledAt !== undefined) set.scheduledAt = dto.scheduledAt;
     if (dto.duration !== undefined) set.duration = dto.duration;
-    if (dto.endTime !== undefined) set.endTime = dto.endTime;
 
     if (dto.maxParticipants !== undefined) {
       set.maxParticipants = dto.maxParticipants;

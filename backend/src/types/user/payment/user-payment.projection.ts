@@ -1,16 +1,12 @@
 import type { Types } from "mongoose";
 import type {
-  PaymentItemType,
-  PaymentProvider,
-  PaymentStatus,
-} from "../../../models/payment.model";
-import type { WalletOwnerType } from "../../../models/wallet.model";
-import type {
   WalletTransactionReason,
   WalletTransactionType,
   WalletTxnStatus,
 } from "../../../models/walletTransaction.model";
 import type { Currency } from "../../../constants/common/currency.constants";
+import { PaymentItemType, PaymentProvider, PaymentStatus } from "../../../constants/common/payment.constants";
+import { WalletOwnerType } from "../../../constants/common/wallet.constants";
 
 export interface IUserPaymentProjection {
   _id: Types.ObjectId;

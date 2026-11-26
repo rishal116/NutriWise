@@ -10,9 +10,10 @@ import {
   Min,
 } from "class-validator";
 
-import type { PaymentStatus } from "../../../models/payment.model";
-import type { WalletOwnerType } from "../../../models/wallet.model";
+
 import type { IWalletTransaction } from "../../../models/walletTransaction.model";
+import { PaymentStatus } from "../../../constants/common/payment.constants";
+import { WalletOwnerType } from "../../../constants/common/wallet.constants";
 
 export class AdminPaymentQueryDTO {
   @IsOptional()

@@ -12,14 +12,19 @@ export class SessionCheckoutStripeMapper {
       throw new Error("FRONTEND_URL is not configured.");
     }
 
+    const pricing = session.pricing;
+
+    if (!pricing || pricing.amount === undefined || !pricing.currency) {
+      throw new Error("Session pricing is not configured.");
+    }
+
     const baseUrl = new URL(frontendUrl).origin;
     const sessionPath = `/communities/sessions/${session._id}`;
 
     return {
-      currency: session.pricing.currency,
       title: session.title,
       description: session.description,
-      amount: session.pricing.amount,
+      amount: pricing.amount,
 
       successUrl: `${baseUrl}${sessionPath}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${baseUrl}${sessionPath}/checkout`,

@@ -1,5 +1,6 @@
-import type { PaymentStatus } from "../../../models/payment.model";
-import type { WalletOwnerType } from "../../../models/wallet.model";
+
+import { PaymentStatus } from "../../../constants/common/payment.constants";
+import { WalletOwnerType } from "../../../constants/common/wallet.constants";
 import type { IWalletTransaction } from "../../../models/walletTransaction.model";
 import type { CursorData } from "../../cursor.types";
 
