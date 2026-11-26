@@ -1,47 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
-  Stethoscope,
-  BadgeDollarSign,
-  Trophy,
-  CreditCard,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   X,
-  BookOpen,
-  Newspaper,
   type LucideIcon,
 } from "lucide-react";
 
-interface NavChild {
-  name: string;
-  path: string;
-}
+import {
+  getActiveChildPath,
+  getActiveGroup,
+  isPathActive,
+} from "@/components/admin/sidebar/admin-sidebar.utils";
 
-type NavItem =
-  | {
-      name: string;
-      icon: LucideIcon;
-      path: string;
-      children?: never;
-    }
-  | {
-      name: string;
-      icon: LucideIcon;
-      children: NavChild[];
-      path?: never;
-    };
-
-interface NavSection {
-  title: string;
-  items: NavItem[];
-}
+import {
+  NAV_SECTIONS,
+  type NavChild,
+  type NavItem,
+} from "@/components/admin/sidebar/admin-sidebar.config";
 
 interface AdminSidebarProps {
   collapsed: boolean;
@@ -49,51 +30,6 @@ interface AdminSidebarProps {
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
 }
-
-const NAV_SECTIONS: NavSection[] = [
-  {
-    title: "Overview",
-    items: [
-      {
-        name: "Dashboard",
-        icon: LayoutDashboard,
-        path: "/admin/dashboard",
-      },
-    ],
-  },
-  {
-    title: "Management",
-    items: [
-      { name: "Users", icon: Users, path: "/admin/users" },
-      {
-        name: "Nutritionists",
-        icon: Stethoscope,
-        children: [
-          { name: "All Nutritionists", path: "/admin/nutritionists" },
-          {
-            name: "Applications",
-            path: "/admin/nutritionists/applications",
-          },
-        ],
-      },
-      { name: "Challenges", icon: Trophy, path: "/admin/challenges" },
-      { name: "Plans", icon: BadgeDollarSign, path: "/admin/plans" },
-    ],
-  },
-  {
-    title: "Content",
-    items: [
-      { name: "Posts", icon: Newspaper, path: "/admin/posts" },
-      { name: "Resources", icon: BookOpen, path: "/admin/resources" },
-    ],
-  },
-  {
-    title: "Finance",
-    items: [
-      { name: "Payments", icon: CreditCard, path: "/admin/payments" },
-    ],
-  },
-];
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/60";
@@ -110,33 +46,6 @@ function getItemClass(isActive: boolean, collapsed: boolean): string {
   return `${NAV_ITEM_CLASS} ${state} ${
     collapsed ? "lg:justify-center lg:px-0" : ""
   }`;
-}
-
-function isPathActive(pathname: string, path: string): boolean {
-  return pathname === path || pathname.startsWith(`${path}/`);
-}
-
-function getActiveChildPath(
-  pathname: string,
-  children: NavChild[],
-): string | null {
-  const activeChild = children
-    .filter((child) => isPathActive(pathname, child.path))
-    .sort((first, second) => second.path.length - first.path.length)[0];
-
-  return activeChild?.path ?? null;
-}
-
-function getActiveGroup(pathname: string): string | null {
-  for (const section of NAV_SECTIONS) {
-    for (const item of section.items) {
-      if (item.children && getActiveChildPath(pathname, item.children)) {
-        return item.name;
-      }
-    }
-  }
-
-  return null;
 }
 
 function NavIcon({
@@ -205,7 +114,9 @@ function SidebarGroup({
 }) {
   const activeChildPath = getActiveChildPath(pathname, item.children);
   const isActive = activeChildPath !== null;
-  const isOpen = isExpanded && !collapsed;
+
+  // Keep groups usable on mobile even when the desktop sidebar is collapsed.
+  const isOpen = isExpanded;
 
   return (
     <div>
@@ -299,6 +210,7 @@ export default function AdminSidebar({
     if (!mobileOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+
     document.body.style.overflow = "hidden";
 
     const handleEscape = (event: KeyboardEvent) => {
@@ -316,7 +228,9 @@ export default function AdminSidebar({
   }, [mobileOpen, setMobileOpen]);
 
   const handleGroupToggle = (groupName: string) => {
-    if (collapsed) {
+    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+
+    if (collapsed && isDesktop) {
       setCollapsed(false);
       setExpandedGroup(groupName);
       return;
@@ -327,9 +241,7 @@ export default function AdminSidebar({
     );
   };
 
-  // Also closes the drawer when the link points to the current route
-  // (pathname does not change in that case).
-  const handleNavClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleNavClick = (event: MouseEvent<HTMLElement>) => {
     if (event.target instanceof Element && event.target.closest("a")) {
       setMobileOpen(false);
     }
@@ -353,7 +265,9 @@ export default function AdminSidebar({
         aria-label="Admin sidebar"
         className={`fixed bottom-0 left-0 top-16 z-50 flex h-[calc(100dvh-4rem)] w-72 flex-col border-r border-admin-border bg-admin-surface shadow-xl transition-[transform,width,visibility] duration-300 ease-in-out lg:visible lg:sticky lg:top-16 lg:shrink-0 lg:translate-x-0 lg:shadow-none ${
           collapsed ? "lg:w-19" : "lg:w-64"
-        } ${mobileOpen ? "visible translate-x-0" : "invisible -translate-x-full"}`}
+        } ${
+          mobileOpen ? "visible translate-x-0" : "invisible -translate-x-full"
+        }`}
       >
         {/* Top bar */}
         <div
@@ -377,11 +291,7 @@ export default function AdminSidebar({
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={`hidden lg:flex ${ICON_BUTTON_CLASS}`}
           >
-            {collapsed ? (
-              <ChevronRight size={19} />
-            ) : (
-              <ChevronLeft size={19} />
-            )}
+            {collapsed ? <ChevronRight size={19} /> : <ChevronLeft size={19} />}
           </button>
 
           {/* Mobile close */}

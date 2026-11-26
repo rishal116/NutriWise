@@ -8,3 +8,4 @@ export * from "./plan.routes";
 export * from "./admin-payment.routes";
 export * from "./admin-post.routes";
 export * from "./admin-resource.routes";
+export * from "./admin-subscription-plan.routes";

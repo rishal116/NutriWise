@@ -607,6 +607,12 @@ import { IStripeEventDispatcher } from "../services/interfaces/common/stripe/ISt
 import { StripeEventDispatcher } from "../services/implements/common/stripe/stripe-event-dispatcher";
 import { IStripeCheckoutHandlerRegistry } from "../services/interfaces/common/stripe/IStripeCheckoutHandlerRegistry";
 import { StripeCheckoutHandlerRegistry } from "../services/implements/common/stripe/stripe-checkout-handler-registry";
+import { IAdminSubscriptionPlanRepository } from "../repositories/interfaces/admin/IAdminSubscriptionPlanRepository";
+import { AdminSubscriptionPlanRepository } from "../repositories/implements/admin/adminSubscriptionPlan.repository";
+import { IAdminSubscriptionPlanService } from "../services/interfaces/admin/IAdminSubscriptionPlanService";
+import { AdminSubscriptionPlanService } from "../services/implements/admin/admin-subscription-plan.service";
+import { IAdminSubscriptionPlanController } from "../controllers/interfaces/admin/IAdminSubscriptionPlanController";
+import { AdminSubscriptionPlanController } from "../controllers/implementations/admin/admin-subscription-plan.controller";
 
 const container = new Container();
 
@@ -1539,5 +1545,21 @@ container
 container
   .bind<IStripeCheckoutHandlerRegistry>(TYPES.IStripeCheckoutHandlerRegistry)
   .to(StripeCheckoutHandlerRegistry);
+
+container
+  .bind<IAdminSubscriptionPlanRepository>(
+    TYPES.IAdminSubscriptionPlanRepository,
+  )
+  .to(AdminSubscriptionPlanRepository);
+
+container
+  .bind<IAdminSubscriptionPlanService>(TYPES.IAdminSubscriptionPlanService)
+  .to(AdminSubscriptionPlanService);
+
+container
+  .bind<IAdminSubscriptionPlanController>(
+    TYPES.IAdminSubscriptionPlanController,
+  )
+  .to(AdminSubscriptionPlanController);
 
 export { container };

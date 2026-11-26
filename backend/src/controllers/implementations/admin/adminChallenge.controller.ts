@@ -14,7 +14,7 @@ import type { CreateChallengeDTO } from "../../../dtos/admin/challenge/create-ch
 import type { UpdateChallengeDTO } from "../../../dtos/admin/challenge/update-challenge.dto";
 
 import { toAdminChallengeListQuery } from "../../../utils/adminChallengeController.util";
-import { ADMIN_CHALLENGE_MESSAGES } from "../../../constants/admin/challenge.constants"; 
+import { ADMIN_CHALLENGE_MESSAGES } from "../../../constants/admin/challenge.constants";
 
 @injectable()
 export class AdminChallengeController implements IAdminChallengeController {
@@ -39,11 +39,7 @@ export class AdminChallengeController implements IAdminChallengeController {
       files?.thumbnail?.[0],
     );
 
-    return sendResponse(
-      res,
-      StatusCode.OK,
-      ADMIN_CHALLENGE_MESSAGES.UPDATED,
-    );
+    return sendResponse(res, StatusCode.OK, ADMIN_CHALLENGE_MESSAGES.UPDATED);
   });
 
   createChallenge = asyncHandler(async (req: Request, res: Response) => {
@@ -102,11 +98,7 @@ export class AdminChallengeController implements IAdminChallengeController {
 
     await this._challengeService.deleteChallenge(challengeId);
 
-    return sendResponse(
-      res,
-      StatusCode.OK,
-      ADMIN_CHALLENGE_MESSAGES.DELETED,
-    );
+    return sendResponse(res, StatusCode.OK, ADMIN_CHALLENGE_MESSAGES.DELETED);
   });
 
   publishChallenge = asyncHandler(async (req: Request, res: Response) => {
@@ -114,10 +106,6 @@ export class AdminChallengeController implements IAdminChallengeController {
 
     await this._challengeService.publishChallenge(challengeId);
 
-    return sendResponse(
-      res,
-      StatusCode.OK,
-      ADMIN_CHALLENGE_MESSAGES.PUBLISHED,
-    );
+    return sendResponse(res, StatusCode.OK, ADMIN_CHALLENGE_MESSAGES.PUBLISHED);
   });
 }
