@@ -66,7 +66,9 @@ export function useNutritionistBrowsing() {
 
   // Sync specialization with URL param
   useEffect(() => {
-    const specializationUrl = searchParams.get("specialization") as Specialization | null;
+    const specializationUrl = searchParams.get(
+      "specialization",
+    ) as Specialization | null;
     setFilters((prev) => ({
       ...prev,
       specialization: specializationUrl || undefined,
@@ -102,6 +104,10 @@ export function useNutritionistBrowsing() {
         search: searchRef.current || undefined,
         limit: PAGE_LIMIT,
       });
+
+      if (!response.data) {
+        throw new Error("Failed to load nutritionists.");
+      }
 
       const { items, nextCursor, hasMore: moreAvailable } = response.data;
       setNutritionists(items);
@@ -139,9 +145,12 @@ export function useNutritionistBrowsing() {
       const response = await nutritionistBrowsingService.browseNutritionists({
         ...filtersRef.current,
         search: searchRef.current || undefined,
-        cursor: cursorRef.current,
         limit: PAGE_LIMIT,
       });
+
+      if (!response.data) {
+        throw new Error("Failed to load nutritionists.");
+      }
 
       const { items, nextCursor, hasMore: moreAvailable } = response.data;
       setNutritionists((prev) => [...prev, ...items]);
@@ -189,7 +198,9 @@ export function useNutritionistBrowsing() {
         newParams.delete("specialization");
       }
       const queryStr = newParams.toString();
-      router.push(queryStr ? `/coaching?${queryStr}` : "/coaching", { scroll: false });
+      router.push(queryStr ? `/coaching?${queryStr}` : "/coaching", {
+        scroll: false,
+      });
     },
     [router, searchParams],
   );
