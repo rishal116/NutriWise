@@ -38,14 +38,19 @@ export function ChallengeDayDetails({
           dayId,
         );
 
-        setDay(response.data);
+        const challengeDay = response.data;
+
+        if (!challengeDay) {
+          throw new Error("Challenge day details were not returned.");
+        }
+
+        setDay(challengeDay);
       } catch {
         setError("Unable to load this challenge day right now.");
       } finally {
         setLoading(false);
       }
     };
-
     void fetchDay();
   }, [challengeId, dayId]);
 
