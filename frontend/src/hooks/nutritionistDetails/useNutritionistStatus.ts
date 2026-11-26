@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { nutritionistAuthService } from "@/services/nutritionist/nutriApplication.service";
+import { nutritionistApplicationService } from "@/services/nutritionist/nutriApplication.service";
 
 export const useNutritionistStatus = () => {
   const router = useRouter();
@@ -8,14 +8,14 @@ export const useNutritionistStatus = () => {
 
   useEffect(() => {
     const check = async () => {
-      const res = await nutritionistAuthService.getProfileStatus();
+      const res = await nutritionistApplicationService.getApplicationStatus();
 
-      if (res.status === "approved") {
+      if (res.data === "approved") {
         router.replace("/nutritionist/dashboard");
         return;
       }
 
-      if (res.status === "pending") {
+      if (res.data === "pending") {
         setStatus("pending");
       }
     };
