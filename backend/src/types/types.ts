@@ -1,4 +1,7 @@
 export const TYPES = {
+  IAdminSubscriptionPlanController:Symbol.for("IAdminSubscriptionPlanController"),
+  IAdminSubscriptionPlanService:Symbol.for("IAdminSubscriptionPlanService"),
+  IAdminSubscriptionPlanRepository:Symbol.for("IAdminSubscriptionPlanRepository"),
   IStripeEventDispatcher:Symbol.for("IStripeEventDispatcher"),
   IStripeWebhookVerifier:Symbol.for("IStripeWebhookVerifier"),
   IStripeCheckoutHandlerRegistry:Symbol.for("IStripeCheckoutHandlerRegistry"),

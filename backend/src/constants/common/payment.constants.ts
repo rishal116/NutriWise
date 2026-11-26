@@ -16,6 +16,7 @@ export const PAYMENT_ITEM_TYPES = [
   "nutritionist_plan",
   "consultation_session",
   "session_registration",
+  "platform_subscription",
 ] as const;
 
 export type PaymentItemType = (typeof PAYMENT_ITEM_TYPES)[number];

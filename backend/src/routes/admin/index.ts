@@ -13,6 +13,7 @@ import paymentRoutes from "./admin-payment.routes";
 import postRoutes from "./admin-post.route";
 import resourceRoutes from "./admin-resource.route";
 import planRoutes from "./plan.route";
+import subscriptionPlanRoutes from "./admin-subscription-plan.route";
 
 const router = Router();
 
@@ -28,5 +29,6 @@ router.use("/plans", planRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/posts", postRoutes);
 router.use("/resources", resourceRoutes);
+router.use("/subscription-plans", subscriptionPlanRoutes);
 
 export default router;
