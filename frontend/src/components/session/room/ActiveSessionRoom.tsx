@@ -26,13 +26,14 @@ import RoomHeader from "@/components/session/room/RoomHeader";
 import {
   RoomConnecting,
   RoomError,
-  getSessionPagePath,
 } from "@/components/session/room/RoomStates";
 import type { LeaveReason } from "@/components/session/room/session-room.utils";
 import { useLiveKitRoom } from "@/hooks/session-room/useLiveKitRoom";
 import type { MediaSettings } from "@/hooks/session-room/useMediaPreview";
 import { useRoomSignals } from "@/hooks/session-room/useRoomSignals";
 import { useSessionLifecycle } from "@/hooks/session-room/useSessionLifecycle";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/redux/store";
 
 interface ActiveSessionRoomProps {
   session: SessionRoomDetailsResponseDTO;
@@ -111,7 +112,12 @@ export default function ActiveSessionRoom({
     room,
     local.canPublishData,
   );
+  const activeRole = useSelector(
+    (state: RootState) => state.auth.user?.activeRole,
+  );
 
+  const backHref =
+    activeRole === "user" ? "/user/sessions" : "/nutritionist/sessions";
   const [chatOpen, setChatOpen] = useState(false);
   const [seenAt, setSeenAt] = useState(0);
 
@@ -119,9 +125,6 @@ export default function ActiveSessionRoom({
     ? 0
     : messages.filter((message) => !message.own && message.sentAt > seenAt)
         .length;
-
-  // Public session details use the MongoDB session ID, not the room ID.
-  const backHref = getSessionPagePath(session.sessionId);
 
   // Connection lost or the room was closed server-side: hand off to the
   // post-call screen, which re-checks availability before offering Rejoin.
