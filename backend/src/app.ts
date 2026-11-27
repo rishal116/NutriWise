@@ -20,6 +20,8 @@ import { notificationRoutes, stripeRoutes } from "./routes/common";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 const isProduction = process.env.NODE_ENV === "production";
 
 app.use("/stripe", express.raw({ type: "application/json" }), stripeRoutes);
