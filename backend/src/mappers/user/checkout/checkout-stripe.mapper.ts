@@ -18,6 +18,7 @@ export class CheckoutStripeMapper {
       cancelUrl: `${process.env.FRONTEND_URL}/checkout/cancel`,
 
       metadata: {
+        paymentType: "nutritionist_plan",
         userId,
         planId: plan._id.toString(),
         nutritionistId: plan.nutritionistId.toString(),
