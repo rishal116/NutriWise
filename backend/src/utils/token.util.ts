@@ -31,6 +31,9 @@ export const setAuthCookies = (res: Response, refreshToken: string): void => {
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: jwtConfig.refreshToken.cookieMaxAge,
     path: "/",
+    ...(process.env.NODE_ENV === "production"
+      ? { domain: ".rishal.top" }
+      : {}),
   });
 };
 
@@ -40,5 +43,8 @@ export const clearAuthCookies = (res: Response): void => {
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
+    ...(process.env.NODE_ENV === "production"
+      ? { domain: ".rishal.top" }
+      : {}),
   });
 };
