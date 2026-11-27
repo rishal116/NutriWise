@@ -22,7 +22,6 @@ import {
 } from "../../../../utils/session.util";
 
 import { UserRegisterDto } from "../../../../dtos/user/auth/signup.dto";
-import { MessageResponseDto } from "../../../../dtos/user/auth/message-response.dto";
 import { VerifyOtpDto } from "../../../../dtos/user/auth/verify-otp.dto";
 import { VerifyOtpResponseDto } from "../../../../dtos/user/auth/verify-otp-response.dto";
 import { ResendOtpDto } from "../../../../dtos/user/auth/resend-otp.dto";
@@ -37,19 +36,19 @@ export class SignupService implements ISignupService {
     private readonly otpService: IOTPService,
   ) {}
 
-  async signup(
-    req: Request,
-    data: UserRegisterDto,
-  ): Promise<MessageResponseDto> {
-    await validateDto(UserRegisterDto, data);
-
-    const { fullName, email, password, confirmPassword } = data;
+  async signup(req: Request, data: UserRegisterDto): Promise<void> {
+    const { fullName, email, password, confirmPassword } = await validateDto(
+      UserRegisterDto,
+      data,
+    );
 
     if (password !== confirmPassword) {
       throw new CustomError("Passwords do not match", StatusCode.BAD_REQUEST);
     }
 
-    logger.info("Signup request", { email });
+    logger.info("User signup initiated", {
+      email: email.replace(/^(.{2}).*(@.*)$/, "$1***$2"),
+    });
 
     const existingUser = await this.userRepository.findByEmail(email);
 
@@ -70,20 +69,18 @@ export class SignupService implements ISignupService {
 
     await this.otpService.requestOtp(email);
 
-    return {
-      message: "OTP sent successfully. Please verify your email.",
-    };
+    logger.info("Signup OTP sent successfully", {
+      email: email.replace(/^(.{2}).*(@.*)$/, "$1***$2"),
+    });
   }
 
   async verifyOtp(
     req: Request,
     data: VerifyOtpDto,
   ): Promise<VerifyOtpResponseDto> {
-    await validateDto(VerifyOtpDto, data);
+    const { email, otp } = await validateDto(VerifyOtpDto, data);
 
-    const { email, otp } = data;
-
-    logger.info("Verifying signup OTP", { email });
+    logger.info("Signup OTP verification initiated");
 
     const tempUser = getTempUser(req);
 
@@ -130,23 +127,20 @@ export class SignupService implements ISignupService {
 
     deleteTempUser(req);
 
-    logger.info("Signup successful", {
+    logger.info("User signup completed successfully", {
       userId: newUser._id.toString(),
     });
 
     return {
-      message: "Signup successful",
       accessToken,
       refreshToken,
     };
   }
 
-  async resendOtp(data: ResendOtpDto): Promise<MessageResponseDto> {
-    await validateDto(ResendOtpDto, data);
+  async resendOtp(data: ResendOtpDto): Promise<void> {
+    const { email } = await validateDto(ResendOtpDto, data);
 
-    const { email } = data;
-
-    logger.info("Resend signup OTP request", { email });
+    logger.info("Signup OTP resend initiated");
 
     const existingUser = await this.userRepository.findByEmail(email);
 
@@ -159,8 +153,6 @@ export class SignupService implements ISignupService {
 
     await this.otpService.requestOtp(email);
 
-    return {
-      message: "OTP sent successfully.",
-    };
+    logger.info("Signup OTP resent successfully");
   }
 }

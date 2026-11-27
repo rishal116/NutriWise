@@ -31,11 +31,7 @@ export class LoginService implements ILoginService {
   }
 
   async login(data: LoginDto): Promise<AuthResponseDto> {
-    await validateDto(LoginDto, data);
-
-    const { email, password } = data;
-
-    logger.info("Login request", { email });
+    const { email, password } = await validateDto(LoginDto, data);
 
     const user = await this.userRepository.findByEmailWithPassword(email);
 
@@ -81,12 +77,12 @@ export class LoginService implements ILoginService {
       user.activeRole,
     );
 
-    logger.info("Login successful", {
+    logger.info("User login successful", {
       userId: user._id.toString(),
+      activeRole: user.activeRole,
     });
 
     return {
-      message: "Login successful",
       accessToken,
       refreshToken,
       activeRole: user.activeRole,
@@ -95,9 +91,8 @@ export class LoginService implements ILoginService {
   }
 
   async googleAuth(data: GoogleAuthDto): Promise<AuthResponseDto> {
-    await validateDto(GoogleAuthDto, data);
+    const { credential } = await validateDto(GoogleAuthDto, data);
 
-    const { credential } = data;
     const audience = process.env.GOOGLE_CLIENT_ID;
 
     if (!audience) {
@@ -109,21 +104,19 @@ export class LoginService implements ILoginService {
       );
     }
 
-    let payload;
-
-    try {
-      const ticket = await this.googleClient.verifyIdToken({
+    const ticket = await this.googleClient
+      .verifyIdToken({
         idToken: credential,
         audience,
+      })
+      .catch(() => {
+        throw new CustomError(
+          "Invalid or expired Google credential.",
+          StatusCode.UNAUTHORIZED,
+        );
       });
 
-      payload = ticket.getPayload();
-    } catch {
-      throw new CustomError(
-        "Invalid or expired Google credential.",
-        StatusCode.UNAUTHORIZED,
-      );
-    }
+    const payload = ticket.getPayload();
 
     if (
       !payload ||
@@ -139,9 +132,8 @@ export class LoginService implements ILoginService {
 
     const email = payload.email.toLowerCase();
 
-    logger.info("Google authentication request", { email });
-
     let user = await this.userRepository.findByEmail(email);
+    let isNewUser = false;
 
     if (user) {
       if (user.deletedAt) {
@@ -177,6 +169,8 @@ export class LoginService implements ILoginService {
         authProvider: AuthProvider.GOOGLE,
         emailVerifiedAt: new Date(),
       });
+
+      isNewUser = true;
     }
 
     const { accessToken, refreshToken } = generateTokens(
@@ -186,10 +180,11 @@ export class LoginService implements ILoginService {
 
     logger.info("Google authentication successful", {
       userId: user._id.toString(),
+      activeRole: user.activeRole,
+      isNewUser,
     });
 
     return {
-      message: "Google authentication successful",
       accessToken,
       refreshToken,
       activeRole: user.activeRole,

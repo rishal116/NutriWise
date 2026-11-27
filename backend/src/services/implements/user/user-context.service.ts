@@ -11,6 +11,7 @@ import type { INutritionistProfileRepository } from "../../../repositories/inter
 import { CustomError } from "../../../utils/customError";
 
 import { GetMeResponseDto } from "../../../dtos/user/auth/get-me-response.dto";
+import logger from "../../../utils/logger";
 
 @injectable()
 export class UserContextService implements IUserContextService {
@@ -23,6 +24,8 @@ export class UserContextService implements IUserContextService {
   ) {}
 
   async getMe(userId: string): Promise<GetMeResponseDto> {
+    logger.info("Fetching current user profile", { userId });
+
     if (!Types.ObjectId.isValid(userId)) {
       throw new CustomError("Invalid user ID.", StatusCode.BAD_REQUEST);
     }
@@ -40,8 +43,12 @@ export class UserContextService implements IUserContextService {
       );
     }
 
-    const nutritionist =
-      await this.nutritionistRepository.findByUserId(userId);
+    const nutritionist = await this.nutritionistRepository.findByUserId(userId);
+
+    logger.info("Current user profile retrieved successfully", {
+      userId,
+      activeRole: user.activeRole,
+    });
 
     return {
       id: user._id.toString(),

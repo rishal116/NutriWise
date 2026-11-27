@@ -1,3 +1,4 @@
+
 import { inject, injectable } from "inversify";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
@@ -15,7 +16,6 @@ import logger from "../../../../utils/logger";
 import { validateDto } from "../../../../middlewares/validateDto.middleware";
 import { sendResetPasswordEmail } from "../../../../utils/sendOtp";
 
-import { MessageResponseDto } from "../../../../dtos/user/auth/message-response.dto";
 import { ForgotPasswordDto } from "../../../../dtos/user/auth/forgot-password.dto";
 import { ResetPasswordDto } from "../../../../dtos/user/auth/reset-password.dto";
 
@@ -29,12 +29,8 @@ export class PasswordResetService implements IPasswordResetService {
     private readonly passwordResetRepository: IPasswordResetRepository,
   ) {}
 
-  async requestPasswordReset(
-    data: ForgotPasswordDto,
-  ): Promise<MessageResponseDto> {
-    await validateDto(ForgotPasswordDto, data);
-
-    const { email } = data;
+  async requestPasswordReset(data: ForgotPasswordDto): Promise<void> {
+    const { email } = await validateDto(ForgotPasswordDto, data);
 
     logger.info("Password reset request", { email });
 
@@ -85,18 +81,13 @@ export class PasswordResetService implements IPasswordResetService {
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
     await sendResetPasswordEmail(user.email, resetLink);
-
-    return {
-      message: "Password reset link sent successfully.",
-    };
   }
 
-  async resetPassword(
-    data: ResetPasswordDto,
-  ): Promise<MessageResponseDto> {
-    await validateDto(ResetPasswordDto, data);
-
-    const { token, newPassword, confirmPassword } = data;
+  async resetPassword(data: ResetPasswordDto): Promise<void> {
+    const { token, newPassword, confirmPassword } = await validateDto(
+      ResetPasswordDto,
+      data,
+    );
 
     if (newPassword !== confirmPassword) {
       throw new CustomError(
@@ -146,9 +137,5 @@ export class PasswordResetService implements IPasswordResetService {
     await this.userRepository.updatePasswordById(userId, hashedPassword);
 
     await this.passwordResetRepository.deleteResetToken(hashedToken);
-
-    return {
-      message: "Password reset successfully.",
-    };
   }
 }
