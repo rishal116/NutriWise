@@ -22,6 +22,7 @@ export default function SessionDetailsHeader({
   onDelete,
 }: SessionDetailsHeaderProps) {
   const router = useRouter();
+  const isCompleted = session.status === "completed";
 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -47,16 +48,18 @@ export default function SessionDetailsHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-2 md:shrink-0 md:flex-nowrap">
-        <button
-          type="button"
-          onClick={() =>
-            router.push(`/nutritionist/sessions/${session.sessionId}/edit`)
-          }
-          className="inline-flex flex-auto items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 md:flex-none"
-        >
-          <Pencil className="h-4 w-4" />
-          Edit
-        </button>
+        {!isCompleted && (
+          <button
+            type="button"
+            onClick={() =>
+              router.push(`/nutritionist/sessions/${session.sessionId}/edit`)
+            }
+            className="inline-flex flex-auto items-center justify-center gap-2 rounded-xl border border-slate-200/80 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 md:flex-none"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit
+          </button>
+        )}
 
         {session.status === "draft" && (
           <button

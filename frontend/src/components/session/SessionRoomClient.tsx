@@ -1,30 +1,34 @@
+
 "use client";
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useSelector } from "react-redux";
 
+import type { RootState } from "@/redux/store";
 import type { SessionRoomDetailsResponseDTO } from "@/dtos/public/session/session-room-details-response.dto";
 import type { SessionRoomJoinResponseDTO } from "@/dtos/public/session/session-room-join-response.dto";
 import type { MediaSettings } from "@/hooks/session-room/useMediaPreview";
+
 import { sessionRoomService } from "@/services/public/sessionRoom.service";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
 import LeftMeetingScreen from "@/components/session/room/LeftMeetingScreen";
 import PreJoinScreen from "@/components/session/room/PreJoinScreen";
 import SessionUnavailable from "@/components/session/room/SessionUnavailable";
+
 import {
   RoomConnecting,
   RoomError,
   RoomLoading,
-  getSessionPagePath,
 } from "@/components/session/room/RoomStates";
+
 import {
   isJoinableStatus,
   type LeaveReason,
 } from "@/components/session/room/session-room.utils";
 
-// livekit-client is only needed once the user actually joins.
 const ActiveSessionRoom = dynamic(
   () => import("@/components/session/room/ActiveSessionRoom"),
   { ssr: false, loading: () => <RoomConnecting /> },
@@ -40,19 +44,25 @@ type Phase =
   | { name: "left"; reason: LeaveReason };
 
 function SessionRoomFlow({ roomId }: { roomId: string }) {
-  const [session, setSession] = useState<SessionRoomDetailsResponseDTO | null>(
-    null,
-  );
+  const [session, setSession] =
+    useState<SessionRoomDetailsResponseDTO | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>({ name: "prejoin" });
 
-  // Details only. Joining (token minting) happens on the Join click.
+  const activeRole = useSelector(
+    (state: RootState) => state.auth.user?.activeRole,
+  );
+
+  const backHref =
+    activeRole === "user" ? "/user/sessions" : "/nutritionist/sessions";
+
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
       try {
-        const response = await sessionRoomService.getSessionRoomDetails(roomId);
+        const response =
+          await sessionRoomService.getSessionRoomDetails(roomId);
 
         if (cancelled) return;
 
@@ -80,9 +90,12 @@ function SessionRoomFlow({ roomId }: { roomId: string }) {
       try {
         const response = await sessionRoomService.joinSession(roomId);
 
-        if (!response.data) return "Session room details were not returned.";
+        if (!response.data) {
+          return "Session room details were not returned.";
+        }
 
         setPhase({ name: "active", joinData: response.data, media });
+
         return null;
       } catch (err: unknown) {
         return getErrorMessage(err);
@@ -91,10 +104,9 @@ function SessionRoomFlow({ roomId }: { roomId: string }) {
     [roomId],
   );
 
-  const handleLeft = useCallback(
-    (reason: LeaveReason) => setPhase({ name: "left", reason }),
-    [],
-  );
+  const handleLeft = useCallback((reason: LeaveReason) => {
+    setPhase({ name: "left", reason });
+  }, []);
 
   const handleRejoin = useCallback(
     (fresh: SessionRoomDetailsResponseDTO) => {
@@ -104,10 +116,11 @@ function SessionRoomFlow({ roomId }: { roomId: string }) {
     [],
   );
 
-  if (loadError) return <RoomError message={loadError} />;
-  if (!session) return <RoomLoading />;
+  if (loadError) {
+    return <RoomError message={loadError} backHref={backHref} />;
+  }
 
-  const backHref = getSessionPagePath(session.sessionId);
+  if (!session) return <RoomLoading />;
 
   if (phase.name === "left") {
     return (
@@ -155,8 +168,9 @@ export default function SessionRoomClient() {
   const params = useParams<{ roomId: string }>();
   const roomId = params.roomId;
 
-  if (!roomId) return <RoomError message="Room ID is missing." />;
+  if (!roomId) {
+    return <RoomError message="Room ID is missing." />;
+  }
 
-  // Keyed so a different room starts from a clean phase.
   return <SessionRoomFlow key={roomId} roomId={roomId} />;
 }

@@ -1,11 +1,25 @@
+
 "use client";
 
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, VideoOff, WifiOff } from "lucide-react";
 
-// Single place for the session page route. Swap in your route constant here.
-export const getSessionPagePath = (sessionId: string): string =>
-  `/communities/sessions/${sessionId}`;
+import { UserRole } from "@/enums/user/user.enum";
+
+// Role-based session listing route.
+export const getSessionListPath = (activeRole: UserRole): string => {
+  switch (activeRole) {
+    case UserRole.USER:
+      return "/user/sessions";
+
+    case UserRole.NUTRITIONIST:
+    case UserRole.ADMIN:
+      return "/nutritionist/sessions";
+
+    default:
+      return "/";
+  }
+};
 
 export function RoomLoading() {
   return (

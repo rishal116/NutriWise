@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useSessionDetails } from "@/hooks/nutritionist/session/use-session-details";
@@ -63,11 +62,10 @@ export default function SessionDetailsClient({
           pricing={session.pricing}
         />
 
-        <SessionMeetingRoom
-          roomId={session.roomId}
-        />
+        {session.status !== "completed" && (
+          <SessionMeetingRoom roomId={session.roomId} />
+        )}
       </div>
-
       <SessionParticipantsSection
         sessionId={session.sessionId}
         isFree={session.pricingType === "free"}
