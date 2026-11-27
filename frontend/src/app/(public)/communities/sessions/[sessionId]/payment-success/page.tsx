@@ -146,10 +146,10 @@ export default function SessionPaymentSuccessPage() {
           Your payment has been confirmed. You can now continue to your session.
         </p>
         <Link
-          href={`/session-room/${sessionId}`}
+          href="/user/sessions"
           className="mt-7 inline-flex rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700"
         >
-          Enter session room
+          View my sessions
         </Link>
       </main>
     );
