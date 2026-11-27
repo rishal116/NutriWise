@@ -97,14 +97,12 @@ const logger = createLogger({
   ],
 });
 
-// DEVELOPMENT CONSOLE
-if (!isProduction) {
-  logger.add(
-    new transports.Console({
-      format: consoleFormat,
-    }),
-  );
-}
+// CONSOLE LOGGER
+logger.add(
+  new transports.Console({
+    format: consoleFormat,
+  }),
+);
 
 // MORGAN STREAM (OPTIONAL)
 export const loggerStream = {
